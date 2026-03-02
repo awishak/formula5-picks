@@ -103,84 +103,6 @@ function PitStopReference() {
     }
   }
 
-  // Box plot chart
-  function BoxPlotChart({ teamStats }) {
-    const allMin = Math.min(...teamStats.map(t => t.fastest));
-    const allMax = Math.max(...teamStats.map(t => t.slowest));
-    const pad = 0.1;
-    const domainMin = Math.floor((allMin - pad) * 10) / 10;
-    const domainMax = Math.ceil((allMax + pad) * 10) / 10;
-    const range = domainMax - domainMin;
-
-    const chartW = 300;
-    const leftMargin = 90;
-    const rowH = 36;
-    const barH = 16;
-    const totalH = teamStats.length * rowH + 30;
-
-    const x = (val) => ((val - domainMin) / range) * chartW;
-
-    // Generate tick marks
-    const ticks = [];
-    for (let v = Math.ceil(domainMin * 5) / 5; v <= domainMax; v += 0.2) {
-      ticks.push(Math.round(v * 10) / 10);
-    }
-
-    return (
-      <div style={{ overflowX: "auto", marginBottom: 8 }}>
-        <svg width={leftMargin + chartW + 20} height={totalH} style={{ display: "block" }}>
-          {/* Grid lines and x-axis labels */}
-          {ticks.map(v => (
-            <g key={v}>
-              <line x1={leftMargin + x(v)} y1={0} x2={leftMargin + x(v)} y2={totalH - 25} stroke={BORDER} strokeWidth={0.5} strokeDasharray="3,3" />
-              <text x={leftMargin + x(v)} y={totalH - 8} textAnchor="middle" style={{ fontFamily: FD, fontSize: 10, fill: TEXT2, fontWeight: 600 }}>{v.toFixed(1)}s</text>
-            </g>
-          ))}
-
-          {/* Team rows */}
-          {teamStats.map((t, i) => {
-            const cy = i * rowH + rowH / 2;
-            const boxL = x(t.p25);
-            const boxR = x(t.p75);
-            const medX = x(t.median);
-            const avgX = x(t.avg);
-            const minX = x(t.fastest);
-            const maxX = x(t.slowest);
-
-            return (
-              <g key={t.team}>
-                {/* Row background */}
-                {i % 2 === 0 && (
-                  <rect x={0} y={i * rowH} width={leftMargin + chartW + 20} height={rowH} fill={`${DARK}03`} rx={0} />
-                )}
-
-                {/* Team name */}
-                <text x={leftMargin - 8} y={cy + 1} textAnchor="end" dominantBaseline="middle" style={{ fontFamily: FD, fontSize: 11, fill: TEXT, fontWeight: 700 }}>{t.team}</text>
-
-                {/* Color bar indicator */}
-                <rect x={2} y={cy - 8} width={4} height={16} rx={2} fill={t.color} />
-
-                {/* Whiskers (min to max) */}
-                <line x1={leftMargin + minX} y1={cy} x2={leftMargin + maxX} y2={cy} stroke={t.color} strokeWidth={1.5} opacity={0.4} />
-                <line x1={leftMargin + minX} y1={cy - barH / 4} x2={leftMargin + minX} y2={cy + barH / 4} stroke={t.color} strokeWidth={1.5} opacity={0.4} />
-                <line x1={leftMargin + maxX} y1={cy - barH / 4} x2={leftMargin + maxX} y2={cy + barH / 4} stroke={t.color} strokeWidth={1.5} opacity={0.4} />
-
-                {/* Box (P25 to P75) */}
-                <rect x={leftMargin + boxL} y={cy - barH / 2} width={boxR - boxL} height={barH} rx={3} fill={`${t.color}25`} stroke={t.color} strokeWidth={1.5} />
-
-                {/* Median line */}
-                <line x1={leftMargin + medX} y1={cy - barH / 2} x2={leftMargin + medX} y2={cy + barH / 2} stroke={t.color} strokeWidth={2.5} />
-
-                {/* Average dot */}
-                <circle cx={leftMargin + avgX} cy={cy} r={3} fill="#fff" stroke={t.color} strokeWidth={2} />
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-    );
-  }
-
   return (
     <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: 16, marginBottom: 20 }}>
       <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: TEXT, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 4px" }}>
@@ -214,49 +136,26 @@ function PitStopReference() {
 
       {pitData && (
         <div>
-          <p style={{ fontFamily: FB, fontSize: 11, color: TEXT2, margin: "0 0 4px" }}>
+          <p style={{ fontFamily: FB, fontSize: 11, color: TEXT2, margin: "0 0 10px" }}>
             {pitData.totalStops} pit stops across {pitData.totalRaces} races
           </p>
 
-          {/* Legend */}
-          <div style={{ display: "flex", gap: 14, marginBottom: 12, flexWrap: "wrap" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ width: 12, height: 12, borderRadius: 3, background: `${BLUE}25`, border: `1.5px solid ${BLUE}` }} />
-              <span style={{ fontFamily: FB, fontSize: 11, color: TEXT2 }}>P25–P75 range</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ width: 12, height: 2, background: BLUE }} />
-              <span style={{ fontFamily: FB, fontSize: 11, color: TEXT2 }}>Median</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ width: 8, height: 8, borderRadius: 4, background: "#fff", border: `2px solid ${BLUE}` }} />
-              <span style={{ fontFamily: FB, fontSize: 11, color: TEXT2 }}>Average</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <div style={{ width: 12, height: 1, background: `${BLUE}50` }} />
-              <span style={{ fontFamily: FB, fontSize: 11, color: TEXT2 }}>Min–Max</span>
-            </div>
-          </div>
-
-          {/* Box plot chart */}
-          <BoxPlotChart teamStats={pitData.teamStats} />
-
-          {/* Stats table below */}
-          <div style={{ marginTop: 12 }}>
+          {/* Stats table */}
+          <div>
             <div style={{ display: "flex", padding: "0 4px 6px", borderBottom: `1px solid ${BORDER}` }}>
               <div style={{ width: 80 }}>
-                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em" }}>Team</span>
+                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em" }}>Team</span>
               </div>
-              {["Avg", "P25", "Med", "P75", "Best", "Worst", "#"].map(h => (
+              {["Best", "P25", "Med", "Avg", "P75", "Worst"].map(h => (
                 <div key={h} style={{ flex: 1, textAlign: "center" }}>
-                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</span>
+                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</span>
                 </div>
               ))}
             </div>
 
             {pitData.teamStats.map((t, i) => (
               <div key={t.team} style={{
-                display: "flex", alignItems: "center", padding: "6px 4px",
+                display: "flex", alignItems: "center", padding: "7px 4px",
                 borderBottom: i < pitData.teamStats.length - 1 ? `1px solid ${BORDER}20` : "none",
                 background: i % 2 === 0 ? `${DARK}03` : "transparent"
               }}>
@@ -265,7 +164,7 @@ function PitStopReference() {
                   <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>{t.team}</span>
                 </div>
                 <div style={{ flex: 1, textAlign: "center" }}>
-                  <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 12, color: DARK }}>{t.avg.toFixed(2)}</span>
+                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: GREEN }}>{t.fastest.toFixed(2)}</span>
                 </div>
                 <div style={{ flex: 1, textAlign: "center" }}>
                   <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 11, color: TEXT2 }}>{t.p25.toFixed(2)}</span>
@@ -274,16 +173,13 @@ function PitStopReference() {
                   <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: BLUEDARK }}>{t.median.toFixed(2)}</span>
                 </div>
                 <div style={{ flex: 1, textAlign: "center" }}>
+                  <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 12, color: DARK }}>{t.avg.toFixed(2)}</span>
+                </div>
+                <div style={{ flex: 1, textAlign: "center" }}>
                   <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 11, color: TEXT2 }}>{t.p75.toFixed(2)}</span>
                 </div>
                 <div style={{ flex: 1, textAlign: "center" }}>
-                  <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 11, color: GREEN }}>{t.fastest.toFixed(2)}</span>
-                </div>
-                <div style={{ flex: 1, textAlign: "center" }}>
-                  <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 11, color: RED }}>{t.slowest.toFixed(2)}</span>
-                </div>
-                <div style={{ flex: 1, textAlign: "center" }}>
-                  <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 11, color: TEXT2 }}>{t.count}</span>
+                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: RED }}>{t.slowest.toFixed(2)}</span>
                 </div>
               </div>
             ))}
