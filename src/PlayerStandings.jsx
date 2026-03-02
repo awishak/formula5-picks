@@ -164,6 +164,18 @@ export default function PlayerStandings({ currentUser }) {
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {/* Column headers */}
+        <div style={{ display: "flex", alignItems: "center", padding: "0 14px 4px", gap: 0 }}>
+          <div style={{ minWidth: 28 }} />
+          <div style={{ flex: 1, marginLeft: 86 }}>
+            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em" }}>Player</span>
+          </div>
+          <div style={{ width: 50, textAlign: "center", flexShrink: 0 }}>
+            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em" }}>Pts</span>
+          </div>
+          <div style={{ width: 44, textAlign: "center", flexShrink: 0 }} />
+          <div style={{ width: 16 }} />
+        </div>
         {standings.map((p, idx) => {
           const rank = idx + 1;
           const isMe = p.name === currentUser;
@@ -192,21 +204,19 @@ export default function PlayerStandings({ currentUser }) {
                   </div>
                   <p style={{ fontFamily: FB, fontSize: 11, color: TEXT2, margin: "1px 0 0" }}>{teamName || ""}</p>
                 </div>
-                <div style={{ minWidth: 50, textAlign: "center" }}>
+                <div style={{ width: 50, textAlign: "center", flexShrink: 0 }}>
                   <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.totalPts > 0 ? DARK : TEXT2 }}>{p.totalPts}</span>
                 </div>
-                {p.raceCount > 0 && (p.wins > 0 || p.podiums > 0 || p.topTens > 0) && (
-                  <div style={{ minWidth: 44, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                    {p.podiums > 0 && (
-                      <div style={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                        {p.trophies.filter(t => t !== "●").map((t, i) => (
-                          <span key={i} style={{ fontSize: 16 }}>{t}</span>
-                        ))}
-                      </div>
-                    )}
-                    {p.topTens > 0 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2 }}>T10: {p.topTens}</span>}
-                  </div>
-                )}
+                <div style={{ width: 44, textAlign: "center", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  {p.podiums > 0 && (
+                    <div style={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                      {p.trophies.filter(t => t !== "●").map((t, i) => (
+                        <span key={i} style={{ fontSize: 16 }}>{t}</span>
+                      ))}
+                    </div>
+                  )}
+                  {p.topTens > 0 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2 }}>T10: {p.topTens}</span>}
+                </div>
                 <span style={{ fontSize: 11, color: TEXT2, transition: "transform 0.2s", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", width: 16, textAlign: "center" }}>▼</span>
               </button>
 
