@@ -1010,6 +1010,7 @@ export default function MyPicks({ currentUser }) {
   const picksNotOpenYet = (() => {
     if (submitted) return false; // Already submitted, don't block
     if (!race.race_date) return false;
+    if (race.round === 1) return false; // First race — picks open immediately
     const raceDate = new Date(race.race_date + "T00:00:00Z");
     const dayOfWeek = raceDate.getUTCDay(); // 0=Sun, 6=Sat
     // Days to go back to reach Tuesday (2)
