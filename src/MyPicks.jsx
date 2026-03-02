@@ -886,9 +886,7 @@ export default function MyPicks({ currentUser, onNavigate }) {
   const [bestFinish, setBestFinish] = useState(null);
   const [pitGuess, setPitGuess] = useState(2.5);
 
-  // TODO: Fetch from your matchups/teams table based on currentUser + race
-  // For now defaults to "UNDER". When you have a matchups table, query it here.
-  const [teamSide, setTeamSide] = useState("UNDER");
+  const [teamSide, setTeamSide] = useState("UNDER"); // Updated from schedule: home=OVER, away=UNDER
 
   const TOTAL_STEPS = 6;
 
@@ -930,14 +928,26 @@ export default function MyPicks({ currentUser, onNavigate }) {
           setSubmitted(true);
         }
 
-        // TODO: Fetch team side from matchups table
-        // const { data: matchup } = await supabase
-        //   .from("matchups")
-        //   .select("team_side")
-        //   .eq("player_id", player.id)
-        //   .eq("race_id", raceData.id)
-        //   .single();
-        // if (matchup) setTeamSide(matchup.team_side);
+        // Fetch team side from schedule
+        const { data: myTeamData } = await supabase
+          .from("teams")
+          .select("id")
+          .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
+          .maybeSingle();
+
+        if (myTeamData) {
+          const { data: matchup } = await supabase
+            .from("schedule")
+            .select("home_team_id, away_team_id")
+            .eq("race_id", raceData.id)
+            .or(`home_team_id.eq.${myTeamData.id},away_team_id.eq.${myTeamData.id}`)
+            .maybeSingle();
+
+          if (matchup) {
+            // Home team = Over, Away team = Under
+            setTeamSide(matchup.home_team_id === myTeamData.id ? "OVER" : "UNDER");
+          }
+        }
 
       } catch (err) {
         setError(err.message);
