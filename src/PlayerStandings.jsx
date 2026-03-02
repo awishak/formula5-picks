@@ -74,7 +74,7 @@ export default function PlayerStandings({ currentUser }) {
         setRacePicks(picksMap);
 
         const playerMap = {};
-        (players || []).forEach(p => { playerMap[p.id] = { id: p.id, name: p.name, totalPts: 0, raceCount: 0, trophies: [] }; });
+        (players || []).forEach(p => { playerMap[p.id] = { id: p.id, name: p.name, photo_url: p.photo_url, totalPts: 0, raceCount: 0, trophies: [] }; });
 
         const raceScoresMap = {};
         const playerRaceTotals = {};
