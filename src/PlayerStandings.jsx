@@ -57,7 +57,7 @@ export default function PlayerStandings({ currentUser }) {
     async function load() {
       try {
         const [{ data: players }, { data: teamData }, { data: scores }, { data: raceData }, { data: picksData }] = await Promise.all([
-          supabase.from("players").select("id, name, photo_url"),
+          supabase.from("players").select("*"),
           supabase.from("teams").select("*"),
           supabase.from("scores").select("*"),
           supabase.from("races").select("id, race_name, round, pick_deadline").order("round", { ascending: true }),
@@ -74,7 +74,7 @@ export default function PlayerStandings({ currentUser }) {
         setRacePicks(picksMap);
 
         const playerMap = {};
-        (players || []).forEach(p => { playerMap[p.id] = { id: p.id, name: p.name, photo_url: p.photo_url, totalPts: 0, raceCount: 0, trophies: [] }; });
+        (players || []).forEach(p => { playerMap[p.id] = { id: p.id, name: p.name, photo_url: p.photo_url || null, totalPts: 0, raceCount: 0, trophies: [], wins: 0, podiums: 0, topTens: 0 }; });
 
         const raceScoresMap = {};
         const playerRaceTotals = {};
@@ -98,10 +98,10 @@ export default function PlayerStandings({ currentUser }) {
             .sort((a, b) => b.score - a.score);
           entries.forEach((entry, idx) => {
             const place = idx + 1;
-            if (place === 1) playerMap[entry.pid].trophies.push("🏆");
-            else if (place === 2) playerMap[entry.pid].trophies.push("🥈");
-            else if (place === 3) playerMap[entry.pid].trophies.push("🥉");
-            else if (place <= 10) playerMap[entry.pid].trophies.push("●");
+            if (place === 1) { playerMap[entry.pid].trophies.push("🏆"); playerMap[entry.pid].wins++; playerMap[entry.pid].podiums++; playerMap[entry.pid].topTens++; }
+            else if (place === 2) { playerMap[entry.pid].trophies.push("🥈"); playerMap[entry.pid].podiums++; playerMap[entry.pid].topTens++; }
+            else if (place === 3) { playerMap[entry.pid].trophies.push("🥉"); playerMap[entry.pid].podiums++; playerMap[entry.pid].topTens++; }
+            else if (place <= 10) { playerMap[entry.pid].trophies.push("●"); playerMap[entry.pid].topTens++; }
             if (!rankings[raceId]) rankings[raceId] = {};
             rankings[raceId][entry.pid] = place;
           });
@@ -202,6 +202,12 @@ export default function PlayerStandings({ currentUser }) {
                 <div style={{ minWidth: 50, textAlign: "center" }}>
                   <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.totalPts > 0 ? DARK : TEXT2 }}>{p.totalPts}</span>
                 </div>
+                {p.raceCount > 0 && (
+                  <div style={{ minWidth: 44, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                    {p.podiums > 0 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: GOLD }}>🏆{p.podiums}</span>}
+                    {p.topTens > p.podiums && <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2 }}>T10: {p.topTens}</span>}
+                  </div>
+                )}
                 <span style={{ fontSize: 11, color: TEXT2, transition: "transform 0.2s", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", width: 16, textAlign: "center" }}>▼</span>
               </button>
 

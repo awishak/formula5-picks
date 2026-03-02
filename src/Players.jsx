@@ -76,7 +76,7 @@ export default function Players({ currentUser }) {
   useEffect(() => {
     async function load() {
       const [{ data: playersData }, { data: teamsData }, { data: scoresData }, { data: racesData }] = await Promise.all([
-        supabase.from("players").select("id, name, photo_url"),
+        supabase.from("players").select("*"),
         supabase.from("teams").select("*"),
         supabase.from("scores").select("*"),
         supabase.from("races").select("id, race_name, round").order("round", { ascending: true })
