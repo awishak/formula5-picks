@@ -29,6 +29,17 @@ function needleScore(guess, actual) {
 // Weekly top-10 bonus
 const WEEKLY_BONUS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
+// OpenF1 driver number → name mapping (matches your picks database)
+const DRIVER_NAMES = {
+  1: "Max Verstappen", 4: "Lando Norris", 16: "Charles Leclerc",
+  44: "Lewis Hamilton", 63: "George Russell", 81: "Oscar Piastri",
+  55: "Carlos Sainz", 14: "Fernando Alonso", 12: "Andrea Kimi Antonelli",
+  23: "Alex Albon", 18: "Lance Stroll", 10: "Pierre Gasly",
+  22: "Yuki Tsunoda", 7: "Jack Doohan", 27: "Nico Hulkenberg",
+  5: "Gabriel Bortoleto", 87: "Oliver Bearman", 31: "Esteban Ocon",
+  30: "Liam Lawson", 6: "Isack Hadjar"
+};
+
 export default function Admin() {
   const [races, setRaces] = useState([]);
   const [selectedRound, setSelectedRound] = useState(null);
@@ -43,6 +54,8 @@ export default function Admin() {
   const [error, setError] = useState(null);
   const [existingScores, setExistingScores] = useState({});
   const [adminTab, setAdminTab] = useState("scoring"); // "scoring" | "logos" | "photos"
+  const [fetching, setFetching] = useState(false);
+  const [fetchStatus, setFetchStatus] = useState("");
   const [teams, setTeams] = useState([]);
   const [uploading, setUploading] = useState(null);
   const [logoMsg, setLogoMsg] = useState(null);
@@ -53,7 +66,7 @@ export default function Admin() {
     async function load() {
       const { data: racesData } = await supabase
         .from("races")
-        .select("id, race_name, round")
+        .select("id, race_name, round, race_date, pit_stop_question")
         .order("round", { ascending: true });
       setRaces(racesData || []);
 
@@ -103,6 +116,206 @@ export default function Admin() {
       .map(line => line.trim())
       .filter(line => line.length > 0)
       .map(line => line.replace(/^\d+[\.\)\-\s]+/, "").trim());
+  }
+
+  // Fetch race data from OpenF1 API
+  async function fetchFromF1API() {
+    if (!selectedRace) return;
+    setFetching(true);
+    setFetchStatus("Looking up race session...");
+    setError(null);
+
+    try {
+      // Step 1: Find the meeting for this race
+      // Use the race name to search — e.g. "Australian Grand Prix" → country_name=Australia
+      const raceName = selectedRace.race_name || "";
+      const raceDate = selectedRace.race_date;
+      const year = raceDate ? new Date(raceDate + "T00:00:00Z").getUTCFullYear() : 2026;
+
+      // Get all 2026 sessions that are Races
+      const sessionsResp = await fetch(
+        `https://api.openf1.org/v1/sessions?year=${year}&session_name=Race`
+      );
+      const sessions = await sessionsResp.json();
+
+      // Match session by date — find the Race session closest to our race_date
+      let bestSession = null;
+      let bestDiff = Infinity;
+      for (const s of sessions) {
+        if (!s.date_start) continue;
+        const sessionDate = s.date_start.split("T")[0];
+        const diff = Math.abs(new Date(sessionDate) - new Date(raceDate));
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          bestSession = s;
+        }
+      }
+
+      if (!bestSession || bestDiff > 3 * 24 * 60 * 60 * 1000) {
+        throw new Error(`No matching OpenF1 session found for ${raceName} (${raceDate}). The race may not have happened yet, or the API doesn't have it.`);
+      }
+
+      const sessionKey = bestSession.session_key;
+      setFetchStatus(`Found session: ${bestSession.country_name} ${bestSession.session_name} (key: ${sessionKey})`);
+
+      // Step 2: Get final positions
+      setFetchStatus("Fetching final race positions...");
+      const posResp = await fetch(
+        `https://api.openf1.org/v1/position?session_key=${sessionKey}`
+      );
+      const positions = await posResp.json();
+
+      // Get the last position entry for each driver (= final position)
+      const lastPos = {};
+      positions.forEach(p => {
+        lastPos[p.driver_number] = p.position;
+      });
+
+      // Sort drivers by final position
+      const sorted = Object.entries(lastPos)
+        .sort((a, b) => a[1] - b[1]);
+
+      // Step 3: Get race control messages to find DNFs/retirements
+      setFetchStatus("Checking for DNFs and retirements...");
+      const rcResp = await fetch(
+        `https://api.openf1.org/v1/race_control?session_key=${sessionKey}&category=Retirement`
+      );
+      const rcMessages = await rcResp.json();
+
+      const dnfDriverNumbers = new Set();
+      rcMessages.forEach(msg => {
+        if (msg.driver_number) dnfDriverNumbers.add(msg.driver_number);
+      });
+
+      // Also check for drivers with status issues via laps (no finish)
+      // Build the finish order and DNF list
+      const finishOrderNames = [];
+      const dnfNames = [];
+
+      sorted.forEach(([numStr, pos]) => {
+        const num = parseInt(numStr);
+        const name = DRIVER_NAMES[num];
+        if (!name) return; // Unknown driver
+        if (dnfDriverNumbers.has(num)) {
+          dnfNames.push(name);
+        } else {
+          finishOrderNames.push(name);
+        }
+      });
+
+      // Step 4: Get pit stops
+      setFetchStatus("Fetching pit stop data...");
+      const pitResp = await fetch(
+        `https://api.openf1.org/v1/pit?session_key=${sessionKey}`
+      );
+      const pitStops = await pitResp.json();
+
+      // Find the pit stop matching the race's pit_stop_question
+      // Default: use the fastest stop duration, or the first Ferrari stop, etc.
+      // For now, grab all stops and let the user pick, but also try to auto-detect
+      const question = (selectedRace.pit_stop_question || "").toLowerCase();
+
+      let targetPitTime = null;
+
+      // Try to find a matching pit stop based on the question
+      if (question.includes("ferrari")) {
+        const ferrariDrivers = [16, 44]; // Leclerc, Hamilton
+        const ferrariStops = pitStops
+          .filter(p => ferrariDrivers.includes(p.driver_number))
+          .sort((a, b) => a.lap_number - b.lap_number);
+        if (question.includes("1st") || question.includes("first")) {
+          targetPitTime = ferrariStops[0]?.stop_duration;
+        } else if (question.includes("fastest")) {
+          targetPitTime = Math.min(...ferrariStops.map(p => p.stop_duration));
+        } else {
+          targetPitTime = ferrariStops[0]?.stop_duration;
+        }
+      } else if (question.includes("red bull")) {
+        const rbDrivers = [1, 30]; // Verstappen, Lawson
+        const rbStops = pitStops
+          .filter(p => rbDrivers.includes(p.driver_number))
+          .sort((a, b) => a.lap_number - b.lap_number);
+        targetPitTime = rbStops[0]?.stop_duration;
+      } else if (question.includes("mclaren")) {
+        const mcDrivers = [4, 81]; // Norris, Piastri
+        const mcStops = pitStops
+          .filter(p => mcDrivers.includes(p.driver_number))
+          .sort((a, b) => a.lap_number - b.lap_number);
+        targetPitTime = mcStops[0]?.stop_duration;
+      } else if (question.includes("mercedes")) {
+        const merDrivers = [63, 12]; // Russell, Antonelli
+        const merStops = pitStops
+          .filter(p => merDrivers.includes(p.driver_number))
+          .sort((a, b) => a.lap_number - b.lap_number);
+        targetPitTime = merStops[0]?.stop_duration;
+      } else if (question.includes("williams")) {
+        const wilDrivers = [55, 23]; // Sainz, Albon
+        const wilStops = pitStops
+          .filter(p => wilDrivers.includes(p.driver_number))
+          .sort((a, b) => a.lap_number - b.lap_number);
+        targetPitTime = wilStops[0]?.stop_duration;
+      } else if (question.includes("aston")) {
+        const amDrivers = [14, 18]; // Alonso, Stroll
+        const amStops = pitStops
+          .filter(p => amDrivers.includes(p.driver_number))
+          .sort((a, b) => a.lap_number - b.lap_number);
+        targetPitTime = amStops[0]?.stop_duration;
+      } else if (question.includes("alpine")) {
+        const alpDrivers = [10, 7]; // Gasly, Doohan
+        const alpStops = pitStops
+          .filter(p => alpDrivers.includes(p.driver_number))
+          .sort((a, b) => a.lap_number - b.lap_number);
+        targetPitTime = alpStops[0]?.stop_duration;
+      } else if (question.includes("racing bulls") || question.includes("rb") || question.includes("vcarb")) {
+        const rbullsDrivers = [22, 6]; // Tsunoda, Hadjar
+        const rbullsStops = pitStops
+          .filter(p => rbullsDrivers.includes(p.driver_number))
+          .sort((a, b) => a.lap_number - b.lap_number);
+        targetPitTime = rbullsStops[0]?.stop_duration;
+      } else if (question.includes("haas")) {
+        const haasDrivers = [87, 31]; // Bearman, Ocon
+        const haasStops = pitStops
+          .filter(p => haasDrivers.includes(p.driver_number))
+          .sort((a, b) => a.lap_number - b.lap_number);
+        targetPitTime = haasStops[0]?.stop_duration;
+      } else if (question.includes("sauber") || question.includes("kick") || question.includes("stake")) {
+        const sauDrivers = [27, 5]; // Hulkenberg, Bortoleto
+        const sauStops = pitStops
+          .filter(p => sauDrivers.includes(p.driver_number))
+          .sort((a, b) => a.lap_number - b.lap_number);
+        targetPitTime = sauStops[0]?.stop_duration;
+      } else if (question.includes("fastest")) {
+        // Overall fastest pit stop
+        const fastest = pitStops.reduce((best, p) =>
+          p.stop_duration < best.stop_duration ? p : best
+        , pitStops[0]);
+        targetPitTime = fastest?.stop_duration;
+      }
+
+      // Fallback: fastest overall pit stop
+      if (!targetPitTime && pitStops.length > 0) {
+        targetPitTime = Math.min(...pitStops.map(p => p.stop_duration));
+        setFetchStatus(prev => prev + " (couldn't match question, using fastest stop)");
+      }
+
+      // Fill in the form
+      setFinishOrderText(finishOrderNames.join("\n"));
+      setDnfText(dnfNames.join("\n"));
+      if (targetPitTime) setPitStopTime(targetPitTime.toFixed(1));
+
+      setFetchStatus(
+        `Done! ${finishOrderNames.length} finishers, ${dnfNames.length} DNFs` +
+        (targetPitTime ? `, pit time: ${targetPitTime.toFixed(2)}s` : "") +
+        `. All ${pitStops.length} pit stops found.`
+      );
+
+    } catch (e) {
+      console.error(e);
+      setError("OpenF1 fetch error: " + e.message);
+      setFetchStatus("");
+    } finally {
+      setFetching(false);
+    }
   }
 
   // Main scoring function
@@ -770,6 +983,30 @@ export default function Admin() {
           </p>
         )}
       </div>
+
+      {/* Auto-fetch from OpenF1 */}
+      <div style={{ marginBottom: 20, padding: "14px 16px", background: "#fff", borderRadius: 12, border: `1px solid ${BORDER}` }}>
+        <button
+          onClick={fetchFromF1API}
+          disabled={fetching || !selectedRace}
+          style={{
+            width: "100%", padding: "12px", borderRadius: 10,
+            border: "none", background: fetching ? BORDER : BLUEDARK,
+            fontFamily: FD, fontWeight: 700, fontSize: 13, color: "#fff",
+            cursor: fetching ? "wait" : "pointer", textTransform: "uppercase",
+            letterSpacing: "0.06em", marginBottom: fetchStatus ? 10 : 0
+          }}
+        >
+          {fetching ? "Fetching from OpenF1..." : "Auto-Fill from F1 API"}
+        </button>
+        {fetchStatus && (
+          <p style={{ fontFamily: FB, fontSize: 11, color: BLUEDARK, margin: 0, lineHeight: 1.5 }}>{fetchStatus}</p>
+        )}
+      </div>
+
+      <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, margin: "0 0 12px", fontStyle: "italic" }}>
+        Or enter manually below:
+      </p>
 
       {/* Finishing order input */}
       <div style={{ marginBottom: 16 }}>
