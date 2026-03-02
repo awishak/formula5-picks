@@ -362,6 +362,8 @@ function StepPitStop({ question, value, onChange, teamSide }) {
 
   const sideLabel = isUnder ? "The Under" : "The Over";
   const sideColor = isUnder ? "#7B2D8E" : "#C5A000";
+  const UNDER_CHIP = { fontFamily: FD, fontWeight: 800, fontSize: 11, color: "#7B2D8E", background: "#7B2D8E14", border: "1.5px solid #7B2D8E30", padding: "2px 10px", borderRadius: 20, display: "inline-block" };
+  const OVER_CHIP = { fontFamily: FD, fontWeight: 800, fontSize: 11, color: "#C5A000", background: "#C5A00014", border: "1.5px solid #C5A00030", padding: "2px 10px", borderRadius: 20, display: "inline-block" };
   const sideExplainParts = { direction: isUnder ? "under" : "over" };
 
   let displayValue;
@@ -383,9 +385,9 @@ function StepPitStop({ question, value, onChange, teamSide }) {
         </p>
         <p style={{ margin: "0 0 8px" }}>
           Each week, your team is assigned either{" "}
-          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: "#fff", background: "#7B2D8E", padding: "2px 8px", borderRadius: 6 }}>The Under</span>
+          <span style={isUnder ? UNDER_CHIP : OVER_CHIP}>{isUnder ? "UNDER" : "OVER"}</span>
           {" "}or{" "}
-          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: "#fff", background: "#C5A000", padding: "2px 8px", borderRadius: 6 }}>The Over</span>
+          <span style={isUnder ? OVER_CHIP : UNDER_CHIP}>{isUnder ? "OVER" : "UNDER"}</span>
           . If the actual pit stop time lands on your team's side of the line: <Pts team>+5 for your team</Pts>. Wrong side? <Pts negative>−1 for your team</Pts>.
         </p>
         <p style={{ margin: "0 0 8px" }}>
@@ -403,7 +405,7 @@ function StepPitStop({ question, value, onChange, teamSide }) {
       <div style={{ textAlign: "center", marginBottom: 20, padding: "14px 16px", background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}` }}>
         <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.08em" }}>This week, your team is</p>
         <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 16, margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-          <span style={{ background: sideColor, color: "#fff", padding: "4px 14px", borderRadius: 8 }}>{sideLabel}</span>
+          <span style={isUnder ? { ...UNDER_CHIP, fontSize: 14, padding: "4px 16px" } : { ...OVER_CHIP, fontSize: 14, padding: "4px 16px" }}>{isUnder ? "UNDER" : "OVER"}</span>
         </p>
         <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0, lineHeight: 1.6 }}>
           To score team points, you need{" "}
