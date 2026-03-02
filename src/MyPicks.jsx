@@ -29,8 +29,8 @@ function Pts({ children, negative, team }) {
 function RuleCard({ children }) {
   return (
     <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "12px 14px", marginBottom: 20, lineHeight: 1.55 }}>
-      <div style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-        <span style={{ fontSize: 12 }}>📋</span> Scoring
+      <div style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6 }}>
+        Scoring
       </div>
       <div style={{ fontFamily: FB, fontSize: 12.5, color: TEXT2 }}>{children}</div>
     </div>
@@ -63,22 +63,22 @@ function StepTopPick({ drivers, selected, onSelect }) {
     <div>
       {/* Intro explainer */}
       <div style={{ background: `${BLUE}08`, border: `1px solid ${BLUE}25`, borderRadius: 14, padding: "14px 16px", marginBottom: 20, lineHeight: 1.6 }}>
-        <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: BLUEDARK, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>👋 Welcome to Formula 5</p>
+        <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: BLUEDARK, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>Welcome to Formula 5</p>
         <p style={{ fontFamily: FB, fontSize: 12.5, color: TEXT, margin: "0 0 8px" }}>
-          Your goal is to earn as many points as possible — just like in F1. Points count toward both the <strong>Players Championship</strong> (individual) and the <strong>Team Championship</strong>.
+          In Formula 5, your goal is to get as many points as possible to win the individual <strong>Players Championship</strong> as well as the <strong>Team Championship</strong> at the end of the season.
         </p>
         <p style={{ fontFamily: FB, fontSize: 12.5, color: TEXT, margin: "0 0 8px" }}>
-          How? By guessing questions right. The more you get right, the more points you earn. And you can earn points every single race.
+          How do you do this? By guessing questions right, which gives you points. The more points, the better, just like in F1. And you can earn points each race, just like in F1.
         </p>
         <p style={{ fontFamily: FB, fontSize: 12.5, color: TEXT, margin: "0 0 8px" }}>
-          <strong>Win the individual game:</strong> guess right, stack points, and whoever has the most at the end of the season is the Players Champion!
+          Winning the individual game is simple: guess right, accumulate points, and whoever has the most points at the end of our season is the Players Champion!
         </p>
         <p style={{ fontFamily: FB, fontSize: 12.5, color: TEXT, margin: 0 }}>
-          <strong>Win the team game:</strong> guess right, win your weekly matchup, and rise to the top of the standings so your team can play for the championship!
+          Winning the team game is actually pretty simple, too: guess right, win each week, and make sure you rise to the top of the standings so you can be one of the top two teams who play for the championship!
         </p>
       </div>
 
-      <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, fontStyle: "italic", marginBottom: 16 }}>Alright, let's get to the picks. There are a few easy ones first, and then one tricky one at the end.</p>
+      <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, fontStyle: "italic", marginBottom: 16 }}>There are some other things to explain, but let's get to the simple stuff first.</p>
 
       <StepHeading title="Top Pick" subtitle={<>Choose <strong>1 driver</strong> from the top of the championship</>} />
       <RuleCard>
@@ -339,9 +339,8 @@ function StepPitStop({ question, value, onChange, teamSide }) {
   const decrement = () => { const n = Math.round((value - stepVal) * 10) / 10; if (n >= min) onChange(n); };
 
   const sideLabel = isUnder ? "The Under" : "The Over";
-  const sideExplain = isUnder
-    ? `To score team points, you need "${question}" to be under the average of your matchup's guesses.`
-    : `To score team points, you need "${question}" to be over the average of your matchup's guesses.`;
+  const sideColor = isUnder ? "#7B2D8E" : "#C5A000";
+  const sideExplainParts = { direction: isUnder ? "under" : "over" };
 
   let displayValue;
   if (value <= min) displayValue = `${min.toFixed(1)} or below`;
@@ -379,9 +378,15 @@ function StepPitStop({ question, value, onChange, teamSide }) {
 
       {/* Team side card */}
       <div style={{ textAlign: "center", marginBottom: 20, padding: "14px 16px", background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}` }}>
-        <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.08em" }}>This week, your team is</p>
-        <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 28, color: DARK, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.04em" }}>"{sideLabel}"</p>
-        <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0, lineHeight: 1.5 }}>{sideExplain}</p>
+        <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.08em" }}>This week, your team is</p>
+        <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 16, margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <span style={{ background: sideColor, color: "#fff", padding: "4px 14px", borderRadius: 8 }}>{sideLabel}</span>
+        </p>
+        <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0, lineHeight: 1.6 }}>
+          To score team points, you need{" "}
+          <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: BLUEDARK, background: `${BLUE}18`, padding: "2px 8px", borderRadius: 6, whiteSpace: "nowrap" }}>{question}</span>
+          {" "}to be {sideExplainParts.direction} the average of your matchup's guesses.
+        </p>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -1037,7 +1042,6 @@ export default function MyPicks({ currentUser }) {
     const deadlineStr = race.pick_deadline ? new Date(race.pick_deadline).toLocaleString(undefined, { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null;
     return (
       <div style={{ padding: "40px 20px 100px", textAlign: "center" }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div>
         <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 20, color: DARK, textTransform: "uppercase", marginBottom: 6 }}>Picks Not Open Yet</p>
         <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 20 }}>{race.race_name} — Round {race.round}</p>
         <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: "16px 20px", maxWidth: 320, margin: "0 auto" }}>

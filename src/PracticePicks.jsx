@@ -20,8 +20,8 @@ function Pts({ children, negative, team }) {
 function RuleCard({ children }) {
   return (
     <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "12px 14px", marginBottom: 20, lineHeight: 1.55 }}>
-      <div style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-        <span style={{ fontSize: 12 }}>📋</span> Scoring
+      <div style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6 }}>
+        Scoring
       </div>
       <div style={{ fontFamily: FB, fontSize: 12.5, color: TEXT2 }}>{children}</div>
     </div>
@@ -302,9 +302,8 @@ function StepPitStop({ value, onChange, teamSide }) {
   const decrement = () => { const n = Math.round((value - stepVal) * 10) / 10; if (n >= min) onChange(n); };
 
   const sideLabel = isUnder ? "The Under" : "The Over";
-  const sideExplain = isUnder
-    ? "To score team points, you need the fastest pit stop to be under the average of your matchup's guesses."
-    : "To score team points, you need the fastest pit stop to be over the average of your matchup's guesses.";
+  const sideColor = isUnder ? "#7B2D8E" : "#C5A000";
+  const sideDirection = isUnder ? "under" : "over";
 
   let displayValue;
   if (value <= min) displayValue = `${min.toFixed(1)} or below`;
@@ -340,9 +339,15 @@ function StepPitStop({ value, onChange, teamSide }) {
       </RuleCard>
 
       <div style={{ textAlign: "center", marginBottom: 20, padding: "14px 16px", background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}` }}>
-        <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.08em" }}>For practice, your team is</p>
-        <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 28, color: DARK, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.04em" }}>"{sideLabel}"</p>
-        <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0, lineHeight: 1.5 }}>{sideExplain}</p>
+        <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.08em" }}>For practice, your team is</p>
+        <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 16, margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <span style={{ background: sideColor, color: "#fff", padding: "4px 14px", borderRadius: 8 }}>{sideLabel}</span>
+        </p>
+        <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0, lineHeight: 1.6 }}>
+          To score team points, you need{" "}
+          <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: BLUEDARK, background: `${BLUE}18`, padding: "2px 8px", borderRadius: 6, whiteSpace: "nowrap" }}>Ferrari's 1st Pit Stop</span>
+          {" "}to be {sideDirection} the average of your matchup's guesses.
+        </p>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
