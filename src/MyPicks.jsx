@@ -61,9 +61,28 @@ function StepTopPick({ drivers, selected, onSelect }) {
   const shown = drivers.slice(0, 3);
   return (
     <div>
-      <StepHeading title="Top Pick" subtitle={<>Choose <strong>1 driver</strong> from the top 5 in the championship</>} />
+      {/* Intro explainer */}
+      <div style={{ background: `${BLUE}08`, border: `1px solid ${BLUE}25`, borderRadius: 14, padding: "14px 16px", marginBottom: 20, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: BLUEDARK, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>👋 Welcome to Formula 5</p>
+        <p style={{ fontFamily: FB, fontSize: 12.5, color: TEXT, margin: "0 0 8px" }}>
+          Your goal is to earn as many points as possible — just like in F1. Points count toward both the <strong>Players Championship</strong> (individual) and the <strong>Team Championship</strong>.
+        </p>
+        <p style={{ fontFamily: FB, fontSize: 12.5, color: TEXT, margin: "0 0 8px" }}>
+          How? By guessing questions right. The more you get right, the more points you earn. And you can earn points every single race.
+        </p>
+        <p style={{ fontFamily: FB, fontSize: 12.5, color: TEXT, margin: "0 0 8px" }}>
+          <strong>Win the individual game:</strong> guess right, stack points, and whoever has the most at the end of the season is the Players Champion!
+        </p>
+        <p style={{ fontFamily: FB, fontSize: 12.5, color: TEXT, margin: 0 }}>
+          <strong>Win the team game:</strong> guess right, win your weekly matchup, and rise to the top of the standings so your team can play for the championship!
+        </p>
+      </div>
+
+      <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, fontStyle: "italic", marginBottom: 16 }}>Alright, let's get to the picks. There are a few easy ones first, and then one tricky one at the end.</p>
+
+      <StepHeading title="Top Pick" subtitle={<>Choose <strong>1 driver</strong> from the top of the championship</>} />
       <RuleCard>
-        <p style={{ margin: "0 0 6px" }}>You earn the F1 points your driver scores in the race.</p>
+        <p style={{ margin: "0 0 8px" }}>Pick the driver you think will finish highest in this race. You'll earn whatever F1 points they score — just like the real championship.</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
           <span>P1 = </span><Pts>+25</Pts><span>P2 = </span><Pts>+18</Pts><span>P3 = </span><Pts>+15</Pts><span>P4 = </span><Pts>+12</Pts><span>P5 = </span><Pts>+10</Pts>
         </div>
@@ -71,6 +90,7 @@ function StepTopPick({ drivers, selected, onSelect }) {
           <span>P6 = </span><Pts>+8</Pts><span>P7 = </span><Pts>+6</Pts><span>P8 = </span><Pts>+4</Pts><span>P9 = </span><Pts>+2</Pts><span>P10 = </span><Pts>+1</Pts>
         </div>
         <p style={{ margin: "6px 0 0" }}>P11+ = <Pts>0</Pts>&ensp;DNF = <Pts negative>−1</Pts></p>
+        <p style={{ margin: "8px 0 0", fontSize: 11.5, color: TEXT2 }}>These points count for both your individual score AND your team score.</p>
       </RuleCard>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {shown.map(d => {
@@ -103,10 +123,11 @@ function StepMidPicks({ drivers, selected, onToggle }) {
     <div>
       <StepHeading title="Midfield Picks" subtitle={<>Choose <strong>4 drivers</strong> from P6–P15 — <span style={{ color: count === 4 ? GREEN : BLUE, fontWeight: 600 }}>{count}/4</span></>} />
       <RuleCard>
-        <p style={{ margin: "0 0 6px" }}>Same F1 points table as your Top Pick. Midfield drivers can finish anywhere — they're only restricted by championship standing at selection.</p>
+        <p style={{ margin: "0 0 6px" }}>Now pick 4 more drivers from the midfield. Same scoring as your Top Pick — you earn whatever F1 points each driver scores.</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
           <span>P1 = </span><Pts>+25</Pts><span> … </span><span>P10 = </span><Pts>+1</Pts><span> P11+ = </span><Pts>0</Pts><span> DNF = </span><Pts negative>−1</Pts>
         </div>
+        <p style={{ margin: "8px 0 0", fontSize: 11.5, color: TEXT2 }}>These guys might be lower in the standings, but they can finish anywhere on race day. A smart midfield pick who lands on the podium is a huge point swing.</p>
       </RuleCard>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {shown.map(d => {
@@ -145,8 +166,8 @@ function StepFinishingOrder({ order, onReorder }) {
     <div>
       <StepHeading title="Finishing Order" subtitle="Arrange your 5 drivers in predicted finishing order" />
       <RuleCard>
-        <p style={{ margin: 0 }}>If you get the exact finishing order of all 5 drivers correct, you earn a <Pts>+6</Pts> bonus. Wrong order? You still keep all your driver points — you just miss the bonus.</p>
-        <p style={{ margin: "6px 0 0", fontSize: 11.5, color: TEXT2 }}>If you have multiple DNFed drivers at the back of your order, they are interchangeable.</p>
+        <p style={{ margin: 0 }}>Now arrange all 5 of your drivers in the order you think they'll finish. This doesn't change the points they earn — you keep those no matter what. But if you nail the exact order of all 5? That's a <Pts>+6</Pts> bonus.</p>
+        <p style={{ margin: "6px 0 0", fontSize: 11.5, color: TEXT2 }}>DNFs at the back of your order are interchangeable, so don't stress about that.</p>
       </RuleCard>
       <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
         {order.map((d, idx) => (
@@ -174,7 +195,7 @@ function StepBestFinish({ selected, onSelect }) {
   return (
     <div>
       <StepHeading title="Best Finish" subtitle={<>Predict where your <strong>best-finishing driver</strong> will place</>} />
-      <RuleCard><p style={{ margin: 0 }}>If you predict the exact finishing position of your single best-finishing driver, you earn a <Pts>+3</Pts> bonus.</p></RuleCard>
+      <RuleCard><p style={{ margin: 0 }}>Out of all 5 of your drivers, one of them is going to finish highest. What position will that be? Guess exactly right and you earn a <Pts>+3</Pts> bonus. Simple as that.</p></RuleCard>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {positions.map(p => {
           const a = selected === p;
@@ -335,19 +356,23 @@ function StepPitStop({ question, value, onChange, teamSide }) {
       )}
 
       <RuleCard>
-        <p style={{ margin: "0 0 8px", fontWeight: 500, color: TEXT }}>You have a choice to make</p>
-        <p style={{ margin: "0 0 6px" }}>
-          <strong>Maximize individual points</strong> — guess as close to the actual pit stop time as you can.
-          The closer your guess, the more you earn: <Pts>+5</Pts> for exact, down to <Pts>+1</Pts> within ±0.4s.
+        <p style={{ margin: "0 0 8px", fontWeight: 500, color: TEXT }}>Okay, here's where it gets interesting.</p>
+        <p style={{ margin: "0 0 8px" }}>
+          Every race has a pit stop question. You're guessing a time in seconds, and how close you get determines your individual points: <Pts>+5</Pts> for nailing it, down to <Pts>+1</Pts> if you're within 0.4 seconds.
         </p>
-        <p style={{ margin: "0 0 6px" }}>
-          <strong>Play it for the team</strong> — your guess moves the BOX BOX Line (the average of all 4 players' guesses).
-          If the actual stop lands on your team's side: <Pts team>+5 for team</Pts>. Wrong side: <Pts negative>−1 for team</Pts>.
+        <p style={{ margin: "0 0 8px" }}>
+          But here's the twist — this is also where the <strong>team game</strong> lives. Your guess doesn't just score you individual points. It also moves something called the <strong>BOX BOX Line</strong>, which is the average of all 4 guesses in your matchup (you + your teammate + the two people you're playing this week).
         </p>
-        <p style={{ margin: 0, fontSize: 11.5 }}>
+        <p style={{ margin: "0 0 8px" }}>
+          Each week, your team is assigned either <strong>"The Over"</strong> or <strong>"The Under."</strong> If the actual pit stop time lands on your team's side of the line: <Pts team>+5 for your team</Pts>. Wrong side? <Pts negative>−1 for your team</Pts>.
+        </p>
+        <p style={{ margin: "0 0 8px" }}>
+          So do you guess what you actually think the answer is and maximize your own points? Or do you sacrifice accuracy to push the BOX BOX Line in your team's favor? That tension is what makes The Needle fun.
+        </p>
+        <p style={{ margin: 0, fontSize: 11.5, color: TEXT2 }}>
           {isUnder
-            ? "As the Under, guessing HIGH pushes the line up — giving your team more room for the actual time to come in under it."
-            : "As the Over, guessing LOW pulls the line down — giving your team more room for the actual time to come in over it."
+            ? "Your team is the Under this week. Guessing HIGH pushes the line up — giving the actual time more room to come in under it."
+            : "Your team is the Over this week. Guessing LOW pulls the line down — giving the actual time more room to come in over it."
           }
         </p>
       </RuleCard>
@@ -426,10 +451,6 @@ function StepReview({ topPick, order, bestFinish, pitGuess }) {
           <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: DARK, margin: 0 }}>{pitGuess.toFixed(1)}s</p>
         </div>
       </div>
-      <RuleCard>
-        <p style={{ margin: "0 0 4px", fontWeight: 500, color: TEXT }}>Max possible score this race</p>
-        <p style={{ margin: 0 }}>All 5 in top 5 + exact order + exact best finish + exact pit stop = <Pts>114 pts</Pts></p>
-      </RuleCard>
     </div>
   );
 }
