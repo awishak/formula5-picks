@@ -213,7 +213,7 @@ function MyPicksPage({ currentUser, onNavigate }) {
         <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: DARK, margin: 0 }}>Picking as <span style={{ fontWeight: 600 }}>{currentUser}</span></p>
         {dl2 && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, margin: 0 }}>⏰ {dl2}</p>}
       </div>
-      <MyPicks currentUser={currentUser} />
+      <MyPicks currentUser={currentUser} onNavigate={onNavigate} />
     </div>
   );
 }

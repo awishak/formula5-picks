@@ -21,6 +21,20 @@ const FD       = "'Geologica', sans-serif";
 const FB       = "'DM Sans', sans-serif";
 
 // ── Shared UI ───────────────────────────────────────────
+// ── F1 Driver → Team map ────────────────────────────────
+const F1_TEAMS = {
+  "Max Verstappen": "Red Bull", "Liam Lawson": "Red Bull",
+  "Lando Norris": "McLaren", "Oscar Piastri": "McLaren",
+  "Charles Leclerc": "Ferrari", "Lewis Hamilton": "Ferrari",
+  "George Russell": "Mercedes", "Andrea Kimi Antonelli": "Mercedes",
+  "Carlos Sainz": "Williams", "Alex Albon": "Williams",
+  "Fernando Alonso": "Aston Martin", "Lance Stroll": "Aston Martin",
+  "Pierre Gasly": "Alpine", "Jack Doohan": "Alpine",
+  "Yuki Tsunoda": "Racing Bulls", "Isack Hadjar": "Racing Bulls",
+  "Nico Hulkenberg": "Sauber", "Gabriel Bortoleto": "Sauber",
+  "Oliver Bearman": "Haas", "Esteban Ocon": "Haas",
+};
+
 function Pts({ children, negative, team }) {
   const c = negative ? RED : team ? GREEN : ORANGE;
   return <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: c, background: `${c}12`, padding: "2px 7px", borderRadius: 6, whiteSpace: "nowrap" }}>{children}</span>;
@@ -29,10 +43,10 @@ function Pts({ children, negative, team }) {
 function RuleCard({ children }) {
   return (
     <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "12px 14px", marginBottom: 20, lineHeight: 1.55 }}>
-      <div style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6 }}>
+      <div style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6 }}>
         Scoring
       </div>
-      <div style={{ fontFamily: FB, fontSize: 12.5, color: TEXT2 }}>{children}</div>
+      <div style={{ fontFamily: FB, fontSize: 13, color: TEXT2 }}>{children}</div>
     </div>
   );
 }
@@ -80,7 +94,7 @@ function StepTopPick({ drivers, selected, onSelect }) {
 
       <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, fontStyle: "italic", marginBottom: 16 }}>There are some other things to explain, but let's get to the simple stuff first.</p>
 
-      <StepHeading title="Top Pick" subtitle={<>Choose <strong>1 driver</strong> from the top of the championship</>} />
+      <StepHeading title="Top Pick" subtitle={<>Choose <strong>1 driver</strong> from the top of the pack</>} />
       <RuleCard>
         <p style={{ margin: "0 0 8px" }}>Pick the driver you think will finish highest in this race. You'll earn whatever F1 points they score — just like the real championship.</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
@@ -92,21 +106,25 @@ function StepTopPick({ drivers, selected, onSelect }) {
         <p style={{ margin: "6px 0 0" }}>P11+ = <Pts>0</Pts>&ensp;DNF = <Pts negative>−1</Pts></p>
         <p style={{ margin: "8px 0 0", fontSize: 11.5, color: TEXT2 }}>These points count for both your individual score AND your team score.</p>
       </RuleCard>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", gap: 8 }}>
         {shown.map(d => {
           const a = selected === d;
+          const parts = d.split(" ");
+          const firstName = parts[0];
+          const lastName = parts.slice(1).join(" ");
+          const team = F1_TEAMS[d] || "";
           return (
             <button key={d} onClick={() => onSelect(d)} style={{
-              width: "100%", padding: "14px 16px", borderRadius: 12,
+              flex: 1, padding: "14px 8px", borderRadius: 12,
               border: `2px solid ${a ? BLUE : BORDER}`,
               background: a ? "rgba(108,184,224,0.1)" : "#fff",
-              fontFamily: FB, fontWeight: 500, fontSize: 15,
-              color: a ? BLUEDARK : TEXT, cursor: "pointer",
-              textAlign: "left", transition: "all 0.15s",
-              display: "flex", alignItems: "center", justifyContent: "space-between"
+              cursor: "pointer", textAlign: "center", transition: "all 0.15s",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative"
             }}>
-              {d}
-              {a && <span style={{ color: BLUE, fontSize: 18 }}>✓</span>}
+              <span style={{ fontFamily: FB, fontWeight: 400, fontSize: 12, color: a ? BLUEDARK : TEXT2 }}>{firstName}</span>
+              <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 15, color: a ? BLUEDARK : TEXT }}>{lastName}</span>
+              {team && <span style={{ fontFamily: FB, fontWeight: 500, fontSize: 10, color: TEXT2, marginTop: 2 }}>{team}</span>}
+              {a && <span style={{ color: BLUE, fontSize: 16, position: "absolute", top: 6, right: 8 }}>✓</span>}
             </button>
           );
         })}
@@ -129,24 +147,28 @@ function StepMidPicks({ drivers, selected, onToggle }) {
         </div>
         <p style={{ margin: "8px 0 0", fontSize: 11.5, color: TEXT2 }}>These guys might be lower in the standings, but they can finish anywhere on race day. A smart midfield pick who lands on the podium is a huge point swing.</p>
       </RuleCard>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {shown.map(d => {
           const a = selected.includes(d);
           const dis = !a && count >= 4;
+          const parts = d.split(" ");
+          const firstName = parts[0];
+          const lastName = parts.slice(1).join(" ");
+          const team = F1_TEAMS[d] || "";
           return (
             <button key={d} onClick={() => !dis && onToggle(d)} style={{
-              width: "100%", padding: "14px 16px", borderRadius: 12,
+              width: "calc(33.33% - 6px)", padding: "14px 6px", borderRadius: 12,
               border: `2px solid ${a ? BLUE : BORDER}`,
               background: a ? "rgba(108,184,224,0.1)" : dis ? "#f0ede5" : "#fff",
-              fontFamily: FB, fontWeight: 500, fontSize: 15,
-              color: a ? BLUEDARK : dis ? TEXT2 : TEXT,
               cursor: dis ? "default" : "pointer",
-              textAlign: "left", transition: "all 0.15s",
+              textAlign: "center", transition: "all 0.15s",
               opacity: dis ? 0.5 : 1,
-              display: "flex", alignItems: "center", justifyContent: "space-between"
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative"
             }}>
-              {d}
-              {a && <span style={{ color: BLUE, fontSize: 18 }}>✓</span>}
+              <span style={{ fontFamily: FB, fontWeight: 400, fontSize: 11, color: a ? BLUEDARK : dis ? TEXT2 : TEXT2 }}>{firstName}</span>
+              <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 13, color: a ? BLUEDARK : dis ? TEXT2 : TEXT }}>{lastName}</span>
+              {team && <span style={{ fontFamily: FB, fontWeight: 500, fontSize: 9, color: TEXT2, marginTop: 1 }}>{team}</span>}
+              {a && <span style={{ color: BLUE, fontSize: 14, position: "absolute", top: 4, right: 6 }}>✓</span>}
             </button>
           );
         })}
@@ -201,10 +223,10 @@ function StepBestFinish({ selected, onSelect }) {
           const a = selected === p;
           return (
             <button key={p} onClick={() => onSelect(p)} style={{
-              width: 56, height: 44, borderRadius: 10,
+              width: "calc(33.33% - 6px)", height: 56, borderRadius: 12,
               border: `2px solid ${a ? BLUE : BORDER}`,
               background: a ? BLUE : "#fff",
-              fontFamily: FD, fontWeight: 700, fontSize: 14,
+              fontFamily: FD, fontWeight: 800, fontSize: 18,
               color: a ? "#fff" : TEXT, cursor: "pointer", transition: "all 0.15s"
             }}>{p}</button>
           );
@@ -350,12 +372,9 @@ function StepPitStop({ question, value, onChange, teamSide }) {
   return (
     <div>
       <StepHeading title="The Needle" subtitle="Guess the pit stop time" />
-      {question && (
-        <p style={{ fontFamily: FB, fontSize: 12, color: BLUEDARK, fontWeight: 600, marginBottom: 14, background: "rgba(108,184,224,0.1)", padding: "8px 12px", borderRadius: 8, display: "inline-block" }}>{question}</p>
-      )}
 
       <RuleCard>
-        <p style={{ margin: "0 0 8px", fontWeight: 500, color: TEXT }}>Okay, here's where it gets interesting.</p>
+        <p style={{ margin: "0 0 8px" }}>Okay, here's where it gets interesting.</p>
         <p style={{ margin: "0 0 8px" }}>
           Every race has a pit stop question. You're guessing a time in seconds, and how close you get determines your individual points: <Pts>+5</Pts> for nailing it, down to <Pts>+1</Pts> if you're within 0.4 seconds.
         </p>
@@ -363,12 +382,16 @@ function StepPitStop({ question, value, onChange, teamSide }) {
           But here's the twist — this is also where the <strong>team game</strong> lives. Your guess doesn't just score you individual points. It also moves something called the <strong>BOX BOX Line</strong>, which is the average of all 4 guesses in your matchup (you + your teammate + the two people you're playing this week).
         </p>
         <p style={{ margin: "0 0 8px" }}>
-          Each week, your team is assigned either <strong>"The Over"</strong> or <strong>"The Under."</strong> If the actual pit stop time lands on your team's side of the line: <Pts team>+5 for your team</Pts>. Wrong side? <Pts negative>−1 for your team</Pts>.
+          Each week, your team is assigned either{" "}
+          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: "#fff", background: "#7B2D8E", padding: "2px 8px", borderRadius: 6 }}>The Under</span>
+          {" "}or{" "}
+          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: "#fff", background: "#C5A000", padding: "2px 8px", borderRadius: 6 }}>The Over</span>
+          . If the actual pit stop time lands on your team's side of the line: <Pts team>+5 for your team</Pts>. Wrong side? <Pts negative>−1 for your team</Pts>.
         </p>
         <p style={{ margin: "0 0 8px" }}>
           So do you guess what you actually think the answer is and maximize your own points? Or do you sacrifice accuracy to push the BOX BOX Line in your team's favor? That tension is what makes The Needle fun.
         </p>
-        <p style={{ margin: 0, fontSize: 11.5, color: TEXT2 }}>
+        <p style={{ margin: 0 }}>
           {isUnder
             ? "Your team is the Under this week. Guessing HIGH pushes the line up — giving the actual time more room to come in under it."
             : "Your team is the Over this week. Guessing LOW pulls the line down — giving the actual time more room to come in over it."
@@ -845,7 +868,7 @@ function PickHistory({ currentUser }) {
 
 export { PickHistory };
 
-export default function MyPicks({ currentUser }) {
+export default function MyPicks({ currentUser, onNavigate }) {
   const [step, setStep] = useState(0);
   const [race, setRace] = useState(null);
   const [playerId, setPlayerId] = useState(null);
@@ -1068,7 +1091,6 @@ export default function MyPicks({ currentUser }) {
       <div style={{ padding: "20px 20px 100px" }}>
         {/* Locked in picks */}
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🏁</div>
           <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 20, color: DARK, textTransform: "uppercase", marginBottom: 6 }}>Picks Locked In</p>
           <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 16 }}>{race.race_name} — Round {race.round}</p>
         </div>
@@ -1096,6 +1118,26 @@ export default function MyPicks({ currentUser }) {
 
         {/* Last Race Results */}
         <LastRaceResults currentUser={currentUser} />
+
+        {/* Want to know more? */}
+        <div style={{ background: `${BLUE}06`, border: `1px solid ${BLUE}20`, borderRadius: 14, padding: "16px 16px", marginBottom: 24, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 13, color: BLUEDARK, margin: "0 0 10px" }}>Want to know a little more?</p>
+          <p style={{ fontFamily: FB, fontSize: 12.5, color: TEXT, margin: "0 0 8px" }}>
+            <strong>Individual vs. Team:</strong> Every point you earn counts toward your individual standing in the Players Championship. But points from your driver picks (not The Needle) also count toward your team's weekly matchup. Each week, your team faces another team — the team with more combined driver points (plus the BOX BOX result) wins the matchup.
+          </p>
+          <p style={{ fontFamily: FB, fontSize: 12.5, color: TEXT, margin: "0 0 8px" }}>
+            <strong>How the Team Championship works:</strong> Teams earn 3 championship points for a win, 1 for a tie, and 0 for a loss — just like soccer. At the end of the season, the top two teams in the Championship Division face off for the title.
+          </p>
+          <p style={{ fontFamily: FB, fontSize: 12.5, color: TEXT, margin: "0 0 8px" }}>
+            <strong>Promotion and Relegation:</strong> There are two divisions — Championship and Second Division. After 11 races (the midpoint of the season), the bottom 3 teams in Championship get relegated to Second Division, and the top 3 teams in Second Division get promoted up. So even if you start in the lower division, you can fight your way to the top.
+          </p>
+          <button onClick={() => onNavigate && onNavigate("rules")} style={{
+            width: "100%", padding: "12px", borderRadius: 10,
+            border: `1px solid ${BLUE}40`, background: "#fff",
+            fontFamily: FD, fontWeight: 700, fontSize: 12, color: BLUEDARK,
+            cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 4
+          }}>Take me to the rulebook</button>
+        </div>
 
         {/* Full Pick History */}
         <PickHistory currentUser={currentUser} />
