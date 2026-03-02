@@ -42,10 +42,12 @@ export default function Admin() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
   const [existingScores, setExistingScores] = useState({});
-  const [adminTab, setAdminTab] = useState("scoring"); // "scoring" | "logos"
+  const [adminTab, setAdminTab] = useState("scoring"); // "scoring" | "logos" | "photos"
   const [teams, setTeams] = useState([]);
   const [uploading, setUploading] = useState(null);
   const [logoMsg, setLogoMsg] = useState(null);
+  const [allPlayers, setAllPlayers] = useState([]);
+  const [photoMsg, setPhotoMsg] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -71,6 +73,10 @@ export default function Admin() {
       // Load teams for logo management
       const { data: teamsData } = await supabase.from("teams").select("*").order("name");
       setTeams(teamsData || []);
+
+      // Load players for photo management
+      const { data: playersData } = await supabase.from("players").select("*").order("name");
+      setAllPlayers(playersData || []);
 
       setLoading(false);
     }
@@ -531,6 +537,49 @@ export default function Admin() {
     }
   }
 
+  // Player photo upload
+  async function handlePhotoUpload(playerId, playerName, file) {
+    setUploading("p-" + playerId);
+    setPhotoMsg(null);
+    try {
+      const ext = file.name.split(".").pop().toLowerCase();
+      const fileName = `${playerId}.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("player-photos")
+        .upload(fileName, file, { upsert: true, contentType: file.type });
+      if (uploadErr) throw uploadErr;
+      const { data: urlData } = supabase.storage
+        .from("player-photos")
+        .getPublicUrl(fileName);
+      const photoUrl = urlData.publicUrl + "?t=" + Date.now();
+      const { error: updateErr } = await supabase
+        .from("players")
+        .update({ photo_url: photoUrl })
+        .eq("id", playerId);
+      if (updateErr) throw updateErr;
+      setAllPlayers(prev => prev.map(p => p.id === playerId ? { ...p, photo_url: photoUrl } : p));
+      setPhotoMsg(`✅ Photo uploaded for ${playerName}`);
+    } catch (e) {
+      setPhotoMsg(`❌ Error: ${e.message}`);
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  async function removePhoto(playerId, playerName) {
+    setUploading("p-" + playerId);
+    setPhotoMsg(null);
+    try {
+      await supabase.from("players").update({ photo_url: null }).eq("id", playerId);
+      setAllPlayers(prev => prev.map(p => p.id === playerId ? { ...p, photo_url: null } : p));
+      setPhotoMsg(`Removed photo for ${playerName}`);
+    } catch (e) {
+      setPhotoMsg(`❌ Error: ${e.message}`);
+    } finally {
+      setUploading(null);
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ padding: "60px 20px", textAlign: "center" }}>
@@ -550,7 +599,7 @@ export default function Admin() {
 
       {/* Tab switcher */}
       <div style={{ display: "flex", gap: 0, marginBottom: 20, borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
-        {[{ id: "scoring", label: "Score Race" }, { id: "logos", label: "Team Logos" }].map(tab => (
+        {[{ id: "scoring", label: "Score Race" }, { id: "logos", label: "Team Logos" }, { id: "photos", label: "Player Photos" }].map(tab => (
           <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{
             flex: 1, padding: "10px 0", border: "none",
             background: adminTab === tab.id ? BLUEDARK : "#fff",
@@ -615,6 +664,69 @@ export default function Admin() {
                   </label>
                   {t.logo_url && (
                     <button onClick={() => removeLogo(t.id, t.name)} style={{
+                      padding: "6px 10px", borderRadius: 8, border: `1px solid ${RED}30`,
+                      background: `${RED}08`, color: RED,
+                      fontFamily: FD, fontWeight: 700, fontSize: 10, textTransform: "uppercase",
+                      cursor: "pointer"
+                    }}>✕</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* PHOTOS TAB */}
+      {adminTab === "photos" && (
+        <div>
+          <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 16 }}>
+            Upload photos for each player. Square images (PNG or JPG) work best.
+          </p>
+
+          {photoMsg && (
+            <div style={{ padding: "8px 12px", borderRadius: 8, background: photoMsg.startsWith("✅") ? `${GREEN}10` : photoMsg.startsWith("❌") ? `${RED}10` : `${BLUE}10`, marginBottom: 16 }}>
+              <p style={{ fontFamily: FB, fontSize: 12, color: photoMsg.startsWith("✅") ? GREEN : photoMsg.startsWith("❌") ? RED : TEXT, margin: 0 }}>{photoMsg}</p>
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {allPlayers.map(p => (
+              <div key={p.id} style={{
+                display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
+                borderRadius: 12, border: `1px solid ${BORDER}`, background: "#fff"
+              }}>
+                {p.photo_url ? (
+                  <img src={p.photo_url} alt={p.name} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: `${BORDER}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: FD, fontWeight: 700, fontSize: 13, color: TEXT2 }}>
+                    {(p.name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: FB, fontWeight: 600, fontSize: 13, color: TEXT, margin: 0 }}>{p.name}</p>
+                  <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, margin: "1px 0 0" }}>
+                    {p.photo_url ? "✅ Has photo" : "No photo"}
+                  </p>
+                </div>
+
+                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                  <label style={{
+                    padding: "6px 12px", borderRadius: 8,
+                    background: BLUE, color: "#fff",
+                    fontFamily: FD, fontWeight: 700, fontSize: 10, textTransform: "uppercase",
+                    cursor: uploading === "p-" + p.id ? "wait" : "pointer",
+                    opacity: uploading === "p-" + p.id ? 0.5 : 1
+                  }}>
+                    {uploading === "p-" + p.id ? "..." : "Upload"}
+                    <input type="file" accept="image/*" style={{ display: "none" }}
+                      onChange={e => { if (e.target.files[0]) handlePhotoUpload(p.id, p.name, e.target.files[0]); e.target.value = ""; }}
+                      disabled={uploading === "p-" + p.id}
+                    />
+                  </label>
+                  {p.photo_url && (
+                    <button onClick={() => removePhoto(p.id, p.name)} style={{
                       padding: "6px 10px", borderRadius: 8, border: `1px solid ${RED}30`,
                       background: `${RED}08`, color: RED,
                       fontFamily: FD, fontWeight: 700, fontSize: 10, textTransform: "uppercase",

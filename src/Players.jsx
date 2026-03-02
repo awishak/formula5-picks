@@ -34,13 +34,16 @@ function getYearDescriptor(name) {
   return `${years + 1}${years + 1 === 2 ? "nd" : years + 1 === 3 ? "rd" : "th"} Year`;
 }
 
-function PlayerAvatar({ name, size = 56 }) {
+function PlayerAvatar({ name, size = 56, photoUrl }) {
   let hash = 0;
   for (let i = 0; i < (name || "").length; i++) hash = (name || "").charCodeAt(i) + ((hash << 5) - hash);
   const hue = (Math.abs(hash) * 137) % 360;
   const bg = `hsl(${hue}, 50%, 60%)`;
   const parts = (name || "?").split(" ");
   const initials = parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0][0].toUpperCase();
+  if (photoUrl) return (
+    <img src={photoUrl} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+  );
   return (
     <div style={{ width: size, height: size, borderRadius: "50%", background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: FD, fontWeight: 900, fontSize: size * 0.36, color: "#fff" }}>{initials}</div>
   );
@@ -73,7 +76,7 @@ export default function Players({ currentUser }) {
   useEffect(() => {
     async function load() {
       const [{ data: playersData }, { data: teamsData }, { data: scoresData }, { data: racesData }] = await Promise.all([
-        supabase.from("players").select("id, name"),
+        supabase.from("players").select("id, name, photo_url"),
         supabase.from("teams").select("*"),
         supabase.from("scores").select("*"),
         supabase.from("races").select("id, race_name, round").order("round", { ascending: true })
@@ -162,7 +165,7 @@ export default function Players({ currentUser }) {
                 cursor: "pointer", textAlign: "left",
                 display: "flex", alignItems: "center", gap: 10
               }}>
-                <PlayerAvatar name={p.name} size={44} />
+                <PlayerAvatar name={p.name} size={44} photoUrl={p.photo_url} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {/* Name + trophies on same line */}
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>

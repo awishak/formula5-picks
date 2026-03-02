@@ -13,13 +13,16 @@ const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
 const FD = "'Geologica', sans-serif";
 const FB = "'DM Sans', sans-serif";
 
-function PlayerAvatar({ name, size = 30 }) {
+function PlayerAvatar({ name, size = 30, photoUrl }) {
   let hash = 0;
   for (let i = 0; i < (name || "").length; i++) hash = (name || "").charCodeAt(i) + ((hash << 5) - hash);
   const hue = (Math.abs(hash) * 137) % 360;
   const bg = `hsl(${hue}, 50%, 60%)`;
   const parts = (name || "?").split(" ");
   const initials = parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0][0].toUpperCase();
+  if (photoUrl) return (
+    <img src={photoUrl} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+  );
   return (
     <div style={{ width: size, height: size, borderRadius: "50%", background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: FD, fontWeight: 900, fontSize: size * 0.36, color: "#fff" }}>{initials}</div>
   );
@@ -54,7 +57,7 @@ export default function PlayerStandings({ currentUser }) {
     async function load() {
       try {
         const [{ data: players }, { data: teamData }, { data: scores }, { data: raceData }, { data: picksData }] = await Promise.all([
-          supabase.from("players").select("id, name"),
+          supabase.from("players").select("id, name, photo_url"),
           supabase.from("teams").select("*"),
           supabase.from("scores").select("*"),
           supabase.from("races").select("id, race_name, round, pick_deadline").order("round", { ascending: true }),
@@ -180,7 +183,7 @@ export default function PlayerStandings({ currentUser }) {
               }}>
                 <div style={{ minWidth: 28, textAlign: "center", fontFamily: FD, fontWeight: 900, fontSize: 16, color: TEXT2 }}>{rank}</div>
                 <div style={{ marginLeft: 8 }}><TeamLogo name={teamName} size={28} division={division} logoUrl={logoUrl} /></div>
-                <div style={{ marginLeft: 6 }}><PlayerAvatar name={p.name} size={30} /></div>
+                <div style={{ marginLeft: 6 }}><PlayerAvatar name={p.name} size={30} photoUrl={p.photo_url} /></div>
                 <div style={{ flex: 1, minWidth: 0, marginLeft: 6 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <p style={{ fontFamily: FB, fontWeight: isMe ? 700 : 500, fontSize: 12.5, color: isMe ? BLUEDARK : TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
