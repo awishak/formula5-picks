@@ -164,11 +164,11 @@ export default function Schedule({ currentUser }) {
 
       return (
         <div style={{ display: "flex", alignItems: "center", padding: "10px 12px", gap: 8 }}>
-          <TeamLogo name={team.name} size={30} division={div} logoUrl={team.logo_url} />
+          <TeamLogo name={team.name} size={42} division={div} logoUrl={team.logo_url} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {isMyTeam && <span style={{ fontSize: 13 }}>⭐</span>}
-              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 14, color: TEXT, margin: 0 }}>
+              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15.5, color: TEXT, margin: 0 }}>
                 {team.name}
               </p>
             </div>

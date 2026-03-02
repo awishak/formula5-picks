@@ -182,8 +182,8 @@ export default function PlayerStandings({ currentUser }) {
                 display: "flex", alignItems: "center", gap: 0, cursor: "pointer", textAlign: "left"
               }}>
                 <div style={{ minWidth: 28, textAlign: "center", fontFamily: FD, fontWeight: 900, fontSize: 16, color: TEXT2 }}>{rank}</div>
-                <div style={{ marginLeft: 8 }}><TeamLogo name={teamName} size={28} division={division} logoUrl={logoUrl} /></div>
-                <div style={{ marginLeft: 6 }}><PlayerAvatar name={p.name} size={30} photoUrl={p.photo_url} /></div>
+                <div style={{ marginLeft: 8 }}><TeamLogo name={teamName} size={36} division={division} logoUrl={logoUrl} /></div>
+                <div style={{ marginLeft: 6 }}><PlayerAvatar name={p.name} size={36} photoUrl={p.photo_url} /></div>
                 <div style={{ flex: 1, minWidth: 0, marginLeft: 6 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <p style={{ fontFamily: FB, fontWeight: isMe ? 700 : 500, fontSize: 12.5, color: isMe ? BLUEDARK : TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -197,7 +197,7 @@ export default function PlayerStandings({ currentUser }) {
                       </span>
                     )}
                   </div>
-                  <p style={{ fontFamily: FB, fontSize: 9.5, color: TEXT2, margin: "1px 0 0" }}>{teamName || ""}</p>
+                  <p style={{ fontFamily: FB, fontSize: 11, color: TEXT2, margin: "1px 0 0" }}>{teamName || ""}</p>
                 </div>
                 <div style={{ minWidth: 50, textAlign: "center" }}>
                   <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.totalPts > 0 ? DARK : TEXT2 }}>{p.totalPts}</span>

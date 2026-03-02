@@ -254,9 +254,9 @@ export default function TeamStandings({ currentUser }) {
                   ...myTeamStyle
                 }}>
                   <div style={{ minWidth: 24, textAlign: "center", fontFamily: FD, fontWeight: 900, fontSize: 13, color: TEXT2 }}>{rank}</div>
-                  <div style={{ marginLeft: 8 }}><TeamLogo name={t.name} size={34} division={t.division} logoUrl={t.logo_url} /></div>
+                  <div style={{ marginLeft: 8 }}><TeamLogo name={t.name} size={44} division={t.division} logoUrl={t.logo_url} /></div>
                   <div style={{ flex: 1, minWidth: 0, marginLeft: 8 }}>
-                    <p style={{ fontFamily: FB, fontWeight: 600, fontSize: 12.5, color: t.isMyTeam ? BLUEDARK : TEXT, margin: 0 }}>
+                    <p style={{ fontFamily: FB, fontWeight: 600, fontSize: 14, color: t.isMyTeam ? BLUEDARK : TEXT, margin: 0 }}>
                       {t.name}{t.isMyTeam ? " ⭐" : ""}
                     </p>
                     <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, margin: "1px 0 0" }}>{shortName(t.p1Name)} & {shortName(t.p2Name)}</p>
