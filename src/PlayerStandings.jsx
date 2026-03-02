@@ -189,23 +189,22 @@ export default function PlayerStandings({ currentUser }) {
                     <p style={{ fontFamily: FB, fontWeight: isMe ? 700 : 500, fontSize: 12.5, color: isMe ? BLUEDARK : TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {p.name}{isMe ? " (you)" : ""}{isMyTeammate ? " (your teammate)" : ""}
                     </p>
-                    {p.trophies.length > 0 && (
-                      <span style={{ letterSpacing: "2px", lineHeight: 1, flexShrink: 0 }}>
-                        {p.trophies.map((t, i) => (
-                          <span key={i} style={{ fontSize: t === "●" ? 12 : 18 }}>{t}</span>
-                        ))}
-                      </span>
-                    )}
                   </div>
                   <p style={{ fontFamily: FB, fontSize: 11, color: TEXT2, margin: "1px 0 0" }}>{teamName || ""}</p>
                 </div>
                 <div style={{ minWidth: 50, textAlign: "center" }}>
                   <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.totalPts > 0 ? DARK : TEXT2 }}>{p.totalPts}</span>
                 </div>
-                {p.raceCount > 0 && (
-                  <div style={{ minWidth: 44, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                    {p.podiums > 0 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: GOLD }}>🏆{p.podiums}</span>}
-                    {p.topTens > p.podiums && <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2 }}>T10: {p.topTens}</span>}
+                {p.raceCount > 0 && (p.wins > 0 || p.podiums > 0 || p.topTens > 0) && (
+                  <div style={{ minWidth: 44, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    {p.podiums > 0 && (
+                      <div style={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                        {p.trophies.filter(t => t !== "●").map((t, i) => (
+                          <span key={i} style={{ fontSize: 16 }}>{t}</span>
+                        ))}
+                      </div>
+                    )}
+                    {p.topTens > 0 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2 }}>T10: {p.topTens}</span>}
                   </div>
                 )}
                 <span style={{ fontSize: 11, color: TEXT2, transition: "transform 0.2s", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", width: 16, textAlign: "center" }}>▼</span>
