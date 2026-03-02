@@ -164,6 +164,7 @@ export default function Admin() {
         `https://api.openf1.org/v1/position?session_key=${sessionKey}`
       );
       const positions = await posResp.json();
+      if (!Array.isArray(positions)) throw new Error("Positions API returned unexpected data: " + JSON.stringify(positions).slice(0, 200));
 
       // Get the last position entry for each driver (= final position)
       const lastPos = {};
@@ -181,11 +182,12 @@ export default function Admin() {
         `https://api.openf1.org/v1/race_control?session_key=${sessionKey}&category=Retirement`
       );
       const rcMessages = await rcResp.json();
-
       const dnfDriverNumbers = new Set();
-      rcMessages.forEach(msg => {
-        if (msg.driver_number) dnfDriverNumbers.add(msg.driver_number);
-      });
+      if (Array.isArray(rcMessages)) {
+        rcMessages.forEach(msg => {
+          if (msg.driver_number) dnfDriverNumbers.add(msg.driver_number);
+        });
+      }
 
       // Also check for drivers with status issues via laps (no finish)
       // Build the finish order and DNF list
@@ -208,7 +210,8 @@ export default function Admin() {
       const pitResp = await fetch(
         `https://api.openf1.org/v1/pit?session_key=${sessionKey}`
       );
-      const pitStops = await pitResp.json();
+      const pitStopsRaw = await pitResp.json();
+      const pitStops = Array.isArray(pitStopsRaw) ? pitStopsRaw : [];
 
       // Find the pit stop matching the race's pit_stop_question
       // Default: use the fastest stop duration, or the first Ferrari stop, etc.
