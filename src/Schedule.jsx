@@ -77,6 +77,23 @@ export default function Schedule({ currentUser }) {
   const pickMap = {};
   picks.forEach(pk => { pickMap[`${pk.player_id}_${pk.race_id}`] = pk; });
 
+  // Compute player rankings by total points
+  const playerTotals = {};
+  scores.forEach(s => {
+    const total = (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) + (s.pit_individual_pts || 0) + (s.weekly_bonus_pts || 0);
+    if (!playerTotals[s.player_id]) playerTotals[s.player_id] = 0;
+    playerTotals[s.player_id] += total;
+  });
+  const playerRankList = Object.entries(playerTotals).sort((a, b) => b[1] - a[1]);
+  const playerRank = {};
+  playerRankList.forEach(([pid, pts], i) => { playerRank[pid] = i + 1; });
+
+  const shortNameInitial = (name) => {
+    if (!name) return "?";
+    const parts = name.split(" ");
+    return parts.length >= 2 ? `${parts[0][0]}. ${parts[parts.length - 1]}` : name;
+  };
+
   const getDiv = (teamName) => {
     const t = teams.find(t => t.name === teamName);
     return t?.division || "second";
@@ -171,6 +188,19 @@ export default function Schedule({ currentUser }) {
               <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15.5, color: TEXT, margin: 0 }}>
                 {team.name}
               </p>
+            </div>
+            <div style={{ display: "flex", gap: 6, marginTop: 2, marginBottom: 3 }}>
+              {[team.player1_id, team.player2_id].map(pid => {
+                const name = playerMap[pid];
+                const rank = playerRank[pid];
+                const rankColor = rank <= 3 ? ORANGE : rank <= 10 ? BLUEDARK : TEXT2;
+                return (
+                  <span key={pid} style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>
+                    {shortNameInitial(name)}
+                    {rank && <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: rankColor, marginLeft: 2 }}>({rank})</span>}
+                  </span>
+                );
+              })}
             </div>
             <span style={{ fontFamily: FD, fontWeight: 400, fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", padding: "1px 6px", borderRadius: 100, color: lineColor, background: `${lineColor}15` }}>
               {lineLabel}
