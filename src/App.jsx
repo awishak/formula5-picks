@@ -221,6 +221,11 @@ function MyPicksPage({ currentUser, onNavigate }) {
 // ── Welcome Screen ───────────────────────────────────────
 const ALL_PLAYERS = ["Aditya Satish","Alicia Cho","Andrew Ishak","Andy Thompson","Anthony Carnesecca","Anthony Zamary","Brett Dillon","Brian Dong","Chris Fondacaro","Chris Malek","Dan Patry","Danny Bowers","Evie Ishak","Francisco Soldavini","George Fahmy","Grant Wong","Harold Gutmann","Heather Ishak","Jack Civitts","Joe Hanna","Joe McGlynn","Kerolos Nakhla","Kevin Coolidge","Krista Nabil","Larry Noel","Lucia Thompson","Maggie Ball","Maggie Mudge","Martin Nobar","Matilda Luton","Matteo Thompson","Max Reisinger","Mena Yousef","Moses Abdelshaid","Nick Brody","Paul Kohli","Pavly Attalah","Rafik Zarifa","Ramy Stephanos","Ronnie Nobar","Ryan Kohli","Sam Bottoms","Scott Schertler","Stacy Michaelsen","Theo Ishak","TJ Donato","Zack Girgis"];
 
+// ── Avatar color palette (deterministic per name) ────────
+const AVATAR_COLORS = ["#6cb8e0","#e08a2e","#22cc66","#e04a4a","#7B2D8E","#C5A000","#2a6fa8","#e06080","#40b090","#d06030","#6080d0","#b050a0"];
+function avatarColor(name) { let h = 0; for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h); return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]; }
+function getInitials(name) { const parts = name.split(" "); return (parts[0]?.[0] || "") + (parts[parts.length - 1]?.[0] || ""); }
+
 function WelcomeScreen({ onSelect }) {
   const [search, setSearch] = useState("");
   const filtered = ALL_PLAYERS.filter(p => p.toLowerCase().includes(search.toLowerCase()));
@@ -230,14 +235,37 @@ function WelcomeScreen({ onSelect }) {
       <div style={{ maxWidth: 480, margin: "0 auto", minHeight: "100vh", background: DARK, display: "flex", flexDirection: "column" }}>
         <div style={{ padding: "48px 24px 32px", textAlign: "center" }}>
           <img src={LOGO_B64} alt="Formula 5" style={{ height: 120, objectFit: "contain", marginBottom: 16, filter: "brightness(0) invert(1)" }} />
-          <div style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 38, textTransform: "uppercase", color: "#fff", lineHeight: 1 }}>Who are<br/><span style={{ color: BLUE }}>you?</span></div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.4)", marginTop: 10 }}>Pick your name to get started</div>
+          <div style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 34, textTransform: "uppercase", color: "#fff", lineHeight: 1.1 }}>Welcome to<br/><span style={{ color: BLUE }}>Formula 5</span></div>
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 300, fontSize: 14, color: "rgba(255,255,255,0.4)", marginTop: 10 }}>Tap your name to get started</div>
         </div>
-        <div style={{ flex: 1, background: BG, borderRadius: "24px 24px 0 0", padding: "24px 20px 40px" }}>
-          <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 300, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: TEXT2, marginBottom: 12 }}>Select your name</p>
+        <div style={{ flex: 1, background: BG, borderRadius: "24px 24px 0 0", padding: "24px 16px 40px" }}>
+          <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 300, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: TEXT2, marginBottom: 12, paddingLeft: 4 }}>Select your name</p>
           <input placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} autoFocus style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${BORDER}`, background: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: TEXT, marginBottom: 14, outline: "none", boxSizing: "border-box" }} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 420, overflowY: "auto" }}>
-            {filtered.map(name => <button key={name} onClick={() => onSelect(name)} style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: `1px solid ${BORDER}`, background: "#fff", fontFamily: "'DM Sans', sans-serif", fontWeight: 500, fontSize: 15, color: TEXT, cursor: "pointer", textAlign: "left" }}>{name}</button>)}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, maxHeight: 460, overflowY: "auto", paddingBottom: 8 }}>
+            {filtered.map(name => {
+              const color = avatarColor(name);
+              const initials = getInitials(name);
+              const firstName = name.split(" ")[0];
+              const lastName = name.split(" ").slice(1).join(" ");
+              return (
+                <button key={name} onClick={() => onSelect(name)} style={{
+                  padding: "14px 6px 12px", borderRadius: 12,
+                  border: `1px solid ${BORDER}`, background: "#fff",
+                  cursor: "pointer", textAlign: "center",
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+                  transition: "all 0.15s",
+                }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: "50%",
+                    background: `${color}20`, border: `2px solid ${color}50`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 14, color: color,
+                  }}>{initials}</div>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 400, fontSize: 11, color: TEXT2, lineHeight: 1.2 }}>{firstName}</span>
+                  <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 12, color: TEXT, lineHeight: 1.2 }}>{lastName}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
