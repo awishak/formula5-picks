@@ -228,7 +228,28 @@ function getInitials(name) { const parts = name.split(" "); return (parts[0]?.[0
 
 function WelcomeScreen({ onSelect }) {
   const [search, setSearch] = useState("");
-  const filtered = ALL_PLAYERS.filter(p => p.toLowerCase().includes(search.toLowerCase()));
+  const [players, setPlayers] = useState([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(true);
+
+  useEffect(() => {
+    async function loadPlayers() {
+      try {
+        const { data, error } = await supabase
+          .from("players")
+          .select("name, photo_url")
+          .order("name", { ascending: true });
+        if (!error && data) setPlayers(data);
+        else setPlayers(ALL_PLAYERS.map(n => ({ name: n, photo_url: null })));
+      } catch {
+        setPlayers(ALL_PLAYERS.map(n => ({ name: n, photo_url: null })));
+      }
+      setLoadingPlayers(false);
+    }
+    loadPlayers();
+  }, []);
+
+  const filtered = players.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: ${DARK}; }`}</style>
@@ -241,32 +262,47 @@ function WelcomeScreen({ onSelect }) {
         <div style={{ flex: 1, background: BG, borderRadius: "24px 24px 0 0", padding: "24px 16px 40px" }}>
           <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 300, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: TEXT2, marginBottom: 12, paddingLeft: 4 }}>Select your name</p>
           <input placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} autoFocus style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${BORDER}`, background: "#fff", fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: TEXT, marginBottom: 14, outline: "none", boxSizing: "border-box" }} />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, maxHeight: 460, overflowY: "auto", paddingBottom: 8 }}>
-            {filtered.map(name => {
-              const color = avatarColor(name);
-              const initials = getInitials(name);
-              const firstName = name.split(" ")[0];
-              const lastName = name.split(" ").slice(1).join(" ");
-              return (
-                <button key={name} onClick={() => onSelect(name)} style={{
-                  padding: "14px 6px 12px", borderRadius: 12,
-                  border: `1px solid ${BORDER}`, background: "#fff",
-                  cursor: "pointer", textAlign: "center",
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-                  transition: "all 0.15s",
-                }}>
-                  <div style={{
-                    width: 40, height: 40, borderRadius: "50%",
-                    background: `${color}20`, border: `2px solid ${color}50`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 14, color: color,
-                  }}>{initials}</div>
-                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 400, fontSize: 11, color: TEXT2, lineHeight: 1.2 }}>{firstName}</span>
-                  <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 12, color: TEXT, lineHeight: 1.2 }}>{lastName}</span>
-                </button>
-              );
-            })}
-          </div>
+          {loadingPlayers ? (
+            <p style={{ textAlign: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT2, padding: 20 }}>Loading…</p>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, maxHeight: 460, overflowY: "auto", paddingBottom: 8 }}>
+              {filtered.map(({ name, photo_url }) => {
+                const color = avatarColor(name);
+                const initials = getInitials(name);
+                const firstName = name.split(" ")[0];
+                const lastName = name.split(" ").slice(1).join(" ");
+                return (
+                  <button key={name} onClick={() => onSelect(name)} style={{
+                    padding: "14px 6px 12px", borderRadius: 12,
+                    border: `1px solid ${BORDER}`, background: "#fff",
+                    cursor: "pointer", textAlign: "center",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+                    transition: "all 0.15s",
+                  }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: "50%", overflow: "hidden",
+                      background: photo_url ? "#eee" : `${color}20`,
+                      border: `2px solid ${photo_url ? `${color}40` : `${color}50`}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0,
+                    }}>
+                      {photo_url ? (
+                        <img src={photo_url} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={(e) => {
+                            e.target.style.display = "none";
+                            e.target.parentNode.innerHTML = `<span style="font-family:'Geologica',sans-serif;font-weight:800;font-size:14px;color:${color}">${initials}</span>`;
+                          }} />
+                      ) : (
+                        <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 14, color: color }}>{initials}</span>
+                      )}
+                    </div>
+                    <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 400, fontSize: 11, color: TEXT2, lineHeight: 1.2 }}>{firstName}</span>
+                    <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 12, color: TEXT, lineHeight: 1.2 }}>{lastName}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </>
