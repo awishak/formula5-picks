@@ -316,7 +316,7 @@ function StepMidPicks({ drivers, selected, onToggle, driverMap }) {
 }
 
 // ── Step 3: Finishing Order ─────────────────────────────
-function StepFinishingOrder({ order, onReorder }) {
+function StepFinishingOrder({ order, onReorder, driverMap }) {
   const [dragging, setDragging] = useState(null);
   const ds = (i) => setDragging(i);
   const dov = (e, i) => { e.preventDefault(); if (dragging === null || dragging === i) return; const n = [...order]; const it = n.splice(dragging, 1)[0]; n.splice(i, 0, it); onReorder(n); setDragging(i); };
@@ -330,20 +330,64 @@ function StepFinishingOrder({ order, onReorder }) {
         <p style={{ margin: "6px 0 0", fontSize: 11.5, color: TEXT2 }}>DNFs at the back of your order are interchangeable, so don't stress about that.</p>
       </RuleCard>
       <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-        {order.map((d, idx) => (
-          <div key={d}>
-            <div draggable onDragStart={() => ds(idx)} onDragOver={(e) => dov(e, idx)} onDragEnd={de}
-              style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 12, border: `2px solid ${dragging === idx ? BLUE : BORDER}`, background: dragging === idx ? "rgba(108,184,224,0.08)" : "#fff", cursor: "grab", transition: "all 0.15s", userSelect: "none" }}>
-              <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 16, color: BLUE, minWidth: 24, textAlign: "center" }}>{idx + 1}</span>
-              <span style={{ flex: 1, fontFamily: FB, fontWeight: 500, fontSize: 15, color: TEXT }}>{d}</span>
-              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <button onClick={() => mv(idx, -1)} disabled={idx === 0} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? BORDER : TEXT2, fontSize: 14, padding: "2px 6px", lineHeight: 1 }}>▲</button>
-                <button onClick={() => mv(idx, 1)} disabled={idx === order.length - 1} style={{ background: "none", border: "none", cursor: idx === order.length - 1 ? "default" : "pointer", color: idx === order.length - 1 ? BORDER : TEXT2, fontSize: 14, padding: "2px 6px", lineHeight: 1 }}>▼</button>
+        {order.map((d, idx) => {
+          const parts = d.split(" ");
+          const firstName = parts[0];
+          const lastName = parts.slice(1).join(" ");
+          const driverInfo = findDriver(driverMap, d);
+          const team = driverInfo?.team || "";
+          const teamColor = driverInfo?.teamColor || BLUE;
+          const headshot = driverInfo?.headshot || null;
+          const isDragging = dragging === idx;
+          return (
+            <div key={d}>
+              <div draggable onDragStart={() => ds(idx)} onDragOver={(e) => dov(e, idx)} onDragEnd={de}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12,
+                  border: `2px solid ${isDragging ? teamColor : BORDER}`,
+                  background: isDragging ? `${teamColor}0a` : "#fff",
+                  cursor: "grab", transition: "all 0.15s", userSelect: "none",
+                  borderLeft: `4px solid ${teamColor}`,
+                }}>
+                {/* Position number */}
+                <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 16, color: BLUE, minWidth: 22, textAlign: "center" }}>{idx + 1}</span>
+
+                {/* Driver headshot */}
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%", overflow: "hidden", flexShrink: 0,
+                  background: headshot ? `${teamColor}18` : `${BORDER}40`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {headshot ? (
+                    <img src={headshot} alt={d} style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      onError={(e) => { e.target.style.display = "none"; }} />
+                  ) : (
+                    <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: TEXT2 }}>
+                      {firstName[0]}{lastName[0] || ""}
+                    </span>
+                  )}
+                </div>
+
+                {/* Name + team */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontFamily: FB, fontWeight: 600, fontSize: 14, color: TEXT, display: "block", lineHeight: 1.2 }}>{d}</span>
+                  {team && (
+                    <span style={{
+                      fontFamily: FB, fontWeight: 500, fontSize: 10, color: teamColor,
+                    }}>{team}</span>
+                  )}
+                </div>
+
+                {/* Up/down arrows */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <button onClick={() => mv(idx, -1)} disabled={idx === 0} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? BORDER : TEXT2, fontSize: 14, padding: "2px 6px", lineHeight: 1 }}>▲</button>
+                  <button onClick={() => mv(idx, 1)} disabled={idx === order.length - 1} style={{ background: "none", border: "none", cursor: idx === order.length - 1 ? "default" : "pointer", color: idx === order.length - 1 ? BORDER : TEXT2, fontSize: 14, padding: "2px 6px", lineHeight: 1 }}>▼</button>
+                </div>
               </div>
+              {idx < order.length - 1 && <div style={{ textAlign: "center", padding: "6px 0", fontFamily: FB, fontSize: 11, color: TEXT2, fontStyle: "italic" }}>will finish ahead of</div>}
             </div>
-            {idx < order.length - 1 && <div style={{ textAlign: "center", padding: "6px 0", fontFamily: FB, fontSize: 11, color: TEXT2, fontStyle: "italic" }}>will finish ahead of</div>}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -1325,7 +1369,7 @@ export default function MyPicks({ currentUser, onNavigate }) {
 
         {step === 0 && <StepTopPick drivers={race.top_drivers} selected={topPick} onSelect={setTopPick} driverMap={driverMap} />}
         {step === 1 && <StepMidPicks drivers={race.mid_drivers} selected={midPicks} onToggle={toggleMidPick} driverMap={driverMap} />}
-        {step === 2 && <StepFinishingOrder order={order} onReorder={setOrder} />}
+        {step === 2 && <StepFinishingOrder order={order} onReorder={setOrder} driverMap={driverMap} />}
         {step === 3 && <StepBestFinish selected={bestFinish} onSelect={setBestFinish} />}
         {step === 4 && <StepPitStop question={race.pit_stop_question} value={pitGuess} onChange={setPitGuess} teamSide={teamSide} />}
         {step === 5 && <StepReview topPick={topPick} order={order} bestFinish={bestFinish} pitGuess={pitGuess} />}
