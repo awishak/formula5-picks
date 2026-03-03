@@ -21,8 +21,8 @@ const FD       = "'Geologica', sans-serif";
 const FB       = "'DM Sans', sans-serif";
 
 // ── Shared UI ───────────────────────────────────────────
-// ── F1 Driver → Team map ────────────────────────────────
-const F1_TEAMS = {
+// ── F1 Driver → Team fallback map ───────────────────────
+const F1_TEAMS_FALLBACK = {
   "Max Verstappen": "Red Bull", "Liam Lawson": "Red Bull",
   "Lando Norris": "McLaren", "Oscar Piastri": "McLaren",
   "Charles Leclerc": "Ferrari", "Lewis Hamilton": "Ferrari",
@@ -34,6 +34,90 @@ const F1_TEAMS = {
   "Nico Hulkenberg": "Sauber", "Gabriel Bortoleto": "Sauber",
   "Oliver Bearman": "Haas", "Esteban Ocon": "Haas",
 };
+
+// ── OpenF1 API: fetch driver data (name, team, headshot) ─
+// Returns a Map keyed by full name → { team, headshot, teamColor, acronym, number }
+function useOpenF1Drivers() {
+  const [driverMap, setDriverMap] = useState(new Map());
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchDrivers() {
+      try {
+        // Fetch the latest session's drivers for current-season headshots
+        const res = await fetch("https://api.openf1.org/v1/drivers?session_key=latest");
+        if (!res.ok) throw new Error(`OpenF1 request failed: ${res.status}`);
+        const data = await res.json();
+
+        if (cancelled || !Array.isArray(data)) return;
+
+        console.log("[OpenF1] Fetched", data.length, "driver entries");
+
+        const map = new Map();
+        // OpenF1 can return duplicate driver entries (one per session); dedupe by driver_number
+        const seen = new Set();
+        for (const d of data) {
+          if (seen.has(d.driver_number)) continue;
+          seen.add(d.driver_number);
+
+          // Build a normalized full name to match Supabase driver names
+          const first = d.first_name || "";
+          const last = d.last_name || "";
+          const fullName = `${first} ${last}`.trim();
+
+          map.set(fullName, {
+            team: d.team_name || "",
+            headshot: d.headshot_url || null,
+            teamColor: d.team_colour ? `#${d.team_colour}` : null,
+            acronym: d.name_acronym || "",
+            number: d.driver_number || null,
+          });
+        }
+        console.log("[OpenF1] Driver map keys:", [...map.keys()]);
+        setDriverMap(map);
+      } catch (err) {
+        console.warn("OpenF1 fetch failed, using fallback data:", err);
+        // Populate with fallback data (no headshots)
+        const map = new Map();
+        Object.entries(F1_TEAMS_FALLBACK).forEach(([name, team]) => {
+          map.set(name, { team, headshot: null, teamColor: null, acronym: "", number: null });
+        });
+        setDriverMap(map);
+      }
+    }
+    fetchDrivers();
+    return () => { cancelled = true; };
+  }, []);
+
+  return driverMap;
+}
+
+// Helper: find a driver in the OpenF1 map using fuzzy matching
+// (handles cases where Supabase names might differ slightly from OpenF1 names)
+function findDriver(driverMap, name) {
+  if (!name || driverMap.size === 0) return { team: F1_TEAMS_FALLBACK[name] || "", headshot: null, teamColor: null, acronym: "", number: null };
+  // Exact match first
+  if (driverMap.has(name)) return driverMap.get(name);
+  // Try matching by last name
+  const nameParts = name.split(" ");
+  const lastName = nameParts[nameParts.length - 1].toLowerCase();
+  for (const [key, val] of driverMap) {
+    if (key.split(" ").pop().toLowerCase() === lastName) return val;
+  }
+  // Try matching by first name (for edge cases like "Andrea Kimi Antonelli" vs "Kimi Antonelli")
+  for (const [key, val] of driverMap) {
+    const keyFirst = key.split(" ")[0].toLowerCase();
+    if (nameParts.some(p => p.toLowerCase() === keyFirst)) return val;
+  }
+  // Try partial / contains match
+  const nameLower = name.toLowerCase();
+  for (const [key, val] of driverMap) {
+    if (nameLower.includes(key.toLowerCase()) || key.toLowerCase().includes(nameLower)) return val;
+  }
+  console.log("[OpenF1] No match for:", name, "| Available:", [...driverMap.keys()]);
+  // Fallback
+  return { team: F1_TEAMS_FALLBACK[name] || "", headshot: null, teamColor: null, acronym: "", number: null };
+}
 
 function Pts({ children, negative, team }) {
   const c = negative ? RED : team ? GREEN : ORANGE;
@@ -71,7 +155,7 @@ function StepHeading({ title, subtitle }) {
 }
 
 // ── Step 1: Top Pick (3 of 5) ───────────────────────────
-function StepTopPick({ drivers, selected, onSelect }) {
+function StepTopPick({ drivers, selected, onSelect, driverMap }) {
   const shown = drivers.slice(0, 3);
   return (
     <div>
@@ -112,19 +196,46 @@ function StepTopPick({ drivers, selected, onSelect }) {
           const parts = d.split(" ");
           const firstName = parts[0];
           const lastName = parts.slice(1).join(" ");
-          const team = F1_TEAMS[d] || "";
+          const driverInfo = findDriver(driverMap, d);
+          const team = driverInfo?.team || "";
+          const teamColor = driverInfo?.teamColor || BLUE;
+          const headshot = driverInfo?.headshot || null;
           return (
             <button key={d} onClick={() => onSelect(d)} style={{
-              flex: 1, padding: "14px 8px", borderRadius: 12,
-              border: `2px solid ${a ? BLUE : BORDER}`,
-              background: a ? "rgba(108,184,224,0.1)" : "#fff",
+              flex: 1, padding: "10px 8px 14px", borderRadius: 12,
+              border: `2px solid ${a ? teamColor : BORDER}`,
+              background: a ? `${teamColor}14` : "#fff",
               cursor: "pointer", textAlign: "center", transition: "all 0.15s",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative"
             }}>
+              {/* Driver headshot */}
+              <div style={{
+                width: 52, height: 52, borderRadius: "50%", overflow: "hidden",
+                background: headshot ? `${teamColor}18` : `${BORDER}40`,
+                marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "center",
+                border: a ? `2px solid ${teamColor}60` : "2px solid transparent",
+                transition: "border 0.15s"
+              }}>
+                {headshot ? (
+                  <img src={headshot} alt={d} style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={(e) => { e.target.style.display = "none"; }} />
+                ) : (
+                  <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 16, color: TEXT2 }}>
+                    {firstName[0]}{lastName[0] || ""}
+                  </span>
+                )}
+              </div>
               <span style={{ fontFamily: FB, fontWeight: 400, fontSize: 12, color: a ? BLUEDARK : TEXT2 }}>{firstName}</span>
               <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 15, color: a ? BLUEDARK : TEXT }}>{lastName}</span>
-              {team && <span style={{ fontFamily: FB, fontWeight: 500, fontSize: 10, color: TEXT2, marginTop: 2 }}>{team}</span>}
-              {a && <span style={{ color: BLUE, fontSize: 16, position: "absolute", top: 6, right: 8 }}>✓</span>}
+              {team && (
+                <span style={{
+                  fontFamily: FB, fontWeight: 500, fontSize: 10, marginTop: 2,
+                  color: teamColor || TEXT2,
+                  background: `${teamColor}10`,
+                  padding: "1px 6px", borderRadius: 4,
+                }}>{team}</span>
+              )}
+              {a && <span style={{ color: teamColor, fontSize: 16, position: "absolute", top: 6, right: 8 }}>✓</span>}
             </button>
           );
         })}
@@ -134,7 +245,7 @@ function StepTopPick({ drivers, selected, onSelect }) {
 }
 
 // ── Step 2: Midfield Picks (7 of 10) ────────────────────
-function StepMidPicks({ drivers, selected, onToggle }) {
+function StepMidPicks({ drivers, selected, onToggle, driverMap }) {
   const shown = drivers.slice(0, 7);
   const count = selected.length;
   return (
@@ -154,21 +265,48 @@ function StepMidPicks({ drivers, selected, onToggle }) {
           const parts = d.split(" ");
           const firstName = parts[0];
           const lastName = parts.slice(1).join(" ");
-          const team = F1_TEAMS[d] || "";
+          const driverInfo = findDriver(driverMap, d);
+          const team = driverInfo?.team || "";
+          const teamColor = driverInfo?.teamColor || BLUE;
+          const headshot = driverInfo?.headshot || null;
           return (
             <button key={d} onClick={() => !dis && onToggle(d)} style={{
-              width: "calc(33.33% - 6px)", padding: "14px 6px", borderRadius: 12,
-              border: `2px solid ${a ? BLUE : BORDER}`,
-              background: a ? "rgba(108,184,224,0.1)" : dis ? "#f0ede5" : "#fff",
+              width: "calc(33.33% - 6px)", padding: "10px 6px 14px", borderRadius: 12,
+              border: `2px solid ${a ? teamColor : BORDER}`,
+              background: a ? `${teamColor}14` : dis ? "#f0ede5" : "#fff",
               cursor: dis ? "default" : "pointer",
               textAlign: "center", transition: "all 0.15s",
               opacity: dis ? 0.5 : 1,
               display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative"
             }}>
+              {/* Driver headshot */}
+              <div style={{
+                width: 40, height: 40, borderRadius: "50%", overflow: "hidden",
+                background: headshot ? `${teamColor}18` : `${BORDER}40`,
+                marginBottom: 3, display: "flex", alignItems: "center", justifyContent: "center",
+                border: a ? `2px solid ${teamColor}60` : "2px solid transparent",
+                transition: "border 0.15s"
+              }}>
+                {headshot ? (
+                  <img src={headshot} alt={d} style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={(e) => { e.target.style.display = "none"; }} />
+                ) : (
+                  <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 13, color: TEXT2 }}>
+                    {firstName[0]}{lastName[0] || ""}
+                  </span>
+                )}
+              </div>
               <span style={{ fontFamily: FB, fontWeight: 400, fontSize: 11, color: a ? BLUEDARK : dis ? TEXT2 : TEXT2 }}>{firstName}</span>
               <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 13, color: a ? BLUEDARK : dis ? TEXT2 : TEXT }}>{lastName}</span>
-              {team && <span style={{ fontFamily: FB, fontWeight: 500, fontSize: 9, color: TEXT2, marginTop: 1 }}>{team}</span>}
-              {a && <span style={{ color: BLUE, fontSize: 14, position: "absolute", top: 4, right: 6 }}>✓</span>}
+              {team && (
+                <span style={{
+                  fontFamily: FB, fontWeight: 500, fontSize: 9, marginTop: 1,
+                  color: teamColor || TEXT2,
+                  background: `${teamColor}10`,
+                  padding: "0px 4px", borderRadius: 3,
+                }}>{team}</span>
+              )}
+              {a && <span style={{ color: teamColor, fontSize: 14, position: "absolute", top: 4, right: 6 }}>✓</span>}
             </button>
           );
         })}
@@ -888,6 +1026,9 @@ export default function MyPicks({ currentUser, onNavigate }) {
 
   const [teamSide, setTeamSide] = useState("UNDER"); // Updated from schedule: home=OVER, away=UNDER
 
+  // OpenF1 driver data (headshots, teams, colors)
+  const driverMap = useOpenF1Drivers();
+
   const TOTAL_STEPS = 6;
 
   // Load current race, player ID, check existing picks
@@ -1182,8 +1323,8 @@ export default function MyPicks({ currentUser, onNavigate }) {
       <div style={{ padding: "0 20px" }}>
         <StepBar current={step} total={TOTAL_STEPS} />
 
-        {step === 0 && <StepTopPick drivers={race.top_drivers} selected={topPick} onSelect={setTopPick} />}
-        {step === 1 && <StepMidPicks drivers={race.mid_drivers} selected={midPicks} onToggle={toggleMidPick} />}
+        {step === 0 && <StepTopPick drivers={race.top_drivers} selected={topPick} onSelect={setTopPick} driverMap={driverMap} />}
+        {step === 1 && <StepMidPicks drivers={race.mid_drivers} selected={midPicks} onToggle={toggleMidPick} driverMap={driverMap} />}
         {step === 2 && <StepFinishingOrder order={order} onReorder={setOrder} />}
         {step === 3 && <StepBestFinish selected={bestFinish} onSelect={setBestFinish} />}
         {step === 4 && <StepPitStop question={race.pit_stop_question} value={pitGuess} onChange={setPitGuess} teamSide={teamSide} />}
