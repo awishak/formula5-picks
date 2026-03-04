@@ -56,6 +56,8 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
   const [chooserSearch, setChooserSearch] = useState("");
 
   useEffect(() => {
+    setHasSubmitted(false);
+    setPlayerPhoto(null);
     async function load() {
       try {
         const today = new Date().toISOString().split("T")[0];
@@ -71,7 +73,7 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
         if (playersAll) setAllPlayers(playersAll);
         if (raceData && playerData) {
           const { data: existing } = await supabase.from("picks").select("id").eq("player_id", playerData.id).eq("race_id", raceData.id).maybeSingle();
-          if (existing) setHasSubmitted(true);
+          setHasSubmitted(!!existing);
         }
       } catch (e) { /* silent */ }
     }
@@ -193,6 +195,11 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
         {pickDeadline && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT, textAlign: "center", marginTop: 12, fontWeight: 500 }}>Picks due by <span style={{ fontWeight: 700, color: DARK }}>{pickDeadline}</span></p>}
       </div>
       {/* All navigation — unified 3-across grid */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <span style={{ flex: 1, height: 1, background: BORDER }} />
+        <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em" }}>Explore</span>
+        <span style={{ flex: 1, height: 1, background: BORDER }} />
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
         {[
           { id: "player-standings", label: "Player\nStandings" },
@@ -401,7 +408,7 @@ function WelcomeScreen({ onSelect }) {
 // ── Bottom Nav ───────────────────────────────────────────
 function BottomNav({ active, onChange, hasSubmittedPicks }) {
   const tabs = [
-    { id: "home", label: "Home" },
+    { id: "home", label: "Garage" },
     { id: "player-standings", label: "Player\nTable" },
     { id: "picks", label: "My Picks", big: true },
     { id: "team-standings", label: "Team\nTable" },
