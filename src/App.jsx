@@ -399,36 +399,42 @@ function WelcomeScreen({ onSelect }) {
 }
 
 // ── Bottom Nav ───────────────────────────────────────────
-function BottomNav({ active, onChange }) {
-  const tabs = [{ id: "home", label: "Home" }, { id: "player-standings", label: "Players", sublabel: "Standings" }, { id: "picks", label: "My Picks", big: true }, { id: "team-standings", label: "Team", sublabel: "Standings" }, { id: "schedule", label: "Schedule" }];
-  const icon = (id, c) => {
-    if (id === "home") return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>;
-    if (id === "player-standings") return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>;
-    if (id === "team-standings") return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M9 5v16"/></svg>;
-    if (id === "schedule") return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>;
-    return null;
-  };
+function BottomNav({ active, onChange, hasSubmittedPicks }) {
+  const tabs = [
+    { id: "home", label: "Home" },
+    { id: "player-standings", label: "Player\nTable" },
+    { id: "picks", label: "My Picks", big: true },
+    { id: "team-standings", label: "Team\nTable" },
+    { id: "schedule", label: "Schedule" },
+  ];
   return (
     <>
       <style>{`.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid ${BORDER};display:flex;justify-content:space-around;align-items:flex-end;padding:0 4px;padding-bottom:max(8px,env(safe-area-inset-bottom));z-index:100}`}</style>
       <div className="bnav">
         {tabs.map(t => {
-          const a = active === t.id, c = a ? BLUE : TEXT2;
-          if (t.big) return (
-            <button key={t.id} onClick={() => onChange(t.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "6px 0 4px", background: "none", border: "none", cursor: "pointer", minWidth: 64, marginTop: -8 }}>
-              <div style={{ width: 52, height: 52, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", background: a ? BLUE : DARK, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" fill="rgba(255,255,255,0.15)"/><path d="M8 12l3 3 5-6"/></svg>
-              </div>
-              <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3, color: a ? BLUE : DARK }}>My Picks</span>
-              {a && <div style={{ width: 4, height: 4, borderRadius: "50%", background: BLUE, marginTop: 2 }}/>}
-            </button>
-          );
+          const a = active === t.id;
+          if (t.big) {
+            // My Picks: green if submitted, blue if active, red/urgent if not submitted
+            const picksColor = hasSubmittedPicks ? GREEN : "#e04a4a";
+            const bgColor = a ? BLUE : hasSubmittedPicks ? GREEN : DARK;
+            return (
+              <button key={t.id} onClick={() => onChange(t.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "6px 0 4px", background: "none", border: "none", cursor: "pointer", minWidth: 64, marginTop: -8 }}>
+                <div style={{ width: 52, height: 52, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", background: bgColor, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}>
+                  {hasSubmittedPicks ? (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                  ) : (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  )}
+                </div>
+                <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3, color: a ? BLUE : hasSubmittedPicks ? GREEN : DARK }}>{t.label}</span>
+              </button>
+            );
+          }
+          const c = a ? BLUE : TEXT2;
           return (
-            <button key={t.id} onClick={() => onChange(t.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "10px 0 4px", background: "none", border: "none", cursor: "pointer", minWidth: 56 }}>
-              {icon(t.id, c)}
-              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, marginTop: 3, color: c, fontWeight: a ? 600 : 500 }}>{t.label}</span>
-              {t.sublabel && <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 9, color: c }}>{t.sublabel}</span>}
-              {a && <div style={{ width: 4, height: 4, borderRadius: "50%", background: BLUE, marginTop: 2 }}/>}
+            <button key={t.id} onClick={() => onChange(t.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "10px 0 4px", background: "none", border: "none", cursor: "pointer", minWidth: 52 }}>
+              <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: a ? 800 : 600, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.04em", color: c, lineHeight: 1.2, whiteSpace: "pre-line", textAlign: "center" }}>{t.label}</span>
+              {a && <div style={{ width: 4, height: 4, borderRadius: "50%", background: BLUE, marginTop: 4 }}/>}
             </button>
           );
         })}
@@ -441,8 +447,26 @@ function BottomNav({ active, onChange }) {
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("f1_user") || null);
   const [activePage, setActivePage] = useState("home");
+  const [hasSubmittedPicks, setHasSubmittedPicks] = useState(false);
   const handleSelectName = (name) => { localStorage.setItem("f1_user", name); setCurrentUser(name); };
   const handleChangeName = () => { localStorage.removeItem("f1_user"); setCurrentUser(null); };
+
+  // Check pick status for bottom nav color
+  useEffect(() => {
+    if (!currentUser) return;
+    async function checkPicks() {
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const { data: race } = await supabase.from("races").select("id").gte("race_date", today).order("race_date", { ascending: true }).limit(1).single();
+        if (!race) return;
+        const { data: player } = await supabase.from("players").select("id").eq("name", currentUser).single();
+        if (!player) return;
+        const { data: existing } = await supabase.from("picks").select("id").eq("player_id", player.id).eq("race_id", race.id).maybeSingle();
+        setHasSubmittedPicks(!!existing);
+      } catch { /* silent */ }
+    }
+    checkPicks();
+  }, [currentUser, activePage]);
 
   if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
 
@@ -466,7 +490,7 @@ export default function App() {
         {activePage === "players" && <Players currentUser={currentUser} />}
         {activePage === "practice" && <PracticePicks />}
       </div>
-      <BottomNav active={activePage} onChange={setActivePage} />
+      <BottomNav active={activePage} onChange={setActivePage} hasSubmittedPicks={hasSubmittedPicks} />
     </>
   );
 }
