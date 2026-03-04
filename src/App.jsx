@@ -416,32 +416,45 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
   ];
   return (
     <>
-      <style>{`.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid ${BORDER};display:flex;justify-content:space-around;align-items:flex-end;padding:0 4px;padding-bottom:max(8px,env(safe-area-inset-bottom));z-index:100}`}</style>
+      <style>{`.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid ${BORDER};display:flex;justify-content:space-around;align-items:center;padding:0 4px;padding-bottom:max(8px,env(safe-area-inset-bottom));z-index:100}`}</style>
       <div className="bnav">
         {tabs.map(t => {
           const a = active === t.id;
-          if (t.big) {
-            // My Picks: green if submitted, blue if active, red/urgent if not submitted
-            const picksColor = hasSubmittedPicks ? GREEN : "#e04a4a";
-            const bgColor = a ? BLUE : hasSubmittedPicks ? GREEN : DARK;
-            return (
-              <button key={t.id} onClick={() => onChange(t.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "6px 0 4px", background: "none", border: "none", cursor: "pointer", minWidth: 64, marginTop: -8 }}>
-                <div style={{ width: 52, height: 52, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", background: bgColor, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}>
-                  {hasSubmittedPicks ? (
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                  ) : (
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                  )}
-                </div>
-                <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3, color: a ? BLUE : hasSubmittedPicks ? GREEN : DARK }}>{t.label}</span>
-              </button>
-            );
+          const isPicksTab = t.big;
+          // Light color logic
+          let lightColor, glowColor;
+          if (isPicksTab) {
+            if (a) { lightColor = "#e00000"; glowColor = "0 0 12px 4px rgba(224,0,0,0.5), 0 0 4px 1px rgba(224,0,0,0.8)"; }
+            else if (hasSubmittedPicks) { lightColor = GREEN; glowColor = `0 0 10px 3px ${GREEN}50, 0 0 3px 1px ${GREEN}80`; }
+            else { lightColor = "#3a3a48"; glowColor = "none"; }
+          } else {
+            if (a) { lightColor = "#e00000"; glowColor = "0 0 12px 4px rgba(224,0,0,0.5), 0 0 4px 1px rgba(224,0,0,0.8)"; }
+            else { lightColor = "#3a3a48"; glowColor = "none"; }
           }
-          const c = a ? BLUE : TEXT2;
           return (
-            <button key={t.id} onClick={() => onChange(t.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "10px 0 4px", background: "none", border: "none", cursor: "pointer", minWidth: 52 }}>
-              <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: a ? 800 : 600, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em", color: c, lineHeight: 1.2, whiteSpace: "pre-line", textAlign: "center" }}>{t.label}</span>
-              {a && <div style={{ width: 4, height: 4, borderRadius: "50%", background: BLUE, marginTop: 4 }}/>}
+            <button key={t.id} onClick={() => onChange(t.id)} style={{
+              display: "flex", flexDirection: "column", alignItems: "center",
+              padding: "10px 0 4px", background: "none", border: "none",
+              cursor: "pointer", minWidth: 56, gap: 5
+            }}>
+              <div style={{
+                width: isPicksTab ? 28 : 22, height: isPicksTab ? 28 : 22,
+                borderRadius: "50%",
+                background: a ? `radial-gradient(circle at 40% 35%, #ff4040 0%, ${lightColor} 60%, #1a0000 100%)`
+                  : isPicksTab && hasSubmittedPicks ? `radial-gradient(circle at 40% 35%, ${GREEN} 0%, #1a3a1a 100%)`
+                  : `radial-gradient(circle at 40% 35%, #5a5a68 0%, ${lightColor} 50%, #1e1e28 100%)`,
+                boxShadow: glowColor,
+                border: `2px solid ${a ? "#8a0000" : isPicksTab && hasSubmittedPicks ? "#1a6a30" : "#2a2a38"}`,
+                transition: "all 0.2s ease"
+              }} />
+              <span style={{
+                fontFamily: "'Geologica', sans-serif",
+                fontWeight: a ? 800 : 600,
+                fontSize: isPicksTab ? 11 : 10,
+                textTransform: "uppercase", letterSpacing: "0.04em",
+                color: a ? "#e00000" : isPicksTab && hasSubmittedPicks ? GREEN : TEXT2,
+                lineHeight: 1.2, whiteSpace: "pre-line", textAlign: "center"
+              }}>{t.label}</span>
             </button>
           );
         })}
