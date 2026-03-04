@@ -448,6 +448,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
           return (
             <button key={t.id} onClick={() => onChange(t.id)} style={{
               display: "flex", flexDirection: "column", alignItems: "center",
+              justifyContent: "flex-start",
               padding: "10px 0 4px", background: "none", border: "none",
               cursor: "pointer", minWidth: 56, gap: 5
             }}>
