@@ -426,14 +426,14 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                   )}
                 </div>
-                <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3, color: a ? BLUE : hasSubmittedPicks ? GREEN : DARK }}>{t.label}</span>
+                <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3, color: a ? BLUE : hasSubmittedPicks ? GREEN : DARK }}>{t.label}</span>
               </button>
             );
           }
           const c = a ? BLUE : TEXT2;
           return (
             <button key={t.id} onClick={() => onChange(t.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "10px 0 4px", background: "none", border: "none", cursor: "pointer", minWidth: 52 }}>
-              <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: a ? 800 : 600, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.04em", color: c, lineHeight: 1.2, whiteSpace: "pre-line", textAlign: "center" }}>{t.label}</span>
+              <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: a ? 800 : 600, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em", color: c, lineHeight: 1.2, whiteSpace: "pre-line", textAlign: "center" }}>{t.label}</span>
               {a && <div style={{ width: 4, height: 4, borderRadius: "50%", background: BLUE, marginTop: 4 }}/>}
             </button>
           );
@@ -453,6 +453,7 @@ export default function App() {
 
   // Check pick status for bottom nav color
   useEffect(() => {
+    setHasSubmittedPicks(false); // reset immediately on user change
     if (!currentUser) return;
     async function checkPicks() {
       try {
