@@ -46,24 +46,29 @@ const CIRCUITS = {
 };
 
 // ── Home Page ────────────────────────────────────────────
-function HomePage({ currentUser, onNavigate, onChangeName }) {
+function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
   const [nextRace, setNextRace] = useState(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [playerPhoto, setPlayerPhoto] = useState(null);
+  const [showChooser, setShowChooser] = useState(false);
+  const [allPlayers, setAllPlayers] = useState([]);
+  const [chooserSearch, setChooserSearch] = useState("");
 
   useEffect(() => {
     async function load() {
       try {
         const today = new Date().toISOString().split("T")[0];
-        const [{ data: raceData }, { data: latestScore }, { data: playerData }] = await Promise.all([
+        const [{ data: raceData }, { data: latestScore }, { data: playerData }, { data: playersAll }] = await Promise.all([
           supabase.from("races").select("*").gte("race_date", today).order("race_date", { ascending: true }).limit(1).single(),
           supabase.from("scores").select("calculated_at").order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
-          supabase.from("players").select("id, name, photo_url").eq("name", currentUser).maybeSingle()
+          supabase.from("players").select("id, name, photo_url").eq("name", currentUser).maybeSingle(),
+          supabase.from("players").select("name, photo_url").order("name")
         ]);
         if (raceData) setNextRace(raceData);
         if (latestScore?.calculated_at) setLastUpdated(latestScore.calculated_at);
         if (playerData?.photo_url) setPlayerPhoto(playerData.photo_url);
+        if (playersAll) setAllPlayers(playersAll);
         if (raceData && playerData) {
           const { data: existing } = await supabase.from("picks").select("id").eq("player_id", playerData.id).eq("race_id", raceData.id).maybeSingle();
           if (existing) setHasSubmitted(true);
@@ -103,18 +108,66 @@ function HomePage({ currentUser, onNavigate, onChangeName }) {
           Last updated {new Date(lastUpdated).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
         </p>
       )}
-      <button onClick={onChangeName} style={{ width: "100%", padding: "14px 16px", borderRadius: 14, border: `2px solid ${BLUE}`, background: `${BLUE}08`, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", marginBottom: 20 }}>
-        {playerPhoto ? (
-          <img src={playerPhoto} alt={currentUser} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-        ) : (
-          <div style={{ width: 44, height: 44, borderRadius: "50%", background: avatarBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 16, color: "#fff" }}>{initials}</div>
+      <div style={{ marginBottom: 20 }}>
+        <button onClick={() => { setShowChooser(!showChooser); setChooserSearch(""); }} style={{ width: "100%", padding: "14px 16px", borderRadius: showChooser ? "14px 14px 0 0" : 14, border: `2px solid ${BLUE}`, borderBottom: showChooser ? `1px solid ${BORDER}` : `2px solid ${BLUE}`, background: `${BLUE}08`, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+          {playerPhoto ? (
+            <img src={playerPhoto} alt={currentUser} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+          ) : (
+            <div style={{ width: 44, height: 44, borderRadius: "50%", background: avatarBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 16, color: "#fff" }}>{initials}</div>
+          )}
+          <div style={{ flex: 1, textAlign: "left" }}>
+            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 300, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: TEXT2, margin: "0 0 2px" }}>Viewing as</p>
+            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 20, color: DARK, margin: 0 }}>{currentUser}</p>
+          </div>
+          <span style={{ fontSize: 12, color: TEXT2, transition: "transform 0.2s", transform: showChooser ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+        </button>
+        {showChooser && (
+          <div style={{ border: `2px solid ${BLUE}`, borderTop: "none", borderRadius: "0 0 14px 14px", background: "#fff", padding: "12px 14px 16px" }}>
+            <input
+              placeholder="Search..."
+              value={chooserSearch}
+              onChange={e => setChooserSearch(e.target.value)}
+              autoFocus
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${BORDER}`, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT, marginBottom: 12, outline: "none", boxSizing: "border-box" }}
+            />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, maxHeight: 320, overflowY: "auto" }}>
+              {(allPlayers.length > 0 ? allPlayers : ALL_PLAYERS.map(n => ({ name: n, photo_url: null })))
+                .filter(p => p.name.toLowerCase().includes(chooserSearch.toLowerCase()))
+                .map(p => {
+                  const isActive = p.name === currentUser;
+                  const color = avatarColor(p.name);
+                  const pInitials = getInitials(p.name);
+                  const firstName = p.name.split(" ")[0];
+                  const lastName = p.name.split(" ").slice(1).join(" ");
+                  return (
+                    <button key={p.name} onClick={() => { onSelectName(p.name); setShowChooser(false); }} style={{
+                      padding: "10px 4px 8px", borderRadius: 10,
+                      border: isActive ? `2px solid ${BLUE}` : `1px solid ${BORDER}`,
+                      background: isActive ? `${BLUE}08` : "#fff",
+                      cursor: "pointer", textAlign: "center",
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: 3
+                    }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: "50%", overflow: "hidden",
+                        background: p.photo_url ? "#eee" : `${color}20`,
+                        border: `2px solid ${p.photo_url ? `${color}40` : `${color}50`}`,
+                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                      }}>
+                        {p.photo_url ? (
+                          <img src={p.photo_url} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 12, color }}>{pInitials}</span>
+                        )}
+                      </div>
+                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 400, fontSize: 10, color: TEXT2, lineHeight: 1.2 }}>{firstName}</span>
+                      <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 11, color: TEXT, lineHeight: 1.2 }}>{lastName}</span>
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
         )}
-        <div style={{ flex: 1, textAlign: "left" }}>
-          <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 300, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: TEXT2, margin: "0 0 2px" }}>Viewing as</p>
-          <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 20, color: DARK, margin: 0 }}>{currentUser}</p>
-        </div>
-        <div style={{ fontFamily: "'Geologica', sans-serif", fontSize: 13, fontWeight: 700, color: BLUE, background: `${BLUE}15`, padding: "10px 18px", borderRadius: 10, textTransform: "uppercase", letterSpacing: "0.04em" }}>Change</div>
-      </button>
+      </div>
       <div style={{ background: "#fff", borderRadius: 16, border: `1px solid ${BORDER}`, padding: 20, marginBottom: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
           <div>
@@ -139,33 +192,21 @@ function HomePage({ currentUser, onNavigate, onChangeName }) {
         )}
         {pickDeadline && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT, textAlign: "center", marginTop: 12, fontWeight: 500 }}>Picks due by <span style={{ fontWeight: 700, color: DARK }}>{pickDeadline}</span></p>}
       </div>
-      {/* Three main nav boxes */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      {/* All navigation — unified 3-across grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
         {[
           { id: "player-standings", label: "Player\nStandings" },
           { id: "team-standings", label: "Team\nStandings" },
           { id: "schedule", label: "Schedule" },
-        ].map(b => (
-          <button key={b.id} onClick={() => onNavigate(b.id)} style={{
-            flex: 1, padding: "18px 8px", borderRadius: 14,
+          ...links,
+        ].map(item => (
+          <button key={item.id} onClick={() => onNavigate(item.id)} style={{
+            padding: "16px 6px", borderRadius: 12,
             border: `1px solid ${BORDER}`, background: "#fff",
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            gap: 0, cursor: "pointer", textAlign: "center"
+            cursor: "pointer", textAlign: "center",
+            display: "flex", alignItems: "center", justifyContent: "center"
           }}>
-            <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 12, color: DARK, lineHeight: 1.3, whiteSpace: "pre-line", textTransform: "uppercase", letterSpacing: "0.04em" }}>{b.label}</span>
-          </button>
-        ))}
-      </div>
-
-      <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12 }}>Quick Links</p>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-        {links.map(link => (
-          <button key={link.id} onClick={() => onNavigate(link.id)} style={{
-            padding: "14px 6px", borderRadius: 12,
-            border: `1px solid ${BORDER}`, background: "#fff",
-            cursor: "pointer", textAlign: "center"
-          }}>
-            <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 11, color: DARK, textTransform: "uppercase", letterSpacing: "0.03em" }}>{link.label}</span>
+            <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 11, color: DARK, textTransform: "uppercase", letterSpacing: "0.03em", lineHeight: 1.3, whiteSpace: "pre-line" }}>{item.label}</span>
           </button>
         ))}
       </div>
@@ -412,7 +453,7 @@ export default function App() {
         <div style={{ padding: "14px 20px 10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <img src={LOGO_B64} alt="Formula 5" style={{ height: 85, objectFit: "contain" }} />
         </div>
-        {activePage === "home" && <HomePage currentUser={currentUser} onNavigate={setActivePage} onChangeName={handleChangeName} />}
+        {activePage === "home" && <HomePage currentUser={currentUser} onNavigate={setActivePage} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
         {activePage === "player-standings" && <PlayerStandings currentUser={currentUser} />}
         {activePage === "picks" && <MyPicksPage currentUser={currentUser} onNavigate={setActivePage} />}
         {activePage === "team-standings" && <TeamStandings currentUser={currentUser} />}
