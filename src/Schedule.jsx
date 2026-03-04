@@ -306,7 +306,7 @@ export default function Schedule({ currentUser }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {isMyTeam && <span style={{ fontSize: 13 }}>⭐</span>}
-              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 17, color: TEXT, margin: 0 }}>
+              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15, color: TEXT, margin: 0 }}>
                 {team.name}
               </p>
             </div>
