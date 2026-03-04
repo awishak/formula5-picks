@@ -422,15 +422,29 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
           const a = active === t.id;
           const isPicksTab = t.big;
           // Light color logic
-          let lightColor, glowColor;
-          if (isPicksTab) {
-            if (a) { lightColor = "#e00000"; glowColor = "0 0 12px 4px rgba(224,0,0,0.5), 0 0 4px 1px rgba(224,0,0,0.8)"; }
-            else if (hasSubmittedPicks) { lightColor = GREEN; glowColor = `0 0 10px 3px ${GREEN}50, 0 0 3px 1px ${GREEN}80`; }
-            else { lightColor = "#3a3a48"; glowColor = "none"; }
+          let lightBg, glowShadow, borderColor;
+          if (isPicksTab && hasSubmittedPicks) {
+            // Submitted picks: always green, brighter when active
+            lightBg = a
+              ? `radial-gradient(circle at 40% 35%, #44ee88 0%, ${GREEN} 50%, #0a3a1a 100%)`
+              : `radial-gradient(circle at 40% 35%, ${GREEN} 0%, #1a5a30 80%, #0a2a14 100%)`;
+            glowShadow = a
+              ? `0 0 14px 5px ${GREEN}60, 0 0 5px 2px ${GREEN}90`
+              : `0 0 10px 3px ${GREEN}50, 0 0 3px 1px ${GREEN}80`;
+            borderColor = a ? GREEN : "#1a6a30";
+          } else if (a) {
+            // Active (non-submitted picks or other tabs): red
+            lightBg = "radial-gradient(circle at 40% 35%, #ff4040 0%, #e00000 60%, #1a0000 100%)";
+            glowShadow = "0 0 12px 4px rgba(224,0,0,0.5), 0 0 4px 1px rgba(224,0,0,0.8)";
+            borderColor = "#8a0000";
           } else {
-            if (a) { lightColor = "#e00000"; glowColor = "0 0 12px 4px rgba(224,0,0,0.5), 0 0 4px 1px rgba(224,0,0,0.8)"; }
-            else { lightColor = "#3a3a48"; glowColor = "none"; }
+            // Inactive: dark
+            lightBg = "radial-gradient(circle at 40% 35%, #5a5a68 0%, #3a3a48 50%, #1e1e28 100%)";
+            glowShadow = "none";
+            borderColor = "#2a2a38";
           }
+          // Label color
+          const labelColor = (isPicksTab && hasSubmittedPicks) ? GREEN : a ? "#e00000" : TEXT2;
           return (
             <button key={t.id} onClick={() => onChange(t.id)} style={{
               display: "flex", flexDirection: "column", alignItems: "center",
@@ -438,21 +452,19 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
               cursor: "pointer", minWidth: 56, gap: 5
             }}>
               <div style={{
-                width: isPicksTab ? 28 : 22, height: isPicksTab ? 28 : 22,
+                width: 24, height: 24,
                 borderRadius: "50%",
-                background: a ? `radial-gradient(circle at 40% 35%, #ff4040 0%, ${lightColor} 60%, #1a0000 100%)`
-                  : isPicksTab && hasSubmittedPicks ? `radial-gradient(circle at 40% 35%, ${GREEN} 0%, #1a3a1a 100%)`
-                  : `radial-gradient(circle at 40% 35%, #5a5a68 0%, ${lightColor} 50%, #1e1e28 100%)`,
-                boxShadow: glowColor,
-                border: `2px solid ${a ? "#8a0000" : isPicksTab && hasSubmittedPicks ? "#1a6a30" : "#2a2a38"}`,
+                background: lightBg,
+                boxShadow: glowShadow,
+                border: `2px solid ${borderColor}`,
                 transition: "all 0.2s ease"
               }} />
               <span style={{
                 fontFamily: "'Geologica', sans-serif",
                 fontWeight: a ? 800 : 600,
-                fontSize: isPicksTab ? 11 : 10,
+                fontSize: 10,
                 textTransform: "uppercase", letterSpacing: "0.04em",
-                color: a ? "#e00000" : isPicksTab && hasSubmittedPicks ? GREEN : TEXT2,
+                color: labelColor,
                 lineHeight: 1.2, whiteSpace: "pre-line", textAlign: "center"
               }}>{t.label}</span>
             </button>
