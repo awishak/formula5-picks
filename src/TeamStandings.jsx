@@ -129,6 +129,21 @@ export default function TeamStandings({ currentUser }) {
           pScoreTotals[p1] = p1Total;
           pScoreTotals[p2] = p2Total;
 
+          // Compute DOTD (Driver of the Day) per player:
+          // Highest individual scorer on the winning team earns DOTD for that week
+          let p1Dotd = 0, p2Dotd = 0;
+          weeklyResults.forEach(wr => {
+            if (wr.won !== true) return; // only winning team gets a DOTD
+            if (wr.p1Score > wr.p2Score) p1Dotd++;
+            else if (wr.p2Score > wr.p1Score) p2Dotd++;
+            else p1Dotd++; // tie goes to p1 by convention
+          });
+
+          // BOX BOX win %: how often the team landed on the correct side
+          const boxBoxTotal = weeklyResults.length;
+          const boxBoxWins = weeklyResults.filter(wr => wr.boxBoxCorrect).length;
+          const boxBoxPct = boxBoxTotal > 0 ? Math.round((boxBoxWins / boxBoxTotal) * 100) : null;
+
           return {
             id: team.id, name: team.name, division, p1Name, p2Name, p1Id: p1, p2Id: p2,
             logo_url: team.logo_url,
@@ -136,7 +151,8 @@ export default function TeamStandings({ currentUser }) {
             avgMatchupScore: matchupCount > 0 ? (totalMatchupScore / matchupCount) : 0,
             weeklyResults: weeklyResults.sort((a, b) => a.round - b.round),
             isMyTeam: p1Name === currentUser || p2Name === currentUser,
-            p1Total, p2Total
+            p1Total, p2Total,
+            p1Dotd, p2Dotd, boxBoxPct
           };
         });
 
@@ -200,9 +216,9 @@ export default function TeamStandings({ currentUser }) {
 
         <div style={{ display: "flex", alignItems: "flex-end", padding: "0 14px 6px", fontFamily: FD, fontWeight: 700, fontSize: 8, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em", lineHeight: 1.3 }}>
           <span style={{ minWidth: 24 }} /><span style={{ width: 34 }} /><span style={{ flex: 1, paddingLeft: 8 }} />
-          <span style={{ minWidth: 50, textAlign: "center" }}><span style={{ display: "block" }}>Champ</span><span style={{ display: "block" }}>Pts</span></span>
-          <span style={{ minWidth: 36, textAlign: "center" }}>Wins</span>
-          <span style={{ minWidth: 48, textAlign: "center" }}><span style={{ display: "block" }}>Scoring</span><span style={{ display: "block" }}>Avg</span></span>
+          <span style={{ minWidth: 38, textAlign: "center" }}>DOTD</span>
+          <span style={{ minWidth: 38, textAlign: "center" }}>DOTD</span>
+          <span style={{ minWidth: 44, textAlign: "center" }}><span style={{ display: "block" }}>BOX</span><span style={{ display: "block" }}>BOX</span></span>
           <span style={{ width: 16 }} />
         </div>
 
@@ -256,12 +272,11 @@ export default function TeamStandings({ currentUser }) {
                   <div style={{ minWidth: 24, textAlign: "center", fontFamily: FD, fontWeight: 900, fontSize: 13, color: TEXT2 }}>{rank}</div>
                   <div style={{ marginLeft: 8 }}><TeamLogo name={t.name} size={44} division={t.division} logoUrl={t.logo_url} /></div>
                   <div style={{ flex: 1, minWidth: 0, marginLeft: 8 }}>
-                    <p style={{ fontFamily: FB, fontWeight: 600, fontSize: 14, color: t.isMyTeam ? BLUEDARK : TEXT, margin: 0 }}>
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 17, color: t.isMyTeam ? BLUEDARK : TEXT, margin: 0 }}>
                       {t.name}{t.isMyTeam ? " ⭐" : ""}
                     </p>
-                    <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, margin: "1px 0 0" }}>{shortName(t.p1Name)} & {shortName(t.p2Name)}</p>
                     {t.weeklyResults.length > 0 && (
-                      <div style={{ display: "flex", gap: 3, marginTop: 3 }}>
+                      <div style={{ display: "flex", gap: 3, marginTop: 4 }}>
                         {t.weeklyResults.slice(-5).map((wr, i) => {
                           const letter = wr.won === true ? "W" : wr.won === false ? "L" : "D";
                           const color = wr.won === true ? GREEN : wr.won === false ? RED : TEXT2;
@@ -279,14 +294,29 @@ export default function TeamStandings({ currentUser }) {
                       </div>
                     )}
                   </div>
-                  <div style={{ minWidth: 50, textAlign: "center" }}>
-                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 20, color: BLUEDARK }}>{t.totalTeamPts}</span>
+                  {/* Player 1 DOTD */}
+                  <div style={{ minWidth: 38, textAlign: "center" }}>
+                    <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 15, color: t.p1Dotd > 0 ? DARK : BORDER }}>{t.p1Dotd > 0 ? t.p1Dotd : "—"}</span>
+                    <p style={{ fontFamily: FB, fontSize: 9.5, color: TEXT, margin: 0 }}>{shortName(t.p1Name)}</p>
                   </div>
-                  <div style={{ minWidth: 36, textAlign: "center" }}>
-                    <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, color: TEXT2 }}>{t.totalWins}</span>
+                  {/* Player 2 DOTD */}
+                  <div style={{ minWidth: 38, textAlign: "center" }}>
+                    <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 15, color: t.p2Dotd > 0 ? DARK : BORDER }}>{t.p2Dotd > 0 ? t.p2Dotd : "—"}</span>
+                    <p style={{ fontFamily: FB, fontSize: 9.5, color: TEXT, margin: 0 }}>{shortName(t.p2Name)}</p>
                   </div>
-                  <div style={{ minWidth: 48, textAlign: "center" }}>
-                    <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, color: TEXT2 }}>{t.avgMatchupScore.toFixed(1)}</span>
+                  {/* BOX BOX win % */}
+                  <div style={{ minWidth: 44, textAlign: "center", padding: "3px 4px", borderRadius: 6, background: `${DARK}04` }}>
+                    {t.boxBoxPct !== null ? (
+                      <>
+                        <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: t.boxBoxPct > 50 ? GREEN : t.boxBoxPct < 50 ? RED : TEXT2 }}>{t.boxBoxPct}%</span>
+                        <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 8, color: TEXT2, margin: 0 }}>BOX BOX</p>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BORDER }}>—</span>
+                        <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 8, color: TEXT2, margin: 0 }}>BOX BOX</p>
+                      </>
+                    )}
                   </div>
                   <span style={{ fontSize: 11, color: TEXT2, transition: "transform 0.2s", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", width: 16, textAlign: "center" }}>▼</span>
                 </button>
