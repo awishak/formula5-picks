@@ -214,24 +214,27 @@ export default function Schedule({ currentUser }) {
         return (
           <div style={{ textAlign: "center", minWidth: 38 }}>
             <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 15, color: DARK }}>{score}</span>
-            <p style={{ fontFamily: FB, fontSize: 9.5, color: TEXT2, margin: 0 }}>{shortName(playerName)}</p>
+            <p style={{ fontFamily: FB, fontSize: 9.5, color: TEXT, margin: 0 }}>{shortName(playerName)}</p>
           </div>
         );
       }
       if (isState2 && hasSubmitted) {
-        // State 2: player submitted — green checkmark
+        // State 2: player submitted — green checkmark + name still visible
         return (
           <div style={{ textAlign: "center", minWidth: 38 }}>
-            <span style={{ fontSize: 16, color: GREEN }}>✓</span>
-            <p style={{ fontFamily: FB, fontSize: 8, color: GREEN, margin: "1px 0 0", lineHeight: 1.1 }}>Picked</p>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
+              <span style={{ fontSize: 13, color: GREEN }}>✓</span>
+              <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: GREEN, textTransform: "uppercase", letterSpacing: "0.04em" }}>Picked</span>
+            </div>
+            <p style={{ fontFamily: FB, fontSize: 9.5, color: TEXT, margin: "1px 0 0" }}>{shortName(playerName)}</p>
           </div>
         );
       }
       // State 1, State 2 (not submitted), State 2.5: blank placeholder
       return (
         <div style={{ textAlign: "center", minWidth: 38 }}>
-          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 15, color: `${BORDER}80` }}>—</span>
-          <p style={{ fontFamily: FB, fontSize: 9.5, color: `${BORDER}80`, margin: 0 }}>{shortName(playerName)}</p>
+          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 15, color: BORDER }}>—</span>
+          <p style={{ fontFamily: FB, fontSize: 9.5, color: TEXT, margin: 0 }}>{shortName(playerName)}</p>
         </div>
       );
     }
@@ -257,8 +260,8 @@ export default function Schedule({ currentUser }) {
           textAlign: "center", minWidth: 32, padding: "3px 5px", borderRadius: 6,
           background: `${DARK}04`
         }}>
-          <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: `${BORDER}80` }}>—</span>
-          <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 8, color: `${BORDER}60`, margin: 0 }}>BOX BOX</p>
+          <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BORDER }}>—</span>
+          <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 8, color: TEXT2, margin: 0 }}>BOX BOX</p>
         </div>
       );
     }
@@ -274,7 +277,7 @@ export default function Schedule({ currentUser }) {
       }
       return (
         <div style={{ textAlign: "center", minWidth: 36, padding: "4px 6px", borderRadius: 8, background: `${DARK}04` }}>
-          <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 19, color: `${BORDER}80` }}>—</span>
+          <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 19, color: BORDER }}>—</span>
         </div>
       );
     }
@@ -303,25 +306,14 @@ export default function Schedule({ currentUser }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               {isMyTeam && <span style={{ fontSize: 13 }}>⭐</span>}
-              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15.5, color: TEXT, margin: 0 }}>
+              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 17, color: TEXT, margin: 0 }}>
                 {team.name}
               </p>
             </div>
-            <div style={{ display: "flex", gap: 6, marginTop: 2, marginBottom: 3 }}>
-              {[team.player1_id, team.player2_id].map(pid => {
-                const name = playerMap[pid];
-                const rank = playerRank[pid];
-                const rankColor = rank <= 3 ? ORANGE : rank <= 10 ? BLUEDARK : TEXT2;
-                return (
-                  <span key={pid} style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>
-                    {shortNameInitial(name)}
-                    {rank && <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: rankColor, marginLeft: 2 }}>({rank})</span>}
-                  </span>
-                );
-              })}
-            </div>
             {/* Over/Under chip — show in States 1, 2, and 3 team rows (not 2.5, which has the big center divider) */}
-            {!isState25 && overUnderChip(isOver, "normal")}
+            <div style={{ marginTop: 4 }}>
+              {!isState25 && overUnderChip(isOver, "normal")}
+            </div>
           </div>
 
           {/* Score area — always show the structure */}
