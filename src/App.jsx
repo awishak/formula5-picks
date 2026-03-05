@@ -481,6 +481,8 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("f1_user") || null);
   const [activePage, setActivePage] = useState("home");
   const [hasSubmittedPicks, setHasSubmittedPicks] = useState(false);
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [adminCode, setAdminCode] = useState("");
   const handleSelectName = (name) => { localStorage.setItem("f1_user", name); setCurrentUser(name); };
   const handleChangeName = () => { localStorage.removeItem("f1_user"); setCurrentUser(null); };
 
@@ -517,7 +519,26 @@ export default function App() {
         {activePage === "team-standings" && <TeamStandings currentUser={currentUser} />}
         {activePage === "schedule" && <Schedule currentUser={currentUser} />}
         {activePage === "rules" && <Rules />}
-        {activePage === "admin" && <Admin />}
+        {activePage === "admin" && (adminUnlocked ? <Admin /> : (
+          <div style={{ padding: "60px 20px", textAlign: "center" }}>
+            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 20, color: "#1e1e2a", textTransform: "uppercase", marginBottom: 8 }}>Admin Access</p>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6b6b80", marginBottom: 20 }}>Enter the access code to continue</p>
+            <input
+              type="password"
+              placeholder="Enter code…"
+              value={adminCode}
+              onChange={e => {
+                const val = e.target.value;
+                setAdminCode(val);
+                if (val.toLowerCase() === "stroll") setAdminUnlocked(true);
+              }}
+              style={{ width: "100%", maxWidth: 240, padding: "12px 16px", borderRadius: 10, border: "1px solid #d8d2c4", fontFamily: "'DM Sans', sans-serif", fontSize: 14, textAlign: "center", outline: "none" }}
+            />
+            {adminCode.length > 0 && adminCode.toLowerCase() !== "stroll" && (
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#e04a4a", marginTop: 10 }}>Incorrect code</p>
+            )}
+          </div>
+        ))}
         {activePage === "results" && <RaceResults currentUser={currentUser} />}
         {activePage === "strategy" && <Strategy />}
         {activePage === "f1-calendar" && <F1Calendar />}
