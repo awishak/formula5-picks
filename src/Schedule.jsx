@@ -167,7 +167,7 @@ export default function Schedule({ currentUser }) {
     const awayWon = hasScoresForMatch && awayTotal > homeTotal;
     const boxLine = computeBoxBoxLine(homeTeam, awayTeam, raceId);
     const allSubmitted = allFourPicked(homeTeam, awayTeam, raceId);
-    const showBoxLine = boxLine !== null && (raceHasScores || picksExist || allSubmitted);
+    const showBoxLine = boxLine !== null && (raceHasScores || allSubmitted);
 
     // Determine the matchup state
     // State 3: scored
