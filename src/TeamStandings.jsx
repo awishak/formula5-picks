@@ -14,6 +14,20 @@ const FD = "'Geologica', sans-serif";
 const FB = "'DM Sans', sans-serif";
 const TEAM_PTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1, 0, 0];
 
+// 2025 individual points — used as preseason tiebreaker when all teams have 0 pts
+const PTS_2025 = {
+  "Andrew Ishak": 473, "George Fahmy": 459, "Krista Nabil": 457, "Rafik Zarifa": 438,
+  "Mena Yousef": 436, "Aditya Satish": 431, "Heather Ishak": 421, "Martin Nobar": 416,
+  "Moses Abdelshaid": 410, "Alicia Cho": 404, "Kerolos Nakhla": 401, "Joe McGlynn": 398,
+  "Scott Schertler": 392, "Anthony Carnesecca": 392, "Evie Ishak": 390, "Jack Civitts": 388,
+  "Nick Brody": 381, "Ryan Kohli": 378, "Harold Gutmann": 378, "Theo Ishak": 376,
+  "Joe Hanna": 376, "Kevin Coolidge": 375, "Zack Girgis": 375, "Lucia Thompson": 373,
+  "Paul Kohli": 366, "Brett Dillon": 362, "Sam Bottoms": 349, "Andy Thompson": 344,
+  "Chris Fondacaro": 339, "Maggie Mudge": 334, "Jacob Ford": 322, "Ronnie Nobar": 319,
+  "Anthony Zamary": 313, "Dan Patry": 313, "Grant Wong": 309, "Chris Malek": 303,
+  "Ramy Stephanos": 280, "Brian Dong": 275, "Kristin Eskind": 267, "Pavly Attalah": 210
+};
+
 function TeamLogo({ name, size = 36, division, logoUrl }) {
   let hash = 0;
   for (let i = 0; i < (name || "").length; i++) hash = (name || "").charCodeAt(i) + ((hash << 5) - hash);
@@ -175,7 +189,9 @@ export default function TeamStandings({ currentUser }) {
         });
 
         teamData.forEach(t => { t.avgMatchupScore = t.matchupCount > 0 ? Math.round((t.totalMatchupScore / t.matchupCount) * 10) / 10 : 0; });
-        teamData.sort((a, b) => b.totalTeamPts - a.totalTeamPts || b.totalWins - a.totalWins || b.avgMatchupScore - a.avgMatchupScore);
+        // Preseason tiebreaker: combined 2025 individual points of both players
+        teamData.forEach(t => { t.combined2025 = (PTS_2025[t.p1Name] || 0) + (PTS_2025[t.p2Name] || 0); });
+        teamData.sort((a, b) => b.totalTeamPts - a.totalTeamPts || b.totalWins - a.totalWins || b.avgMatchupScore - a.avgMatchupScore || b.combined2025 - a.combined2025);
         setStandings(teamData);
       } catch (e) { console.error(e); } finally { setLoading(false); }
     }
