@@ -13,6 +13,21 @@ const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
 const FD = "'Geologica', sans-serif";
 const FB = "'DM Sans', sans-serif";
 
+// Players who played in prior F5 seasons but not 2025
+const DID_NOT_PLAY_2025 = new Set(["Stacy Michaelsen"]);
+const PTS_2025 = {
+  "Andrew Ishak": 473, "George Fahmy": 459, "Krista Nabil": 457, "Rafik Zarifa": 438,
+  "Mena Yousef": 436, "Aditya Satish": 431, "Heather Ishak": 421, "Martin Nobar": 416,
+  "Moses Abdelshaid": 410, "Alicia Cho": 404, "Kerolos Nakhla": 401, "Joe McGlynn": 398,
+  "Scott Schertler": 392, "Anthony Carnesecca": 392, "Evie Ishak": 390, "Jack Civitts": 388,
+  "Nick Brody": 381, "Ryan Kohli": 378, "Harold Gutmann": 378, "Theo Ishak": 376,
+  "Joe Hanna": 376, "Kevin Coolidge": 375, "Zack Girgis": 375, "Lucia Thompson": 373,
+  "Paul Kohli": 366, "Brett Dillon": 362, "Sam Bottoms": 349, "Andy Thompson": 344,
+  "Chris Fondacaro": 339, "Maggie Mudge": 334, "Jacob Ford": 322, "Ronnie Nobar": 319,
+  "Anthony Zamary": 313, "Dan Patry": 313, "Grant Wong": 309, "Chris Malek": 303,
+  "Ramy Stephanos": 280, "Brian Dong": 275, "Kristin Eskind": 267, "Pavly Attalah": 210
+};
+
 function PlayerAvatar({ name, size = 30, photoUrl }) {
   let hash = 0;
   for (let i = 0; i < (name || "").length; i++) hash = (name || "").charCodeAt(i) + ((hash << 5) - hash);
@@ -52,6 +67,7 @@ export default function PlayerStandings({ currentUser }) {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [raceRankings, setRaceRankings] = useState({});
+  const [sortBy, setSortBy] = useState("2025");
 
   useEffect(() => {
     async function load() {
@@ -108,7 +124,9 @@ export default function PlayerStandings({ currentUser }) {
         });
         setRaceRankings(rankings);
 
-        const sorted = Object.values(playerMap).sort((a, b) => b.totalPts - a.totalPts);
+        const sorted = Object.values(playerMap);
+        sorted.forEach(p => { p.pts2025 = PTS_2025[p.name] || 0; });
+        sorted.sort((a, b) => (b.pts2025 || 0) - (a.pts2025 || 0));
         setStandings(sorted);
         const ts = (scores || []).map(s => s.calculated_at).filter(Boolean).sort().reverse();
         if (ts.length > 0) setLastUpdated(ts[0]);
@@ -132,6 +150,17 @@ export default function PlayerStandings({ currentUser }) {
 
   const hasScores = standings.some(s => s.raceCount > 0);
   const myPlayerId = standings.find(s => s.name === currentUser)?.id;
+
+  const sortedStandings = [...standings].sort((a, b) => {
+    switch (sortBy) {
+      case "points": return b.totalPts - a.totalPts || (b.pts2025 || 0) - (a.pts2025 || 0);
+      case "first": return a.name.split(" ")[0].localeCompare(b.name.split(" ")[0]);
+      case "last": return (a.name.split(" ").pop()).localeCompare(b.name.split(" ").pop());
+      case "trophies": return b.trophies.length - a.trophies.length || b.totalPts - a.totalPts;
+      case "2025":
+      default: return (b.pts2025 || 0) - (a.pts2025 || 0);
+    }
+  });
 
   return (
     <div style={{ padding: "20px 20px 100px" }}>
@@ -159,9 +188,29 @@ export default function PlayerStandings({ currentUser }) {
           <span style={{ fontFamily: FB, fontSize: 9, color: TEXT2 }}>Top 10</span>
         </div>
       </div>
-      <p style={{ fontFamily: FB, fontSize: 9, color: TEXT2, margin: "0 0 16px" }}>
+      <p style={{ fontFamily: FB, fontSize: 9, color: TEXT2, margin: "0 0 12px" }}>
         Total Pts = sum of all individual race scores + weekly top-10 bonuses
       </p>
+
+      {/* Sort options */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+        <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "center", marginRight: 2 }}>Sort</span>
+        {[
+          { id: "2025", label: "2025 Pts" },
+          { id: "points", label: "Points" },
+          { id: "first", label: "First Name" },
+          { id: "last", label: "Last Name" },
+          { id: "trophies", label: "Trophies" },
+        ].map(s => (
+          <button key={s.id} onClick={() => setSortBy(s.id)} style={{
+            padding: "5px 10px", borderRadius: 100, cursor: "pointer",
+            border: `1px solid ${sortBy === s.id ? DARK : BORDER}`,
+            background: sortBy === s.id ? DARK : "transparent",
+            color: sortBy === s.id ? "#fff" : TEXT2,
+            fontFamily: FD, fontWeight: 700, fontSize: 10
+          }}>{s.label}</button>
+        ))}
+      </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {/* Column headers */}
@@ -176,7 +225,7 @@ export default function PlayerStandings({ currentUser }) {
           <div style={{ width: 44, textAlign: "center", flexShrink: 0 }} />
           <div style={{ width: 16 }} />
         </div>
-        {standings.map((p, idx) => {
+        {sortedStandings.map((p, idx) => {
           const rank = idx + 1;
           const isMe = p.name === currentUser;
           const isExpanded = expanded === p.id;
@@ -198,7 +247,7 @@ export default function PlayerStandings({ currentUser }) {
                 <div style={{ marginLeft: 6 }}><PlayerAvatar name={p.name} size={36} photoUrl={p.photo_url} /></div>
                 <div style={{ flex: 1, minWidth: 0, marginLeft: 6 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <p style={{ fontFamily: FB, fontWeight: isMe ? 700 : 500, fontSize: 12.5, color: isMe ? BLUEDARK : TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <p style={{ fontFamily: FB, fontWeight: isMe ? 700 : 500, fontSize: 14, color: isMe ? BLUEDARK : TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {p.name}{isMe ? " (you)" : ""}{isMyTeammate ? " (your teammate)" : ""}
                     </p>
                   </div>
@@ -206,6 +255,15 @@ export default function PlayerStandings({ currentUser }) {
                 </div>
                 <div style={{ width: 50, textAlign: "center", flexShrink: 0 }}>
                   <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.totalPts > 0 ? DARK : TEXT2 }}>{p.totalPts}</span>
+                  {sortBy === "2025" && (
+                    <p style={{ fontFamily: FD, fontWeight: 600, fontSize: 8, color: TEXT2, margin: "1px 0 0" }}>
+                      {p.pts2025 > 0
+                        ? `2025 Points: ${p.pts2025}`
+                        : DID_NOT_PLAY_2025.has(p.name)
+                          ? "Did not play in 2025"
+                          : "Rookie"}
+                    </p>
+                  )}
                 </div>
                 <div style={{ width: 44, textAlign: "center", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                   {p.podiums > 0 && (
