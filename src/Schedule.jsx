@@ -119,10 +119,17 @@ export default function Schedule({ currentUser }) {
 
   function computeBoxBoxLine(homeTeam, awayTeam, raceId) {
     if (!homeTeam || !awayTeam) return null;
-    const guesses = [homeTeam.player1_id, homeTeam.player2_id, awayTeam.player1_id, awayTeam.player2_id]
-      .map(pid => pickMap[`${pid}_${raceId}`]?.pit_guess).filter(g => g != null);
+    const playerIds = [homeTeam.player1_id, homeTeam.player2_id, awayTeam.player1_id, awayTeam.player2_id];
+    const guesses = playerIds.map(pid => pickMap[`${pid}_${raceId}`]?.pit_guess).filter(g => g != null);
     return guesses.length > 0 ?
       guesses.reduce((a, b) => a + b, 0) / guesses.length : null;
+  }
+
+  // Check if all 4 players in a matchup have submitted picks
+  function allFourPicked(homeTeam, awayTeam, raceId) {
+    if (!homeTeam || !awayTeam) return false;
+    return [homeTeam.player1_id, homeTeam.player2_id, awayTeam.player1_id, awayTeam.player2_id]
+      .every(pid => pickMap[`${pid}_${raceId}`]);
   }
 
   // Check if the matchup was within BOX BOX line range: score without BOX BOX was within 6
@@ -159,15 +166,16 @@ export default function Schedule({ currentUser }) {
     const homeWon = hasScoresForMatch && homeTotal > awayTotal;
     const awayWon = hasScoresForMatch && awayTotal > homeTotal;
     const boxLine = computeBoxBoxLine(homeTeam, awayTeam, raceId);
-    const showBoxLine = boxLine !== null && (raceHasScores || picksExist);
+    const allSubmitted = allFourPicked(homeTeam, awayTeam, raceId);
+    const showBoxLine = boxLine !== null && (raceHasScores || picksLocked || allSubmitted);
 
     // Determine the matchup state
     // State 3: scored
-    // State 2.5: picks locked (past deadline) but not scored
-    // State 2: some picks exist but not locked
+    // State 2.5: picks locked (past deadline) OR all 4 players submitted, but not scored
+    // State 2: some picks exist but not locked and not all 4 submitted
     // State 1: no picks yet
     const isState3 = !!hasScoresForMatch;
-    const isState25 = !isState3 && picksLocked && picksExist;
+    const isState25 = !isState3 && (picksLocked || allSubmitted) && picksExist;
     const isState2 = !isState3 && !isState25 && picksExist;
     const isState1 = !isState3 && !isState25 && !isState2;
 
