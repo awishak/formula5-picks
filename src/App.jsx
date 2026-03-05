@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Schedule from "./Schedule.jsx";
 import Rules from "./Rules.jsx";
@@ -45,6 +45,83 @@ const CIRCUITS = {
   24: { city: "Abu Dhabi",   country: "🇦🇪", circuit: "Yas Marina" }
 };
 
+// ── Season Preview Carousel ──────────────────────────────
+const PREVIEW_SLIDES = [
+  { title: "Welcome to 2026", emoji: "🏁", body: "New season, new rules, new app. Everything about Formula 5 has been rebuilt from the ground up. 24 races. Two championships. Let's go racing." },
+  { title: "Brand New App", emoji: "📱", body: "No more Google Forms and Sheets. We've built a full web app — make your picks, check standings, view results, and track your team all in one place." },
+  { title: "Two-Player Teams", emoji: "👥", body: "Teams are now two players instead of four. Nowhere to hide. Every point matters. Every bad pick is exposed. Head-to-head matchups every single race." },
+  { title: "How You Score", emoji: "🎯", body: "Pick 5 drivers each race: 1 Top Pick from the top 5 in F1, plus 4 Midfield picks from P6–P15. Earn real F1 points — P1 = 25 pts, P2 = 18, all the way down. DNF = −1." },
+  { title: "Finishing Order Bonus", emoji: "📊", body: "Arrange your 5 drivers in predicted finishing order. Nail the exact order → +6 bonus points. Miss it → you keep your driver points, just no bonus." },
+  { title: "Best Finish Bonus", emoji: "🏅", body: "Predict the exact finishing position of your best driver. Get it right → +3 bonus points." },
+  { title: "The Needle 🪡", emoji: "⏱️", body: "NEW: Guess a designated pit stop time in seconds. Exact = +5 pts. Within ±0.1s = +4, ±0.2s = +3, ±0.3s = +2, ±0.4s = +1. This also drives the team game." },
+  { title: "The BOX BOX Line", emoji: "📦", body: "Each matchup has a BOX BOX Line — the average of all 4 players' pit guesses. One team is OVER, one is UNDER. Right side = +5 team pts. Wrong side = −1. Six-point swing." },
+  { title: "The Tension", emoji: "🤔", body: "Guess accurately → maximize your individual score. Guess strategically → shift the BOX BOX Line for your team. You can't always do both. That's what makes it fun." },
+  { title: "Two Divisions", emoji: "↕️", body: "12 teams in Championship, 12 in Second Division. After Race 12: top 3 in Second get promoted, bottom 3 in Championship get relegated. Playoff spots for 4th/5th and 8th/9th." },
+  { title: "Two Halves", emoji: "📅", body: "Races 1–12 set your division. Races 13–24 are the Team Championship — standings reset, and the team with the most points in the second half wins it all. Individual standings never reset." },
+  { title: "Weekly Top 10", emoji: "🏆", body: "Top 10 scorers each week earn bonus points: 1st = +10, 2nd = +9 … 10th = +1. Theoretical max per race: 114 points. Last year's max was ~35. The scale is completely different." },
+  { title: "What To Do Now", emoji: "✅", body: "Log in and set your name. Try Practice Picks to learn the flow. First race is Melbourne — picks open Tuesday at noon, lock Friday at noon. Read the rules. Talk to your teammate. Let's go." },
+];
+
+function SeasonPreview() {
+  const [idx, setIdx] = useState(0);
+  const scrollRef = useRef(null);
+  const total = PREVIEW_SLIDES.length;
+
+  const scrollTo = (i) => {
+    setIdx(i);
+    if (scrollRef.current) {
+      const card = scrollRef.current.children[i];
+      if (card) card.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+  };
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    const cardWidth = container.children[0]?.offsetWidth || 1;
+    const gap = 12;
+    const newIdx = Math.round(container.scrollLeft / (cardWidth + gap));
+    if (newIdx !== idx && newIdx >= 0 && newIdx < total) setIdx(newIdx);
+  };
+
+  return (
+    <div style={{ padding: "20px 20px 100px" }}>
+      <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 22, color: "#1e1e2a", textTransform: "uppercase", letterSpacing: "0.03em", margin: "0 0 4px" }}>Season Preview</p>
+      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6b6b80", marginBottom: 20 }}>Swipe through everything new in 2026</p>
+
+      <div ref={scrollRef} onScroll={handleScroll} style={{
+        display: "flex", gap: 12, overflowX: "auto", scrollSnapType: "x mandatory",
+        scrollbarWidth: "none", paddingBottom: 4
+      }}>
+        {PREVIEW_SLIDES.map((s, i) => (
+          <div key={i} style={{
+            flex: "0 0 85%", scrollSnapAlign: "center",
+            background: "#fff", borderRadius: 16, border: "1px solid #d8d2c4",
+            padding: "20px 18px", minHeight: 180,
+            display: "flex", flexDirection: "column"
+          }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>{s.emoji}</div>
+            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 16, color: "#1e1e2a", textTransform: "uppercase", letterSpacing: "0.02em", margin: "0 0 8px" }}>{s.title}</p>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6b6b80", lineHeight: 1.55, margin: 0, flex: 1 }}>{s.body}</p>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: "#d8d2c4", margin: "10px 0 0", textAlign: "right" }}>{i + 1} / {total}</p>
+          </div>
+        ))}
+      </div>
+      {/* Dots */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 5, marginTop: 10 }}>
+        {PREVIEW_SLIDES.map((_, i) => (
+          <button key={i} onClick={() => scrollTo(i)} style={{
+            width: idx === i ? 18 : 6, height: 6, borderRadius: 3,
+            background: idx === i ? "#6cb8e0" : "#d8d2c4",
+            border: "none", padding: 0, cursor: "pointer",
+            transition: "all 0.2s"
+          }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Home Page ────────────────────────────────────────────
 function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
   const [nextRace, setNextRace] = useState(null);
@@ -87,6 +164,7 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
     { id: "strategy", label: "Strategy", desc: "Pit stop & BOX BOX tactics", icon: "🎯" },
     { id: "players", label: "Players", desc: "All players & team rosters", icon: "🏅" },
     { id: "f1-calendar", label: "F1 Calendar", desc: "Full 2026 race schedule", icon: "🗓️" },
+    { id: "season-preview", label: "Season Preview", desc: "2026 rules & what's new", icon: "🎬" },
     { id: "admin", label: "Admin", desc: "Score races & manage data", icon: "⚙️" },
   ];
 
@@ -194,6 +272,7 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
         )}
         {pickDeadline && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT, textAlign: "center", marginTop: 12, fontWeight: 500 }}>Picks due by <span style={{ fontWeight: 700, color: DARK }}>{pickDeadline}</span></p>}
       </div>
+
       {/* All navigation — unified 3-across grid */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
         <span style={{ flex: 1, height: 1, background: BORDER }} />
@@ -523,15 +602,8 @@ export default function App() {
           <div style={{ padding: "60px 20px", textAlign: "center" }}>
             <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 20, color: "#1e1e2a", textTransform: "uppercase", marginBottom: 8 }}>Admin Access</p>
             <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6b6b80", marginBottom: 20 }}>Enter the access code to continue</p>
-            <input
-              type="password"
-              placeholder="Enter code…"
-              value={adminCode}
-              onChange={e => {
-                const val = e.target.value;
-                setAdminCode(val);
-                if (val.toLowerCase() === "stroll") setAdminUnlocked(true);
-              }}
+            <input type="password" placeholder="Enter code…" value={adminCode}
+              onChange={e => { const val = e.target.value; setAdminCode(val); if (val.toLowerCase() === "stroll") setAdminUnlocked(true); }}
               style={{ width: "100%", maxWidth: 240, padding: "12px 16px", borderRadius: 10, border: "1px solid #d8d2c4", fontFamily: "'DM Sans', sans-serif", fontSize: 14, textAlign: "center", outline: "none" }}
             />
             {adminCode.length > 0 && adminCode.toLowerCase() !== "stroll" && (
@@ -544,6 +616,7 @@ export default function App() {
         {activePage === "f1-calendar" && <F1Calendar />}
         {activePage === "players" && <Players currentUser={currentUser} />}
         {activePage === "practice" && <PracticePicks />}
+        {activePage === "season-preview" && <SeasonPreview />}
       </div>
       <BottomNav active={activePage} onChange={setActivePage} hasSubmittedPicks={hasSubmittedPicks} />
     </>
