@@ -28,6 +28,34 @@ const PTS_2025 = {
   "Ramy Stephanos": 280, "Brian Dong": 275, "Kristin Eskind": 267, "Pavly Attalah": 210
 };
 
+// 2025 trophies — used for "2025 Trophies" sort
+const TROPHIES_2025 = {
+  "Andrew Ishak": "🚾🏆🥈🥈🥉🥉🛞", "George Fahmy": "🏆🏆🏆🏆🥉",
+  "Krista Nabil": "🏆🥉", "Rafik Zarifa": "🏆🥈🥈🥈🥉",
+  "Mena Yousef": "🏆🥈🥉", "Aditya Satish": "🏆🏆🥈",
+  "Heather Ishak": "🏆🛞🏁", "Martin Nobar": "🥉🥉",
+  "Moses Abdelshaid": "🏆", "Alicia Cho": "🥈🥉",
+  "Kerolos Nakhla": "🥈🥉", "Joe McGlynn": "🥉",
+  "Scott Schertler": "🏆🥈🛞", "Anthony Carnesecca": "🏆",
+  "Evie Ishak": "🥈🥉", "Jack Civitts": "🏆🥈🥈",
+  "Nick Brody": "🏆🥉🛞", "Ryan Kohli": "🥈🥈",
+  "Harold Gutmann": "🥉", "Theo Ishak": "🥉",
+  "Kevin Coolidge": "🏆🏆🥈🥉", "Zack Girgis": "🥈🛞",
+  "Lucia Thompson": "🏆🥉", "Paul Kohli": "🥉🥉🛞",
+  "Brett Dillon": "🏆", "Andy Thompson": "🥈🥈",
+  "Chris Fondacaro": "🥈", "Maggie Mudge": "🥉",
+  "Jacob Ford": "🏆", "Anthony Zamary": "🥉",
+  "Grant Wong": "🏆🥈", "Chris Malek": "🏆",
+  "Ramy Stephanos": "🥈🥈🥉", "Brian Dong": "🏆🥉",
+  "Kristin Eskind": "🥈🥉"
+};
+
+function countTrophies2025(name) {
+  const str = TROPHIES_2025[name];
+  if (!str) return 0;
+  return [...str].length;
+}
+
 function PlayerAvatar({ name, size = 30, photoUrl }) {
   let hash = 0;
   for (let i = 0; i < (name || "").length; i++) hash = (name || "").charCodeAt(i) + ((hash << 5) - hash);
@@ -125,7 +153,7 @@ export default function PlayerStandings({ currentUser }) {
         setRaceRankings(rankings);
 
         const sorted = Object.values(playerMap);
-        sorted.forEach(p => { p.pts2025 = PTS_2025[p.name] || 0; });
+        sorted.forEach(p => { p.pts2025 = PTS_2025[p.name] || 0; p.trophies2025 = TROPHIES_2025[p.name] || ""; p.trophyCount2025 = countTrophies2025(p.name); });
         sorted.sort((a, b) => (b.pts2025 || 0) - (a.pts2025 || 0));
         setStandings(sorted);
         const ts = (scores || []).map(s => s.calculated_at).filter(Boolean).sort().reverse();
@@ -157,6 +185,7 @@ export default function PlayerStandings({ currentUser }) {
       case "first": return a.name.split(" ")[0].localeCompare(b.name.split(" ")[0]);
       case "last": return (a.name.split(" ").pop()).localeCompare(b.name.split(" ").pop());
       case "trophies": return b.trophies.length - a.trophies.length || b.totalPts - a.totalPts;
+      case "2025trophies": return b.trophyCount2025 - a.trophyCount2025 || (b.pts2025 || 0) - (a.pts2025 || 0);
       case "2025":
       default: return (b.pts2025 || 0) - (a.pts2025 || 0);
     }
@@ -197,6 +226,7 @@ export default function PlayerStandings({ currentUser }) {
         <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "center", marginRight: 2 }}>Sort</span>
         {[
           { id: "2025", label: "2025 Pts" },
+          { id: "2025trophies", label: "2025 Trophies" },
           { id: "points", label: "Points" },
           { id: "first", label: "First Name" },
           { id: "last", label: "Last Name" },
@@ -247,7 +277,7 @@ export default function PlayerStandings({ currentUser }) {
                 <div style={{ marginLeft: 6 }}><PlayerAvatar name={p.name} size={36} photoUrl={p.photo_url} /></div>
                 <div style={{ flex: 1, minWidth: 0, marginLeft: 6 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <p style={{ fontFamily: FB, fontWeight: isMe ? 700 : 500, fontSize: 14, color: isMe ? BLUEDARK : TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <p style={{ fontFamily: FB, fontWeight: isMe ? 700 : 500, fontSize: 16, color: isMe ? BLUEDARK : TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {p.name}{isMe ? " (you)" : ""}{isMyTeammate ? " (your teammate)" : ""}
                     </p>
                   </div>
@@ -256,12 +286,23 @@ export default function PlayerStandings({ currentUser }) {
                 <div style={{ width: 50, textAlign: "center", flexShrink: 0 }}>
                   <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.totalPts > 0 ? DARK : TEXT2 }}>{p.totalPts}</span>
                   {sortBy === "2025" && (
-                    <p style={{ fontFamily: FD, fontWeight: 600, fontSize: 8, color: TEXT2, margin: "1px 0 0" }}>
+                    <p style={{ fontFamily: FD, fontWeight: 600, fontSize: 9, color: TEXT2, margin: "1px 0 0" }}>
                       {p.pts2025 > 0
                         ? `2025 Points: ${p.pts2025}`
                         : DID_NOT_PLAY_2025.has(p.name)
                           ? "Did not play in 2025"
                           : "Rookie"}
+                    </p>
+                  )}
+                  {sortBy === "2025trophies" && (
+                    <p style={{ fontFamily: FD, fontWeight: 600, fontSize: 9, color: TEXT2, margin: "1px 0 0" }}>
+                      {p.trophies2025
+                        ? `2025: ${p.trophies2025}`
+                        : DID_NOT_PLAY_2025.has(p.name)
+                          ? "Did not play in 2025"
+                          : p.pts2025 > 0
+                            ? "No podiums in 2025"
+                            : "Rookie"}
                     </p>
                   )}
                 </div>
