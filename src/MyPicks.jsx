@@ -257,6 +257,7 @@ function StepMidPicks({ drivers, selected, onToggle, driverMap }) {
           <span>P1 = </span><Pts>+25</Pts><span> … </span><span>P10 = </span><Pts>+1</Pts><span> P11+ = </span><Pts>0</Pts><span> DNF = </span><Pts negative>−1</Pts>
         </div>
         <p style={{ margin: "8px 0 0", fontSize: 11.5, color: TEXT2 }}>These guys might be lower in the standings, but they can finish anywhere on race day. A smart midfield pick who lands on the podium is a huge point swing.</p>
+        <p style={{ margin: "8px 0 0", fontSize: 11.5, color: BLUEDARK, fontWeight: 600 }}>Don't worry about order right now — you'll order your drivers on the next page.</p>
       </RuleCard>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {shown.map(d => {
@@ -420,6 +421,8 @@ function StepBestFinish({ selected, onSelect }) {
 
 // ── Step 5: Pit Stop Speedometer ────────────────────────
 function StepPitStop({ question, value, onChange, teamSide }) {
+  const [scoringOpen, setScoringOpen] = useState(true);
+  const [pitDataOpen, setPitDataOpen] = useState(false);
   const min = 1.5, max = 4.0, stepVal = 0.1;
   const svgRef = useRef(null);
   const draggingRef = useRef(false);
@@ -557,31 +560,59 @@ function StepPitStop({ question, value, onChange, teamSide }) {
     <div>
       <StepHeading title="The Needle" subtitle="Guess the pit stop time" />
 
-      <RuleCard>
-        <p style={{ margin: "0 0 8px" }}>Okay, here's where it gets interesting.</p>
-        <p style={{ margin: "0 0 8px" }}>
-          Every race has a pit stop question. You're guessing a time in seconds, and how close you get determines your individual points: <Pts>+5</Pts> for nailing it, down to <Pts>+1</Pts> if you're within 0.4 seconds.
-        </p>
-        <p style={{ margin: "0 0 8px" }}>
-          But here's the twist — this is also where the <strong>team game</strong> lives. Your guess doesn't just score you individual points. It also moves something called the <strong>BOX BOX Line</strong>, which is the average of all 4 guesses in your matchup (you + your teammate + the two people you're playing this week).
-        </p>
-        <p style={{ margin: "0 0 8px" }}>
-          Each week, your team is assigned either{" "}
-          <span style={isUnder ? UNDER_CHIP : OVER_CHIP}>{isUnder ? "UNDER" : "OVER"}</span>
-          {" "}or{" "}
-          <span style={isUnder ? OVER_CHIP : UNDER_CHIP}>{isUnder ? "OVER" : "UNDER"}</span>
-          . If the actual pit stop time lands on your team's side of the line: <Pts team>+5 for your team</Pts>. Wrong side? <Pts negative>−1 for your team</Pts>.
-        </p>
-        <p style={{ margin: "0 0 8px" }}>
-          So do you guess what you actually think the answer is and maximize your own points? Or do you sacrifice accuracy to push the BOX BOX Line in your team's favor? That tension is what makes The Needle fun.
-        </p>
-        <p style={{ margin: 0 }}>
-          {isUnder
-            ? "Your team is the Under this week. Guessing HIGH pushes the line up — giving the actual time more room to come in under it."
-            : "Your team is the Over this week. Guessing LOW pulls the line down — giving the actual time more room to come in over it."
-          }
-        </p>
-      </RuleCard>
+      {/* Scoring dropdown — starts open */}
+      <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 12, marginBottom: 10, overflow: "hidden" }}>
+        <button onClick={() => setScoringOpen(!scoringOpen)} style={{
+          width: "100%", padding: "12px 14px", background: "none", border: "none", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left"
+        }}>
+          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em" }}>Scoring</span>
+          <span style={{ fontSize: 11, color: TEXT2, transform: scoringOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
+        </button>
+        {scoringOpen && (
+          <div style={{ padding: "0 14px 12px", fontFamily: FB, fontSize: 13, color: TEXT2, lineHeight: 1.55 }}>
+            <p style={{ margin: "0 0 8px" }}>Okay, here's where it gets interesting.</p>
+            <p style={{ margin: "0 0 8px" }}>
+              Every race has a pit stop question. You're guessing a time in seconds, and how close you get determines your individual points: <Pts>+5</Pts> for nailing it, down to <Pts>+1</Pts> if you're within 0.4 seconds.
+            </p>
+            <p style={{ margin: "0 0 8px" }}>
+              But here's the twist — this is also where the <strong>team game</strong> lives. Your guess doesn't just score you individual points. It also moves something called the <strong>BOX BOX Line</strong>, which is the average of all 4 guesses in your matchup (you + your teammate + the two people you're playing this week).
+            </p>
+            <p style={{ margin: "0 0 8px" }}>
+              Each week, your team is assigned either{" "}
+              <span style={isUnder ? UNDER_CHIP : OVER_CHIP}>{isUnder ? "UNDER" : "OVER"}</span>
+              {" "}or{" "}
+              <span style={isUnder ? OVER_CHIP : UNDER_CHIP}>{isUnder ? "OVER" : "UNDER"}</span>
+              . If the actual pit stop time lands on your team's side of the line: <Pts team>+5 for your team</Pts>. Wrong side? <Pts negative>−1 for your team</Pts>.
+            </p>
+            <p style={{ margin: "0 0 8px" }}>
+              So do you guess what you actually think the answer is and maximize your own points? Or do you sacrifice accuracy to push the BOX BOX Line in your team's favor? That tension is what makes The Needle fun.
+            </p>
+            <p style={{ margin: 0 }}>
+              {isUnder
+                ? "Your team is the Under this week. Guessing HIGH pushes the line up — giving the actual time more room to come in under it."
+                : "Your team is the Over this week. Guessing LOW pulls the line down — giving the actual time more room to come in over it."
+              }
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* 2025 Pit Stop Data dropdown — starts closed */}
+      <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 12, marginBottom: 20, overflow: "hidden" }}>
+        <button onClick={() => setPitDataOpen(!pitDataOpen)} style={{
+          width: "100%", padding: "12px 14px", background: "none", border: "none", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left"
+        }}>
+          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em" }}>View 2025 Pit Stop Data</span>
+          <span style={{ fontSize: 11, color: TEXT2, transform: pitDataOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
+        </button>
+        {pitDataOpen && (
+          <div style={{ padding: "0 4px 4px" }}>
+            <img src="/pit-stop-data.png" alt="2025 Pit Stop Data by Team" style={{ width: "100%", display: "block", borderRadius: 8 }} />
+          </div>
+        )}
+      </div>
 
       {/* Team side card */}
       <div style={{ textAlign: "center", marginBottom: 20, padding: "14px 16px", background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}` }}>
@@ -615,6 +646,20 @@ function StepPitStop({ question, value, onChange, teamSide }) {
           <text x={goodSubPos.x} y={goodSubPos.y} textAnchor="middle" dominantBaseline="middle" style={{ fontFamily: FD, fontSize: 8.5, fill: goodDark, fontWeight: 700, letterSpacing: "0.08em" }}>FOR TEAM</text>
           <text x={badPos.x} y={badPos.y} textAnchor="middle" dominantBaseline="middle" style={{ fontFamily: FD, fontSize: 22, fill: badDark, fontWeight: 900 }}>−1</text>
           <text x={badSubPos.x} y={badSubPos.y} textAnchor="middle" dominantBaseline="middle" style={{ fontFamily: FD, fontSize: 8.5, fill: badDark, fontWeight: 700, letterSpacing: "0.08em" }}>FOR TEAM</text>
+
+          {/* Tick marks at 2.0, 2.5, 3.0, 3.5 */}
+          {[2.0, 2.5, 3.0, 3.5].map(v => {
+            const a = valToAngle(v);
+            const inner = polar(CX, CY, ROUTER + 2, a);
+            const outer = polar(CX, CY, ROUTER + 10, a);
+            const labelPos = polar(CX, CY, ROUTER + 20, a);
+            return (
+              <g key={`tick-${v}`}>
+                <line x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} stroke={TEXT2} strokeWidth="1.5" strokeLinecap="round" />
+                <text x={labelPos.x} y={labelPos.y} textAnchor="middle" dominantBaseline="middle" style={{ fontFamily: FD, fontSize: 9, fill: TEXT2, fontWeight: 700 }}>{v.toFixed(1)}</text>
+              </g>
+            );
+          })}
 
           <polygon points={`${needleTip.x},${needleTip.y} ${needleBase1.x},${needleBase1.y} ${needleBase2.x},${needleBase2.y}`} fill="#3a3a4a" />
           <circle cx={CX} cy={CY} r="11" fill="#3a3a4a" />
