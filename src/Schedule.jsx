@@ -119,8 +119,8 @@ export default function Schedule({ currentUser }) {
 
   function computeBoxBoxLine(homeTeam, awayTeam, raceId) {
     if (!homeTeam || !awayTeam) return null;
-    const playerIds = [homeTeam.player1_id, homeTeam.player2_id, awayTeam.player1_id, awayTeam.player2_id];
-    const guesses = playerIds.map(pid => pickMap[`${pid}_${raceId}`]?.pit_guess).filter(g => g != null);
+    const guesses = [homeTeam.player1_id, homeTeam.player2_id, awayTeam.player1_id, awayTeam.player2_id]
+      .map(pid => pickMap[`${pid}_${raceId}`]?.pit_guess).filter(g => g != null);
     return guesses.length > 0 ?
       guesses.reduce((a, b) => a + b, 0) / guesses.length : null;
   }
@@ -167,15 +167,15 @@ export default function Schedule({ currentUser }) {
     const awayWon = hasScoresForMatch && awayTotal > homeTotal;
     const boxLine = computeBoxBoxLine(homeTeam, awayTeam, raceId);
     const allSubmitted = allFourPicked(homeTeam, awayTeam, raceId);
-    const showBoxLine = boxLine !== null && (raceHasScores || picksLocked || allSubmitted);
+    const showBoxLine = boxLine !== null && (raceHasScores || picksExist || allSubmitted);
 
     // Determine the matchup state
     // State 3: scored
-    // State 2.5: picks locked (past deadline) OR all 4 players submitted, but not scored
-    // State 2: some picks exist but not locked and not all 4 submitted
+    // State 2.5: picks locked (past deadline) but not scored
+    // State 2: some picks exist but not locked
     // State 1: no picks yet
     const isState3 = !!hasScoresForMatch;
-    const isState25 = !isState3 && (picksLocked || allSubmitted) && picksExist;
+    const isState25 = !isState3 && picksLocked && picksExist;
     const isState2 = !isState3 && !isState25 && picksExist;
     const isState1 = !isState3 && !isState25 && !isState2;
 
@@ -204,13 +204,14 @@ export default function Schedule({ currentUser }) {
       const chipColor = isOver ? GOLD : "#7c5cbf";
       const fontSize = size === "large" ? 12 : 11;
       const padding = size === "large" ? "3px 10px" : "2px 8px";
+      const lineStr = showBoxLine ? ` ${boxLine.toFixed(1)}` : "";
       return (
         <span style={{
           fontFamily: FD, fontWeight: 700, fontSize, letterSpacing: "0.08em",
           textTransform: "uppercase", padding, borderRadius: 100,
           color: chipColor, background: `${chipColor}15`
         }}>
-          {label}
+          {label}{lineStr}
         </span>
       );
     };
@@ -226,8 +227,8 @@ export default function Schedule({ currentUser }) {
           </div>
         );
       }
-      if (isState2 && hasSubmitted) {
-        // State 2: player submitted — green checkmark + name still visible
+      if ((isState2 || isState25) && hasSubmitted) {
+        // State 2 or 2.5: player submitted — green checkmark + name still visible
         return (
           <div style={{ textAlign: "center", minWidth: 38 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
@@ -238,7 +239,7 @@ export default function Schedule({ currentUser }) {
           </div>
         );
       }
-      // State 1, State 2 (not submitted), State 2.5: blank placeholder
+      // State 1, State 2 (not submitted), State 2.5 (not submitted): blank placeholder
       return (
         <div style={{ textAlign: "center", minWidth: 38 }}>
           <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 15, color: BORDER }}>—</span>
