@@ -486,6 +486,7 @@ export default function Schedule({ currentUser }) {
         const pitGuesses = picks
           .filter(pk => pk.race_id === currentRace.id && pk.pit_guess != null)
           .map(pk => Number(pk.pit_guess));
+        const allIn = players.length > 0 && pitGuesses.length >= players.length;
         const avgPitGuess = pitGuesses.length > 0
           ? (pitGuesses.reduce((a, b) => a + b, 0) / pitGuesses.length).toFixed(2)
           : null;
@@ -494,17 +495,17 @@ export default function Schedule({ currentUser }) {
             background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 14,
             padding: "14px 16px", marginBottom: 16
           }}>
-            <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, margin: "0 0 8px" }}>
-              This week, the over/under is on:
+            <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, margin: 0, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+              <span>This week, the over/under is on</span>
+              <span style={{
+                fontFamily: FD, fontWeight: 800, fontSize: 13, color: BLUEDARK,
+                background: `${BLUE}12`, border: `1.5px solid ${BLUE}30`,
+                padding: "4px 12px", borderRadius: 8, whiteSpace: "nowrap"
+              }}>
+                {currentRace.pit_stop_question}
+              </span>
             </p>
-            <span style={{
-              fontFamily: FD, fontWeight: 800, fontSize: 14, color: BLUEDARK,
-              background: `${BLUE}12`, border: `1.5px solid ${BLUE}30`,
-              padding: "6px 14px", borderRadius: 10, display: "inline-block"
-            }}>
-              ⏱️ {currentRace.pit_stop_question}
-            </span>
-            {avgPitGuess && (
+            {allIn && avgPitGuess && (
               <div style={{ marginTop: 12, display: "flex", alignItems: "baseline", gap: 6 }}>
                 <span style={{ fontFamily: FB, fontSize: 13, color: TEXT2 }}>Current average pit stop guess:</span>
                 <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 18, color: DARK }}>{avgPitGuess}s</span>
