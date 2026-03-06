@@ -199,7 +199,10 @@ export default function PickIntel({ currentUser }) {
       (pk.finishing_order || []).forEach(function (d) {
         if (d !== pk.top_pick) midCounts[d] = (midCounts[d] || 0) + 1;
       });
-      if (pk.best_finish != null) bfCounts[pk.best_finish] = (bfCounts[pk.best_finish] || 0) + 1;
+      if (pk.best_finish != null) {
+        var bfNum = typeof pk.best_finish === "string" ? parseInt(pk.best_finish.replace(/\D/g, ""), 10) : pk.best_finish;
+        if (bfNum >= 1 && bfNum <= 20) bfCounts[bfNum] = (bfCounts[bfNum] || 0) + 1;
+      }
     });
     var topSorted = Object.entries(topCounts).sort(function (a, b) { return b[1] - a[1]; });
     var midSorted = Object.entries(midCounts).sort(function (a, b) { return b[1] - a[1]; });
@@ -417,7 +420,7 @@ export default function PickIntel({ currentUser }) {
       var va, vb;
       if (sortCol === "name") { va = a.playerName; vb = b.playerName; }
       else if (sortCol === "top") { va = a.top_pick || ""; vb = b.top_pick || ""; }
-      else if (sortCol === "best") { va = a.best_finish || 99; vb = b.best_finish || 99; return sortAsc ? va - vb : vb - va; }
+      else if (sortCol === "best") { va = typeof a.best_finish === "string" ? parseInt(a.best_finish.replace(/\D/g, ""), 10) || 99 : (a.best_finish || 99); vb = typeof b.best_finish === "string" ? parseInt(b.best_finish.replace(/\D/g, ""), 10) || 99 : (b.best_finish || 99); return sortAsc ? va - vb : vb - va; }
       else if (sortCol === "pit") { va = a.pit_guess != null ? a.pit_guess : 99; vb = b.pit_guess != null ? b.pit_guess : 99; return sortAsc ? va - vb : vb - va; }
       else { va = a.playerName; vb = b.playerName; }
       if (typeof va === "string") return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
@@ -454,7 +457,7 @@ export default function PickIntel({ currentUser }) {
                     <td style={Object.assign({}, tdStyle, { color: TEXT2 })}>{pk.fo[2] ? lastName(pk.fo[2]) : "\u2014"}</td>
                     <td style={Object.assign({}, tdStyle, { color: TEXT2 })}>{pk.fo[3] ? lastName(pk.fo[3]) : "\u2014"}</td>
                     <td style={Object.assign({}, tdStyle, { color: TEXT2 })}>{pk.fo[4] ? lastName(pk.fo[4]) : "\u2014"}</td>
-                    <td style={Object.assign({}, tdStyle, { fontFamily: FD, fontWeight: 700, color: BLUEDARK })}>P{pk.best_finish || "\u2014"}</td>
+                    <td style={Object.assign({}, tdStyle, { fontFamily: FD, fontWeight: 700, color: BLUEDARK })}>{pk.best_finish != null ? (String(pk.best_finish).startsWith("P") ? pk.best_finish : "P" + pk.best_finish) : "\u2014"}</td>
                     <td style={Object.assign({}, tdStyle, { fontFamily: FD, fontWeight: 700, color: BLUEDARK })}>{pk.pit_guess != null ? Number(pk.pit_guess).toFixed(1) : "\u2014"}</td>
                   </tr>
                 );
