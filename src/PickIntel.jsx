@@ -191,6 +191,19 @@ export default function PickIntel({ currentUser }) {
     });
   }
 
+  // Find current user's pick for this round
+  var myPlayer = players.find(function (p) { return p.name === currentUser; });
+  var myPick = myPlayer ? racePicks.find(function (pk) { return pk.player_id === myPlayer.id; }) : null;
+  var myDrivers = myPick ? (myPick.finishing_order || []) : [];
+  var myTopPick = myPick ? myPick.top_pick : null;
+  var myBestFinish = myPick ? parseInt(String(myPick.best_finish || "").replace(/[^0-9]/g, ""), 10) : null;
+  var myComboKey = myDrivers.length > 0 ? myDrivers.slice().sort().join(", ") : null;
+  var myOrderKey = myDrivers.length > 0 ? myDrivers.join(" > ") : null;
+
+  function YourPickBadge() {
+    return <span style={{ fontFamily: FB, fontWeight: 600, fontSize: 9, color: BLUEDARK, background: BLUE + "15", border: "1px solid " + BLUE + "30", padding: "2px 6px", borderRadius: 6, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 3 }}>{"\u2B50"} your pick</span>;
+  }
+
   // ── PICKS TAB ──────────────────────────────────────
   function PicksTab() {
     var topCounts = {}, midCounts = {}, bfCounts = {};
@@ -208,13 +221,14 @@ export default function PickIntel({ currentUser }) {
     var topSorted = Object.entries(topCounts).sort(function (a, b) { return b[1] - a[1]; });
     var midSorted = Object.entries(midCounts).sort(function (a, b) { return b[1] - a[1]; });
 
-    function Card({ name, count }) {
+    function Card({ name, count, isMine }) {
       var info = findDriver(driverMap, name);
       var tc = info.teamColor || BLUE;
       var parts = name.split(" ");
       var first = parts[0], last = parts.slice(1).join(" ");
       return (
-        <div style={{ width: "calc(33.33% - 6px)", padding: "10px 6px 12px", borderRadius: 12, border: "2px solid " + tc + "40", background: tc + "08", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+        <div style={{ width: "calc(33.33% - 6px)", padding: "10px 6px 12px", borderRadius: 12, border: "2px solid " + (isMine ? BLUE : tc + "40"), background: isMine ? BLUE + "10" : tc + "08", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative" }}>
+          {isMine && <div style={{ position: "absolute", top: 4, right: 4 }}><YourPickBadge /></div>}
           <div style={{ width: 44, height: 44, borderRadius: "50%", overflow: "hidden", background: info.headshot ? tc + "18" : BORDER + "40", marginBottom: 3, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid " + tc + "60" }}>
             {info.headshot ? (
               <img src={info.headshot} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={function (e) { e.target.style.display = "none"; }} />
@@ -235,20 +249,22 @@ export default function PickIntel({ currentUser }) {
       <div>
         <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 10px" }}>Top Driver Selections</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-          {topSorted.map(function (entry) { return <Card key={entry[0]} name={entry[0]} count={entry[1]} />; })}
+          {topSorted.map(function (entry) { return <Card key={entry[0]} name={entry[0]} count={entry[1]} isMine={entry[0] === myTopPick} />; })}
         </div>
         <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 10px" }}>Midfield Selections</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-          {midSorted.map(function (entry) { return <Card key={entry[0]} name={entry[0]} count={entry[1]} />; })}
+          {midSorted.map(function (entry) { return <Card key={entry[0]} name={entry[0]} count={entry[1]} isMine={myDrivers.indexOf(entry[0]) >= 0 && entry[0] !== myTopPick} />; })}
         </div>
         <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 10px" }}>Best Finish Predictions</p>
         <div style={{ background: "#fff", borderRadius: 14, border: "1px solid " + BORDER, padding: "12px 14px" }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (pos) {
+              var isMyBf = myBestFinish === pos;
               return (
                 <div key={pos} style={{ textAlign: "center", width: "calc(20% - 7px)", flexShrink: 0 }}>
                   <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 20, color: bfCounts[pos] ? BLUEDARK : BORDER + "80", display: "block" }}>{bfCounts[pos] || 0}</span>
-                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2 }}>P{pos}</span>
+                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: isMyBf ? BLUEDARK : TEXT2 }}>P{pos}</span>
+                  {isMyBf && <span style={{ display: "block", fontSize: 9, marginTop: 2 }}>{"\u2B50"}</span>}
                 </div>
               );
             })}
@@ -281,9 +297,13 @@ export default function PickIntel({ currentUser }) {
         <div style={{ background: "#fff", borderRadius: 14, border: "1px solid " + BORDER, padding: "12px 14px", marginBottom: 20 }}>
           {combosFiltered.length === 0 && <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0 }}>No shared combos — everyone picked different drivers!</p>}
           {combosFiltered.map(function (entry, i) {
+            var isMyCombo = myComboKey === entry[0];
             return (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i < combosFiltered.length - 1 ? "1px solid " + BORDER + "15" : "none" }}>
-                <span style={{ fontFamily: FB, fontSize: 11, color: TEXT, flex: 1 }}>{entry[0].split(", ").map(function (d) { return lastName(d); }).join(", ")}</span>
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i < combosFiltered.length - 1 ? "1px solid " + BORDER + "15" : "none", background: isMyCombo ? BLUE + "08" : "transparent", margin: isMyCombo ? "0 -14px" : 0, padding: isMyCombo ? "7px 14px" : "7px 0", borderRadius: isMyCombo ? 8 : 0 }}>
+                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: FB, fontSize: 11, color: TEXT }}>{entry[0].split(", ").map(function (d) { return lastName(d); }).join(", ")}</span>
+                  {isMyCombo && <YourPickBadge />}
+                </div>
                 <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: i === 0 ? GOLD : BLUEDARK, background: i === 0 ? GOLD + "15" : BLUE + "12", padding: "4px 10px", borderRadius: 8, flexShrink: 0 }}>{entry[1]} {entry[1] === 1 ? "pick" : "picks"}</span>
               </div>
             );
@@ -294,10 +314,14 @@ export default function PickIntel({ currentUser }) {
         <div style={{ background: "#fff", borderRadius: 14, border: "1px solid " + BORDER, padding: "12px 14px" }}>
           {consensus.length === 0 && <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0 }}>No matching orders — everyone went their own way!</p>}
           {consensus.map(function (entry, i) {
+            var isMyOrder = myOrderKey === entry[0];
             return (
-              <div key={i} style={{ padding: "8px 0", borderBottom: i < consensus.length - 1 ? "1px solid " + BORDER + "15" : "none" }}>
+              <div key={i} style={{ padding: "8px 0", borderBottom: i < consensus.length - 1 ? "1px solid " + BORDER + "15" : "none", background: isMyOrder ? BLUE + "08" : "transparent", margin: isMyOrder ? "0 -14px" : 0, padding: isMyOrder ? "8px 14px" : "8px 0", borderRadius: isMyOrder ? 8 : 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: i === 0 ? GOLD : TEXT2 }}>{i === 0 ? "MOST POPULAR" : "#" + (i + 1)}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: i === 0 ? GOLD : TEXT2 }}>{i === 0 ? "MOST POPULAR" : "#" + (i + 1)}</span>
+                    {isMyOrder && <YourPickBadge />}
+                  </div>
                   <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: BLUEDARK, background: BLUE + "12", padding: "4px 10px", borderRadius: 8 }}>{entry[1]} {entry[1] === 1 ? "pick" : "picks"}</span>
                 </div>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
