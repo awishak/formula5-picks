@@ -11,6 +11,7 @@ import Strategy from "./Strategy.jsx";
 import F1Calendar from "./F1Calendar.jsx";
 import Players from "./Players.jsx";
 import PracticePicks from "./PracticePicks.jsx";
+import PickIntel from "./PickIntel.jsx";
 
 const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 
@@ -311,9 +312,8 @@ function MyPicksPage({ currentUser, onNavigate }) {
   const [nextRace, setNextRace] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pastDeadline, setPastDeadline] = useState(false);
-  const [allPicks, setAllPicks] = useState([]);
-  const [players, setPlayers] = useState([]);
-  const [scores, setScores] = useState([]);
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [adminInput, setAdminInput] = useState("");
 
   useEffect(() => {
     async function check() {
@@ -326,10 +326,6 @@ function MyPicksPage({ currentUser, onNavigate }) {
           const { data: player } = await supabase.from("players").select("id").eq("name", currentUser).single();
           if (player) { const { data: existing } = await supabase.from("picks").select("id").eq("player_id", player.id).eq("race_id", raceData.id).maybeSingle(); if (existing) setHasSubmitted(true); }
         }
-        if (raceData?.pick_deadline && new Date() >= new Date(raceData.pick_deadline)) {
-          const [{ data: p }, { data: pl }, { data: sc }] = await Promise.all([supabase.from("picks").select("*").eq("race_id", raceData.id), supabase.from("players").select("id, name"), supabase.from("scores").select("*").eq("race_id", raceData.id)]);
-          setAllPicks(p || []); setPlayers(pl || []); setScores(sc || []);
-        }
       } catch (e) { /* silent */ }
       setLoading(false);
     }
@@ -338,37 +334,10 @@ function MyPicksPage({ currentUser, onNavigate }) {
 
   if (loading) return <div style={{ padding: "60px 20px", textAlign: "center" }}><p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: TEXT2 }}>Loading…</p></div>;
 
-  // PAST DEADLINE → show all picks + season history
-  if (pastDeadline && nextRace) {
-    const playerMap = {}; players.forEach(p => { playerMap[p.id] = p.name; });
-    const scoreMap = {}; scores.forEach(s => { scoreMap[s.player_id] = s; });
-    const sorted = [...allPicks].sort((a, b) => { const an = playerMap[a.player_id] || "", bn = playerMap[b.player_id] || ""; if (an === currentUser) return -1; if (bn === currentUser) return 1; return an.localeCompare(bn); });
-    return (
-      <div style={{ padding: "20px 20px 100px" }}>
-        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: BLUE, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 2px" }}>Round {nextRace.round}</p>
-        <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 22, color: DARK, textTransform: "uppercase", margin: "0 0 4px" }}>{nextRace.race_name}</p>
-        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: TEXT2, marginBottom: 20 }}>🔒 Picks locked — {allPicks.length} submitted</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
-          {sorted.map(pick => {
-            const name = playerMap[pick.player_id] || "Unknown"; const isMe = name === currentUser; const score = scoreMap[pick.player_id];
-            const totalPts = score ? (score.top_pick_pts||0)+(score.midfield_pts||0)+(score.order_bonus||0)+(score.best_finish_bonus||0)+(score.pit_individual_pts||0) : null;
-            return (
-              <div key={pick.id} style={{ padding: "12px 14px", borderRadius: 12, border: `1px solid ${isMe ? BLUE : BORDER}`, background: isMe ? `${BLUE}08` : "#fff" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div><p style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 14, color: isMe ? BLUEDARK : DARK, margin: 0 }}>{name}{isMe ? " (you)" : ""}</p>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, margin: "2px 0 0" }}>Top: {pick.top_pick||"—"} · Pit: {pick.pit_guess ? `${Number(pick.pit_guess).toFixed(1)}s` : "—"}</p></div>
-                  {totalPts !== null ? <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 20, color: DARK }}>{totalPts}<span style={{ fontSize: 9, color: TEXT2 }}> pts</span></span> : <span style={{ color: BORDER }}>—</span>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <PickHistory currentUser={currentUser} />
-      </div>
-    );
-  }
+  // Show PickIntel if past deadline OR admin unlocked
+  var showIntel = pastDeadline || adminUnlocked;
 
-  // SUBMITTED (before deadline)
+  // SUBMITTED — show their picks, then Intel below if unlocked
   if (hasSubmitted) {
     const dl = nextRace?.pick_deadline ? new Date(nextRace.pick_deadline).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }) : null;
     return (
@@ -378,14 +347,66 @@ function MyPicksPage({ currentUser, onNavigate }) {
           <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 20, color: DARK, textTransform: "uppercase", marginBottom: 6 }}>Picks Locked In</p>
           <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT2, marginBottom: 16 }}>{nextRace?.race_name} — Round {nextRace?.round}</p>
           <div style={{ maxWidth: 320, margin: "0 auto", padding: "14px 0", borderRadius: 12, background: `${GREEN}15`, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, color: GREEN }}>✓ Picks Submitted</div>
-          {dl && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: TEXT2, marginTop: 16 }}>Everyone's picks visible after:<br/><span style={{ fontWeight: 600, color: DARK }}>{dl}</span></p>}
+          {!showIntel && dl && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: TEXT2, marginTop: 16 }}>Everyone's picks visible after:<br/><span style={{ fontWeight: 600, color: DARK }}>{dl}</span></p>}
+        </div>
+
+        {/* Admin unlock — only show before deadline, only for Andrew */}
+        {currentUser === "Andrew Ishak" && !showIntel && (
+          <div style={{ maxWidth: 280, margin: "0 auto 24px", textAlign: "center" }}>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                type="password"
+                placeholder="Admin password"
+                value={adminInput}
+                onChange={function(e) { setAdminInput(e.target.value); }}
+                style={{
+                  flex: 1, padding: "10px 12px", borderRadius: 10,
+                  border: "1px solid " + BORDER, fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 13, color: DARK, background: "#fff", outline: "none"
+                }}
+              />
+              <button
+                onClick={function() { if (adminInput.toLowerCase() === "stroll") setAdminUnlocked(true); }}
+                style={{
+                  padding: "10px 16px", borderRadius: 10, border: "none",
+                  background: BLUEDARK, color: "#fff",
+                  fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 12,
+                  cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.06em"
+                }}
+              >Unlock</button>
+            </div>
+          </div>
+        )}
+
+        {/* Pick Intel — shows after deadline or admin unlock */}
+        {showIntel && (
+          <div style={{ margin: "0 -20px" }}>
+            <PickIntel currentUser={currentUser} />
+          </div>
+        )}
+
+        <PickHistory currentUser={currentUser} />
+      </div>
+    );
+  }
+
+  // NOT SUBMITTED but past deadline → show Intel (they missed the window)
+  if (pastDeadline && nextRace) {
+    return (
+      <div style={{ padding: "20px 20px 100px" }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 18, color: RED, textTransform: "uppercase", marginBottom: 4 }}>No Picks Submitted</p>
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT2 }}>{nextRace.race_name} — Round {nextRace.round}</p>
+        </div>
+        <div style={{ margin: "0 -20px" }}>
+          <PickIntel currentUser={currentUser} />
         </div>
         <PickHistory currentUser={currentUser} />
       </div>
     );
   }
 
-  // NOT SUBMITTED → pick wizard
+  // NOT SUBMITTED, before deadline → pick wizard
   const dl2 = nextRace?.pick_deadline ? new Date(nextRace.pick_deadline).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }) : null;
   return (
     <div>
