@@ -44,6 +44,7 @@ export default function Schedule({ currentUser }) {
   const [loading, setLoading] = useState(true);
   const [activeRound, setActiveRound] = useState(1);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [expandedRooting, setExpandedRooting] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -53,7 +54,7 @@ export default function Schedule({ currentUser }) {
         supabase.from("teams").select("*"),
         supabase.from("players").select("id, name"),
         supabase.from("scores").select("*"),
-        supabase.from("picks").select("player_id, race_id, pit_guess")
+        supabase.from("picks").select("player_id, race_id, pit_guess, finishing_order, top_pick")
       ]);
       setRaces(racesData || []);
       const normalized = (scheduleData || []).map(s => ({ ...s, home_team: Array.isArray(s.home_team) ? s.home_team[0] : s.home_team, away_team: Array.isArray(s.away_team) ? s.away_team[0] : s.away_team }));
@@ -476,6 +477,111 @@ export default function Schedule({ currentUser }) {
           {teamRow(homeTeam, true, homeP1, homeP2, homeBoxBox, homeTotal, homeWon)}
           <div style={{ height: 1, background: BORDER, margin: "0 12px" }} />
           {teamRow(awayTeam, false, awayP1, awayP2, awayBoxBox, awayTotal, awayWon)}
+
+          {/* Rooting Guide — only after deadline */}
+          {picksLocked && homeTeam && awayTeam && (() => {
+            const isOpen = expandedRooting === m.id;
+            const homeP1Pick = pickMap[`${homeTeam.player1_id}_${raceId}`];
+            const homeP2Pick = pickMap[`${homeTeam.player2_id}_${raceId}`];
+            const awayP1Pick = pickMap[`${awayTeam.player1_id}_${raceId}`];
+            const awayP2Pick = pickMap[`${awayTeam.player2_id}_${raceId}`];
+
+            const homeDrivers = new Set([
+              ...((homeP1Pick?.finishing_order) || []),
+              ...((homeP2Pick?.finishing_order) || [])
+            ]);
+            const awayDrivers = new Set([
+              ...((awayP1Pick?.finishing_order) || []),
+              ...((awayP2Pick?.finishing_order) || [])
+            ]);
+
+            const shared = [...homeDrivers].filter(d => awayDrivers.has(d));
+            const homeOnly = [...homeDrivers].filter(d => !awayDrivers.has(d));
+            const awayOnly = [...awayDrivers].filter(d => !homeDrivers.has(d));
+
+            // Check if we have any picks data
+            const hasPicks = homeDrivers.size > 0 || awayDrivers.size > 0;
+            if (!hasPicks) return null;
+
+            const ln = (name) => name ? name.split(" ").pop() : "?";
+
+            return (
+              <div>
+                <button onClick={() => setExpandedRooting(isOpen ? null : m.id)} style={{
+                  width: "100%", padding: "8px 12px", border: "none", borderTop: `1px solid ${BORDER}30`,
+                  background: isOpen ? `${BLUE}06` : "transparent",
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6
+                }}>
+                  <span style={{ fontFamily: FB, fontWeight: 600, fontSize: 11, color: BLUEDARK }}>
+                    {isOpen ? "Hide" : "Who's rooting for who?"}
+                  </span>
+                  <span style={{ fontSize: 10, color: BLUEDARK }}>{isOpen ? "▲" : "▼"}</span>
+                </button>
+
+                {isOpen && (
+                  <div style={{ padding: "0 12px 14px" }}>
+                    {/* Home team rooting */}
+                    {homeOnly.length > 0 && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                          <TeamLogo name={homeTeam.name} size={18} division={getDiv(homeTeam.name)} logoUrl={homeTeam.logo_url} />
+                          <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT }}>{homeTeam.name} rooting for</span>
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                          {homeOnly.map(d => (
+                            <span key={d} style={{
+                              fontFamily: FD, fontWeight: 700, fontSize: 10, color: GOLD,
+                              background: `${GOLD}12`, border: `1px solid ${GOLD}25`,
+                              padding: "3px 8px", borderRadius: 6
+                            }}>{ln(d)}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Away team rooting */}
+                    {awayOnly.length > 0 && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                          <TeamLogo name={awayTeam.name} size={18} division={getDiv(awayTeam.name)} logoUrl={awayTeam.logo_url} />
+                          <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT }}>{awayTeam.name} rooting for</span>
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                          {awayOnly.map(d => (
+                            <span key={d} style={{
+                              fontFamily: FD, fontWeight: 700, fontSize: 10, color: "#5a3d99",
+                              background: "#7c5cbf12", border: "1px solid #7c5cbf25",
+                              padding: "3px 8px", borderRadius: 6
+                            }}>{ln(d)}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Shared — wash */}
+                    {shared.length > 0 && (
+                      <div>
+                        <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, marginBottom: 6, display: "block" }}>Wash (both teams picked)</span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                          {shared.map(d => (
+                            <span key={d} style={{
+                              fontFamily: FD, fontWeight: 600, fontSize: 10, color: TEXT2,
+                              background: `${DARK}05`, border: `1px solid ${BORDER}`,
+                              padding: "3px 8px", borderRadius: 6
+                            }}>{ln(d)}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {homeOnly.length === 0 && awayOnly.length === 0 && (
+                      <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0, textAlign: "center" }}>Both teams picked the exact same drivers!</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
     );
