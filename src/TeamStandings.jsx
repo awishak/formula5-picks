@@ -482,19 +482,49 @@ export default function TeamStandings({ currentUser }) {
         {scoringOpen && (
           <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderTop: "none", borderRadius: "0 0 12px 12px", padding: "12px 14px", marginTop: -2, fontFamily: FB, fontSize: 12, color: TEXT2, lineHeight: 1.55 }}>
             <p style={{ margin: "0 0 8px" }}>Each race, teams within a division are ranked by their matchup result. <strong style={{ color: GREEN }}>Winners</strong> are sorted on top by score, then <strong style={{ color: TEXT2 }}>ties</strong>, then <strong style={{ color: RED }}>losers</strong> on the bottom.</p>
-            <p style={{ margin: "0 0 8px" }}>Championship points are awarded based on that ranking, using the <strong style={{ color: TEXT }}>F1 points scale</strong>:</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "8px 0 10px" }}>
-              {TEAM_PTS_TABLE.map((pts, i) => (
-                <div key={i} style={{
-                  display: "flex", alignItems: "center", gap: 4, padding: "4px 8px", borderRadius: 8,
-                  background: i < 3 ? `${GREEN}10` : i < 6 ? `${BLUEDARK}08` : `${RED}08`,
-                  border: `1px solid ${i < 3 ? `${GREEN}25` : i < 6 ? `${BLUEDARK}15` : `${RED}15`}`
-                }}>
-                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2 }}>{i + 1}{i === 0 ? "st" : i === 1 ? "nd" : i === 2 ? "rd" : "th"}</span>
-                  <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 12, color: i < 3 ? GREEN : i < 6 ? BLUEDARK : RED }}>{pts}</span>
+            <p style={{ margin: "0 0 10px" }}>Championship points are awarded based on that ranking, using the <strong style={{ color: TEXT }}>F1 points scale</strong>:</p>
+
+            {/* Winners — each on its own line */}
+            <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: GREEN, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px" }}>Winners</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 12 }}>
+              {[
+                { pos: "1st", pts: 25, label: "Highest Scoring Winner" },
+                { pos: "2nd", pts: 18, label: "2nd Highest Scoring Winner" },
+                { pos: "3rd", pts: 15, label: "3rd Highest Scoring Winner" },
+                { pos: "4th", pts: 12, label: "4th Highest Scoring Winner" },
+                { pos: "5th", pts: 10, label: "5th Highest Scoring Winner" },
+                { pos: "6th", pts: 8, label: "Lowest Scoring Winner" },
+              ].map((w) => (
+                <div key={w.pos} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontFamily: FB, fontSize: 11, color: TEXT2, flex: 1 }}>{w.label}</span>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 8,
+                    background: `${GREEN}10`, border: `1px solid ${GREEN}25`, flexShrink: 0
+                  }}>
+                    <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2 }}>{w.pos}</span>
+                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 13, color: GREEN }}>{w.pts}</span>
+                  </div>
                 </div>
               ))}
             </div>
+
+            {/* Losers — row of chips */}
+            <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: RED, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px" }}>Losers</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+              {[
+                { pos: "7th", pts: 6 }, { pos: "8th", pts: 4 }, { pos: "9th", pts: 2 },
+                { pos: "10th", pts: 1 }, { pos: "11th", pts: 0 }, { pos: "12th", pts: 0 },
+              ].map((l) => (
+                <div key={l.pos} style={{
+                  display: "flex", alignItems: "center", gap: 4, padding: "4px 8px", borderRadius: 8,
+                  background: `${RED}08`, border: `1px solid ${RED}15`
+                }}>
+                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2 }}>{l.pos}</span>
+                  <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 12, color: RED }}>{l.pts}</span>
+                </div>
+              ))}
+            </div>
+
             <p style={{ margin: 0 }}>The team with the most championship points at the end of the <strong style={{ color: TEXT }}>second half</strong> (Races 13–24) wins the <strong style={{ color: GOLD }}>Team Championship</strong>.</p>
           </div>
         )}
