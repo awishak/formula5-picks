@@ -21,10 +21,10 @@ function TeamLogo({ name, size = 22, division, logoUrl }) {
   const initials = (name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   const outlineColor = division === "championship" ? GOLD : SILVER;
   if (logoUrl) return (
-    <img src={logoUrl} alt={name} style={{ width: size, height: size, borderRadius: size * 0.3, objectFit: "cover", flexShrink: 0, border: `1.5px solid ${outlineColor}`, boxSizing: "border-box" }} />
+    <img src={logoUrl} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: `1.5px solid ${outlineColor}`, boxSizing: "border-box" }} />
   );
   return (
-    <div style={{ width: size, height: size, borderRadius: size * 0.3, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: FD, fontWeight: 900, fontSize: size * 0.36, color: "#fff", border: `1.5px solid ${outlineColor}`, boxSizing: "border-box" }}>{initials}</div>
+    <div style={{ width: size, height: size, borderRadius: "50%", background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: FD, fontWeight: 900, fontSize: size * 0.36, color: "#fff", border: `1.5px solid ${outlineColor}`, boxSizing: "border-box" }}>{initials}</div>
   );
 }
 
