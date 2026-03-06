@@ -250,7 +250,7 @@ export default function Schedule({ currentUser }) {
 
     // BOX BOX cell — blank placeholder for non-scored states
     function boxBoxCell(boxBonus) {
-      const boxPill = <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 7, color: "#fff", background: "#6dc0eb", padding: "1px 4px", borderRadius: 4, margin: "2px auto 0", display: "inline-block", whiteSpace: "nowrap" }}>BOX BOX</p>;
+      const boxPill = <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 7, color: "#fff", background: "#6dc0eb", padding: "1px 4px", borderRadius: 4, margin: "2px auto 0", width: "fit-content", whiteSpace: "nowrap" }}>BOX BOX</p>;
       if (isState3) {
         return (
           <div style={{
