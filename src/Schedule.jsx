@@ -424,24 +424,59 @@ export default function Schedule({ currentUser }) {
       );
     }
 
+    // Vertical over/under bar
+    const barMin = 1.5, barMax = 4.0;
+    const barLine = boxLine != null ? boxLine : 2.75;
+    const goldPct = Math.max(5, Math.min(95, ((barMax - barLine) / (barMax - barMin)) * 100));
+
     return (
       <div key={m.id} style={{
         background: "#fff", borderRadius: 14, overflow: "hidden",
         border: `${outlineWidth}px solid ${outlineColor}`,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        display: "flex"
       }}>
-        {teamRow(homeTeam, true, homeP1, homeP2, homeBoxBox, homeTotal, homeWon)}
+        {/* Vertical Over/Under bar */}
+        <div style={{
+          width: 32, flexShrink: 0, display: "flex", flexDirection: "column",
+          position: "relative", userSelect: "none"
+        }}>
+          {/* Gold (Over) portion */}
+          <div style={{
+            height: `${goldPct}%`, background: `${GOLD}25`,
+            display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "space-between", padding: "6px 0 0"
+          }}>
+            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 8, color: GOLD, letterSpacing: "0.04em" }}>4.0</span>
+          </div>
+          {/* Line number at the split */}
+          <div style={{
+            position: "absolute", left: 0, right: 0, top: `${goldPct}%`,
+            transform: "translateY(-50%)", display: "flex", justifyContent: "center", zIndex: 2
+          }}>
+            <span style={{
+              fontFamily: FD, fontWeight: 900, fontSize: 11, color: "#fff",
+              background: `linear-gradient(135deg, ${GOLD}, #7c5cbf)`,
+              padding: "2px 5px", borderRadius: 6, lineHeight: 1.2,
+              boxShadow: "0 1px 3px rgba(0,0,0,0.2)"
+            }}>{barLine.toFixed(2)}</span>
+          </div>
+          {/* Purple (Under) portion */}
+          <div style={{
+            height: `${100 - goldPct}%`, background: "#7c5cbf25",
+            display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "flex-end", padding: "0 0 6px"
+          }}>
+            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 8, color: "#7c5cbf", letterSpacing: "0.04em" }}>1.5</span>
+          </div>
+        </div>
 
-        {/* Divider between teams — changes based on state */}
-        {isState25 ? (
-          overUnderDivider()
-        ) : isState3 ? (
-          overUnderResultDivider()
-        ) : (
+        {/* Main matchup content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {teamRow(homeTeam, true, homeP1, homeP2, homeBoxBox, homeTotal, homeWon)}
           <div style={{ height: 1, background: BORDER, margin: "0 12px" }} />
-        )}
-
-        {teamRow(awayTeam, false, awayP1, awayP2, awayBoxBox, awayTotal, awayWon)}
+          {teamRow(awayTeam, false, awayP1, awayP2, awayBoxBox, awayTotal, awayWon)}
+        </div>
       </div>
     );
   }
