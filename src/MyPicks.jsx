@@ -1096,16 +1096,14 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                   }}>
                     {isTop && <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: BLUEDARK, textTransform: "uppercase", margin: "0 0 2px", letterSpacing: "0.08em" }}>TOP</p>}
                     <div style={{
-                      width: 32, height: 32, borderRadius: "50%", overflow: "hidden",
-                      background: info.headshot ? `${tc}18` : `${BORDER}40`,
+                      width: 36, height: 36, borderRadius: "50%", overflow: "hidden",
+                      background: `${tc}25`,
                       margin: "0 auto 3px", display: "flex", alignItems: "center", justifyContent: "center",
-                      border: `2px solid ${tc}60`
+                      border: `2px solid ${tc}`, position: "relative"
                     }}>
-                      {info.headshot ? (
-                        <img src={info.headshot} alt={d} style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                          onError={(e) => { e.target.style.display = "none"; }} />
-                      ) : (
-                        <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2 }}>{first[0]}{(last[0] || "")}</span>
+                      <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: "#fff" }}>{first[0]}{(last[0] || "")}</span>
+                      {info.headshot && (
+                        <img src={info.headshot} alt={d} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
                       )}
                     </div>
                     <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{last}</p>

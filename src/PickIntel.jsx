@@ -254,15 +254,13 @@ export default function PickIntel({ currentUser }) {
         }}>
           <div style={{
             width: 44, height: 44, borderRadius: "50%", overflow: "hidden",
-            background: info.headshot ? `${tc}18` : `${BORDER}40`,
+            background: `${tc}25`,
             marginBottom: 3, display: "flex", alignItems: "center", justifyContent: "center",
-            border: `2px solid ${tc}60`
+            border: `2px solid ${tc}`, position: "relative"
           }}>
-            {info.headshot ? (
-              <img src={info.headshot} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                onError={(e) => { e.target.style.display = "none"; }} />
-            ) : (
-              <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 14, color: TEXT2 }}>{first[0]}{(last[0] || "")}</span>
+            <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 14, color: "#fff" }}>{first[0]}{(last[0] || "")}</span>
+            {info.headshot && (
+              <img src={info.headshot} alt={name} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
             )}
           </div>
           <span style={{ fontFamily: FB, fontWeight: 400, fontSize: 10, color: TEXT2 }}>{first}</span>
