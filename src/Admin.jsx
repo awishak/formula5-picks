@@ -53,7 +53,7 @@ export default function Admin() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
   const [existingScores, setExistingScores] = useState({});
-  const [adminTab, setAdminTab] = useState("scoring"); // "scoring" | "logos" | "photos"
+  const [adminTab, setAdminTab] = useState("scoring"); // "scoring" | "logos" | "photos" | "missing"
   const [fetching, setFetching] = useState(false);
   const [fetchStatus, setFetchStatus] = useState("");
   const [teams, setTeams] = useState([]);
@@ -61,6 +61,8 @@ export default function Admin() {
   const [logoMsg, setLogoMsg] = useState(null);
   const [allPlayers, setAllPlayers] = useState([]);
   const [photoMsg, setPhotoMsg] = useState(null);
+  const [allPicks, setAllPicks] = useState([]);
+  const [missingRound, setMissingRound] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -90,6 +92,15 @@ export default function Admin() {
       // Load players for photo management
       const { data: playersData } = await supabase.from("players").select("*").order("name");
       setAllPlayers(playersData || []);
+
+      // Load all picks for missing picks tracker
+      const { data: picksData } = await supabase.from("picks").select("player_id, race_id");
+      setAllPicks(picksData || []);
+
+      // Default missing picks round to first unscored or next upcoming
+      const firstUnscoredRound = (racesData || []).find(r => !scored[r.id]);
+      if (firstUnscoredRound) setMissingRound(firstUnscoredRound.round);
+      else if (racesData?.length) setMissingRound(racesData[racesData.length - 1].round);
 
       setLoading(false);
     }
@@ -815,7 +826,7 @@ export default function Admin() {
 
       {/* Tab switcher */}
       <div style={{ display: "flex", gap: 0, marginBottom: 20, borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
-        {[{ id: "scoring", label: "Score Race" }, { id: "logos", label: "Team Logos" }, { id: "photos", label: "Player Photos" }].map(tab => (
+        {[{ id: "scoring", label: "Score Race" }, { id: "missing", label: "Missing Picks" }, { id: "logos", label: "Logos" }, { id: "photos", label: "Photos" }].map(tab => (
           <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{
             flex: 1, padding: "10px 0", border: "none",
             background: adminTab === tab.id ? BLUEDARK : "#fff",
@@ -825,6 +836,125 @@ export default function Admin() {
           }}>{tab.label}</button>
         ))}
       </div>
+
+      {/* MISSING PICKS TAB */}
+      {adminTab === "missing" && (() => {
+        const missingRace = races.find(r => r.round === missingRound);
+        const submittedPlayerIds = new Set(
+          allPicks.filter(pk => missingRace && pk.race_id === missingRace.id).map(pk => pk.player_id)
+        );
+        const missingPlayers = allPlayers.filter(p => !submittedPlayerIds.has(p.id));
+        const submittedPlayers = allPlayers.filter(p => submittedPlayerIds.has(p.id));
+        const missingEmails = missingPlayers.map(p => p.email).filter(Boolean);
+        const copied = () => {
+          if (missingEmails.length === 0) return;
+          navigator.clipboard.writeText(missingEmails.join(", "));
+        };
+
+        return (
+          <div>
+            <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 12 }}>
+              See who hasn't submitted picks for a given round.
+            </p>
+
+            {/* Round selector */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>
+                Select Round
+              </label>
+              <select
+                value={missingRound || ""}
+                onChange={e => setMissingRound(parseInt(e.target.value))}
+                style={{
+                  width: "100%", padding: "10px 12px", borderRadius: 10,
+                  border: `1px solid ${BORDER}`, fontFamily: FB, fontSize: 13, color: TEXT,
+                  background: "#fff"
+                }}
+              >
+                {races.map(r => (
+                  <option key={r.round} value={r.round}>
+                    Round {r.round} — {r.race_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Summary */}
+            <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+              <div style={{
+                flex: 1, padding: "12px 14px", borderRadius: 12,
+                background: `${GREEN}08`, border: `1px solid ${GREEN}25`, textAlign: "center"
+              }}>
+                <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: GREEN, margin: 0 }}>{submittedPlayers.length}</p>
+                <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, margin: "2px 0 0" }}>Submitted</p>
+              </div>
+              <div style={{
+                flex: 1, padding: "12px 14px", borderRadius: 12,
+                background: `${RED}08`, border: `1px solid ${RED}25`, textAlign: "center"
+              }}>
+                <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: RED, margin: 0 }}>{missingPlayers.length}</p>
+                <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, margin: "2px 0 0" }}>Missing</p>
+              </div>
+            </div>
+
+            {/* Missing players table */}
+            {missingPlayers.length > 0 ? (
+              <>
+                <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: DARK, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 8px" }}>
+                  Haven't Submitted
+                </p>
+                <div style={{ overflowX: "auto", marginBottom: 16 }}>
+                  <table style={{ borderCollapse: "collapse", width: "100%", fontFamily: FB, fontSize: 12 }}>
+                    <thead>
+                      <tr style={{ background: `${DARK}08` }}>
+                        <th style={{ ...thStyle, fontSize: 10 }}>Player</th>
+                        <th style={{ ...thStyle, fontSize: 10 }}>Email</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {missingPlayers.map((p, i) => (
+                        <tr key={p.id} style={{ background: i % 2 === 0 ? "#fff" : `${DARK}03`, borderBottom: `1px solid ${BORDER}30` }}>
+                          <td style={{ padding: "8px 10px", fontWeight: 600, color: TEXT }}>{p.name}</td>
+                          <td style={{ padding: "8px 10px", color: p.email ? TEXT2 : `${RED}80`, fontSize: 11 }}>
+                            {p.email || "No email on file"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Copy emails button */}
+                <button
+                  onClick={copied}
+                  disabled={missingEmails.length === 0}
+                  style={{
+                    width: "100%", padding: "12px", borderRadius: 12,
+                    background: missingEmails.length > 0 ? BLUEDARK : BORDER,
+                    border: "none", color: "#fff",
+                    fontFamily: FD, fontWeight: 800, fontSize: 13,
+                    textTransform: "uppercase", letterSpacing: "0.06em",
+                    cursor: missingEmails.length > 0 ? "pointer" : "default",
+                    marginBottom: 8
+                  }}
+                >
+                  Copy {missingEmails.length} Email{missingEmails.length !== 1 ? "s" : ""} to Clipboard
+                </button>
+                {missingEmails.length === 0 && missingPlayers.length > 0 && (
+                  <p style={{ fontFamily: FB, fontSize: 11, color: RED, textAlign: "center", margin: 0 }}>
+                    No emails on file for missing players — add emails to the players table in Supabase.
+                  </p>
+                )}
+              </>
+            ) : (
+              <div style={{ padding: "30px 0", textAlign: "center" }}>
+                <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 16, color: GREEN, margin: "0 0 4px" }}>All Submitted!</p>
+                <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0 }}>Everyone has submitted picks for this round.</p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* LOGOS TAB */}
       {adminTab === "logos" && (
