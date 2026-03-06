@@ -204,7 +204,7 @@ export default function Schedule({ currentUser }) {
       const chipColor = isOver ? GOLD : "#7c5cbf";
       const fontSize = size === "large" ? 12 : 11;
       const padding = size === "large" ? "3px 10px" : "2px 8px";
-      const lineStr = showBoxLine ? ` ${boxLine.toFixed(1)}` : "";
+      const lineStr = showBoxLine ? ` ${boxLine.toFixed(2)}` : "";
       return (
         <span style={{
           fontFamily: FD, fontWeight: 700, fontSize, letterSpacing: "0.08em",
@@ -250,6 +250,7 @@ export default function Schedule({ currentUser }) {
 
     // BOX BOX cell — blank placeholder for non-scored states
     function boxBoxCell(boxBonus) {
+      const boxPill = <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 7, color: "#fff", background: "#6dc0eb", padding: "1px 4px", borderRadius: 4, margin: "2px auto 0", display: "inline-block", whiteSpace: "nowrap" }}>BOX BOX</p>;
       if (isState3) {
         return (
           <div style={{
@@ -259,18 +260,17 @@ export default function Schedule({ currentUser }) {
             <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: boxBonus > 0 ? GREEN : boxBonus < 0 ? RED : TEXT2 }}>
               {boxBonus > 0 ? "+5" : boxBonus < 0 ? "−1" : "0"}
             </span>
-            <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 8, color: TEXT2, margin: 0 }}>BOX BOX</p>
+            {boxPill}
           </div>
         );
       }
-      // Blank placeholder
       return (
         <div style={{
           textAlign: "center", minWidth: 32, padding: "3px 5px", borderRadius: 6,
           background: `${DARK}04`
         }}>
           <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BORDER }}>—</span>
-          <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 8, color: TEXT2, margin: 0 }}>BOX BOX</p>
+          {boxPill}
         </div>
       );
     }
@@ -339,7 +339,7 @@ export default function Schedule({ currentUser }) {
     // State 2.5: Big centered Over/Under divider between team rows
     function overUnderDivider() {
       if (!isState25) return null;
-      const lineStr = boxLine !== null ? boxLine.toFixed(1) : "—";
+      const lineStr = boxLine !== null ? boxLine.toFixed(2) : "—";
       return (
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -381,7 +381,7 @@ export default function Schedule({ currentUser }) {
       const overWon = homeBoxBox > 0;
       const underWon = awayBoxBox > 0;
       const push = homeBoxBox === 0 && awayBoxBox === 0;
-      const lineStr = boxLine !== null ? boxLine.toFixed(1) : "—";
+      const lineStr = boxLine !== null ? boxLine.toFixed(2) : "—";
 
       const overColor = overWon ? GREEN : underWon ? RED : TEXT2;
       const underColor = underWon ? GREEN : overWon ? RED : TEXT2;
@@ -543,7 +543,7 @@ export default function Schedule({ currentUser }) {
             {allIn && avgPitGuess && (
               <div style={{ marginTop: 12, display: "flex", alignItems: "baseline", gap: 6 }}>
                 <span style={{ fontFamily: FB, fontSize: 13, color: TEXT2 }}>Current average pit stop guess:</span>
-                <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 18, color: DARK }}>{avgPitGuess}s</span>
+                <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: "#fff", background: "#6dc0eb", padding: "3px 8px", borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }}>{avgPitGuess}s</span>
               </div>
             )}
           </div>
@@ -563,7 +563,7 @@ export default function Schedule({ currentUser }) {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <span style={{ width: 14, height: 14, borderRadius: 4, border: `2px solid ${GREEN}`, display: "inline-block" }} />
-            <span style={{ fontFamily: FB, fontSize: 9, color: TEXT2 }}>Decided by BOX BOX Line</span>
+            <span style={{ fontFamily: FB, fontSize: 9, color: TEXT2 }}>Decided by </span><span style={{ fontFamily: FD, fontWeight: 800, fontSize: 8, color: "#fff", background: "#6dc0eb", padding: "1px 5px", borderRadius: 4 }}>BOX BOX</span><span style={{ fontFamily: FB, fontSize: 9, color: TEXT2 }}> Line</span>
           </div>
         </div>
       )}
