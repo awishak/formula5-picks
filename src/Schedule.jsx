@@ -486,21 +486,26 @@ export default function Schedule({ currentUser }) {
             const awayP1Pick = pickMap[`${awayTeam.player1_id}_${raceId}`];
             const awayP2Pick = pickMap[`${awayTeam.player2_id}_${raceId}`];
 
-            const homeDrivers = new Set([
-              ...((homeP1Pick?.finishing_order) || []),
-              ...((homeP2Pick?.finishing_order) || [])
-            ]);
-            const awayDrivers = new Set([
-              ...((awayP1Pick?.finishing_order) || []),
-              ...((awayP2Pick?.finishing_order) || [])
-            ]);
+            const homeCounts = {};
+            const awayCounts = {};
+            ((homeP1Pick?.finishing_order) || []).forEach(d => { homeCounts[d] = (homeCounts[d] || 0) + 1; });
+            ((homeP2Pick?.finishing_order) || []).forEach(d => { homeCounts[d] = (homeCounts[d] || 0) + 1; });
+            ((awayP1Pick?.finishing_order) || []).forEach(d => { awayCounts[d] = (awayCounts[d] || 0) + 1; });
+            ((awayP2Pick?.finishing_order) || []).forEach(d => { awayCounts[d] = (awayCounts[d] || 0) + 1; });
 
-            const shared = [...homeDrivers].filter(d => awayDrivers.has(d));
-            const homeOnly = [...homeDrivers].filter(d => !awayDrivers.has(d));
-            const awayOnly = [...awayDrivers].filter(d => !homeDrivers.has(d));
+            const allDrivers = new Set([...Object.keys(homeCounts), ...Object.keys(awayCounts)]);
+            const homeOnly = [];
+            const awayOnly = [];
+            const shared = [];
+            allDrivers.forEach(d => {
+              const hc = homeCounts[d] || 0;
+              const ac = awayCounts[d] || 0;
+              if (hc > ac) homeOnly.push(d);
+              else if (ac > hc) awayOnly.push(d);
+              else shared.push(d);
+            });
 
-            // Check if we have any picks data
-            const hasPicks = homeDrivers.size > 0 || awayDrivers.size > 0;
+            const hasPicks = allDrivers.size > 0;
             if (!hasPicks) return null;
 
             const ln = (name) => name ? name.split(" ").pop() : "?";
