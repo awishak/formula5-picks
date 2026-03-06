@@ -482,23 +482,37 @@ export default function Schedule({ currentUser }) {
       )}
 
       {/* Pit stop question — The Needle */}
-      {currentRace?.pit_stop_question && (
-        <div style={{
-          background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 14,
-          padding: "14px 16px", marginBottom: 16
-        }}>
-          <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, margin: "0 0 8px" }}>
-            This week, the over/under is on:
-          </p>
-          <span style={{
-            fontFamily: FD, fontWeight: 800, fontSize: 14, color: BLUEDARK,
-            background: `${BLUE}12`, border: `1.5px solid ${BLUE}30`,
-            padding: "6px 14px", borderRadius: 10, display: "inline-block"
+      {currentRace?.pit_stop_question && (() => {
+        const pitGuesses = picks
+          .filter(pk => pk.race_id === currentRace.id && pk.pit_guess != null)
+          .map(pk => Number(pk.pit_guess));
+        const avgPitGuess = pitGuesses.length > 0
+          ? (pitGuesses.reduce((a, b) => a + b, 0) / pitGuesses.length).toFixed(2)
+          : null;
+        return (
+          <div style={{
+            background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 14,
+            padding: "14px 16px", marginBottom: 16
           }}>
-            ⏱️ {currentRace.pit_stop_question}
-          </span>
-        </div>
-      )}
+            <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, margin: "0 0 8px" }}>
+              This week, the over/under is on:
+            </p>
+            <span style={{
+              fontFamily: FD, fontWeight: 800, fontSize: 14, color: BLUEDARK,
+              background: `${BLUE}12`, border: `1.5px solid ${BLUE}30`,
+              padding: "6px 14px", borderRadius: 10, display: "inline-block"
+            }}>
+              ⏱️ {currentRace.pit_stop_question}
+            </span>
+            {avgPitGuess && (
+              <div style={{ marginTop: 12, display: "flex", alignItems: "baseline", gap: 6 }}>
+                <span style={{ fontFamily: FB, fontSize: 13, color: TEXT2 }}>Current average pit stop guess:</span>
+                <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 18, color: DARK }}>{avgPitGuess}s</span>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Outline legend — show for scored races */}
       {raceHasScores && (
