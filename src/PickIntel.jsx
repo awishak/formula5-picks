@@ -9,9 +9,24 @@ const supabase = createClient(
 const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
   GREEN = "#22cc66", RED = "#e04a4a", ORANGE = "#e08a2e",
   TEXT = "#1e1e2a", TEXT2 = "#6b6b80", BORDER = "#d8d2c4",
-  GOLD = "#c9a820", PURPLE = "#7c5cbf";
+  GOLD = "#c9a820", PURPLE = "#7c5cbf", SILVER = "#a0a0a0";
 const FD = "'Geologica', sans-serif";
 const FB = "'DM Sans', sans-serif";
+
+function TeamLogo({ name, size = 22, division, logoUrl }) {
+  let hash = 0;
+  for (let i = 0; i < (name || "").length; i++) hash = (name || "").charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  const bg = `hsl(${hue}, 45%, 55%)`;
+  const initials = (name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const outlineColor = division === "championship" ? GOLD : SILVER;
+  if (logoUrl) return (
+    <img src={logoUrl} alt={name} style={{ width: size, height: size, borderRadius: size * 0.3, objectFit: "cover", flexShrink: 0, border: `1.5px solid ${outlineColor}`, boxSizing: "border-box" }} />
+  );
+  return (
+    <div style={{ width: size, height: size, borderRadius: size * 0.3, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: FD, fontWeight: 900, fontSize: size * 0.36, color: "#fff", border: `1.5px solid ${outlineColor}`, boxSizing: "border-box" }}>{initials}</div>
+  );
+}
 
 // ── EXACT COPY from MyPicks.jsx ─────────────────────────
 const F1_TEAMS_FALLBACK = {
@@ -215,6 +230,13 @@ export default function PickIntel({ currentUser }) {
     });
   }
 
+  // Player → Team map
+  const playerTeamMap = {};
+  teams.forEach(t => {
+    playerTeamMap[t.player1_id] = t;
+    playerTeamMap[t.player2_id] = t;
+  });
+
   // Current user's pick
   const myPlayer = players.find(p => p.name === currentUser);
   const myPick = myPlayer ? racePicks.find(pk => pk.player_id === myPlayer.id) : null;
@@ -376,6 +398,7 @@ export default function PickIntel({ currentUser }) {
       name: playerMap[pk.player_id] || "?",
       guess: pk.pit_guess != null ? Number(pk.pit_guess) : null,
       side: playerSideMap[pk.player_id] || null,
+      playerId: pk.player_id,
     })).filter(g => g.guess !== null).sort((a, b) => a.guess - b.guess);
 
     if (guesses.length === 0) return <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2 }}>No pit stop guesses yet.</p>;
@@ -445,10 +468,12 @@ export default function PickIntel({ currentUser }) {
         <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: "10px 14px" }}>
           {guesses.map((g, i) => {
             const isMe = g.name === currentUser;
+            const pTeam = playerTeamMap[g.playerId];
             return (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < guesses.length - 1 ? `1px solid ${BORDER}15` : "none" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
                   <span style={{ fontFamily: FB, fontSize: 12, fontWeight: isMe ? 700 : 400, color: isMe ? BLUEDARK : TEXT }}>{shortName(g.name)}{isMe ? " ⭐" : ""}</span>
+                  {pTeam && <TeamLogo name={pTeam.name} size={20} division={pTeam.division} logoUrl={pTeam.logo_url} />}
                   {g.side && <SideChip side={g.side} />}
                 </div>
                 <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 13, color: BLUEDARK, minWidth: 38, textAlign: "right", flexShrink: 0 }}>{g.guess.toFixed(1)}s</span>
