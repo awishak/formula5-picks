@@ -87,7 +87,7 @@ function useOpenF1Drivers() {
         // Populate with fallback data (no headshots)
         const map = new Map();
         Object.entries(F1_TEAMS_FALLBACK).forEach(([name, team]) => {
-          map.set(name, { team, headshot: null, teamColor: null, acronym: "", number: null });
+          map.set(name, { team, headshot: null, teamColor: F1_TEAM_COLORS[team] || null, acronym: "", number: null });
         });
         setDriverMap(map);
       }
@@ -102,7 +102,10 @@ function useOpenF1Drivers() {
 // Helper: find a driver in the OpenF1 map using fuzzy matching
 // (handles cases where Supabase names might differ slightly from OpenF1 names)
 function findDriver(driverMap, name) {
-  if (!name || driverMap.size === 0) return { team: F1_TEAMS_FALLBACK[name] || "", headshot: null, teamColor: null, acronym: "", number: null };
+  if (!name || driverMap.size === 0) {
+    const team = F1_TEAMS_FALLBACK[name] || "";
+    return { team, headshot: null, teamColor: F1_TEAM_COLORS[team] || null, acronym: "", number: null };
+  }
   // Exact match first
   if (driverMap.has(name)) return driverMap.get(name);
   // Try matching by last name
@@ -123,7 +126,8 @@ function findDriver(driverMap, name) {
   }
   console.log("[OpenF1] No match for:", name, "| Available:", [...driverMap.keys()]);
   // Fallback
-  return { team: F1_TEAMS_FALLBACK[name] || "", headshot: null, teamColor: null, acronym: "", number: null };
+  const fallbackTeam = F1_TEAMS_FALLBACK[name] || "";
+  return { team: fallbackTeam, headshot: null, teamColor: F1_TEAM_COLORS[fallbackTeam] || null, acronym: "", number: null };
 }
 
 function Pts({ children, negative, team }) {
@@ -824,11 +828,12 @@ function LastRaceResults({ currentUser }) {
 }
 
 // ── Season History (picks + team results) ────────────
-function PickHistory({ currentUser }) {
+function PickHistory({ currentUser, driverMap: externalDriverMap }) {
   const [history, setHistory] = useState([]);
   const [seasonStats, setSeasonStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const driverMap = useOpenF1Drivers();
+  const internalDriverMap = useOpenF1Drivers();
+  const driverMap = (externalDriverMap && externalDriverMap.size > 0) ? externalDriverMap : internalDriverMap;
 
   useEffect(() => {
     async function load() {
@@ -1360,7 +1365,7 @@ export default function MyPicks({ currentUser, onNavigate }) {
             </div>
           )}
         </div>
-        <PickHistory currentUser={currentUser} />
+        <PickHistory currentUser={currentUser} driverMap={driverMap} />
       </div>
     );
   }
@@ -1421,7 +1426,7 @@ export default function MyPicks({ currentUser, onNavigate }) {
         </div>
 
         {/* Full Pick History */}
-        <PickHistory currentUser={currentUser} />
+        <PickHistory currentUser={currentUser} driverMap={driverMap} />
       </div>
     );
   }
@@ -1435,7 +1440,7 @@ export default function MyPicks({ currentUser, onNavigate }) {
           <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2 }}>Picks open soon — driver pools haven't been set yet for this race.</p>
         </div>
         <LastRaceResults currentUser={currentUser} />
-        <PickHistory currentUser={currentUser} />
+        <PickHistory currentUser={currentUser} driverMap={driverMap} />
       </div>
     );
   }

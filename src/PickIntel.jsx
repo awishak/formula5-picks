@@ -137,11 +137,11 @@ function SideChip({ side }) {
 function YourPickBadge() {
   return (
     <span style={{
-      fontFamily: FB, fontWeight: 600, fontSize: 8, color: BLUEDARK,
-      background: `${BLUE}15`, border: `1px solid ${BLUE}30`,
-      padding: "2px 6px", borderRadius: 6, whiteSpace: "nowrap",
-      display: "inline-flex", alignItems: "center", gap: 2
-    }}>⭐ your pick</span>
+      fontFamily: FB, fontWeight: 700, fontSize: 10, color: GREEN,
+      background: `${GREEN}15`, border: `1.5px solid ${GREEN}30`,
+      padding: "3px 8px", borderRadius: 8, whiteSpace: "nowrap",
+      display: "inline-flex", alignItems: "center", gap: 3
+    }}>⭐ Your Pick</span>
   );
 }
 
@@ -298,8 +298,8 @@ export default function PickIntel({ currentUser }) {
               return (
                 <div key={pos} style={{ textAlign: "center", width: "calc(20% - 7px)", flexShrink: 0 }}>
                   <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 28, color: bfCounts[pos] ? BLUEDARK : `${BORDER}80`, display: "block" }}>{bfCounts[pos] || 0}</span>
-                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, color: isMyBf ? BLUEDARK : TEXT2 }}>P{pos}</span>
-                  {isMyBf && <span style={{ display: "block", fontSize: 10, marginTop: 2 }}>⭐</span>}
+                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, color: isMyBf ? GREEN : TEXT2 }}>P{pos}</span>
+                  {isMyBf && <span style={{ display: "block", fontFamily: FB, fontWeight: 700, fontSize: 9, color: GREEN, marginTop: 2 }}>⭐ You</span>}
                 </div>
               );
             })}
