@@ -563,22 +563,6 @@ export default function Schedule({ currentUser }) {
                       </div>
                     )}
 
-                    {/* Shared — wash */}
-                    {shared.length > 0 && (
-                      <div>
-                        <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, marginBottom: 6, display: "block" }}>Wash (both teams picked)</span>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                          {shared.map(d => (
-                            <span key={d} style={{
-                              fontFamily: FD, fontWeight: 600, fontSize: 10, color: TEXT2,
-                              background: `${DARK}05`, border: `1px solid ${BORDER}`,
-                              padding: "3px 8px", borderRadius: 6
-                            }}>{ln(d)}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                     {homeOnly.length === 0 && awayOnly.length === 0 && (
                       <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0, textAlign: "center" }}>Both teams picked the exact same drivers!</p>
                     )}
