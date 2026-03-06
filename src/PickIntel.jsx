@@ -199,9 +199,10 @@ export default function PickIntel({ currentUser }) {
       (pk.finishing_order || []).forEach(function (d) {
         if (d !== pk.top_pick) midCounts[d] = (midCounts[d] || 0) + 1;
       });
-      if (pk.best_finish != null) {
-        var bfNum = typeof pk.best_finish === "string" ? parseInt(pk.best_finish.replace(/\D/g, ""), 10) : pk.best_finish;
-        if (bfNum >= 1 && bfNum <= 20) bfCounts[bfNum] = (bfCounts[bfNum] || 0) + 1;
+      if (pk.best_finish != null && pk.best_finish !== "") {
+        var bfRaw = String(pk.best_finish);
+        var bfNum = parseInt(bfRaw.replace(/[^0-9]/g, ""), 10);
+        if (!isNaN(bfNum) && bfNum >= 1 && bfNum <= 20) bfCounts[bfNum] = (bfCounts[bfNum] || 0) + 1;
       }
     });
     var topSorted = Object.entries(topCounts).sort(function (a, b) { return b[1] - a[1]; });
@@ -283,7 +284,7 @@ export default function PickIntel({ currentUser }) {
             return (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i < combosFiltered.length - 1 ? "1px solid " + BORDER + "15" : "none" }}>
                 <span style={{ fontFamily: FB, fontSize: 11, color: TEXT, flex: 1 }}>{entry[0].split(", ").map(function (d) { return lastName(d); }).join(", ")}</span>
-                <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: i === 0 ? GOLD : BLUEDARK, background: i === 0 ? GOLD + "15" : BLUE + "10", padding: "3px 8px", borderRadius: 6, flexShrink: 0 }}>{entry[1]}</span>
+                <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: i === 0 ? GOLD : BLUEDARK, background: i === 0 ? GOLD + "15" : BLUE + "12", padding: "4px 10px", borderRadius: 8, flexShrink: 0 }}>{entry[1]} {entry[1] === 1 ? "pick" : "picks"}</span>
               </div>
             );
           })}
@@ -297,7 +298,7 @@ export default function PickIntel({ currentUser }) {
               <div key={i} style={{ padding: "8px 0", borderBottom: i < consensus.length - 1 ? "1px solid " + BORDER + "15" : "none" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                   <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: i === 0 ? GOLD : TEXT2 }}>{i === 0 ? "MOST POPULAR" : "#" + (i + 1)}</span>
-                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: BLUEDARK }}>{entry[1]}x</span>
+                  <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: BLUEDARK, background: BLUE + "12", padding: "4px 10px", borderRadius: 8 }}>{entry[1]} {entry[1] === 1 ? "pick" : "picks"}</span>
                 </div>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                   {entry[0].split(" > ").map(function (d, j) {
@@ -457,7 +458,7 @@ export default function PickIntel({ currentUser }) {
                     <td style={Object.assign({}, tdStyle, { color: TEXT2 })}>{pk.fo[2] ? lastName(pk.fo[2]) : "\u2014"}</td>
                     <td style={Object.assign({}, tdStyle, { color: TEXT2 })}>{pk.fo[3] ? lastName(pk.fo[3]) : "\u2014"}</td>
                     <td style={Object.assign({}, tdStyle, { color: TEXT2 })}>{pk.fo[4] ? lastName(pk.fo[4]) : "\u2014"}</td>
-                    <td style={Object.assign({}, tdStyle, { fontFamily: FD, fontWeight: 700, color: BLUEDARK })}>{pk.best_finish != null ? (String(pk.best_finish).startsWith("P") ? pk.best_finish : "P" + pk.best_finish) : "\u2014"}</td>
+                    <td style={Object.assign({}, tdStyle, { fontFamily: FD, fontWeight: 700, color: BLUEDARK })}>{pk.best_finish != null ? (String(pk.best_finish).match(/^\d+$/) ? "P" + pk.best_finish : pk.best_finish) : "\u2014"}</td>
                     <td style={Object.assign({}, tdStyle, { fontFamily: FD, fontWeight: 700, color: BLUEDARK })}>{pk.pit_guess != null ? Number(pk.pit_guess).toFixed(1) : "\u2014"}</td>
                   </tr>
                 );
