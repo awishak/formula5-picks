@@ -821,6 +821,7 @@ function PickHistory({ currentUser }) {
   const [history, setHistory] = useState([]);
   const [seasonStats, setSeasonStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const driverMap = useOpenF1Drivers();
 
   useEffect(() => {
     async function load() {
@@ -1057,17 +1058,40 @@ function PickHistory({ currentUser }) {
             )}
 
             {/* Drivers */}
-            <div style={{ display: "flex", gap: 3, marginBottom: 6, overflow: "auto" }}>
+            <div style={{ display: "flex", gap: 4, marginBottom: 8, overflow: "auto" }}>
               {(h.pick.finishing_order || []).map((d, i) => {
                 const isTop = d === h.pick.top_pick;
                 const pts = h.driverPts[d];
                 const pc = pts === undefined ? TEXT2 : pts < 0 ? RED : pts > 0 ? ORANGE : TEXT2;
+                const info = findDriver(driverMap, d);
+                const tc = info.teamColor || BLUE;
+                const parts = d.split(" ");
+                const first = parts[0], last = parts.slice(1).join(" ");
                 return (
-                  <div key={d} style={{ flex: "1 1 0", minWidth: 48, textAlign: "center", background: isTop ? `${BLUEDARK}08` : `${DARK}02`, borderRadius: 6, padding: "4px 3px", border: isTop ? `1px solid ${BLUEDARK}25` : "1px solid transparent" }}>
-                    {isTop && <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: BLUEDARK, textTransform: "uppercase", margin: "0 0 1px" }}>TOP</p>}
-                    <p style={{ fontFamily: FB, fontWeight: 600, fontSize: 9, color: TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ln(d)}</p>
+                  <div key={d} style={{
+                    flex: "1 1 0", minWidth: 58, textAlign: "center",
+                    background: isTop ? `${BLUEDARK}08` : `${DARK}02`,
+                    borderRadius: 10, padding: "6px 4px 8px",
+                    border: isTop ? `1.5px solid ${BLUEDARK}30` : `1px solid ${BORDER}30`
+                  }}>
+                    {isTop && <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: BLUEDARK, textTransform: "uppercase", margin: "0 0 2px", letterSpacing: "0.08em" }}>TOP</p>}
+                    <div style={{
+                      width: 32, height: 32, borderRadius: "50%", overflow: "hidden",
+                      background: info.headshot ? `${tc}18` : `${BORDER}40`,
+                      margin: "0 auto 3px", display: "flex", alignItems: "center", justifyContent: "center",
+                      border: `2px solid ${tc}60`
+                    }}>
+                      {info.headshot ? (
+                        <img src={info.headshot} alt={d} style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={(e) => { e.target.style.display = "none"; }} />
+                      ) : (
+                        <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2 }}>{first[0]}{(last[0] || "")}</span>
+                      )}
+                    </div>
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{last}</p>
+                    {info.team && <p style={{ fontFamily: FB, fontSize: 7, color: tc, margin: "1px 0 0" }}>{info.team}</p>}
                     {pts !== undefined && (
-                      <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: pc, background: `${pc}12`, padding: "0 4px", borderRadius: 3, display: "inline-block", marginTop: 2 }}>
+                      <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: pc, background: `${pc}12`, padding: "1px 5px", borderRadius: 4, display: "inline-block", marginTop: 3 }}>
                         {pts > 0 ? `+${pts}` : pts}
                       </span>
                     )}
@@ -1076,17 +1100,17 @@ function PickHistory({ currentUser }) {
               })}
             </div>
             {/* Bonuses */}
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 10 }}>
-              <span style={{ padding: "2px 6px", borderRadius: 4, background: `${DARK}04`, fontFamily: FB, color: TEXT2 }}>
-                Best P{h.pick.best_finish}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 12 }}>
+              <span style={{ padding: "4px 8px", borderRadius: 6, background: `${DARK}04`, fontFamily: FB, fontSize: 12, color: TEXT2 }}>
+                Best {String(h.pick.best_finish || "").startsWith("P") ? h.pick.best_finish : `P${h.pick.best_finish}`}
                 {h.score && <span style={{ color: h.score.best_finish_bonus > 0 ? ORANGE : TEXT2, marginLeft: 3 }}>{h.score.best_finish_bonus > 0 ? "✓+3" : "✗"}</span>}
               </span>
-              <span style={{ padding: "2px 6px", borderRadius: 4, background: `${DARK}04`, fontFamily: FB, color: TEXT2 }}>
+              <span style={{ padding: "4px 8px", borderRadius: 6, background: `${DARK}04`, fontFamily: FB, fontSize: 12, color: TEXT2 }}>
                 Pit Stop {Number(h.pick.pit_guess).toFixed(1)}s
                 {h.score && <span style={{ color: h.score.pit_individual_pts > 0 ? ORANGE : TEXT2, marginLeft: 3 }}>+{h.score.pit_individual_pts || 0}</span>}
               </span>
-              {h.score && <span style={{ padding: "2px 6px", borderRadius: 4, background: h.score.order_bonus > 0 ? `${ORANGE}10` : `${DARK}04`, fontFamily: FB, color: h.score.order_bonus > 0 ? ORANGE : TEXT2 }}>{h.score.order_bonus > 0 ? "Order ✓+6" : "Order ✗"}</span>}
-              {h.score?.weekly_bonus_pts > 0 && <span style={{ padding: "2px 6px", borderRadius: 4, background: `${GREEN}10`, fontFamily: FB, color: GREEN }}>Top 10 +{h.score.weekly_bonus_pts}</span>}
+              {h.score && <span style={{ padding: "4px 8px", borderRadius: 6, background: h.score.order_bonus > 0 ? `${ORANGE}10` : `${DARK}04`, fontFamily: FB, fontSize: 12, color: h.score.order_bonus > 0 ? ORANGE : TEXT2 }}>{h.score.order_bonus > 0 ? "Order ✓+6" : "Order ✗"}</span>}
+              {h.score?.weekly_bonus_pts > 0 && <span style={{ padding: "4px 8px", borderRadius: 6, background: `${GREEN}10`, fontFamily: FB, fontSize: 12, color: GREEN }}>Top 10 +{h.score.weekly_bonus_pts}</span>}
             </div>
           </div>
         ))}
