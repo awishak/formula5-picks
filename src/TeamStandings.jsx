@@ -57,6 +57,7 @@ export default function TeamStandings({ currentUser }) {
   const [allSchedule, setAllSchedule] = useState([]);
   const [allRaces, setAllRaces] = useState([]);
   const [promoOpen, setPromoOpen] = useState(false);
+  const [scoringOpen, setScoringOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [playerScoreTotals, setPlayerScoreTotals] = useState({});
   const secondDivRef = useRef(null);
@@ -285,7 +286,7 @@ export default function TeamStandings({ currentUser }) {
                   display: "flex", alignItems: "center", gap: 0, cursor: "pointer", textAlign: "left",
                   ...myTeamStyle
                 }}>
-                  <div style={{ minWidth: 24, textAlign: "center", fontFamily: FD, fontWeight: 900, fontSize: 13, color: TEXT2 }}>{rank}</div>
+                  <div style={{ minWidth: 24, textAlign: "center", fontFamily: FD, fontWeight: 900, fontSize: 16, color: TEXT2 }}>{rank}</div>
                   <div style={{ marginLeft: 8 }}><TeamLogo name={t.name} size={44} division={t.division} logoUrl={t.logo_url} /></div>
                   <div style={{ flex: 1, minWidth: 0, marginLeft: 8 }}>
                     <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15, color: t.isMyTeam ? BLUEDARK : TEXT, margin: 0 }}>
@@ -450,20 +451,51 @@ export default function TeamStandings({ currentUser }) {
       }}>↓ Jump to Second Division</button>
 
       {/* Promo/Rel dropdown */}
-      <div style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 10 }}>
         <button onClick={() => setPromoOpen(!promoOpen)} style={{
-          width: "100%", padding: "12px 14px", borderRadius: 12, border: `1px solid ${BORDER}`,
+          width: "100%", padding: "12px 14px", borderRadius: promoOpen ? "12px 12px 0 0" : 12, border: `1px solid ${BORDER}`,
           background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, textAlign: "left"
         }}>
-          <span style={{ fontSize: 14 }}>🔄</span>
-          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: TEXT, textTransform: "uppercase", letterSpacing: "0.08em", flex: 1 }}>Promotion & Relegation</span>
+          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: TEXT, textTransform: "uppercase", letterSpacing: "0.08em", flex: 1 }}>Understanding Promotion & Relegation</span>
           <span style={{ fontSize: 11, color: TEXT2, transform: promoOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
         </button>
         {promoOpen && (
           <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderTop: "none", borderRadius: "0 0 12px 12px", padding: "12px 14px", marginTop: -2, fontFamily: FB, fontSize: 12, color: TEXT2, lineHeight: 1.55 }}>
-            <p style={{ margin: "0 0 4px" }}>After 11 races, the <strong style={{ color: TEXT }}>bottom 3 teams</strong> (10th–12th) in Championship are <strong style={{ color: RED }}>relegated</strong> to Second Division. The <strong style={{ color: TEXT }}>top 3 teams</strong> in Second Division are <strong style={{ color: GREEN }}>promoted</strong> to Championship.</p>
-            <p style={{ margin: "0 0 4px" }}><strong style={{ color: TEXT }}>8th and 9th</strong> in Championship face a <strong style={{ color: BLUEDARK }}>one-race playoff</strong> to keep their spot.</p>
-            <p style={{ margin: 0 }}><strong style={{ color: TEXT }}>4th and 5th</strong> in Second Division face a <strong style={{ color: BLUEDARK }}>one-race playoff</strong> for the chance to move up.</p>
+            <p style={{ margin: "0 0 8px" }}>Your team's first goal is to be in the <strong style={{ color: GOLD }}>Championship Division</strong> in the second half of the season so you can compete for the <strong style={{ color: TEXT }}>2026 Team Championship</strong>.</p>
+            <p style={{ margin: "0 0 8px" }}>The first half of the season acts as a qualifier for the team championship. <strong style={{ color: TEXT }}>Eight teams</strong> from the Championship Division will qualify, and <strong style={{ color: TEXT }}>four teams</strong> from the Second Division will qualify.</p>
+            <p style={{ margin: "0 0 8px" }}>In other words, the <strong style={{ color: RED }}>bottom four teams</strong> in the Championship Division will be relegated. That's <strong style={{ color: RED }}>10th, 11th, and 12th place</strong> after 11 weeks, as well as the loser of a <strong style={{ color: ORANGE }}>Week 12 playoff</strong> between the 8th and 9th place teams.</p>
+            <p style={{ margin: "0 0 8px" }}>As for the Second Division, the <strong style={{ color: GREEN }}>top three teams</strong> after 11 weeks will qualify for the Championship Division in the second half. And <strong style={{ color: ORANGE }}>4th and 5th place</strong> will have a one-game playoff during Week 12 for the right to move up.</p>
+            <p style={{ margin: 0 }}>After Week 12, teams will be moved and standings will be <strong style={{ color: TEXT }}>reset</strong> — then there will be a <strong style={{ color: BLUEDARK }}>12-week sprint</strong> for the Team Championship.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Team Scoring dropdown */}
+      <div style={{ marginBottom: 20 }}>
+        <button onClick={() => setScoringOpen(!scoringOpen)} style={{
+          width: "100%", padding: "12px 14px", borderRadius: scoringOpen ? "12px 12px 0 0" : 12, border: `1px solid ${BORDER}`,
+          background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, textAlign: "left"
+        }}>
+          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: TEXT, textTransform: "uppercase", letterSpacing: "0.08em", flex: 1 }}>How Team Scoring Works</span>
+          <span style={{ fontSize: 11, color: TEXT2, transform: scoringOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
+        </button>
+        {scoringOpen && (
+          <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderTop: "none", borderRadius: "0 0 12px 12px", padding: "12px 14px", marginTop: -2, fontFamily: FB, fontSize: 12, color: TEXT2, lineHeight: 1.55 }}>
+            <p style={{ margin: "0 0 8px" }}>Each race, teams within a division are ranked by their matchup result. <strong style={{ color: GREEN }}>Winners</strong> are sorted on top by score, then <strong style={{ color: TEXT2 }}>ties</strong>, then <strong style={{ color: RED }}>losers</strong> on the bottom.</p>
+            <p style={{ margin: "0 0 8px" }}>Championship points are awarded based on that ranking, using the <strong style={{ color: TEXT }}>F1 points scale</strong>:</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "8px 0 10px" }}>
+              {TEAM_PTS_TABLE.map((pts, i) => (
+                <div key={i} style={{
+                  display: "flex", alignItems: "center", gap: 4, padding: "4px 8px", borderRadius: 8,
+                  background: i < 3 ? `${GREEN}10` : i < 6 ? `${BLUEDARK}08` : `${RED}08`,
+                  border: `1px solid ${i < 3 ? `${GREEN}25` : i < 6 ? `${BLUEDARK}15` : `${RED}15`}`
+                }}>
+                  <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2 }}>{i + 1}{i === 0 ? "st" : i === 1 ? "nd" : i === 2 ? "rd" : "th"}</span>
+                  <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 12, color: i < 3 ? GREEN : i < 6 ? BLUEDARK : RED }}>{pts}</span>
+                </div>
+              ))}
+            </div>
+            <p style={{ margin: 0 }}>The team with the most championship points at the end of the <strong style={{ color: TEXT }}>second half</strong> (Races 13–24) wins the <strong style={{ color: GOLD }}>Team Championship</strong>.</p>
           </div>
         )}
       </div>
