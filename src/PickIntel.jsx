@@ -27,6 +27,13 @@ const F1_TEAMS_FALLBACK = {
   "Oliver Bearman": "Haas", "Esteban Ocon": "Haas",
 };
 
+const F1_TEAM_COLORS = {
+  "Red Bull": "#3671C6", "McLaren": "#FF8000", "Ferrari": "#E8002D",
+  "Mercedes": "#27F4D2", "Williams": "#64C4FF", "Aston Martin": "#229971",
+  "Alpine": "#0093CC", "Racing Bulls": "#6692FF", "Sauber": "#52E252",
+  "Haas": "#B6BABD",
+};
+
 function useOpenF1Drivers() {
   const [driverMap, setDriverMap] = useState(new Map());
 
@@ -66,7 +73,7 @@ function useOpenF1Drivers() {
         console.warn("OpenF1 fetch failed, using fallback data:", err);
         const map = new Map();
         Object.entries(F1_TEAMS_FALLBACK).forEach(([name, team]) => {
-          map.set(name, { team, headshot: null, teamColor: null, acronym: "", number: null });
+          map.set(name, { team, headshot: null, teamColor: F1_TEAM_COLORS[team] || null, acronym: "", number: null });
         });
         setDriverMap(map);
       }
@@ -79,7 +86,10 @@ function useOpenF1Drivers() {
 }
 
 function findDriver(driverMap, name) {
-  if (!name || driverMap.size === 0) return { team: F1_TEAMS_FALLBACK[name] || "", headshot: null, teamColor: null, acronym: "", number: null };
+  if (!name || driverMap.size === 0) {
+    const team = F1_TEAMS_FALLBACK[name] || "";
+    return { team, headshot: null, teamColor: F1_TEAM_COLORS[team] || null, acronym: "", number: null };
+  }
   if (driverMap.has(name)) return driverMap.get(name);
   const nameParts = name.split(" ");
   const nameLast = nameParts[nameParts.length - 1].toLowerCase();
@@ -95,7 +105,8 @@ function findDriver(driverMap, name) {
     if (nameLower.includes(key.toLowerCase()) || key.toLowerCase().includes(nameLower)) return val;
   }
   console.log("[OpenF1] No match for:", name, "| Available:", [...driverMap.keys()]);
-  return { team: F1_TEAMS_FALLBACK[name] || "", headshot: null, teamColor: null, acronym: "", number: null };
+  const team = F1_TEAMS_FALLBACK[name] || "";
+  return { team, headshot: null, teamColor: F1_TEAM_COLORS[team] || null, acronym: "", number: null };
 }
 // ── END COPY from MyPicks.jsx ───────────────────────────
 
@@ -232,7 +243,7 @@ export default function PickIntel({ currentUser }) {
 
     function Card({ name, count, isMine }) {
       const info = findDriver(driverMap, name);
-      const tc = info.teamColor || BLUE;
+      const tc = info.teamColor || F1_TEAM_COLORS[info.team] || F1_TEAM_COLORS[F1_TEAMS_FALLBACK[name]] || BLUE;
       const parts = name.split(" ");
       const first = parts[0], last = parts.slice(1).join(" ");
       return (

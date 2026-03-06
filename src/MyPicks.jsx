@@ -35,6 +35,13 @@ const F1_TEAMS_FALLBACK = {
   "Oliver Bearman": "Haas", "Esteban Ocon": "Haas",
 };
 
+const F1_TEAM_COLORS = {
+  "Red Bull": "#3671C6", "McLaren": "#FF8000", "Ferrari": "#E8002D",
+  "Mercedes": "#27F4D2", "Williams": "#64C4FF", "Aston Martin": "#229971",
+  "Alpine": "#0093CC", "Racing Bulls": "#6692FF", "Sauber": "#52E252",
+  "Haas": "#B6BABD",
+};
+
 // ── OpenF1 API: fetch driver data (name, team, headshot) ─
 // Returns a Map keyed by full name → { team, headshot, teamColor, acronym, number }
 function useOpenF1Drivers() {
@@ -883,7 +890,7 @@ function PickHistory({ currentUser }) {
             const opp = (teams || []).find(t => t.id === oppId);
             const oppTS = opp ? teamScore(opp, pk.race_id) : 0;
             const won = myTS > oppTS, lost = myTS < oppTS;
-            teamResult = { myScore: myTS, oppScore: oppTS, oppName: opp?.name || "?", won, lost };
+            teamResult = { myScore: myTS, oppScore: oppTS, oppName: opp?.name || "?", won, lost, isOver: matchup.home_team_id === myTeam.id };
             if (won) teamWins++; else if (lost) teamLosses++; else teamTies++;
           }
         }
@@ -1043,17 +1050,24 @@ function PickHistory({ currentUser }) {
             {/* Team matchup result */}
             {h.teamResult && (
               <div style={{
-                display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, marginBottom: 8,
+                display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 8, marginBottom: 8,
                 background: h.teamResult.won ? `${GREEN}08` : h.teamResult.lost ? `${RED}08` : `${DARK}04`,
                 border: `1px solid ${h.teamResult.won ? `${GREEN}20` : h.teamResult.lost ? `${RED}20` : `${BORDER}40`}`
               }}>
-                <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 13, color: h.teamResult.won ? GREEN : h.teamResult.lost ? RED : TEXT2 }}>
+                <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: h.teamResult.won ? GREEN : h.teamResult.lost ? RED : TEXT2 }}>
                   {h.teamResult.won ? "W" : h.teamResult.lost ? "L" : "T"}
                 </span>
-                <span style={{ fontFamily: FB, fontSize: 11, color: TEXT2 }}>
+                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>
                   {h.teamResult.myScore} – {h.teamResult.oppScore}
                 </span>
-                <span style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>vs {h.teamResult.oppName}</span>
+                <span style={{ fontFamily: FB, fontSize: 11, color: TEXT2 }}>vs {h.teamResult.oppName}</span>
+                <span style={{
+                  fontFamily: FD, fontWeight: 800, fontSize: 9, letterSpacing: "0.08em",
+                  color: h.teamResult.isOver ? "#c9a820" : "#7c5cbf",
+                  background: h.teamResult.isOver ? "#c9a82015" : "#7c5cbf15",
+                  border: `1.5px solid ${h.teamResult.isOver ? "#c9a82030" : "#7c5cbf30"}`,
+                  padding: "2px 8px", borderRadius: 20, textTransform: "uppercase", marginLeft: "auto"
+                }}>{h.teamResult.isOver ? "OVER" : "UNDER"}</span>
               </div>
             )}
 
@@ -1064,7 +1078,8 @@ function PickHistory({ currentUser }) {
                 const pts = h.driverPts[d];
                 const pc = pts === undefined ? TEXT2 : pts < 0 ? RED : pts > 0 ? ORANGE : TEXT2;
                 const info = findDriver(driverMap, d);
-                const tc = info.teamColor || BLUE;
+                const teamName = info.team || F1_TEAMS_FALLBACK[d] || "";
+                const tc = info.teamColor || F1_TEAM_COLORS[teamName] || BLUE;
                 const parts = d.split(" ");
                 const first = parts[0], last = parts.slice(1).join(" ");
                 return (
@@ -1089,7 +1104,7 @@ function PickHistory({ currentUser }) {
                       )}
                     </div>
                     <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{last}</p>
-                    {info.team && <p style={{ fontFamily: FB, fontSize: 7, color: tc, margin: "1px 0 0" }}>{info.team}</p>}
+                    {teamName && <p style={{ fontFamily: FB, fontSize: 7, color: tc, margin: "1px 0 0" }}>{teamName}</p>}
                     {pts !== undefined && (
                       <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: pc, background: `${pc}12`, padding: "1px 5px", borderRadius: 4, display: "inline-block", marginTop: 3 }}>
                         {pts > 0 ? `+${pts}` : pts}
@@ -1100,17 +1115,17 @@ function PickHistory({ currentUser }) {
               })}
             </div>
             {/* Bonuses */}
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 12 }}>
-              <span style={{ padding: "4px 8px", borderRadius: 6, background: `${DARK}04`, fontFamily: FB, fontSize: 12, color: TEXT2 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <span style={{ padding: "5px 10px", borderRadius: 8, background: `${DARK}04`, fontFamily: FB, fontSize: 13, fontWeight: 600, color: TEXT2 }}>
                 Best {String(h.pick.best_finish || "").startsWith("P") ? h.pick.best_finish : `P${h.pick.best_finish}`}
-                {h.score && <span style={{ color: h.score.best_finish_bonus > 0 ? ORANGE : TEXT2, marginLeft: 3 }}>{h.score.best_finish_bonus > 0 ? "✓+3" : "✗"}</span>}
+                {h.score && <span style={{ color: h.score.best_finish_bonus > 0 ? ORANGE : TEXT2, marginLeft: 4 }}>{h.score.best_finish_bonus > 0 ? "✓+3" : "✗"}</span>}
               </span>
-              <span style={{ padding: "4px 8px", borderRadius: 6, background: `${DARK}04`, fontFamily: FB, fontSize: 12, color: TEXT2 }}>
-                Pit Stop {Number(h.pick.pit_guess).toFixed(1)}s
-                {h.score && <span style={{ color: h.score.pit_individual_pts > 0 ? ORANGE : TEXT2, marginLeft: 3 }}>+{h.score.pit_individual_pts || 0}</span>}
+              <span style={{ padding: "5px 10px", borderRadius: 8, background: `${DARK}04`, fontFamily: FB, fontSize: 13, fontWeight: 600, color: TEXT2 }}>
+                Pit {Number(h.pick.pit_guess).toFixed(1)}s
+                {h.score && <span style={{ color: h.score.pit_individual_pts > 0 ? ORANGE : TEXT2, marginLeft: 4 }}>+{h.score.pit_individual_pts || 0}</span>}
               </span>
-              {h.score && <span style={{ padding: "4px 8px", borderRadius: 6, background: h.score.order_bonus > 0 ? `${ORANGE}10` : `${DARK}04`, fontFamily: FB, fontSize: 12, color: h.score.order_bonus > 0 ? ORANGE : TEXT2 }}>{h.score.order_bonus > 0 ? "Order ✓+6" : "Order ✗"}</span>}
-              {h.score?.weekly_bonus_pts > 0 && <span style={{ padding: "4px 8px", borderRadius: 6, background: `${GREEN}10`, fontFamily: FB, fontSize: 12, color: GREEN }}>Top 10 +{h.score.weekly_bonus_pts}</span>}
+              {h.score && <span style={{ padding: "5px 10px", borderRadius: 8, background: h.score.order_bonus > 0 ? `${ORANGE}10` : `${DARK}04`, fontFamily: FB, fontSize: 13, fontWeight: 600, color: h.score.order_bonus > 0 ? ORANGE : TEXT2 }}>{h.score.order_bonus > 0 ? "Order ✓+6" : "Order ✗"}</span>}
+              {h.score?.weekly_bonus_pts > 0 && <span style={{ padding: "5px 10px", borderRadius: 8, background: `${GREEN}10`, fontFamily: FB, fontSize: 13, fontWeight: 600, color: GREEN }}>Top 10 +{h.score.weekly_bonus_pts}</span>}
             </div>
           </div>
         ))}
