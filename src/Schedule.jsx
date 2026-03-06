@@ -319,9 +319,9 @@ export default function Schedule({ currentUser }) {
                 {team.name}
               </p>
             </div>
-            {/* Over/Under chip — show in States 1, 2, and 3 team rows (not 2.5, which has the big center divider) */}
+            {/* Over/Under chip — always show */}
             <div style={{ marginTop: 4 }}>
-              {!isState25 && overUnderChip(isOver, "normal")}
+              {overUnderChip(isOver, "normal")}
             </div>
           </div>
 
@@ -443,11 +443,11 @@ export default function Schedule({ currentUser }) {
         }}>
           {/* Gold (Over) portion */}
           <div style={{
-            height: `${goldPct}%`, background: `${GOLD}25`,
+            height: `${goldPct}%`, background: `${GOLD}40`,
             display: "flex", flexDirection: "column", alignItems: "center",
             justifyContent: "space-between", padding: "6px 0 0"
           }}>
-            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 8, color: GOLD, letterSpacing: "0.04em" }}>4.0</span>
+            <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: GOLD }}>4.0</span>
           </div>
           {/* Line number at the split */}
           <div style={{
@@ -456,18 +456,18 @@ export default function Schedule({ currentUser }) {
           }}>
             <span style={{
               fontFamily: FD, fontWeight: 900, fontSize: 11, color: "#fff",
-              background: `linear-gradient(135deg, ${GOLD}, #7c5cbf)`,
+              background: "#6dc0eb",
               padding: "2px 5px", borderRadius: 6, lineHeight: 1.2,
-              boxShadow: "0 1px 3px rgba(0,0,0,0.2)"
+              boxShadow: "0 1px 3px rgba(0,0,0,0.25)"
             }}>{barLine.toFixed(2)}</span>
           </div>
           {/* Purple (Under) portion */}
           <div style={{
-            height: `${100 - goldPct}%`, background: "#7c5cbf25",
+            height: `${100 - goldPct}%`, background: "#7c5cbf50",
             display: "flex", flexDirection: "column", alignItems: "center",
             justifyContent: "flex-end", padding: "0 0 6px"
           }}>
-            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 8, color: "#7c5cbf", letterSpacing: "0.04em" }}>1.5</span>
+            <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: "#5a3d99" }}>1.5</span>
           </div>
         </div>
 
