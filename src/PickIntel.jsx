@@ -123,7 +123,7 @@ export default function PickIntel({ currentUser }) {
   useEffect(function () {
     async function load() {
       var results = await Promise.all([
-        supabase.from("races").select("*").eq("season", 2026).order("round"),
+        supabase.from("races").select("*").order("round"),
         supabase.from("players").select("id, name"),
         supabase.from("picks").select("*"),
         supabase.from("teams").select("*"),
@@ -142,9 +142,24 @@ export default function PickIntel({ currentUser }) {
 
       var isA = currentUser === "Andrew Ishak";
       var now = new Date();
+
+      // Find which rounds have picks
+      var roundsWithPicks = new Set();
+      picksData.forEach(function (pk) { roundsWithPicks.add(pk.race_id); });
+      var raceIdToRound = {};
+      racesData.forEach(function (r) { raceIdToRound[r.id] = r.round; });
+
+      // Default to the latest round that has picks and is accessible
       var available = racesData.filter(function (r) {
-        return isA || (r.pick_deadline && new Date(r.pick_deadline) <= now);
+        return (isA || (r.pick_deadline && new Date(r.pick_deadline) <= now)) && roundsWithPicks.has(r.id);
       }).sort(function (a, b) { return b.round - a.round; });
+
+      // Fallback: latest accessible round even without picks
+      if (available.length === 0) {
+        available = racesData.filter(function (r) {
+          return isA || (r.pick_deadline && new Date(r.pick_deadline) <= now);
+        }).sort(function (a, b) { return b.round - a.round; });
+      }
 
       if (available.length > 0) setActiveRound(available[0].round);
       else if (racesData.length > 0) setActiveRound(racesData[0].round);
@@ -160,6 +175,10 @@ export default function PickIntel({ currentUser }) {
   var playerMap = {};
   players.forEach(function (p) { playerMap[p.id] = p.name; });
   var totalPickers = racePicks.length;
+
+  // Track which races have picks
+  var raceIdsWithPicks = new Set();
+  picks.forEach(function (pk) { raceIdsWithPicks.add(pk.race_id); });
 
   // Over/Under map
   var playerSideMap = {};
@@ -223,7 +242,7 @@ export default function PickIntel({ currentUser }) {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (pos) {
               return (
-                <div key={pos} style={{ textAlign: "center", minWidth: 36, flex: "1 1 36px" }}>
+                <div key={pos} style={{ textAlign: "center", width: "calc(20% - 7px)", flexShrink: 0 }}>
                   <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 20, color: bfCounts[pos] ? BLUEDARK : BORDER + "80", display: "block" }}>{bfCounts[pos] || 0}</span>
                   <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2 }}>P{pos}</span>
                 </div>
@@ -469,17 +488,24 @@ export default function PickIntel({ currentUser }) {
         {races.map(function (r) {
           var dl = r.pick_deadline ? new Date(r.pick_deadline) : null;
           var locked = isAdmin || (dl && new Date() >= dl);
+          var hasPicks = raceIdsWithPicks.has(r.id);
           return (
             <button key={r.round} onClick={function () { if (locked) setActiveRound(r.round); }} style={{
               flexShrink: 0, width: 36, height: 36, borderRadius: "50%",
-              border: "1px solid " + (activeRound === r.round ? DARK : locked ? BORDER : BORDER + "50"),
+              border: "1px solid " + (activeRound === r.round ? DARK : locked && hasPicks ? BORDER : BORDER + "50"),
               background: activeRound === r.round ? DARK : "transparent",
-              color: activeRound === r.round ? "#fff" : locked ? TEXT2 : BORDER,
+              color: activeRound === r.round ? "#fff" : locked && hasPicks ? TEXT2 : BORDER,
               fontFamily: FD, fontWeight: 700, fontSize: 13,
               cursor: locked ? "pointer" : "default",
               display: "flex", alignItems: "center", justifyContent: "center",
-              opacity: locked ? 1 : 0.4,
-            }}>{r.round}</button>
+              opacity: locked && hasPicks ? 1 : locked ? 0.5 : 0.3,
+              position: "relative",
+            }}>
+              {r.round}
+              {hasPicks && activeRound !== r.round && (
+                <span style={{ position: "absolute", bottom: 2, width: 4, height: 4, borderRadius: "50%", background: BLUEDARK }} />
+              )}
+            </button>
           );
         })}
       </div>
