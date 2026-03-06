@@ -207,8 +207,7 @@ export default function PickIntel({ currentUser }) {
       var parts = name.split(" ");
       var first = parts[0], last = parts.slice(1).join(" ");
       return (
-        <div style={{ width: "calc(33.33% - 6px)", padding: "10px 6px 12px", borderRadius: 12, border: "2px solid " + tc + (isMine ? "" : "40"), background: tc + (isMine ? "14" : "08"), textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, position: "relative" }}>
-          {isMine && <div style={{ marginBottom: 2 }}><YourPickBadge /></div>}
+        <div style={{ width: "calc(33.33% - 6px)", padding: "10px 6px 12px", borderRadius: 12, border: "2px solid " + tc + "40", background: tc + "08", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
           <div style={{ width: 44, height: 44, borderRadius: "50%", overflow: "hidden", background: info.headshot ? tc + "18" : BORDER + "40", marginBottom: 3, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid " + tc + "60" }}>
             {info.headshot ? (
               <img src={info.headshot} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={function (e) { e.target.style.display = "none"; }} />
@@ -221,6 +220,7 @@ export default function PickIntel({ currentUser }) {
           {info.team && <span style={{ fontFamily: FB, fontWeight: 500, fontSize: 9, color: tc, background: tc + "12", padding: "1px 6px", borderRadius: 4 }}>{info.team}</span>}
           <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 18, color: BLUEDARK, marginTop: 4 }}>{count}</span>
           <span style={{ fontFamily: FB, fontSize: 9, color: TEXT2 }}>{totalPickers > 0 ? Math.round((count / totalPickers) * 100) : 0}% owned</span>
+          {isMine && <div style={{ marginTop: 4 }}><YourPickBadge /></div>}
         </div>
       );
     }
