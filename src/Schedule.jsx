@@ -481,6 +481,25 @@ export default function Schedule({ currentUser }) {
         </div>
       )}
 
+      {/* Pit stop question — The Needle */}
+      {currentRace?.pit_stop_question && (
+        <div style={{
+          background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 14,
+          padding: "14px 16px", marginBottom: 16
+        }}>
+          <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, margin: "0 0 8px" }}>
+            This week, the over/under is on:
+          </p>
+          <span style={{
+            fontFamily: FD, fontWeight: 800, fontSize: 14, color: BLUEDARK,
+            background: `${BLUE}12`, border: `1.5px solid ${BLUE}30`,
+            padding: "6px 14px", borderRadius: 10, display: "inline-block"
+          }}>
+            ⏱️ {currentRace.pit_stop_question}
+          </span>
+        </div>
+      )}
+
       {/* Outline legend — show for scored races */}
       {raceHasScores && (
         <div style={{ display: "flex", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
