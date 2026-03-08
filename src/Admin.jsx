@@ -148,6 +148,9 @@ export default function Admin() {
         `https://api.openf1.org/v1/sessions?year=${year}&session_name=Race`
       );
       const sessions = await sessionsResp.json();
+      if (!Array.isArray(sessions) || sessions.length === 0) {
+        throw new Error(`No ${year} race sessions found on OpenF1. The season may not have started yet, or try changing the year.`);
+      }
 
       // Match session by date — find the Race session closest to our race_date
       let bestSession = null;
@@ -175,7 +178,7 @@ export default function Admin() {
         `https://api.openf1.org/v1/position?session_key=${sessionKey}`
       );
       const positions = await posResp.json();
-      if (!Array.isArray(positions)) throw new Error("Positions API returned unexpected data: " + JSON.stringify(positions).slice(0, 200));
+      if (!Array.isArray(positions) || positions.length === 0) throw new Error("Positions API returned no data. The race may not have finished yet.");
 
       // Get the last position entry for each driver (= final position)
       const lastPos = {};
@@ -222,7 +225,15 @@ export default function Admin() {
         `https://api.openf1.org/v1/pit?session_key=${sessionKey}`
       );
       const pitStopsRaw = await pitResp.json();
-      const pitStops = Array.isArray(pitStopsRaw) ? pitStopsRaw : [];
+      const pitStopsAll = Array.isArray(pitStopsRaw) ? pitStopsRaw : [];
+      // Normalize: OpenF1 uses stop_duration or pit_duration depending on version
+      const pitStops = pitStopsAll.map(p => ({
+        ...p,
+        stop_duration: p.stop_duration ?? p.pit_duration ?? null
+      })).filter(p => p.stop_duration != null);
+      if (pitStops.length === 0) {
+        setFetchStatus(prev => prev + " (no pit stop data available)");
+      }
 
       // Find the pit stop matching the race's pit_stop_question
       // Default: use the fastest stop duration, or the first Ferrari stop, etc.
