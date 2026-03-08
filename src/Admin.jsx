@@ -403,9 +403,11 @@ export default function Admin() {
 
       function getPos(driverName) {
         const key = driverName?.toLowerCase();
-        if (!key) return 99;
+        if (!key) return -1;
         if (positionMap[key] === -1) return -1;
-        return positionMap[key] || 99;
+        // If not in finish order at all, treat as DNF
+        if (positionMap[key] === undefined) return -1;
+        return positionMap[key];
       }
 
       function getPts(driverName) {
@@ -1372,8 +1374,12 @@ export default function Admin() {
                         </td>
                       );
                     })}
-                    <td style={{ ...tdStyle, color: s.orderBonus > 0 ? ORANGE : TEXT2, fontFamily: FD, fontWeight: 700 }}>
-                      {s.orderBonus > 0 ? "✓ +6" : "✗"}
+                    <td style={{ ...tdStyle, fontFamily: FD, fontWeight: 700 }}>
+                      {s.noPick ? "·" : (
+                        <span>
+                          <span style={{ color: s.orderBonus > 0 ? ORANGE : RED, fontWeight: 800 }}>{s.orderBonus > 0 ? "✓ +6" : "✗"}</span>
+                        </span>
+                      )}
                     </td>
                     <td style={{ ...tdStyle, fontFamily: FD, fontWeight: 700 }}>
                       {s.noPick ? "·" : (
