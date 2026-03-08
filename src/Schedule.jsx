@@ -500,8 +500,8 @@ export default function Schedule({ currentUser }) {
           <div style={{ height: 1, background: BORDER, margin: "0 12px" }} />
           {teamRow(awayTeam, false, awayP1, awayP2, awayBoxBox, awayTotal, awayWon)}
 
-          {/* Rooting Guide — only after deadline */}
-          {picksLocked && homeTeam && awayTeam && (() => {
+          {/* Rooting Guide — only after deadline, not when scored */}
+          {picksLocked && !isState3 && homeTeam && awayTeam && (() => {
             const isOpen = expandedRooting === m.id;
             const homeP1Pick = pickMap[`${homeTeam.player1_id}_${raceId}`];
             const homeP2Pick = pickMap[`${homeTeam.player2_id}_${raceId}`];
@@ -598,59 +598,35 @@ export default function Schedule({ currentUser }) {
           {isState3 && homeTeam && awayTeam && (() => {
             const isOpen = expandedBoxScore === m.id;
             const sn = (name) => { if (!name) return "?"; const p = name.split(" "); return p.length < 2 ? name : `${p[0][0]}. ${p.slice(1).join(" ")}`; };
-            const ln = (name) => name ? name.split(" ").pop() : "?";
+            const code = (name) => name ? name.split(" ").pop().slice(0, 3).toUpperCase() : "?";
 
-            function playerBox(pid) {
+            function playerLine(pid) {
               const name = playerMap[pid] || "?";
               const s = scoreMap[sk(pid, raceId)];
               const pick = pickMap[`${pid}_${raceId}`];
               if (!s) return null;
               const driverPts = s.driver_pts ? (typeof s.driver_pts === "string" ? JSON.parse(s.driver_pts) : s.driver_pts) : {};
-              const entries = Object.entries(driverPts);
-              const topEntry = entries.find(([d]) => d === pick?.top_pick);
-              const midEntries = entries.filter(([d]) => d !== pick?.top_pick).sort((a, b) => b[1] - a[1]);
-              const allDriverEntries = topEntry ? [topEntry, ...midEntries] : midEntries;
-              const indivTotal = (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) + (s.pit_individual_pts || 0) + (s.weekly_bonus_pts || 0);
               const teamContrib = (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0);
               const bestFinishDisplay = pick?.best_finish ? (String(pick.best_finish).startsWith("P") ? pick.best_finish : `P${pick.best_finish}`) : "?";
 
               return (
-                <div style={{ padding: "10px 12px", borderRadius: 10, background: `${DARK}03`, border: `1px solid ${BORDER}30`, marginBottom: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 14, color: TEXT }}>{sn(name)}</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>Team <strong style={{ fontFamily: FD, color: BLUEDARK, fontSize: 13 }}>{teamContrib}</strong></span>
-                      <span style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>Indiv <strong style={{ fontFamily: FD, color: DARK, fontSize: 13 }}>{indivTotal}</strong></span>
-                    </div>
+                <div style={{ padding: "6px 0", borderBottom: `1px solid ${BORDER}15` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                    <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>{sn(name)}</span>
+                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BLUEDARK }}>{teamContrib}</span>
                   </div>
-                  <div style={{ display: "flex", gap: 3, marginBottom: 8 }}>
-                    {allDriverEntries.map(([driver, pts]) => {
+                  <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center" }}>
+                    {Object.entries(driverPts).map(([driver, pts]) => {
                       const isTop = driver === pick?.top_pick;
                       const pc = pts < 0 ? RED : pts > 0 ? ORANGE : TEXT2;
                       return (
-                        <div key={driver} style={{ flex: "1 1 0", minWidth: 44, textAlign: "center", background: isTop ? `${BLUEDARK}08` : `${DARK}02`, borderRadius: 6, padding: "4px 2px", border: isTop ? `1px solid ${BLUEDARK}25` : "1px solid transparent" }}>
-                          {isTop && <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: BLUEDARK, textTransform: "uppercase", margin: 0 }}>TOP</p>}
-                          <p style={{ fontFamily: FD, fontWeight: 600, fontSize: 10, color: TEXT, margin: 0 }}>{ln(driver)}</p>
-                          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: pc }}>{pts > 0 ? `+${pts}` : pts}</span>
-                        </div>
+                        <span key={driver} style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: pc, background: isTop ? `${BLUEDARK}10` : `${DARK}04`, padding: "1px 4px", borderRadius: 3, border: isTop ? `1px solid ${BLUEDARK}20` : "none" }}>
+                          {code(driver)} {pts > 0 ? `+${pts}` : pts}
+                        </span>
                       );
                     })}
-                  </div>
-                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                    <span style={{ padding: "3px 7px", borderRadius: 5, background: `${DARK}04`, fontFamily: FB, fontSize: 11, fontWeight: 600, color: TEXT2 }}>
-                      Order {s.order_bonus > 0 ? <span style={{ color: ORANGE }}>✓+6</span> : "✗"}
-                    </span>
-                    <span style={{ padding: "3px 7px", borderRadius: 5, background: `${DARK}04`, fontFamily: FB, fontSize: 11, fontWeight: 600, color: TEXT2 }}>
-                      Best {bestFinishDisplay} {s.best_finish_bonus > 0 ? <span style={{ color: ORANGE }}>✓+3</span> : "✗"}
-                    </span>
-                    <span style={{ padding: "3px 7px", borderRadius: 5, background: `${DARK}04`, fontFamily: FB, fontSize: 11, fontWeight: 600, color: TEXT2 }}>
-                      Pit {pick?.pit_guess ? `${Number(pick.pit_guess).toFixed(1)}s` : "—"} <span style={{ color: s.pit_individual_pts > 0 ? ORANGE : TEXT2 }}>+{s.pit_individual_pts || 0}</span>
-                    </span>
-                    {(s.weekly_bonus_pts || 0) > 0 && (
-                      <span style={{ padding: "3px 7px", borderRadius: 5, background: `${GREEN}08`, fontFamily: FB, fontSize: 11, fontWeight: 600, color: GREEN }}>
-                        Top 10 +{s.weekly_bonus_pts}
-                      </span>
-                    )}
+                    {s.order_bonus > 0 && <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: ORANGE, background: `${ORANGE}10`, padding: "1px 4px", borderRadius: 3 }}>ORD +6</span>}
+                    {s.best_finish_bonus > 0 && <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: ORANGE, background: `${ORANGE}10`, padding: "1px 4px", borderRadius: 3 }}>BF +3</span>}
                   </div>
                 </div>
               );
@@ -659,7 +635,7 @@ export default function Schedule({ currentUser }) {
             return (
               <div>
                 <button onClick={() => setExpandedBoxScore(isOpen ? null : m.id)} style={{
-                  width: "100%", padding: "8px 12px", border: "none", borderTop: `1px solid ${BORDER}30`,
+                  width: "100%", padding: "7px 12px", border: "none", borderTop: `1px solid ${BORDER}30`,
                   background: isOpen ? `${DARK}04` : "transparent",
                   cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6
                 }}>
@@ -669,13 +645,13 @@ export default function Schedule({ currentUser }) {
                   <span style={{ fontSize: 10, color: BLUEDARK }}>{isOpen ? "▲" : "▼"}</span>
                 </button>
                 {isOpen && (
-                  <div style={{ padding: "8px 12px 14px" }}>
-                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: GOLD, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>{homeTeam.name} (Over)</p>
-                    {playerBox(homeTeam.player1_id)}
-                    {playerBox(homeTeam.player2_id)}
-                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: "#5a3d99", textTransform: "uppercase", letterSpacing: "0.06em", margin: "10px 0 6px" }}>{awayTeam.name} (Under)</p>
-                    {playerBox(awayTeam.player1_id)}
-                    {playerBox(awayTeam.player2_id)}
+                  <div style={{ padding: "4px 12px 10px" }}>
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: GOLD, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>{homeTeam.name}</p>
+                    {playerLine(homeTeam.player1_id)}
+                    {playerLine(homeTeam.player2_id)}
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: "#5a3d99", textTransform: "uppercase", letterSpacing: "0.06em", margin: "8px 0 2px" }}>{awayTeam.name}</p>
+                    {playerLine(awayTeam.player1_id)}
+                    {playerLine(awayTeam.player2_id)}
                   </div>
                 )}
               </div>
