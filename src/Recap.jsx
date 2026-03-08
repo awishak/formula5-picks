@@ -34,24 +34,41 @@ export default function Recap() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeRound, setActiveRound] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     async function load() {
-      const [{ data: recapsData }, { data: racesData }, { data: teamsData }] = await Promise.all([
-        supabase.from("recaps").select("*").order("round", { ascending: false }),
-        supabase.from("races").select("id, race_name, round, race_date").order("round"),
-        supabase.from("teams").select("id, name, division, logo_url"),
-      ]);
-      setRecaps(recapsData || []);
-      setRaces(racesData || []);
-      setTeams(teamsData || []);
-      if ((recapsData || []).length > 0) setActiveRound(recapsData[0].round);
+      try {
+        const [{ data: recapsData, error: e1 }, { data: racesData, error: e2 }, { data: teamsData, error: e3 }] = await Promise.all([
+          supabase.from("recaps").select("*").order("round", { ascending: false }),
+          supabase.from("races").select("id, race_name, round, race_date").order("round"),
+          supabase.from("teams").select("id, name, division, logo_url"),
+        ]);
+        if (e1) setLoadError("Recaps table error: " + e1.message);
+        setRecaps(recapsData || []);
+        setRaces(racesData || []);
+        setTeams(teamsData || []);
+        if ((recapsData || []).length > 0) setActiveRound(recapsData[0].round);
+      } catch (e) {
+        console.error("Recap load error:", e);
+        setLoadError(e.message);
+      }
       setLoading(false);
     }
     load();
   }, []);
 
   if (loading) return <div style={{ padding: "60px 20px", textAlign: "center" }}><p style={{ fontFamily: FB, fontSize: 14, color: TEXT2 }}>Loading recaps…</p></div>;
+
+  if (loadError) return (
+    <div style={{ padding: "20px 20px 100px" }}>
+      <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: DARK, textTransform: "uppercase", letterSpacing: "0.03em", margin: "0 0 4px" }}>Race Recaps</p>
+      <div style={{ padding: "20px", background: "#fff", borderRadius: 14, border: `1px solid ${RED}30` }}>
+        <p style={{ fontFamily: FB, fontSize: 13, color: RED, margin: 0 }}>{loadError}</p>
+        <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: "8px 0 0" }}>Make sure the recaps table has been created in Supabase.</p>
+      </div>
+    </div>
+  );
 
   const roundsWithRecaps = new Set(recaps.map(r => r.round));
   const activeRecap = recaps.find(r => r.round === activeRound);
