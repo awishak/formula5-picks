@@ -9,6 +9,7 @@ import PlayerStandings from "./PlayerStandings.jsx";
 import TeamStandings from "./TeamStandings.jsx";
 import Strategy from "./Strategy.jsx";
 import F1Calendar from "./F1Calendar.jsx";
+import Recap from "./Recap.jsx";
 import Players from "./Players.jsx";
 import PracticePicks from "./PracticePicks.jsx";
 import PickIntel from "./PickIntel.jsx";
@@ -145,7 +146,7 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
       try {
         const today = new Date().toISOString().split("T")[0];
         const [{ data: raceData }, { data: latestScore }, { data: playerData }, { data: playersAll }] = await Promise.all([
-          supabase.from("races").select("*").gte("race_date", today).order("race_date", { ascending: true }).limit(1).single(),
+          supabase.from("races").select("*").gte("race_date", today).order("race_date", { ascending: true }).limit(1).maybeSingle(),
           supabase.from("scores").select("calculated_at").order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
           supabase.from("players").select("id, name, photo_url").eq("name", currentUser).maybeSingle(),
           supabase.from("players").select("name, photo_url").order("name")
@@ -166,6 +167,7 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
   const links = [
     { id: "practice", label: "Practice Picks", desc: "Try the pick process — nothing saved", icon: "🏎️" },
     { id: "results", label: "Race Results", desc: "Detailed scoring breakdowns", icon: "📊" },
+    { id: "recap", label: "Race Recaps", desc: "AI-written race day stories", icon: "📝" },
     { id: "rules", label: "Rules", desc: "Complete scoring & format guide", icon: "📋" },
     { id: "strategy", label: "Strategy", desc: "Pit stop & BOX BOX tactics", icon: "🎯" },
     { id: "players", label: "Players", desc: "All players & team rosters", icon: "🏅" },
@@ -319,11 +321,11 @@ function MyPicksPage({ currentUser, onNavigate }) {
     async function check() {
       try {
         const today = new Date().toISOString().split("T")[0];
-        const { data: raceData } = await supabase.from("races").select("*").gte("race_date", today).order("race_date", { ascending: true }).limit(1).single();
+        const { data: raceData } = await supabase.from("races").select("*").gte("race_date", today).order("race_date", { ascending: true }).limit(1).maybeSingle();
         if (raceData) setNextRace(raceData);
         if (raceData?.pick_deadline && new Date() >= new Date(raceData.pick_deadline)) setPastDeadline(true);
         if (raceData && currentUser) {
-          const { data: player } = await supabase.from("players").select("id").eq("name", currentUser).single();
+          const { data: player } = await supabase.from("players").select("id").eq("name", currentUser).maybeSingle();
           if (player) { const { data: existing } = await supabase.from("picks").select("id").eq("player_id", player.id).eq("race_id", raceData.id).maybeSingle(); if (existing) setHasSubmitted(true); }
         }
       } catch (e) { /* silent */ }
@@ -441,7 +443,7 @@ function WelcomeScreen({ onSelect }) {
           .order("name", { ascending: true });
         if (!error && data) setPlayers(data);
         else setPlayers(ALL_PLAYERS.map(n => ({ name: n, photo_url: null })));
-      } catch {
+      } catch (e) {
         setPlayers(ALL_PLAYERS.map(n => ({ name: n, photo_url: null })));
       }
       setLoadingPlayers(false);
@@ -598,13 +600,13 @@ export default function App() {
     async function checkPicks() {
       try {
         const today = new Date().toISOString().split("T")[0];
-        const { data: race } = await supabase.from("races").select("id").gte("race_date", today).order("race_date", { ascending: true }).limit(1).single();
+        const { data: race } = await supabase.from("races").select("id").gte("race_date", today).order("race_date", { ascending: true }).limit(1).maybeSingle();
         if (!race) return;
-        const { data: player } = await supabase.from("players").select("id").eq("name", currentUser).single();
+        const { data: player } = await supabase.from("players").select("id").eq("name", currentUser).maybeSingle();
         if (!player) return;
         const { data: existing } = await supabase.from("picks").select("id").eq("player_id", player.id).eq("race_id", race.id).maybeSingle();
         setHasSubmittedPicks(!!existing);
-      } catch { /* silent */ }
+      } catch (e) { /* silent */ }
     }
     checkPicks();
   }, [currentUser, activePage]);
@@ -643,6 +645,7 @@ export default function App() {
         {activePage === "players" && <Players currentUser={currentUser} />}
         {activePage === "practice" && <PracticePicks />}
         {activePage === "season-preview" && <SeasonPreview />}
+        {activePage === "recap" && <Recap />}
       </div>
       <BottomNav active={activePage} onChange={setActivePage} hasSubmittedPicks={hasSubmittedPicks} />
     </>
