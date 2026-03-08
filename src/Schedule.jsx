@@ -607,13 +607,16 @@ export default function Schedule({ currentUser }) {
               if (!s) return null;
               const driverPts = s.driver_pts ? (typeof s.driver_pts === "string" ? JSON.parse(s.driver_pts) : s.driver_pts) : {};
               const teamContrib = (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0);
-              const bestFinishDisplay = pick?.best_finish ? (String(pick.best_finish).startsWith("P") ? pick.best_finish : `P${pick.best_finish}`) : "?";
+              const indivTotal = teamContrib + (s.pit_individual_pts || 0) + (s.weekly_bonus_pts || 0);
 
               return (
                 <div style={{ padding: "6px 0", borderBottom: `1px solid ${BORDER}15` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
                     <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>{sn(name)}</span>
-                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BLUEDARK }}>{teamContrib}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontFamily: FB, fontSize: 9, color: TEXT2 }}>Team <strong style={{ fontFamily: FD, color: BLUEDARK, fontSize: 12 }}>{teamContrib}</strong></span>
+                      <span style={{ fontFamily: FB, fontSize: 9, color: TEXT2 }}>Indiv <strong style={{ fontFamily: FD, color: DARK, fontSize: 12 }}>{indivTotal}</strong></span>
+                    </div>
                   </div>
                   <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center" }}>
                     {Object.entries(driverPts).map(([driver, pts]) => {
