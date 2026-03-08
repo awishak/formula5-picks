@@ -190,16 +190,25 @@ export default function Admin() {
       const sorted = Object.entries(lastPos)
         .sort((a, b) => a[1] - b[1]);
 
-      // Step 3: Get race control messages to find DNFs/retirements
-      setFetchStatus("Checking for DNFs and retirements...");
+      // Step 3: Get race control messages to find DNFs/retirements/DQ/DNS
+      setFetchStatus("Checking for DNFs, DQs, and DNS...");
       const rcResp = await fetch(
-        `https://api.openf1.org/v1/race_control?session_key=${sessionKey}&category=Retirement`
+        `https://api.openf1.org/v1/race_control?session_key=${sessionKey}`
       );
       const rcMessages = await rcResp.json();
       const dnfDriverNumbers = new Set();
       if (Array.isArray(rcMessages)) {
         rcMessages.forEach(msg => {
-          if (msg.driver_number) dnfDriverNumbers.add(msg.driver_number);
+          if (!msg.driver_number) return;
+          const cat = (msg.category || "").toLowerCase();
+          const msgText = (msg.message || "").toLowerCase();
+          // Retirement, disqualification, DNS, stopped, out of race
+          if (cat === "retirement" || cat === "disqualification" ||
+              msgText.includes("retired") || msgText.includes("disqualified") ||
+              msgText.includes("did not start") || msgText.includes("dns") ||
+              msgText.includes("stopped") || msgText.includes("out of the race")) {
+            dnfDriverNumbers.add(msg.driver_number);
+          }
         });
       }
 
@@ -226,11 +235,8 @@ export default function Admin() {
       );
       const pitStopsRaw = await pitResp.json();
       const pitStopsAll = Array.isArray(pitStopsRaw) ? pitStopsRaw : [];
-      // Normalize: OpenF1 uses stop_duration or pit_duration depending on version
-      const pitStops = pitStopsAll.map(p => ({
-        ...p,
-        stop_duration: p.stop_duration ?? p.pit_duration ?? null
-      })).filter(p => p.stop_duration != null);
+      // Normalize: OpenF1 uses stop_duration
+      const pitStops = pitStopsAll.filter(p => p.stop_duration != null);
       if (pitStops.length === 0) {
         setFetchStatus(prev => prev + " (no pit stop data available)");
       }
