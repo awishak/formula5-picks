@@ -40,6 +40,14 @@ const DRIVER_NAMES = {
   30: "Liam Lawson", 6: "Isack Hadjar"
 };
 
+const DRIVER_TEAMS = {
+  1: "Red Bull", 30: "Red Bull", 4: "McLaren", 81: "McLaren",
+  16: "Ferrari", 44: "Ferrari", 63: "Mercedes", 12: "Mercedes",
+  55: "Williams", 23: "Williams", 14: "Aston Martin", 18: "Aston Martin",
+  10: "Alpine", 7: "Alpine", 22: "Racing Bulls", 6: "Racing Bulls",
+  27: "Sauber", 5: "Sauber", 87: "Haas", 31: "Haas"
+};
+
 export default function Admin() {
   const [races, setRaces] = useState([]);
   const [selectedRound, setSelectedRound] = useState(null);
@@ -63,6 +71,8 @@ export default function Admin() {
   const [photoMsg, setPhotoMsg] = useState(null);
   const [allPicks, setAllPicks] = useState([]);
   const [missingRound, setMissingRound] = useState(null);
+  const [allPitStops, setAllPitStops] = useState([]);
+  const [selectedPitIdx, setSelectedPitIdx] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -190,51 +200,13 @@ export default function Admin() {
       const sorted = Object.entries(lastPos)
         .sort((a, b) => a[1] - b[1]);
 
-      // Step 3: Determine DNFs using laps — anyone who completed fewer laps than the winner
-      setFetchStatus("Checking for DNFs...");
-      const lapsResp = await fetch(
-        `https://api.openf1.org/v1/laps?session_key=${sessionKey}`
-      );
-      const lapsRaw = await lapsResp.json();
-      const lapsData = Array.isArray(lapsRaw) ? lapsRaw : [];
-
-      // Find the max lap number each driver completed
-      const driverMaxLap = {};
-      lapsData.forEach(l => {
-        if (l.driver_number && l.lap_number) {
-          driverMaxLap[l.driver_number] = Math.max(driverMaxLap[l.driver_number] || 0, l.lap_number);
-        }
-      });
-
-      // The winner completed the most laps
-      const maxLaps = Math.max(...Object.values(driverMaxLap), 0);
-
-      // Anyone who completed fewer laps than the winner is a DNF
-      const dnfDriverNumbers = new Set();
-      Object.entries(driverMaxLap).forEach(([num, laps]) => {
-        if (laps < maxLaps) dnfDriverNumbers.add(parseInt(num));
-      });
-
-      // Also count any driver with a final position but no lap data as DNF (DNS)
-      Object.keys(lastPos).forEach(numStr => {
-        const num = parseInt(numStr);
-        if (!driverMaxLap[num]) dnfDriverNumbers.add(num);
-      });
-
-      // Also check for drivers with status issues via laps (no finish)
-      // Build the finish order and DNF list
+      // Step 3: Build finish order — all known drivers by position
+      // Put everyone in position order; user manually moves DNFs
       const finishOrderNames = [];
-      const dnfNames = [];
-
       sorted.forEach(([numStr, pos]) => {
         const num = parseInt(numStr);
         const name = DRIVER_NAMES[num];
-        if (!name) return; // Unknown driver
-        if (dnfDriverNumbers.has(num)) {
-          dnfNames.push(name);
-        } else {
-          finishOrderNames.push(name);
-        }
+        if (name) finishOrderNames.push(name);
       });
 
       // Step 4: Get pit stops
@@ -244,11 +216,27 @@ export default function Admin() {
       );
       const pitStopsRaw = await pitResp.json();
       const pitStopsAll = Array.isArray(pitStopsRaw) ? pitStopsRaw : [];
-      // Normalize: OpenF1 uses stop_duration
       const pitStops = pitStopsAll.filter(p => p.stop_duration != null);
       if (pitStops.length === 0) {
         setFetchStatus(prev => prev + " (no pit stop data available)");
       }
+
+      // Sort chronologically by lap
+      const pitStopsSorted = [...pitStops].sort((a, b) => {
+        if (a.lap_number !== b.lap_number) return a.lap_number - b.lap_number;
+        return (a.stop_duration || 0) - (b.stop_duration || 0);
+      });
+
+      // Build chart data
+      const chartData = pitStopsSorted.map((p, i) => ({
+        idx: i,
+        driver: DRIVER_NAMES[p.driver_number] || `#${p.driver_number}`,
+        team: DRIVER_TEAMS[p.driver_number] || "Unknown",
+        lap: p.lap_number,
+        duration: p.stop_duration,
+        driverNumber: p.driver_number,
+      }));
+      setAllPitStops(chartData);
 
       // Find the pit stop matching the race's pit_stop_question
       // Default: use the fastest stop duration, or the first Ferrari stop, etc.
@@ -340,13 +328,24 @@ export default function Admin() {
 
       // Fill in the form
       setFinishOrderText(finishOrderNames.join("\n"));
-      setDnfText(dnfNames.join("\n"));
-      if (targetPitTime) setPitStopTime(targetPitTime.toFixed(1));
+      setDnfText("");
+
+      // Find the selected pit stop index in chartData
+      let selectedIdx = null;
+      if (targetPitTime && chartData.length > 0) {
+        const match = chartData.find(p => Math.abs(p.duration - targetPitTime) < 0.01);
+        if (match) selectedIdx = match.idx;
+        setPitStopTime(targetPitTime.toFixed(1));
+      }
+      setSelectedPitIdx(selectedIdx);
+
+      const matchedTeam = targetPitTime && chartData.find(p => Math.abs(p.duration - targetPitTime) < 0.01);
+      const pitDesc = matchedTeam ? `${matchedTeam.driver} (${matchedTeam.team}) Lap ${matchedTeam.lap} — ${targetPitTime.toFixed(2)}s` : targetPitTime ? `${targetPitTime.toFixed(2)}s` : "none found";
 
       setFetchStatus(
-        `Done! ${finishOrderNames.length} finishers, ${dnfNames.length} DNFs` +
-        (targetPitTime ? `, pit time: ${targetPitTime.toFixed(2)}s` : "") +
-        `. All ${pitStops.length} pit stops found.`
+        `Done! ${finishOrderNames.length} drivers classified` +
+        `. Pit: ${pitDesc}` +
+        `. ${chartData.length} total pit stops found.`
       );
 
     } catch (e) {
@@ -1221,6 +1220,52 @@ export default function Admin() {
           }}
         />
       </div>
+
+      {/* All Pit Stops Chart */}
+      {allPitStops.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 8 }}>
+            All Pit Stops — Chronological ({allPitStops.length} stops)
+          </label>
+          <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${BORDER}`, overflow: "hidden", maxHeight: 360, overflowY: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: FB, fontSize: 11 }}>
+              <thead>
+                <tr style={{ background: `${DARK}08`, position: "sticky", top: 0 }}>
+                  <th style={{ padding: "6px 8px", textAlign: "left", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Lap</th>
+                  <th style={{ padding: "6px 8px", textAlign: "left", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Driver</th>
+                  <th style={{ padding: "6px 8px", textAlign: "left", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Team</th>
+                  <th style={{ padding: "6px 8px", textAlign: "right", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Duration</th>
+                  <th style={{ padding: "6px 4px", textAlign: "center", borderBottom: `1px solid ${BORDER}` }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {allPitStops.map((p, i) => {
+                  const isSelected = selectedPitIdx === p.idx;
+                  return (
+                    <tr key={i} style={{
+                      background: isSelected ? `${GREEN}12` : i % 2 === 0 ? "#fff" : `${DARK}03`,
+                      borderBottom: `1px solid ${BORDER}20`,
+                      cursor: "pointer",
+                    }} onClick={() => {
+                      setPitStopTime(p.duration.toFixed(1));
+                      setSelectedPitIdx(p.idx);
+                    }}>
+                      <td style={{ padding: "5px 8px", fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2 }}>{p.lap}</td>
+                      <td style={{ padding: "5px 8px", fontWeight: 600, color: TEXT }}>{p.driver.split(" ").pop()}</td>
+                      <td style={{ padding: "5px 8px", color: TEXT2 }}>{p.team}</td>
+                      <td style={{ padding: "5px 8px", textAlign: "right", fontFamily: FD, fontWeight: 800, fontSize: 12, color: isSelected ? GREEN : BLUEDARK }}>{p.duration.toFixed(2)}s</td>
+                      <td style={{ padding: "5px 4px", textAlign: "center" }}>
+                        {isSelected && <span style={{ fontSize: 10, color: GREEN }}>✓</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, marginTop: 4 }}>Click a row to use that pit stop time</p>
+        </div>
+      )}
 
       {/* Score button */}
       <button
