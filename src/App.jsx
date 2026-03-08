@@ -624,7 +624,7 @@ export default function App() {
         {activePage === "player-standings" && <PlayerStandings currentUser={currentUser} />}
         {activePage === "picks" && <MyPicksPage currentUser={currentUser} onNavigate={setActivePage} />}
         {activePage === "team-standings" && <TeamStandings currentUser={currentUser} />}
-        {activePage === "schedule" && <Schedule currentUser={currentUser} />}
+        {activePage === "schedule" && <Schedule currentUser={currentUser} onNavigate={setActivePage} />}
         {activePage === "rules" && <Rules />}
         {activePage === "admin" && (adminUnlocked ? <Admin /> : (
           <div style={{ padding: "60px 20px", textAlign: "center" }}>

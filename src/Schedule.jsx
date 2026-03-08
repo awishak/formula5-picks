@@ -34,7 +34,7 @@ function shortName(fullName) {
   return parts.length < 2 ? fullName : `${parts[0][0]}. ${parts.slice(1).join(" ")}`;
 }
 
-export default function Schedule({ currentUser }) {
+export default function Schedule({ currentUser, onNavigate }) {
   const [schedule, setSchedule] = useState([]);
   const [races, setRaces] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -744,6 +744,17 @@ export default function Schedule({ currentUser }) {
             <span style={{ fontWeight: 700 }}>Hey!</span> I'm working through the kinks in this first week. I believe these are the final scores but I'll confirm when they are all ready to go.
           </p>
         </div>
+      )}
+      {raceHasScores && onNavigate && (
+        <button onClick={() => onNavigate("recap")} style={{
+          width: "100%", padding: "12px", borderRadius: 10, marginBottom: 14,
+          border: `1px solid ${BLUE}30`, background: `${BLUE}08`,
+          fontFamily: FD, fontWeight: 700, fontSize: 12, color: BLUEDARK,
+          cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.06em",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 6
+        }}>
+          <span style={{ fontSize: 14 }}>📝</span> Read the Race Recap
+        </button>
       )}
       {raceHasScores && (
         <div style={{ display: "flex", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
