@@ -41,20 +41,23 @@ export default function Schedule({ currentUser }) {
   const [players, setPlayers] = useState([]);
   const [scores, setScores] = useState([]);
   const [picks, setPicks] = useState([]);
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeRound, setActiveRound] = useState(1);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [expandedRooting, setExpandedRooting] = useState(null);
+  const [expandedBoxScore, setExpandedBoxScore] = useState(null);
 
   useEffect(() => {
     async function load() {
-      const [{ data: racesData }, { data: scheduleData }, { data: teamsData }, { data: playersData }, { data: scoresData }, { data: picksData }] = await Promise.all([
+      const [{ data: racesData }, { data: scheduleData }, { data: teamsData }, { data: playersData }, { data: scoresData }, { data: picksData }, { data: resultsData }] = await Promise.all([
         supabase.from("races").select("*").eq("season", 2026).order("round"),
         supabase.from("schedule").select("id, race_id, home_team:home_team_id ( id, name, player1_id, player2_id, logo_url, division ), away_team:away_team_id ( id, name, player1_id, player2_id, logo_url, division )"),
         supabase.from("teams").select("*"),
         supabase.from("players").select("id, name"),
         supabase.from("scores").select("*"),
-        supabase.from("picks").select("player_id, race_id, pit_guess, finishing_order, top_pick")
+        supabase.from("picks").select("player_id, race_id, pit_guess, finishing_order, top_pick"),
+        supabase.from("results").select("race_id, pit_stop_time")
       ]);
       setRaces(racesData || []);
       const normalized = (scheduleData || []).map(s => ({ ...s, home_team: Array.isArray(s.home_team) ? s.home_team[0] : s.home_team, away_team: Array.isArray(s.away_team) ? s.away_team[0] : s.away_team }));
@@ -63,6 +66,7 @@ export default function Schedule({ currentUser }) {
       setPlayers(playersData || []);
       setScores(scoresData || []);
       setPicks(picksData || []);
+      setResults(resultsData || []);
       const ts = (scoresData || []).map(s => s.calculated_at).filter(Boolean).sort().reverse();
       if (ts.length > 0) setLastUpdated(ts[0]);
       setLoading(false);
@@ -77,6 +81,8 @@ export default function Schedule({ currentUser }) {
   scores.forEach(s => { scoreMap[sk(s.player_id, s.race_id)] = s; });
   const pickMap = {};
   picks.forEach(pk => { pickMap[`${pk.player_id}_${pk.race_id}`] = pk; });
+  const resultsMap = {};
+  results.forEach(r => { resultsMap[r.race_id] = r; });
 
   // Compute player rankings by total points
   const playerTotals = {};
@@ -429,6 +435,8 @@ export default function Schedule({ currentUser }) {
     const barMin = 1.5, barMax = 4.0;
     const barLine = boxLine != null ? boxLine : 2.75;
     const goldPct = Math.max(5, Math.min(95, ((barMax - barLine) / (barMax - barMin)) * 100));
+    const actualPitTime = resultsMap[raceId]?.pit_stop_time;
+    const actualPitPct = actualPitTime != null ? Math.max(2, Math.min(98, ((barMax - actualPitTime) / (barMax - barMin)) * 100)) : null;
 
     return (
       <div key={m.id} style={{
@@ -462,6 +470,20 @@ export default function Schedule({ currentUser }) {
               boxShadow: "0 1px 3px rgba(0,0,0,0.25)"
             }}>{barLine.toFixed(2)}</span>
           </div>
+          {/* Actual pit stop dot */}
+          {actualPitPct !== null && (
+            <div style={{
+              position: "absolute", left: 0, right: 0, top: `${actualPitPct}%`,
+              transform: "translateY(-50%)", display: "flex", justifyContent: "center", zIndex: 3
+            }}>
+              <div style={{
+                width: 10, height: 10, borderRadius: "50%",
+                background: actualPitTime > barLine ? GOLD : actualPitTime < barLine ? "#7c5cbf" : "#6dc0eb",
+                border: "2px solid #fff",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
+              }} />
+            </div>
+          )}
           {/* Purple (Under) portion */}
           <div style={{
             height: `${100 - goldPct}%`, background: "#7c5cbf50",
@@ -571,6 +593,94 @@ export default function Schedule({ currentUser }) {
               </div>
             );
           })()}
+
+          {/* Box Score — only for scored matches */}
+          {isState3 && homeTeam && awayTeam && (() => {
+            const isOpen = expandedBoxScore === m.id;
+            const sn = (name) => { if (!name) return "?"; const p = name.split(" "); return p.length < 2 ? name : `${p[0][0]}. ${p.slice(1).join(" ")}`; };
+            const ln = (name) => name ? name.split(" ").pop() : "?";
+
+            function playerBox(pid) {
+              const name = playerMap[pid] || "?";
+              const s = scoreMap[sk(pid, raceId)];
+              const pick = pickMap[`${pid}_${raceId}`];
+              if (!s) return null;
+              const driverPts = s.driver_pts ? (typeof s.driver_pts === "string" ? JSON.parse(s.driver_pts) : s.driver_pts) : {};
+              const entries = Object.entries(driverPts);
+              const topEntry = entries.find(([d]) => d === pick?.top_pick);
+              const midEntries = entries.filter(([d]) => d !== pick?.top_pick).sort((a, b) => b[1] - a[1]);
+              const allDriverEntries = topEntry ? [topEntry, ...midEntries] : midEntries;
+              const indivTotal = (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) + (s.pit_individual_pts || 0) + (s.weekly_bonus_pts || 0);
+              const teamContrib = (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0);
+              const bestFinishDisplay = pick?.best_finish ? (String(pick.best_finish).startsWith("P") ? pick.best_finish : `P${pick.best_finish}`) : "?";
+
+              return (
+                <div style={{ padding: "10px 12px", borderRadius: 10, background: `${DARK}03`, border: `1px solid ${BORDER}30`, marginBottom: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 14, color: TEXT }}>{sn(name)}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>Team <strong style={{ fontFamily: FD, color: BLUEDARK, fontSize: 13 }}>{teamContrib}</strong></span>
+                      <span style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>Indiv <strong style={{ fontFamily: FD, color: DARK, fontSize: 13 }}>{indivTotal}</strong></span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 3, marginBottom: 8 }}>
+                    {allDriverEntries.map(([driver, pts]) => {
+                      const isTop = driver === pick?.top_pick;
+                      const pc = pts < 0 ? RED : pts > 0 ? ORANGE : TEXT2;
+                      return (
+                        <div key={driver} style={{ flex: "1 1 0", minWidth: 44, textAlign: "center", background: isTop ? `${BLUEDARK}08` : `${DARK}02`, borderRadius: 6, padding: "4px 2px", border: isTop ? `1px solid ${BLUEDARK}25` : "1px solid transparent" }}>
+                          {isTop && <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: BLUEDARK, textTransform: "uppercase", margin: 0 }}>TOP</p>}
+                          <p style={{ fontFamily: FD, fontWeight: 600, fontSize: 10, color: TEXT, margin: 0 }}>{ln(driver)}</p>
+                          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: pc }}>{pts > 0 ? `+${pts}` : pts}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                    <span style={{ padding: "3px 7px", borderRadius: 5, background: `${DARK}04`, fontFamily: FB, fontSize: 11, fontWeight: 600, color: TEXT2 }}>
+                      Order {s.order_bonus > 0 ? <span style={{ color: ORANGE }}>✓+6</span> : "✗"}
+                    </span>
+                    <span style={{ padding: "3px 7px", borderRadius: 5, background: `${DARK}04`, fontFamily: FB, fontSize: 11, fontWeight: 600, color: TEXT2 }}>
+                      Best {bestFinishDisplay} {s.best_finish_bonus > 0 ? <span style={{ color: ORANGE }}>✓+3</span> : "✗"}
+                    </span>
+                    <span style={{ padding: "3px 7px", borderRadius: 5, background: `${DARK}04`, fontFamily: FB, fontSize: 11, fontWeight: 600, color: TEXT2 }}>
+                      Pit {pick?.pit_guess ? `${Number(pick.pit_guess).toFixed(1)}s` : "—"} <span style={{ color: s.pit_individual_pts > 0 ? ORANGE : TEXT2 }}>+{s.pit_individual_pts || 0}</span>
+                    </span>
+                    {(s.weekly_bonus_pts || 0) > 0 && (
+                      <span style={{ padding: "3px 7px", borderRadius: 5, background: `${GREEN}08`, fontFamily: FB, fontSize: 11, fontWeight: 600, color: GREEN }}>
+                        Top 10 +{s.weekly_bonus_pts}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div>
+                <button onClick={() => setExpandedBoxScore(isOpen ? null : m.id)} style={{
+                  width: "100%", padding: "8px 12px", border: "none", borderTop: `1px solid ${BORDER}30`,
+                  background: isOpen ? `${DARK}04` : "transparent",
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6
+                }}>
+                  <span style={{ fontFamily: FB, fontWeight: 600, fontSize: 11, color: BLUEDARK }}>
+                    {isOpen ? "Hide Box Score" : "Box Score"}
+                  </span>
+                  <span style={{ fontSize: 10, color: BLUEDARK }}>{isOpen ? "▲" : "▼"}</span>
+                </button>
+                {isOpen && (
+                  <div style={{ padding: "8px 12px 14px" }}>
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: GOLD, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>{homeTeam.name} (Over)</p>
+                    {playerBox(homeTeam.player1_id)}
+                    {playerBox(homeTeam.player2_id)}
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: "#5a3d99", textTransform: "uppercase", letterSpacing: "0.06em", margin: "10px 0 6px" }}>{awayTeam.name} (Under)</p>
+                    {playerBox(awayTeam.player1_id)}
+                    {playerBox(awayTeam.player2_id)}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
     );
@@ -646,6 +756,16 @@ export default function Schedule({ currentUser }) {
       })()}
 
       {/* Outline legend — show for scored races */}
+      {raceHasScores && (
+        <div style={{
+          padding: "12px 14px", borderRadius: 12, marginBottom: 14,
+          background: `${ORANGE}08`, border: `1px solid ${ORANGE}25`
+        }}>
+          <p style={{ fontFamily: FB, fontSize: 12, color: TEXT, margin: 0, lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 700 }}>Hey!</span> I'm working through the kinks in this first week. I believe these are the final scores but I'll confirm when they are all ready to go.
+          </p>
+        </div>
+      )}
       {raceHasScores && (
         <div style={{ display: "flex", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>

@@ -353,7 +353,7 @@ export default function Admin() {
       if (targetPitTime && chartData.length > 0) {
         const match = chartData.find(p => Math.abs(p.duration - targetPitTime) < 0.01);
         if (match) selectedIdx = match.idx;
-        setPitStopTime(targetPitTime.toFixed(1));
+        setPitStopTime(targetPitTime.toFixed(2));
       }
       setSelectedPitIdx(selectedIdx);
 
@@ -1269,7 +1269,7 @@ export default function Admin() {
         </label>
         <input
           type="number"
-          step="0.1"
+          step="0.01"
           value={pitStopTime}
           onChange={e => setPitStopTime(e.target.value)}
           placeholder="2.4"
@@ -1308,7 +1308,7 @@ export default function Admin() {
                       borderBottom: `1px solid ${BORDER}20`,
                       cursor: "pointer",
                     }} onClick={() => {
-                      setPitStopTime(p.duration.toFixed(1));
+                      setPitStopTime(p.duration.toFixed(2));
                       setSelectedPitIdx(p.idx);
                     }}>
                       <td style={{ padding: "5px 8px", fontFamily: FD, fontWeight: 600, fontSize: 10, color: TEXT2 }}>{i + 1}</td>
