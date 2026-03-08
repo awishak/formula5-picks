@@ -216,26 +216,29 @@ export default function Admin() {
       );
       const pitStopsRaw = await pitResp.json();
       const pitStopsAll = Array.isArray(pitStopsRaw) ? pitStopsRaw : [];
-      const pitStops = pitStopsAll.filter(p => p.stop_duration != null);
+      console.log("[Admin] Raw pit stops:", pitStopsAll.length, "| First entry keys:", pitStopsAll[0] ? Object.keys(pitStopsAll[0]) : "none");
+      console.log("[Admin] First pit stop:", pitStopsAll[0]);
+      const pitStops = pitStopsAll.filter(p => p.stop_duration != null && p.stop_duration > 0);
       if (pitStops.length === 0) {
-        setFetchStatus(prev => prev + " (no pit stop data available)");
+        setFetchStatus(prev => prev + ` (no pit stop data — ${pitStopsAll.length} raw entries, none with stop_duration)`);
       }
 
       // Sort chronologically by lap
       const pitStopsSorted = [...pitStops].sort((a, b) => {
-        if (a.lap_number !== b.lap_number) return a.lap_number - b.lap_number;
+        if ((a.lap_number || 0) !== (b.lap_number || 0)) return (a.lap_number || 0) - (b.lap_number || 0);
         return (a.stop_duration || 0) - (b.stop_duration || 0);
       });
 
       // Build chart data
       const chartData = pitStopsSorted.map((p, i) => ({
         idx: i,
-        driver: DRIVER_NAMES[p.driver_number] || `#${p.driver_number}`,
+        driver: DRIVER_NAMES[p.driver_number] || `Driver #${p.driver_number}`,
         team: DRIVER_TEAMS[p.driver_number] || "Unknown",
-        lap: p.lap_number,
+        lap: p.lap_number || "?",
         duration: p.stop_duration,
         driverNumber: p.driver_number,
       }));
+      console.log("[Admin] Chart data:", chartData.length, "pit stops");
       setAllPitStops(chartData);
 
       // Find the pit stop matching the race's pit_stop_question
@@ -351,7 +354,6 @@ export default function Admin() {
     } catch (e) {
       console.error(e);
       setError("OpenF1 fetch error: " + e.message);
-      setFetchStatus("");
     } finally {
       setFetching(false);
     }
@@ -1158,7 +1160,9 @@ export default function Admin() {
           {fetching ? "Fetching from OpenF1..." : "Auto-Fill from F1 API"}
         </button>
         {fetchStatus && (
-          <p style={{ fontFamily: FB, fontSize: 11, color: BLUEDARK, margin: 0, lineHeight: 1.5 }}>{fetchStatus}</p>
+          <div style={{ marginTop: 10, padding: "10px 12px", borderRadius: 8, background: `${BLUE}10`, border: `1px solid ${BLUE}20` }}>
+            <p style={{ fontFamily: FB, fontSize: 13, color: BLUEDARK, margin: 0, lineHeight: 1.5 }}>{fetchStatus}</p>
+          </div>
         )}
       </div>
 
@@ -1227,14 +1231,15 @@ export default function Admin() {
           <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 8 }}>
             All Pit Stops — Chronological ({allPitStops.length} stops)
           </label>
-          <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${BORDER}`, overflow: "hidden", maxHeight: 360, overflowY: "auto" }}>
+          <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${BORDER}`, overflow: "hidden", maxHeight: 500, overflowY: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: FB, fontSize: 11 }}>
               <thead>
                 <tr style={{ background: `${DARK}08`, position: "sticky", top: 0 }}>
+                  <th style={{ padding: "6px 8px", textAlign: "left", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>#</th>
                   <th style={{ padding: "6px 8px", textAlign: "left", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Lap</th>
                   <th style={{ padding: "6px 8px", textAlign: "left", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Driver</th>
                   <th style={{ padding: "6px 8px", textAlign: "left", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Team</th>
-                  <th style={{ padding: "6px 8px", textAlign: "right", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Duration</th>
+                  <th style={{ padding: "6px 8px", textAlign: "right", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>stop_duration</th>
                   <th style={{ padding: "6px 4px", textAlign: "center", borderBottom: `1px solid ${BORDER}` }}></th>
                 </tr>
               </thead>
@@ -1250,9 +1255,10 @@ export default function Admin() {
                       setPitStopTime(p.duration.toFixed(1));
                       setSelectedPitIdx(p.idx);
                     }}>
+                      <td style={{ padding: "5px 8px", fontFamily: FD, fontWeight: 600, fontSize: 10, color: TEXT2 }}>{i + 1}</td>
                       <td style={{ padding: "5px 8px", fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2 }}>{p.lap}</td>
-                      <td style={{ padding: "5px 8px", fontWeight: 600, color: TEXT }}>{p.driver.split(" ").pop()}</td>
-                      <td style={{ padding: "5px 8px", color: TEXT2 }}>{p.team}</td>
+                      <td style={{ padding: "5px 8px", fontWeight: 600, fontSize: 11, color: TEXT }}>{p.driver}</td>
+                      <td style={{ padding: "5px 8px", fontSize: 11, color: TEXT2 }}>{p.team}</td>
                       <td style={{ padding: "5px 8px", textAlign: "right", fontFamily: FD, fontWeight: 800, fontSize: 12, color: isSelected ? GREEN : BLUEDARK }}>{p.duration.toFixed(2)}s</td>
                       <td style={{ padding: "5px 4px", textAlign: "center" }}>
                         {isSelected && <span style={{ fontSize: 10, color: GREEN }}>✓</span>}
