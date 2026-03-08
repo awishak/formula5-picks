@@ -218,13 +218,21 @@ export default function Admin() {
       const pitStopsAll = Array.isArray(pitStopsRaw) ? pitStopsRaw : [];
       console.log("[Admin] Raw pit stops:", pitStopsAll.length, "| First entry keys:", pitStopsAll[0] ? Object.keys(pitStopsAll[0]) : "none");
       console.log("[Admin] First pit stop:", pitStopsAll[0]);
-      const pitStops = pitStopsAll.filter(p => p.stop_duration != null && p.stop_duration > 0);
-      const firstKeys = pitStopsAll[0] ? Object.keys(pitStopsAll[0]).join(", ") : "none";
+      
+      // Debug: show first 3 stop_duration values
+      const sampleVals = pitStopsAll.slice(0, 3).map(p => `stop_duration=${JSON.stringify(p.stop_duration)} (type: ${typeof p.stop_duration}), pit_duration=${JSON.stringify(p.pit_duration)} (type: ${typeof p.pit_duration})`);
+      
+      // Try stop_duration first, fall back to pit_duration
+      let usedField = "stop_duration";
+      let pitStops = pitStopsAll.filter(p => p.stop_duration != null && p.stop_duration > 0);
       if (pitStops.length === 0) {
-        setFetchStatus(prev => prev + ` | ⚠️ No pit stops with stop_duration found. ${pitStopsAll.length} raw entries. Fields: [${firstKeys}]`);
-      } else {
-        setFetchStatus(prev => prev + ` | ${pitStopsAll.length} raw pit entries, ${pitStops.length} with stop_duration. Fields: [${firstKeys}]`);
+        pitStops = pitStopsAll.filter(p => p.pit_duration != null && p.pit_duration > 0)
+          .map(p => ({ ...p, stop_duration: p.pit_duration }));
+        usedField = "pit_duration";
       }
+      
+      const firstKeys = pitStopsAll[0] ? Object.keys(pitStopsAll[0]).join(", ") : "none";
+      setFetchStatus(prev => prev + ` | ${pitStopsAll.length} raw entries, ${pitStops.length} with valid ${usedField}. Sample: ${sampleVals[0] || "none"}`);
 
       // Sort chronologically by lap
       const pitStopsSorted = [...pitStops].sort((a, b) => {
@@ -351,8 +359,7 @@ export default function Admin() {
       setFetchStatus(
         `✅ ${finishOrderNames.length} drivers classified. ` +
         `Selected pit stop: ${pitDesc}. ` +
-        `${chartData.length} total stops in table below. ` +
-        `Fields on API response: [${firstKeys}]`
+        `${chartData.length} total stops in table below (using ${usedField}).`
       );
 
     } catch (e) {
@@ -502,7 +509,9 @@ export default function Admin() {
           .map(d => getPos(d))
           .filter(p => p > 0);
         const bestActualPos = positions.length > 0 ? Math.min(...positions) : 99;
-        const bestFinishBonus = Number(pick.best_finish) === bestActualPos ? 3 : 0;
+        const bestFinishGuessRaw = String(pick.best_finish || "").replace(/[^0-9]/g, "");
+        const bestFinishGuessNum = bestFinishGuessRaw ? parseInt(bestFinishGuessRaw, 10) : null;
+        const bestFinishBonus = bestFinishGuessNum === bestActualPos ? 3 : 0;
 
         // Pit stop needle
         const pitIndividualPts = pick.pit_guess ? needleScore(pick.pit_guess, pitTime) : 0;
@@ -524,7 +533,10 @@ export default function Admin() {
           totalPts,
           noPick: false,
           pitGuess: pick.pit_guess,
-          bestFinishGuess: pick.best_finish
+          bestFinishGuess: pick.best_finish,
+          bestActualPos,
+          predictedOrder: allPicks,
+          actualOrder
         });
       });
 
@@ -1243,7 +1255,7 @@ export default function Admin() {
                   <th style={{ padding: "6px 8px", textAlign: "left", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Lap</th>
                   <th style={{ padding: "6px 8px", textAlign: "left", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Driver</th>
                   <th style={{ padding: "6px 8px", textAlign: "left", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Team</th>
-                  <th style={{ padding: "6px 8px", textAlign: "right", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>stop_duration</th>
+                  <th style={{ padding: "6px 8px", textAlign: "right", fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", borderBottom: `1px solid ${BORDER}` }}>Duration</th>
                   <th style={{ padding: "6px 4px", textAlign: "center", borderBottom: `1px solid ${BORDER}` }}></th>
                 </tr>
               </thead>
@@ -1328,7 +1340,8 @@ export default function Admin() {
                     <th key={d} style={{ ...thStyle, maxWidth: 50 }}>{lastName(d)}</th>
                   ))}
                   <th style={thStyle}>Order</th>
-                  <th style={thStyle}>Best</th>
+                  <th style={thStyle}>Best Finish</th>
+                  <th style={thStyle}>Pit Guess</th>
                   <th style={thStyle}>Needle</th>
                   <th style={thStyle}>Top 10</th>
                 </tr>
@@ -1360,10 +1373,20 @@ export default function Admin() {
                       );
                     })}
                     <td style={{ ...tdStyle, color: s.orderBonus > 0 ? ORANGE : TEXT2, fontFamily: FD, fontWeight: 700 }}>
-                      {s.orderBonus > 0 ? "+6" : "0"}
+                      {s.orderBonus > 0 ? "✓ +6" : "✗"}
                     </td>
-                    <td style={{ ...tdStyle, color: s.bestFinishBonus > 0 ? ORANGE : TEXT2, fontFamily: FD, fontWeight: 700 }}>
-                      {s.bestFinishBonus > 0 ? "+3" : "0"}
+                    <td style={{ ...tdStyle, fontFamily: FD, fontWeight: 700 }}>
+                      {s.noPick ? "·" : (
+                        <span>
+                          <span style={{ color: TEXT2 }}>Guess {s.bestFinishGuess || "?"}</span>
+                          <span style={{ color: TEXT2 }}> / Actual P{s.bestActualPos || "?"}</span>
+                          {" "}
+                          <span style={{ color: s.bestFinishBonus > 0 ? ORANGE : RED, fontWeight: 800 }}>{s.bestFinishBonus > 0 ? "✓ +3" : "✗"}</span>
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ ...tdStyle, fontFamily: FD, fontWeight: 700, color: TEXT2 }}>
+                      {s.pitGuess != null ? `${Number(s.pitGuess).toFixed(1)}s` : "·"}
                     </td>
                     <td style={{ ...tdStyle, color: s.pitIndividualPts > 0 ? ORANGE : TEXT2, fontFamily: FD, fontWeight: 700 }}>
                       {s.pitIndividualPts > 0 ? `+${s.pitIndividualPts}` : "0"}
