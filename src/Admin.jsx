@@ -220,16 +220,11 @@ export default function Admin() {
       console.log("[Admin] First pit stop:", pitStopsAll[0]);
       
       // Debug: show first 3 stop_duration values
-      const sampleVals = pitStopsAll.slice(0, 3).map(p => `stop_duration=${JSON.stringify(p.stop_duration)} (type: ${typeof p.stop_duration}), pit_duration=${JSON.stringify(p.pit_duration)} (type: ${typeof p.pit_duration})`);
-      
-      // Try stop_duration first, fall back to pit_duration
-      let usedField = "stop_duration";
-      let pitStops = pitStopsAll.filter(p => p.stop_duration != null && p.stop_duration > 0);
-      if (pitStops.length === 0) {
-        pitStops = pitStopsAll.filter(p => p.pit_duration != null && p.pit_duration > 0)
-          .map(p => ({ ...p, stop_duration: p.pit_duration }));
-        usedField = "pit_duration";
-      }
+      const sampleVals = pitStopsAll.slice(0, 3).map(p => `stop_duration=${JSON.stringify(p.stop_duration)} (type: ${typeof p.stop_duration})`);
+
+      // Use stop_duration only
+      const usedField = "stop_duration";
+      const pitStops = pitStopsAll.filter(p => p.stop_duration != null && p.stop_duration > 0);
       
       const firstKeys = pitStopsAll[0] ? Object.keys(pitStopsAll[0]).join(", ") : "none";
       setFetchStatus(prev => prev + ` | ${pitStopsAll.length} raw entries, ${pitStops.length} with valid ${usedField}. Sample: ${sampleVals[0] || "none"}`);
