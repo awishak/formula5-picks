@@ -190,27 +190,36 @@ export default function Admin() {
       const sorted = Object.entries(lastPos)
         .sort((a, b) => a[1] - b[1]);
 
-      // Step 3: Get race control messages to find DNFs/retirements/DQ/DNS
-      setFetchStatus("Checking for DNFs, DQs, and DNS...");
-      const rcResp = await fetch(
-        `https://api.openf1.org/v1/race_control?session_key=${sessionKey}`
+      // Step 3: Determine DNFs using laps — anyone who completed fewer laps than the winner
+      setFetchStatus("Checking for DNFs...");
+      const lapsResp = await fetch(
+        `https://api.openf1.org/v1/laps?session_key=${sessionKey}`
       );
-      const rcMessages = await rcResp.json();
+      const lapsRaw = await lapsResp.json();
+      const lapsData = Array.isArray(lapsRaw) ? lapsRaw : [];
+
+      // Find the max lap number each driver completed
+      const driverMaxLap = {};
+      lapsData.forEach(l => {
+        if (l.driver_number && l.lap_number) {
+          driverMaxLap[l.driver_number] = Math.max(driverMaxLap[l.driver_number] || 0, l.lap_number);
+        }
+      });
+
+      // The winner completed the most laps
+      const maxLaps = Math.max(...Object.values(driverMaxLap), 0);
+
+      // Anyone who completed fewer laps than the winner is a DNF
       const dnfDriverNumbers = new Set();
-      if (Array.isArray(rcMessages)) {
-        rcMessages.forEach(msg => {
-          if (!msg.driver_number) return;
-          const cat = (msg.category || "").toLowerCase();
-          const msgText = (msg.message || "").toLowerCase();
-          // Retirement, disqualification, DNS, stopped, out of race
-          if (cat === "retirement" || cat === "disqualification" ||
-              msgText.includes("retired") || msgText.includes("disqualified") ||
-              msgText.includes("did not start") || msgText.includes("dns") ||
-              msgText.includes("stopped") || msgText.includes("out of the race")) {
-            dnfDriverNumbers.add(msg.driver_number);
-          }
-        });
-      }
+      Object.entries(driverMaxLap).forEach(([num, laps]) => {
+        if (laps < maxLaps) dnfDriverNumbers.add(parseInt(num));
+      });
+
+      // Also count any driver with a final position but no lap data as DNF (DNS)
+      Object.keys(lastPos).forEach(numStr => {
+        const num = parseInt(numStr);
+        if (!driverMaxLap[num]) dnfDriverNumbers.add(num);
+      });
 
       // Also check for drivers with status issues via laps (no finish)
       // Build the finish order and DNF list
