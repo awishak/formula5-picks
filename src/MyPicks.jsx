@@ -1167,12 +1167,12 @@ export default function MyPicks({ currentUser, onNavigate }) {
     async function init() {
       try {
         // Get player ID
-        const { data: player, error: pErr } = await supabase
+        const { data: player } = await supabase
           .from("players")
           .select("id")
           .eq("name", currentUser)
-          .single();
-        if (pErr) throw pErr;
+          .maybeSingle();
+        if (!player) { setLoading(false); return; }
         setPlayerId(player.id);
 
         // Get next upcoming race (or the most recently started race if all have passed)
