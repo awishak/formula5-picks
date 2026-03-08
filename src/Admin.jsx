@@ -219,8 +219,11 @@ export default function Admin() {
       console.log("[Admin] Raw pit stops:", pitStopsAll.length, "| First entry keys:", pitStopsAll[0] ? Object.keys(pitStopsAll[0]) : "none");
       console.log("[Admin] First pit stop:", pitStopsAll[0]);
       const pitStops = pitStopsAll.filter(p => p.stop_duration != null && p.stop_duration > 0);
+      const firstKeys = pitStopsAll[0] ? Object.keys(pitStopsAll[0]).join(", ") : "none";
       if (pitStops.length === 0) {
-        setFetchStatus(prev => prev + ` (no pit stop data — ${pitStopsAll.length} raw entries, none with stop_duration)`);
+        setFetchStatus(prev => prev + ` | ⚠️ No pit stops with stop_duration found. ${pitStopsAll.length} raw entries. Fields: [${firstKeys}]`);
+      } else {
+        setFetchStatus(prev => prev + ` | ${pitStopsAll.length} raw pit entries, ${pitStops.length} with stop_duration. Fields: [${firstKeys}]`);
       }
 
       // Sort chronologically by lap
@@ -346,9 +349,10 @@ export default function Admin() {
       const pitDesc = matchedTeam ? `${matchedTeam.driver} (${matchedTeam.team}) Lap ${matchedTeam.lap} — ${targetPitTime.toFixed(2)}s` : targetPitTime ? `${targetPitTime.toFixed(2)}s` : "none found";
 
       setFetchStatus(
-        `Done! ${finishOrderNames.length} drivers classified` +
-        `. Pit: ${pitDesc}` +
-        `. ${chartData.length} total pit stops found.`
+        `✅ ${finishOrderNames.length} drivers classified. ` +
+        `Selected pit stop: ${pitDesc}. ` +
+        `${chartData.length} total stops in table below. ` +
+        `Fields on API response: [${firstKeys}]`
       );
 
     } catch (e) {
