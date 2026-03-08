@@ -1175,16 +1175,36 @@ export default function MyPicks({ currentUser, onNavigate }) {
         if (pErr) throw pErr;
         setPlayerId(player.id);
 
-        // Get next upcoming race
+        // Get next upcoming race (or the most recently started race if all have passed)
         const today = new Date().toISOString().split("T")[0];
-        const { data: raceData, error: rErr } = await supabase
+        let raceData = null;
+        
+        // First try: upcoming race
+        const { data: upcomingRace } = await supabase
           .from("races")
           .select("*")
           .gte("race_date", today)
           .order("race_date", { ascending: true })
           .limit(1)
-          .single();
-        if (rErr) throw rErr;
+          .maybeSingle();
+        
+        if (upcomingRace) {
+          raceData = upcomingRace;
+        } else {
+          // Fallback: most recent race (picks window may still be open)
+          const { data: lastRace } = await supabase
+            .from("races")
+            .select("*")
+            .order("race_date", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          raceData = lastRace;
+        }
+        
+        if (!raceData) {
+          setLoading(false);
+          return;
+        }
         setRace(raceData);
 
         // Check if already submitted
@@ -1381,8 +1401,8 @@ export default function MyPicks({ currentUser, onNavigate }) {
         <div style={{ maxWidth: 360, margin: "0 auto 24px" }}>
           <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: 16, marginBottom: 12 }}>
             <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>Your Drivers</p>
-            {pick.finishing_order.map((d, i) => (
-              <div key={d} style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", borderBottom: i < pick.finishing_order.length - 1 ? `1px solid ${BG2}` : "none" }}>
+            {(pick.finishing_order || []).map((d, i) => (
+              <div key={d} style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", borderBottom: i < (pick.finishing_order || []).length - 1 ? `1px solid ${BG2}` : "none" }}>
                 <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BLUE, minWidth: 20 }}>{i + 1}</span>
                 <span style={{ fontFamily: FB, fontSize: 14, color: TEXT }}>{d}</span>
               </div>
@@ -1395,7 +1415,7 @@ export default function MyPicks({ currentUser, onNavigate }) {
             </div>
             <div style={{ flex: 1, background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: 16 }}>
               <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px" }}>Pit Stop</p>
-              <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: DARK, margin: 0 }}>{Number(pick.pit_guess).toFixed(1)}s</p>
+              <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: DARK, margin: 0 }}>{pick.pit_guess != null ? Number(pick.pit_guess).toFixed(1) + "s" : "—"}</p>
             </div>
           </div>
         </div>
