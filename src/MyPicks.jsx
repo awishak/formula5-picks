@@ -1,10 +1,26 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Component } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
+
+class MyPicksErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null, info: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error("MyPicks crash:", error, info); this.setState({ info }); }
+  render() {
+    if (this.state.error) return (
+      <div style={{ padding: "40px 20px" }}>
+        <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 18, color: "#e04a4a", marginBottom: 8 }}>MyPicks Crashed</p>
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#1e1e2a", marginBottom: 8, wordBreak: "break-all" }}>{String(this.state.error)}</p>
+        <pre style={{ fontFamily: "monospace", fontSize: 10, color: "#6b6b80", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>{this.state.info?.componentStack || ""}</pre>
+      </div>
+    );
+    return this.props.children;
+  }
+}
 
 // ── Colors ──────────────────────────────────────────────
 const BG2      = "#ededef";
@@ -1124,7 +1140,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                 {h.score && <span style={{ color: h.score.best_finish_bonus > 0 ? ORANGE : TEXT2, marginLeft: 4 }}>{h.score.best_finish_bonus > 0 ? "✓+3" : "✗"}</span>}
               </span>
               <span style={{ padding: "5px 10px", borderRadius: 8, background: `${DARK}04`, fontFamily: FB, fontSize: 13, fontWeight: 600, color: TEXT2 }}>
-                Pit {Number(h.pick.pit_guess).toFixed(1)}s
+                Pit {h.pick.pit_guess != null ? Number(h.pick.pit_guess).toFixed(1) + "s" : "—"}
                 {h.score && <span style={{ color: h.score.pit_individual_pts > 0 ? ORANGE : TEXT2, marginLeft: 4 }}>+{h.score.pit_individual_pts || 0}</span>}
               </span>
               {h.score && <span style={{ padding: "5px 10px", borderRadius: 8, background: h.score.order_bonus > 0 ? `${ORANGE}10` : `${DARK}04`, fontFamily: FB, fontSize: 13, fontWeight: 600, color: h.score.order_bonus > 0 ? ORANGE : TEXT2 }}>{h.score.order_bonus > 0 ? "Order ✓+6" : "Order ✗"}</span>}
@@ -1137,9 +1153,10 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
   );
 }
 
-export { PickHistory };
+function SafePickHistory(props) { return <MyPicksErrorBoundary><PickHistory {...props} /></MyPicksErrorBoundary>; }
+export { SafePickHistory as PickHistory };
 
-export default function MyPicks({ currentUser, onNavigate }) {
+function MyPicksInner({ currentUser, onNavigate }) {
   const [step, setStep] = useState(0);
   const [race, setRace] = useState(null);
   const [playerId, setPlayerId] = useState(null);
@@ -1513,3 +1530,5 @@ export default function MyPicks({ currentUser, onNavigate }) {
     </div>
   );
 }
+
+export default function MyPicks(props) { return <MyPicksErrorBoundary><MyPicksInner {...props} /></MyPicksErrorBoundary>; }
