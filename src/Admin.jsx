@@ -78,6 +78,7 @@ export default function Admin() {
   const [recapGenerating, setRecapGenerating] = useState(false);
   const [recapStatus, setRecapStatus] = useState("");
   const [existingRecaps, setExistingRecaps] = useState({});
+  const [recapNotes, setRecapNotes] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -1260,7 +1261,7 @@ export default function Admin() {
             setRecapStatus("Generating recap with AI...");
 
             const prompt = `You are the official writer for Formula 5, a fantasy F1 pick'em league. Write an engaging, fun recap of Round ${recapRound} — the ${race.race_name}.
-
+${recapNotes ? "\nADMIN NOTES — the league commissioner wants you to incorporate these points:\n" + recapNotes + "\n" : ""}
 IMPORTANT HIGHLIGHT RULES — you MUST call attention to these when they occur:
 1. If the actual pit stop time was within 0.05 seconds of a matchup's BOX BOX line, that's a DRAMATIC close call — emphasize how razor-thin the margin was.
 2. If a matchup was DECIDED by BOX BOX (meaning without the BOX BOX bonus, the other team would have won or tied), make this a big storyline — the pit stop literally flipped the result.
@@ -1356,6 +1357,25 @@ Please respond ONLY with valid JSON in this exact format (no markdown, no backti
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Admin notes */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>
+                Your Notes (optional — things to highlight or mention)
+              </label>
+              <textarea
+                value={recapNotes}
+                onChange={e => setRecapNotes(e.target.value)}
+                placeholder={"e.g. George had a great week picking Verstappen who won. The Cal Aggie vs Prestissimo matchup was super close. Mention that this is the first race of the season."}
+                rows={4}
+                style={{
+                  width: "100%", padding: "10px 12px", borderRadius: 10,
+                  border: "1px solid " + BORDER, fontFamily: FB, fontSize: 13,
+                  color: TEXT, resize: "vertical", boxSizing: "border-box",
+                  lineHeight: 1.5
+                }}
+              />
             </div>
 
             <button
