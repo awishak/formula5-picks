@@ -501,14 +501,28 @@ export default function Admin() {
           return sa - sb;
         });
 
-        // DNF rule: DNFs are interchangeable at the back
+        // DNF rule: All 5 drivers must be checked. DNFs go at the back and are interchangeable among themselves.
         let orderBonus = 0;
-        const predictedNonDnf = allPicks.filter(d => getPos(d) !== -1);
-        const actualNonDnf = actualOrder.filter(d => getPos(d) !== -1);
-        if (predictedNonDnf.length === actualNonDnf.length &&
-            predictedNonDnf.every((d, i) => d === actualNonDnf[i])) {
-          orderBonus = 6;
+        // actualOrder has all 5 sorted: finishers by position, DNFs at back
+        // Compare predicted vs actual position by position
+        // For non-DNF slots, must match exactly
+        // For DNF slots (at the back), any DNF driver is acceptable
+        const predictedDnfSet = new Set(allPicks.filter(d => getPos(d) === -1));
+        const actualDnfSet = new Set(actualOrder.filter(d => getPos(d) === -1));
+        let orderCorrect = true;
+        for (let idx = 0; idx < allPicks.length; idx++) {
+          const predicted = allPicks[idx];
+          const actual = actualOrder[idx];
+          if (getPos(actual) === -1 && getPos(predicted) === -1) {
+            // Both are DNF — interchangeable, this slot is fine
+            continue;
+          }
+          if (predicted !== actual) {
+            orderCorrect = false;
+            break;
+          }
         }
+        if (orderCorrect) orderBonus = 6;
 
         // Best finish bonus
         const positions = allPicks
