@@ -73,6 +73,7 @@ export default function Admin() {
   const [missingRound, setMissingRound] = useState(null);
   const [allPitStops, setAllPitStops] = useState([]);
   const [selectedPitIdx, setSelectedPitIdx] = useState(null);
+  const [rawApiDump, setRawApiDump] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -216,6 +217,14 @@ export default function Admin() {
       );
       const pitStopsRaw = await pitResp.json();
       const pitStopsAll = Array.isArray(pitStopsRaw) ? pitStopsRaw : [];
+      
+      // Dump raw data to screen so user can see everything
+      setRawApiDump({
+        totalEntries: pitStopsAll.length,
+        fields: pitStopsAll[0] ? Object.keys(pitStopsAll[0]) : [],
+        first5: pitStopsAll.slice(0, 5),
+      });
+      
       console.log("[Admin] Raw pit stops:", pitStopsAll.length, "| First entry keys:", pitStopsAll[0] ? Object.keys(pitStopsAll[0]) : "none");
       console.log("[Admin] First pit stop:", pitStopsAll[0]);
       
@@ -1178,6 +1187,26 @@ export default function Admin() {
           </div>
         )}
       </div>
+
+      {/* Raw API Data Dump */}
+      {rawApiDump && (
+        <div style={{ marginBottom: 16, padding: "12px 14px", background: `${DARK}04`, borderRadius: 12, border: `1px solid ${BORDER}` }}>
+          <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 8px" }}>
+            Raw OpenF1 Pit Data — {rawApiDump.totalEntries} entries
+          </p>
+          <p style={{ fontFamily: FB, fontSize: 11, color: TEXT, margin: "0 0 8px" }}>
+            <strong>Fields:</strong> {rawApiDump.fields.join(", ") || "none"}
+          </p>
+          <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, margin: "0 0 4px" }}>First 5 raw entries:</p>
+          <div style={{ maxHeight: 300, overflowY: "auto", background: "#fff", borderRadius: 8, padding: "8px 10px", border: `1px solid ${BORDER}` }}>
+            {rawApiDump.first5.map((entry, i) => (
+              <pre key={i} style={{ fontFamily: "monospace", fontSize: 11, color: TEXT, margin: "0 0 8px", whiteSpace: "pre-wrap", wordBreak: "break-all", borderBottom: i < rawApiDump.first5.length - 1 ? `1px solid ${BORDER}30` : "none", paddingBottom: 8 }}>
+                {JSON.stringify(entry, null, 2)}
+              </pre>
+            ))}
+          </div>
+        </div>
+      )}
 
       <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, margin: "0 0 12px", fontStyle: "italic" }}>
         Or enter manually below:
