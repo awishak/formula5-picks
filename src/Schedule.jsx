@@ -649,12 +649,31 @@ export default function Schedule({ currentUser, onNavigate }) {
                 </button>
                 {isOpen && (
                   <div style={{ padding: "4px 12px 10px" }}>
-                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: GOLD, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>{homeTeam.name}</p>
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: GOLD, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>{homeTeam.name} (Over)</p>
                     {playerLine(homeTeam.player1_id)}
                     {playerLine(homeTeam.player2_id)}
-                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: "#5a3d99", textTransform: "uppercase", letterSpacing: "0.06em", margin: "8px 0 2px" }}>{awayTeam.name}</p>
+                    {/* Home BOX BOX + Total */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0 2px", borderTop: `1px solid ${BORDER}30`, marginTop: 2 }}>
+                      <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: homeBoxBox > 0 ? GREEN : homeBoxBox < 0 ? RED : TEXT2, background: homeBoxBox > 0 ? `${GREEN}10` : homeBoxBox < 0 ? `${RED}10` : `${DARK}04`, padding: "1px 6px", borderRadius: 3 }}>
+                        BOX BOX {homeBoxBox > 0 ? "+5" : homeBoxBox < 0 ? "−1" : "0"}
+                      </span>
+                      <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: homeWon ? GOLD : TEXT2 }}>
+                        {homeTotal}
+                      </span>
+                    </div>
+
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: "#5a3d99", textTransform: "uppercase", letterSpacing: "0.06em", margin: "12px 0 2px" }}>{awayTeam.name} (Under)</p>
                     {playerLine(awayTeam.player1_id)}
                     {playerLine(awayTeam.player2_id)}
+                    {/* Away BOX BOX + Total */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0 2px", borderTop: `1px solid ${BORDER}30`, marginTop: 2 }}>
+                      <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: awayBoxBox > 0 ? GREEN : awayBoxBox < 0 ? RED : TEXT2, background: awayBoxBox > 0 ? `${GREEN}10` : awayBoxBox < 0 ? `${RED}10` : `${DARK}04`, padding: "1px 6px", borderRadius: 3 }}>
+                        BOX BOX {awayBoxBox > 0 ? "+5" : awayBoxBox < 0 ? "−1" : "0"}
+                      </span>
+                      <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: awayWon ? "#5a3d99" : TEXT2 }}>
+                        {awayTotal}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
