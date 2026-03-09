@@ -280,7 +280,7 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
       </div>
 
       {/* Recap button */}
-      <button onClick={() => onNavigate("schedule")} style={{
+      <button onClick={() => window.open("/recaps/round1.html", "_blank")} style={{
         width: "100%", padding: "14px", borderRadius: 12, marginBottom: 24,
         border: `1.5px solid ${BORDER}`, background: "#fff",
         fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 13, color: BLUEDARK,
@@ -595,6 +595,17 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("f1_user") || null);
   const [activePage, setActivePage] = useState("home");
+  const [scheduleInitialView, setScheduleInitialView] = useState(null);
+
+  function navigateTo(page) {
+    if (page === "schedule-recap") {
+      setScheduleInitialView("recap");
+      setActivePage("schedule");
+    } else {
+      setScheduleInitialView(null);
+      setActivePage(page);
+    }
+  }
   const [hasSubmittedPicks, setHasSubmittedPicks] = useState(false);
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [adminCode, setAdminCode] = useState("");
@@ -628,11 +639,11 @@ export default function App() {
         <div style={{ padding: "14px 20px 10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <img src={LOGO_B64} alt="Formula 5" style={{ height: 85, objectFit: "contain" }} />
         </div>
-        {activePage === "home" && <HomePage currentUser={currentUser} onNavigate={setActivePage} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
+        {activePage === "home" && <HomePage currentUser={currentUser} onNavigate={navigateTo} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
         {activePage === "player-standings" && <PlayerStandings currentUser={currentUser} />}
-        {activePage === "picks" && <MyPicksPage currentUser={currentUser} onNavigate={setActivePage} />}
+        {activePage === "picks" && <MyPicksPage currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "team-standings" && <TeamStandings currentUser={currentUser} />}
-        {activePage === "schedule" && <Schedule currentUser={currentUser} onNavigate={setActivePage} />}
+        {activePage === "schedule" && <Schedule currentUser={currentUser} onNavigate={navigateTo} initialView={scheduleInitialView} />}
         {activePage === "rules" && <Rules />}
         {activePage === "admin" && (adminUnlocked ? <Admin /> : (
           <div style={{ padding: "60px 20px", textAlign: "center" }}>
@@ -654,7 +665,7 @@ export default function App() {
         {activePage === "practice" && <PracticePicks />}
         {activePage === "season-preview" && <SeasonPreview />}
       </div>
-      <BottomNav active={activePage} onChange={setActivePage} hasSubmittedPicks={hasSubmittedPicks} />
+      <BottomNav active={activePage} onChange={navigateTo} hasSubmittedPicks={hasSubmittedPicks} />
     </>
   );
 }
