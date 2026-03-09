@@ -894,7 +894,7 @@ export default function Admin() {
 
       {/* Tab switcher */}
       <div style={{ display: "flex", gap: 0, marginBottom: 20, borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
-        {[{ id: "scoring", label: "Score Race" }, { id: "missing", label: "Missing Picks" }, { id: "recaps", label: "Recaps" }, { id: "logos", label: "Logos" }, { id: "photos", label: "Photos" }].map(tab => (
+        {[{ id: "scoring", label: "Score Race" }, { id: "missing", label: "Missing Picks" }, { id: "recaps", label: "Recaps" }, { id: "export", label: "Export" }, { id: "logos", label: "Logos" }, { id: "photos", label: "Photos" }].map(tab => (
           <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{
             flex: 1, padding: "10px 0", border: "none",
             background: adminTab === tab.id ? BLUEDARK : "#fff",
@@ -1402,6 +1402,105 @@ Please respond ONLY with valid JSON in this exact format (no markdown, no backti
                 <p style={{ fontFamily: FB, fontSize: 13, color: recapStatus.startsWith("✅") ? GREEN : recapStatus.startsWith("❌") ? RED : BLUEDARK, margin: 0, lineHeight: 1.5 }}>{recapStatus}</p>
               </div>
             )}
+          </div>
+        );
+      })()}
+
+      {/* EXPORT TAB */}
+      {adminTab === "export" && (() => {
+        async function exportData() {
+          const [{ data: players }, { data: teams }, { data: races2 }, { data: scores2 }, { data: picks2 }, { data: schedule2 }, { data: results2 }] = await Promise.all([
+            supabase.from("players").select("*"),
+            supabase.from("teams").select("*"),
+            supabase.from("races").select("*").eq("season", 2026).order("round"),
+            supabase.from("scores").select("*"),
+            supabase.from("picks").select("*"),
+            supabase.from("schedule").select("*"),
+            supabase.from("results").select("*"),
+          ]);
+
+          const playerMap = {};
+          (players || []).forEach(p => { playerMap[p.id] = p.name; });
+          const teamMap = {};
+          (teams || []).forEach(t => { teamMap[t.id] = t.name; });
+          const raceMap = {};
+          (races2 || []).forEach(r => { raceMap[r.id] = r; });
+          const currentRaceIds = new Set((races2 || []).map(r => r.id));
+
+          // Enrich scores with names
+          const enrichedScores = (scores2 || []).filter(s => currentRaceIds.has(s.race_id)).map(s => ({
+            ...s,
+            player_name: playerMap[s.player_id] || s.player_id,
+            race_name: raceMap[s.race_id]?.race_name || s.race_id,
+            round: raceMap[s.race_id]?.round,
+            total: (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) + (s.pit_individual_pts || 0) + (s.weekly_bonus_pts || 0),
+          }));
+
+          // Enrich picks with names
+          const enrichedPicks = (picks2 || []).filter(p => currentRaceIds.has(p.race_id)).map(p => ({
+            ...p,
+            player_name: playerMap[p.player_id] || p.player_id,
+            race_name: raceMap[p.race_id]?.race_name || p.race_id,
+            round: raceMap[p.race_id]?.round,
+          }));
+
+          // Enrich schedule with names
+          const enrichedSchedule = (schedule2 || []).filter(s => currentRaceIds.has(s.race_id)).map(s => ({
+            ...s,
+            home_team_name: teamMap[s.home_team_id] || s.home_team_id,
+            away_team_name: teamMap[s.away_team_id] || s.away_team_id,
+            race_name: raceMap[s.race_id]?.race_name || s.race_id,
+            round: raceMap[s.race_id]?.round,
+          }));
+
+          // Enrich teams with player names
+          const enrichedTeams = (teams || []).map(t => ({
+            ...t,
+            player1_name: playerMap[t.player1_id] || t.player1_id,
+            player2_name: playerMap[t.player2_id] || t.player2_id,
+          }));
+
+          const exportObj = {
+            exported_at: new Date().toISOString(),
+            season: 2026,
+            players: players || [],
+            teams: enrichedTeams,
+            races: races2 || [],
+            scores: enrichedScores,
+            picks: enrichedPicks,
+            schedule: enrichedSchedule,
+            results: results2 || [],
+          };
+
+          const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `formula5_data_${new Date().toISOString().split("T")[0]}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+
+        return (
+          <div>
+            <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 16, lineHeight: 1.6 }}>
+              Export all Formula 5 data (players, teams, scores, picks, schedule, results) as a JSON file. Share this with Claude for analysis.
+            </p>
+            <button
+              onClick={exportData}
+              style={{
+                width: "100%", padding: "14px", borderRadius: 12,
+                background: BLUEDARK, border: "none", color: "#fff",
+                fontFamily: FD, fontWeight: 800, fontSize: 14,
+                textTransform: "uppercase", letterSpacing: "0.06em",
+                cursor: "pointer", marginBottom: 16
+              }}
+            >
+              📦 Export All Data
+            </button>
+            <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, fontStyle: "italic" }}>
+              Downloads a JSON file with all 2026 season data — enriched with player/team names for easy reading.
+            </p>
           </div>
         );
       })()}
