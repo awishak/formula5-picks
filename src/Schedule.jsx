@@ -612,11 +612,11 @@ export default function Schedule({ currentUser, onNavigate }) {
               return (
                 <div style={{ padding: "6px 0", borderBottom: `1px solid ${BORDER}15` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-                    <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>{sn(name)}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontFamily: FB, fontSize: 9, color: TEXT2 }}>Team <strong style={{ fontFamily: FD, color: BLUEDARK, fontSize: 12 }}>{teamContrib}</strong></span>
-                      <span style={{ fontFamily: FB, fontSize: 9, color: TEXT2 }}>Indiv <strong style={{ fontFamily: FD, color: DARK, fontSize: 12 }}>{indivTotal}</strong></span>
+                      <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>{sn(name)}</span>
+                      <span style={{ fontFamily: FB, fontSize: 9, color: TEXT2 }}>Indiv <strong style={{ fontFamily: FD, color: DARK, fontSize: 11 }}>{indivTotal}</strong></span>
                     </div>
+                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BLUEDARK }}>{teamContrib}</span>
                   </div>
                   <div style={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "center" }}>
                     {Object.entries(driverPts).map(([driver, pts]) => {
@@ -652,28 +652,26 @@ export default function Schedule({ currentUser, onNavigate }) {
                     <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: GOLD, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 2px" }}>{homeTeam.name} (Over)</p>
                     {playerLine(homeTeam.player1_id)}
                     {playerLine(homeTeam.player2_id)}
-                    {/* Home BOX BOX + Total */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0 2px", borderTop: `1px solid ${BORDER}30`, marginTop: 2 }}>
+                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, padding: "6px 0 2px", borderTop: `1px solid ${BORDER}30`, marginTop: 2 }}>
                       <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: homeBoxBox > 0 ? GREEN : homeBoxBox < 0 ? RED : TEXT2, background: homeBoxBox > 0 ? `${GREEN}10` : homeBoxBox < 0 ? `${RED}10` : `${DARK}04`, padding: "1px 6px", borderRadius: 3 }}>
                         BOX BOX {homeBoxBox > 0 ? "+5" : homeBoxBox < 0 ? "−1" : "0"}
                       </span>
-                      <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: homeWon ? GOLD : TEXT2 }}>
-                        {homeTotal}
-                      </span>
+                      <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 16, color: BLUEDARK }}>{homeTotal}</span>
                     </div>
 
                     <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: "#5a3d99", textTransform: "uppercase", letterSpacing: "0.06em", margin: "12px 0 2px" }}>{awayTeam.name} (Under)</p>
                     {playerLine(awayTeam.player1_id)}
                     {playerLine(awayTeam.player2_id)}
-                    {/* Away BOX BOX + Total */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0 2px", borderTop: `1px solid ${BORDER}30`, marginTop: 2 }}>
+                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, padding: "6px 0 2px", borderTop: `1px solid ${BORDER}30`, marginTop: 2 }}>
                       <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: awayBoxBox > 0 ? GREEN : awayBoxBox < 0 ? RED : TEXT2, background: awayBoxBox > 0 ? `${GREEN}10` : awayBoxBox < 0 ? `${RED}10` : `${DARK}04`, padding: "1px 6px", borderRadius: 3 }}>
                         BOX BOX {awayBoxBox > 0 ? "+5" : awayBoxBox < 0 ? "−1" : "0"}
                       </span>
-                      <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: awayWon ? "#5a3d99" : TEXT2 }}>
-                        {awayTotal}
-                      </span>
+                      <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 16, color: BLUEDARK }}>{awayTotal}</span>
                     </div>
+
+                    <p style={{ fontFamily: FB, fontSize: 9, color: TEXT2, margin: "10px 0 0", lineHeight: 1.5, fontStyle: "italic" }}>
+                      Team scores = driver points + order bonus + best finish bonus from each player, plus the BOX BOX result. The Needle and weekly top-10 bonuses count only toward individual standings.
+                    </p>
                   </div>
                 )}
               </div>
