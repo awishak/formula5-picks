@@ -807,16 +807,6 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
       })()}
 
       {/* Outline legend — show for scored races */}
-      {raceHasScores && (
-        <div style={{
-          padding: "12px 14px", borderRadius: 12, marginBottom: 14,
-          background: `${ORANGE}08`, border: `1px solid ${ORANGE}25`
-        }}>
-          <p style={{ fontFamily: FB, fontSize: 12, color: TEXT, margin: 0, lineHeight: 1.5 }}>
-            <span style={{ fontWeight: 700 }}>Hey!</span> I'm working through the kinks in this first week. I believe these are the final scores but I'll confirm when they are all ready to go.
-          </p>
-        </div>
-      )}
       {raceHasScores && (() => {
         const activeRecap = recaps.find(r => r.race_id === currentRace?.id);
         const hasRecap = !!activeRecap;
