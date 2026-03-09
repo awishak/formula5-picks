@@ -33,6 +33,7 @@ const ORANGE   = "#e08a2e";
 const TEXT     = "#1e1e2a";
 const TEXT2    = "#6b6b80";
 const BORDER   = "#d8d2c4";
+const GOLD     = "#c9a820";
 const FD       = "'Geologica', sans-serif";
 const FB       = "'DM Sans', sans-serif";
 
