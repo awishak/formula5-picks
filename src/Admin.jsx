@@ -74,11 +74,11 @@ export default function Admin() {
   const [allPitStops, setAllPitStops] = useState([]);
   const [selectedPitIdx, setSelectedPitIdx] = useState(null);
   const [rawApiDump, setRawApiDump] = useState(null);
-  const [recapRound, setRecapRound] = useState(null);
-  const [recapGenerating, setRecapGenerating] = useState(false);
-  const [recapStatus, setRecapStatus] = useState("");
-  const [existingRecaps, setExistingRecaps] = useState({});
-  const [recapNotes, setRecapNotes] = useState("");
+  const [driverPoolRound, setDriverPoolRound] = useState(null);
+  const [topDrivers, setTopDrivers] = useState(["", "", ""]);
+  const [midDrivers, setMidDrivers] = useState(["", "", "", "", "", "", ""]);
+  const [driverPoolStatus, setDriverPoolStatus] = useState("");
+  const [driverPoolSaving, setDriverPoolSaving] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -894,7 +894,7 @@ export default function Admin() {
 
       {/* Tab switcher */}
       <div style={{ display: "flex", gap: 0, marginBottom: 20, borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
-        {[{ id: "scoring", label: "Score Race" }, { id: "missing", label: "Missing Picks" }, { id: "recaps", label: "Recaps" }, { id: "export", label: "Export" }, { id: "logos", label: "Logos" }, { id: "photos", label: "Photos" }].map(tab => (
+        {[{ id: "scoring", label: "Score Race" }, { id: "missing", label: "Missing Picks" }, { id: "drivers", label: "Driver Pools" }, { id: "export", label: "Export" }, { id: "logos", label: "Logos" }, { id: "photos", label: "Photos" }].map(tab => (
           <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{
             flex: 1, padding: "10px 0", border: "none",
             background: adminTab === tab.id ? BLUEDARK : "#fff",
@@ -1154,191 +1154,42 @@ export default function Admin() {
         </div>
       )}
 
-      {/* RECAPS TAB */}
-      {adminTab === "recaps" && (() => {
-        async function loadExistingRecaps() {
-          const { data } = await supabase.from("recaps").select("round");
-          const map = {};
-          (data || []).forEach(r => { map[r.round] = true; });
-          setExistingRecaps(map);
+      {/* DRIVER POOLS TAB */}
+      {adminTab === "drivers" && (() => {
+        async function loadDriverPool(round) {
+          const race = races.find(r => r.round === round);
+          if (!race) return;
+          setTopDrivers((race.top_drivers && race.top_drivers.length === 3) ? race.top_drivers : ["", "", ""]);
+          setMidDrivers((race.mid_drivers && race.mid_drivers.length === 7) ? race.mid_drivers : ["", "", "", "", "", "", ""]);
+          setDriverPoolStatus("");
         }
 
-        async function generateRecap() {
-          if (!recapRound) return;
-          setRecapGenerating(true);
-          setRecapStatus("Collecting data...");
-
-          try {
-            const race = races.find(r => r.round === recapRound);
-            if (!race) throw new Error("Race not found");
-
-            // Fetch everything needed
-            const [{ data: scoresData }, { data: picksData }, { data: playersData }, { data: teamsData }, { data: scheduleData }] = await Promise.all([
-              supabase.from("scores").select("*").eq("race_id", race.id),
-              supabase.from("picks").select("*").eq("race_id", race.id),
-              supabase.from("players").select("id, name"),
-              supabase.from("teams").select("*"),
-              supabase.from("schedule").select("*").eq("race_id", race.id),
-            ]);
-
-            const pMap = {};
-            (playersData || []).forEach(p => { pMap[p.id] = p.name; });
-
-            // Build player scores summary
-            const playerSummaries = (scoresData || []).map(s => {
-              const name = pMap[s.player_id] || "Unknown";
-              const total = (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) + (s.pit_individual_pts || 0) + (s.weekly_bonus_pts || 0);
-              const teamContrib = (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0);
-              const pick = (picksData || []).find(pk => pk.player_id === s.player_id);
-              return {
-                name, total, teamContrib,
-                topPick: pick?.top_pick || "?",
-                drivers: (pick?.finishing_order || []).join(", "),
-                orderBonus: s.order_bonus || 0,
-                bestFinishBonus: s.best_finish_bonus || 0,
-                pitPts: s.pit_individual_pts || 0,
-                weeklyBonus: s.weekly_bonus_pts || 0,
-              };
-            }).sort((a, b) => b.total - a.total);
-
-            // Get actual pit stop time
-            const { data: resultsRow } = await supabase.from("results").select("pit_stop_time").eq("race_id", race.id).maybeSingle();
-            const actualPitTime = resultsRow?.pit_stop_time;
-
-            // Build matchup summaries
-            const matchupSummaries = (scheduleData || []).map(m => {
-              const ht = (teamsData || []).find(t => t.id === m.home_team_id);
-              const at = (teamsData || []).find(t => t.id === m.away_team_id);
-              if (!ht || !at) return null;
-
-              const teamScore = (team) => {
-                const p1 = (scoresData || []).find(s => s.player_id === team.player1_id);
-                const p2 = (scoresData || []).find(s => s.player_id === team.player2_id);
-                const base = (s) => s ? (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) : 0;
-                const boxBox = p1?.pit_matchup_pts || 0;
-                return { total: base(p1) + base(p2) + boxBox, boxBox, p1: pMap[team.player1_id], p2: pMap[team.player2_id], p1Score: base(p1), p2Score: base(p2) };
-              };
-
-              const home = teamScore(ht);
-              const away = teamScore(at);
-
-              // Compute BOX BOX line (avg of 4 pit guesses)
-              const fourPids = [ht.player1_id, ht.player2_id, at.player1_id, at.player2_id];
-              const pitGuesses = fourPids.map(pid => (picksData || []).find(pk => pk.player_id === pid)?.pit_guess).filter(g => g != null).map(Number);
-              const boxBoxLine = pitGuesses.length > 0 ? pitGuesses.reduce((a, b) => a + b, 0) / pitGuesses.length : null;
-
-              // Flag: pit stop was within .05 of the line
-              const pitCloseCall = (boxBoxLine !== null && actualPitTime != null) ? Math.abs(actualPitTime - boxBoxLine) <= 0.05 : false;
-
-              // Flag: match decided by BOX BOX (without BOX BOX, the other team would have won or tied)
-              const homeWithout = home.p1Score + home.p2Score;
-              const awayWithout = away.p1Score + away.p2Score;
-              const actualWinner = home.total > away.total ? "home" : away.total > home.total ? "away" : "tie";
-              const withoutWinner = homeWithout > awayWithout ? "home" : awayWithout > homeWithout ? "away" : "tie";
-              const decidedByBoxBox = actualWinner !== withoutWinner;
-
-              return {
-                homeTeam: ht.name, awayTeam: at.name,
-                homeScore: home.total, awayScore: away.total,
-                homeP1: home.p1, homeP1Score: home.p1Score,
-                homeP2: home.p2, homeP2Score: home.p2Score,
-                awayP1: away.p1, awayP1Score: away.p1Score,
-                awayP2: away.p2, awayP2Score: away.p2Score,
-                homeBoxBox: home.boxBox, awayBoxBox: away.boxBox,
-                winner: home.total > away.total ? ht.name : away.total > home.total ? at.name : "Tie",
-                division: ht.division || "second",
-                boxBoxLine: boxBoxLine ? boxBoxLine.toFixed(2) : null,
-                actualPitTime: actualPitTime ? actualPitTime.toFixed(2) : null,
-                pitCloseCall,
-                decidedByBoxBox,
-                margin: Math.abs(home.total - away.total),
-              };
-            }).filter(Boolean);
-
-            // Identify top 10 scorers
-            const top10Names = new Set(playerSummaries.slice(0, 10).map(p => p.name));
-
-            setRecapStatus("Generating recap with AI...");
-
-            const prompt = `You are the official writer for Formula 5, a fantasy F1 pick'em league. Write an engaging, fun recap of Round ${recapRound} — the ${race.race_name}.
-${recapNotes ? "\nADMIN NOTES — the league commissioner wants you to incorporate these points:\n" + recapNotes + "\n" : ""}
-IMPORTANT HIGHLIGHT RULES — you MUST call attention to these when they occur:
-1. If the actual pit stop time was within 0.05 seconds of a matchup's BOX BOX line, that's a DRAMATIC close call — emphasize how razor-thin the margin was.
-2. If a matchup was DECIDED by BOX BOX (meaning without the BOX BOX bonus, the other team would have won or tied), make this a big storyline — the pit stop literally flipped the result.
-3. Any player who finished in the top 10 individually deserves a shout-out, especially top 3.
-4. Close matchups (margin of 5 or less) are exciting — highlight the drama.
-
-ACTUAL PIT STOP TIME: ${actualPitTime ? actualPitTime.toFixed(2) + "s" : "N/A"}
-
-INDIVIDUAL STANDINGS (sorted by total points):
-${playerSummaries.map((p, i) => `${i + 1}. ${p.name}: ${p.total} pts (Top Pick: ${p.topPick}, Drivers: ${p.drivers}, Order Bonus: ${p.orderBonus > 0 ? "+6" : "0"}, Best Finish: ${p.bestFinishBonus > 0 ? "+3" : "0"}, Needle: +${p.pitPts}, Weekly Bonus: +${p.weeklyBonus})${i < 10 ? " ⭐ TOP 10" : ""}`).join("\n")}
-
-TEAM MATCHUPS:
-${matchupSummaries.map(m => `${m.homeTeam} (Over) ${m.homeScore} vs ${m.awayTeam} (Under) ${m.awayScore} — Winner: ${m.winner} (margin: ${m.margin})
-  ${m.homeP1} (${m.homeP1Score}) + ${m.homeP2} (${m.homeP2Score}) + BOX BOX (${m.homeBoxBox > 0 ? "+5" : m.homeBoxBox < 0 ? "-1" : "0"})
-  ${m.awayP1} (${m.awayP1Score}) + ${m.awayP2} (${m.awayP2Score}) + BOX BOX (${m.awayBoxBox > 0 ? "+5" : m.awayBoxBox < 0 ? "-1" : "0"})
-  BOX BOX Line: ${m.boxBoxLine || "N/A"} | Actual Pit: ${m.actualPitTime || "N/A"} | Division: ${m.division}
-  ${m.pitCloseCall ? "⚠️ PIT STOP CLOSE CALL — within 0.05s of the line!" : ""}
-  ${m.decidedByBoxBox ? "🔥 DECIDED BY BOX BOX — without the pit bonus, the result would have been different!" : ""}
-  ${m.margin <= 5 ? "🏁 CLOSE MATCH — margin of " + m.margin + " points!" : ""}`).join("\n\n")}
-
-Please respond ONLY with valid JSON in this exact format (no markdown, no backticks):
-{
-  "league_recap": "3-4 paragraphs about the overall league storylines, standout performances, surprises, and drama. Use paragraph breaks (\\n\\n). Be specific with names and numbers. Be fun and engaging like a sports columnist. Make sure to highlight any BOX BOX close calls, matches decided by BOX BOX, and top individual performances.",
-  "matchup_recaps": [
-    ${matchupSummaries.map(m => `{"homeTeam": "${m.homeTeam}", "awayTeam": "${m.awayTeam}", "recap": "One paragraph about this specific matchup. Highlight BOX BOX drama if flagged, close margins, standout players. Be specific with scores."}`).join(",\n    ")}
-  ]
-}`;
-
-            const response = await fetch("https://api.anthropic.com/v1/messages", {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-              body: JSON.stringify({
-                model: "claude-sonnet-4-20250514",
-                max_tokens: 4000,
-                messages: [{ role: "user", content: prompt }],
-              }),
-            });
-
-            if (!response.ok) throw new Error(`API error: ${response.status} ${response.statusText}`);
-            const data = await response.json();
-            const text = data.content.map(c => c.text || "").join("");
-            const clean = text.replace(/```json|```/g, "").trim();
-            const parsed = JSON.parse(clean);
-
-            setRecapStatus("Saving to database...");
-
-            // Upsert into recaps table
-            const { error: upsertErr } = await supabase.from("recaps").upsert({
-              race_id: race.id,
-              round: recapRound,
-              league_recap: parsed.league_recap,
-              matchup_recaps: parsed.matchup_recaps,
-              generated_at: new Date().toISOString(),
-            }, { onConflict: "race_id" });
-
-            if (upsertErr) throw upsertErr;
-
-            setRecapStatus(`✅ Recap generated and saved for Round ${recapRound}!`);
-            setExistingRecaps(prev => ({ ...prev, [recapRound]: true }));
-
-          } catch (e) {
-            console.error(e);
-            setRecapStatus(`❌ Error: ${e.message}`);
-          } finally {
-            setRecapGenerating(false);
+        async function saveDriverPool() {
+          const race = races.find(r => r.round === driverPoolRound);
+          if (!race) return;
+          const top = topDrivers.filter(d => d.trim());
+          const mid = midDrivers.filter(d => d.trim());
+          if (top.length !== 3) { setDriverPoolStatus("Need exactly 3 top drivers"); return; }
+          if (mid.length !== 7) { setDriverPoolStatus("Need exactly 7 midfield drivers"); return; }
+          setDriverPoolSaving(true);
+          const { error } = await supabase.from("races").update({ top_drivers: top, mid_drivers: mid }).eq("id", race.id);
+          if (error) { setDriverPoolStatus("Error: " + error.message); }
+          else {
+            setDriverPoolStatus("Saved!");
+            // Update local races array
+            const idx = races.findIndex(r => r.round === driverPoolRound);
+            if (idx >= 0) { races[idx].top_drivers = top; races[idx].mid_drivers = mid; }
           }
+          setDriverPoolSaving(false);
         }
 
-        // Load existing recaps on tab open
-        if (Object.keys(existingRecaps).length === 0) loadExistingRecaps();
-
-        const scoredRounds = races.filter(r => scores.some(s => s.race_id === r.id));
+        const selectedRacePool = races.find(r => r.round === driverPoolRound);
+        const hasPool = selectedRacePool && selectedRacePool.top_drivers && selectedRacePool.top_drivers.length > 0;
 
         return (
           <div>
-            <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 16 }}>
-              Generate AI-powered recaps for scored rounds. Requires VITE_ANTHROPIC_API_KEY in your .env file.
+            <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 16, lineHeight: 1.6 }}>
+              Set the 3 Top Drivers and 7 Midfield Drivers available for each race week. Players pick 1 Top Driver and 4 Midfield Drivers.
             </p>
 
             <div style={{ marginBottom: 16 }}>
@@ -1346,60 +1197,67 @@ Please respond ONLY with valid JSON in this exact format (no markdown, no backti
                 Select Round
               </label>
               <select
-                value={recapRound || ""}
-                onChange={e => { setRecapRound(parseInt(e.target.value)); setRecapStatus(""); }}
-                style={{ padding: "10px 12px", borderRadius: 10, border: `1px solid ${BORDER}`, fontFamily: FD, fontSize: 14, fontWeight: 700, color: TEXT, minWidth: 200 }}
+                value={driverPoolRound || ""}
+                onChange={e => { const r = parseInt(e.target.value); setDriverPoolRound(r); loadDriverPool(r); }}
+                style={{ padding: "10px 12px", borderRadius: 10, border: `1px solid ${BORDER}`, fontFamily: FD, fontSize: 14, fontWeight: 700, color: TEXT, minWidth: 200, width: "100%" }}
               >
-                <option value="">Choose a scored round…</option>
-                {scoredRounds.map(r => (
-                  <option key={r.round} value={r.round}>
-                    Round {r.round} — {r.race_name} {existingRecaps[r.round] ? "✅" : ""}
-                  </option>
-                ))}
+                <option value="">Choose a round...</option>
+                {races.map(r => {
+                  const has = r.top_drivers && r.top_drivers.length > 0;
+                  return (
+                    <option key={r.round} value={r.round}>
+                      Round {r.round} — {r.race_name} {has ? "✅" : ""}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
-            {/* Admin notes */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>
-                Your Notes (optional — things to highlight or mention)
-              </label>
-              <textarea
-                value={recapNotes}
-                onChange={e => setRecapNotes(e.target.value)}
-                placeholder={"e.g. George had a great week picking Verstappen who won. The Cal Aggie vs Prestissimo matchup was super close. Mention that this is the first race of the season."}
-                rows={4}
-                style={{
-                  width: "100%", padding: "10px 12px", borderRadius: 10,
-                  border: "1px solid " + BORDER, fontFamily: FB, fontSize: 13,
-                  color: TEXT, resize: "vertical", boxSizing: "border-box",
-                  lineHeight: 1.5
-                }}
-              />
-            </div>
+            {driverPoolRound && (
+              <div>
+                <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>
+                  Top Drivers (3) — players pick 1
+                </label>
+                {topDrivers.map((d, i) => (
+                  <input key={`top-${i}`} value={d} onChange={e => { const arr = [...topDrivers]; arr[i] = e.target.value; setTopDrivers(arr); }}
+                    placeholder={`Top Driver ${i + 1}`}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1px solid ${BORDER}`, fontFamily: FB, fontSize: 14, color: TEXT, marginBottom: 6, boxSizing: "border-box" }}
+                  />
+                ))}
 
-            <button
-              onClick={generateRecap}
-              disabled={recapGenerating || !recapRound}
-              style={{
-                width: "100%", padding: "14px", borderRadius: 12,
-                background: recapGenerating ? BORDER : BLUEDARK, border: "none", color: "#fff",
-                fontFamily: FD, fontWeight: 800, fontSize: 14,
-                textTransform: "uppercase", letterSpacing: "0.06em",
-                cursor: recapGenerating ? "wait" : "pointer", opacity: recapGenerating ? 0.6 : 1,
-                marginBottom: 16
-              }}
-            >
-              {recapGenerating ? "Generating..." : existingRecaps[recapRound] ? "Regenerate Recap" : "Generate Recap"}
-            </button>
+                <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, marginTop: 16 }}>
+                  Midfield Drivers (7) — players pick 4
+                </label>
+                {midDrivers.map((d, i) => (
+                  <input key={`mid-${i}`} value={d} onChange={e => { const arr = [...midDrivers]; arr[i] = e.target.value; setMidDrivers(arr); }}
+                    placeholder={`Midfield Driver ${i + 1}`}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1px solid ${BORDER}`, fontFamily: FB, fontSize: 14, color: TEXT, marginBottom: 6, boxSizing: "border-box" }}
+                  />
+                ))}
 
-            {recapStatus && (
-              <div style={{
-                padding: "10px 14px", borderRadius: 10,
-                background: recapStatus.startsWith("✅") ? `${GREEN}10` : recapStatus.startsWith("❌") ? `${RED}10` : `${BLUE}10`,
-                border: `1px solid ${recapStatus.startsWith("✅") ? `${GREEN}30` : recapStatus.startsWith("❌") ? `${RED}30` : `${BLUE}20`}`,
-              }}>
-                <p style={{ fontFamily: FB, fontSize: 13, color: recapStatus.startsWith("✅") ? GREEN : recapStatus.startsWith("❌") ? RED : BLUEDARK, margin: 0, lineHeight: 1.5 }}>{recapStatus}</p>
+                <button
+                  onClick={saveDriverPool}
+                  disabled={driverPoolSaving}
+                  style={{
+                    width: "100%", padding: "14px", borderRadius: 12, marginTop: 12,
+                    background: driverPoolSaving ? BORDER : BLUEDARK, border: "none", color: "#fff",
+                    fontFamily: FD, fontWeight: 800, fontSize: 14,
+                    textTransform: "uppercase", letterSpacing: "0.06em",
+                    cursor: driverPoolSaving ? "wait" : "pointer", opacity: driverPoolSaving ? 0.6 : 1,
+                  }}
+                >
+                  {driverPoolSaving ? "Saving..." : "Save Driver Pool"}
+                </button>
+
+                {driverPoolStatus && (
+                  <div style={{
+                    padding: "10px 14px", borderRadius: 10, marginTop: 12,
+                    background: driverPoolStatus === "Saved!" ? `${GREEN}10` : `${RED}10`,
+                    border: `1px solid ${driverPoolStatus === "Saved!" ? `${GREEN}30` : `${RED}30`}`,
+                  }}>
+                    <p style={{ fontFamily: FB, fontSize: 13, color: driverPoolStatus === "Saved!" ? GREEN : RED, margin: 0 }}>{driverPoolStatus}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

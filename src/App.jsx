@@ -166,7 +166,6 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
   const links = [
     { id: "practice", label: "Practice Picks", desc: "Try the pick process — nothing saved", icon: "🏎️" },
     { id: "results", label: "Race Results", desc: "Detailed scoring breakdowns", icon: "📊" },
-    { id: "schedule", label: "Race Recaps", desc: "AI-written race day stories", icon: "📝" },
     { id: "rules", label: "Rules", desc: "Complete scoring & format guide", icon: "📋" },
     { id: "strategy", label: "Strategy", desc: "Pit stop & BOX BOX tactics", icon: "🎯" },
     { id: "players", label: "Players", desc: "All players & team rosters", icon: "🏅" },
@@ -279,6 +278,16 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
         )}
         {pickDeadline && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT, textAlign: "center", marginTop: 12, fontWeight: 500 }}>Picks due by <span style={{ fontWeight: 700, color: DARK }}>{pickDeadline}</span></p>}
       </div>
+
+      {/* Recap button */}
+      <button onClick={() => onNavigate("schedule")} style={{
+        width: "100%", padding: "14px", borderRadius: 12, marginBottom: 24,
+        border: `1.5px solid ${BORDER}`, background: "#fff",
+        fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 13, color: BLUEDARK,
+        cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.04em"
+      }}>
+        Read the Round 1 Recap
+      </button>
 
       {/* All navigation — unified 3-across grid */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
