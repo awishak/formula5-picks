@@ -858,22 +858,29 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
         supabase.from("players").select("id, name"),
         supabase.from("picks").select("*"),
         supabase.from("scores").select("*"),
-        supabase.from("races").select("id, race_name, round").order("round", { ascending: true }),
+        supabase.from("races").select("id, race_name, round, season").order("round", { ascending: true }),
         supabase.from("teams").select("*"),
         supabase.from("schedule").select("*")
       ]);
       const me = (players || []).find(p => p.name === currentUser);
       if (!me) { setLoading(false); return; }
 
+      // Filter to current season only
+      const currentSeasonRaces = (races || []).filter(r => r.season === 2026);
+      const currentRaceIds = new Set(currentSeasonRaces.map(r => r.id));
+      const currentScores = (scores || []).filter(s => currentRaceIds.has(s.race_id));
+      const currentSchedule = (schedule || []).filter(s => currentRaceIds.has(s.race_id));
+      const currentPicks = (picks || []).filter(p => currentRaceIds.has(p.race_id));
+
       const myTeam = (teams || []).find(t => t.player1_id === me.id || t.player2_id === me.id);
       const raceMap = {};
-      (races || []).forEach(r => { raceMap[r.id] = r; });
+      currentSeasonRaces.forEach(r => { raceMap[r.id] = r; });
       const scoreMap = {};
-      (scores || []).forEach(s => { if (s.player_id === me.id) scoreMap[s.race_id] = s; });
+      currentScores.forEach(s => { if (s.player_id === me.id) scoreMap[s.race_id] = s; });
 
       // All player totals per race for ranking
       const raceTotals = {};
-      (scores || []).forEach(s => {
+      currentScores.forEach(s => {
         if (!raceTotals[s.race_id]) raceTotals[s.race_id] = [];
         const total = (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) + (s.pit_individual_pts || 0) + (s.weekly_bonus_pts || 0);
         raceTotals[s.race_id].push({ pid: s.player_id, total });
@@ -883,13 +890,13 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
       // Helper: compute team score for a given team + race
       const teamScore = (team, raceId) => {
         if (!team) return 0;
-        const sk = (pid) => (scores || []).find(s => s.player_id === pid && s.race_id === raceId);
+        const sk = (pid) => currentScores.find(s => s.player_id === pid && s.race_id === raceId);
         const s1 = sk(team.player1_id), s2 = sk(team.player2_id);
         const base = (s) => s ? (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) : 0;
         return base(s1) + base(s2) + (s1?.pit_matchup_pts || 0);
       };
 
-      const myPicks = (picks || []).filter(pk => pk.player_id === me.id);
+      const myPicks = currentPicks.filter(pk => pk.player_id === me.id);
       let totalSeasonPts = 0, wins = 0, losses = 0, ties = 0, teamWins = 0, teamLosses = 0, teamTies = 0;
 
       const entries = myPicks.map(pk => {
@@ -905,7 +912,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
         // Team matchup for this race
         let teamResult = null;
         if (myTeam && score) {
-          const matchup = (schedule || []).find(m => m.race_id === pk.race_id && (m.home_team_id === myTeam.id || m.away_team_id === myTeam.id));
+          const matchup = currentSchedule.find(m => m.race_id === pk.race_id && (m.home_team_id === myTeam.id || m.away_team_id === myTeam.id));
           if (matchup) {
             const myTS = teamScore(myTeam, pk.race_id);
             const oppId = matchup.home_team_id === myTeam.id ? matchup.away_team_id : matchup.home_team_id;
@@ -924,7 +931,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
 
       // Player standings rank: sum all players' total pts, rank them
       const playerTotalPts = {};
-      (scores || []).forEach(s => {
+      currentScores.forEach(s => {
         const t = (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) + (s.pit_individual_pts || 0) + (s.weekly_bonus_pts || 0);
         playerTotalPts[s.player_id] = (playerTotalPts[s.player_id] || 0) + t;
       });
@@ -941,10 +948,10 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
         // Compute W/L record and champ pts for each team in division
         const teamStats = divTeams.map(team => {
           let w = 0, l = 0, t2 = 0, cp = 0;
-          const teamMatchups = (schedule || []).filter(m => m.home_team_id === team.id || m.away_team_id === team.id);
+          const teamMatchups = currentSchedule.filter(m => m.home_team_id === team.id || m.away_team_id === team.id);
           teamMatchups.forEach(m => {
             // Only count scored races
-            const hasScores = (scores || []).some(s => s.race_id === m.race_id);
+            const hasScores = currentScores.some(s => s.race_id === m.race_id);
             if (!hasScores) return;
             const myTS = teamScore(team, m.race_id);
             const oppId = m.home_team_id === team.id ? m.away_team_id : m.home_team_id;
