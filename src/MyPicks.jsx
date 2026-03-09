@@ -939,34 +939,40 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
       const myStandingsRank = standingsArr.findIndex(([pid]) => pid === me.id) + 1;
       const totalPlayersInStandings = standingsArr.length;
 
-      // Team standings: compute championship points per team from schedule matchups
+      // Team standings: F1-style points table (matching TeamStandings)
+      const TEAM_PTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1, 0, 0];
       let teamDivision = null, teamChampPts = 0, teamStandingsRank = null, totalTeamsInDiv = 0;
       if (myTeam) {
         teamDivision = myTeam.division === "championship" ? "Championship" : "Second Division";
-        // Only include teams that have matchups in the current season
         const activeTeamIds = new Set();
         currentSchedule.forEach(m => { activeTeamIds.add(m.home_team_id); activeTeamIds.add(m.away_team_id); });
         const divTeams = (teams || []).filter(t => t.division === myTeam.division && activeTeamIds.has(t.id));
 
-        // Compute W/L record and champ pts for each team in division
-        const teamStats = divTeams.map(team => {
-          let w = 0, l = 0, t2 = 0, cp = 0;
-          const teamMatchups = currentSchedule.filter(m => m.home_team_id === team.id || m.away_team_id === team.id);
-          teamMatchups.forEach(m => {
-            // Only count scored races
-            const hasScores = currentScores.some(s => s.race_id === m.race_id);
-            if (!hasScores) return;
-            const myTS = teamScore(team, m.race_id);
-            const oppId = m.home_team_id === team.id ? m.away_team_id : m.home_team_id;
-            const opp = (teams || []).find(t => t.id === oppId);
-            const oppTS = opp ? teamScore(opp, m.race_id) : 0;
-            if (myTS > oppTS) { w++; cp += 3; }
-            else if (myTS === oppTS) { t2++; cp += 1; }
-            else { l++; }
-          });
-          return { teamId: team.id, teamName: team.name, w, l, t: t2, cp };
-        }).sort((a, b) => b.cp - a.cp);
+        const teamPtsMap = {};
+        divTeams.forEach(t => { teamPtsMap[t.id] = 0; });
 
+        const scoredRaceIds = [...new Set(currentScores.map(s => s.race_id))];
+        scoredRaceIds.forEach(raceId => {
+          const raceResults = divTeams.map(team => {
+            const matchup = currentSchedule.find(m => m.race_id === raceId && (m.home_team_id === team.id || m.away_team_id === team.id));
+            if (!matchup) return null;
+            const myTS = teamScore(team, raceId);
+            const oppId = matchup.home_team_id === team.id ? matchup.away_team_id : matchup.home_team_id;
+            const opp = (teams || []).find(t => t.id === oppId);
+            const oppTS = opp ? teamScore(opp, raceId) : 0;
+            const won = myTS > oppTS ? true : myTS < oppTS ? false : null;
+            return { teamId: team.id, matchupScore: myTS, won };
+          }).filter(Boolean);
+
+          const winners = raceResults.filter(r => r.won === true).sort((a, b) => b.matchupScore - a.matchupScore);
+          const tiedTeams = raceResults.filter(r => r.won === null).sort((a, b) => b.matchupScore - a.matchupScore);
+          const losers = raceResults.filter(r => r.won === false).sort((a, b) => b.matchupScore - a.matchupScore);
+          [...winners, ...tiedTeams, ...losers].forEach((r, idx) => {
+            teamPtsMap[r.teamId] = (teamPtsMap[r.teamId] || 0) + (idx < TEAM_PTS_TABLE.length ? TEAM_PTS_TABLE[idx] : 0);
+          });
+        });
+
+        const teamStats = divTeams.map(t => ({ teamId: t.id, cp: teamPtsMap[t.id] || 0 })).sort((a, b) => b.cp - a.cp);
         totalTeamsInDiv = teamStats.length;
         const myTeamStats = teamStats.find(ts => ts.teamId === myTeam.id);
         teamChampPts = myTeamStats?.cp || 0;
