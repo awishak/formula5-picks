@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Component } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Schedule from "./Schedule.jsx";
 import Rules from "./Rules.jsx";
@@ -130,6 +130,21 @@ function SeasonPreview() {
 }
 
 // ── Home Page ────────────────────────────────────────────
+class PageErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error: error.message || String(error) }; }
+  componentDidCatch(error, info) { console.error("Page crash:", error, info); }
+  render() {
+    if (this.state.error) return (
+      <div style={{ padding: "40px 20px" }}>
+        <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 18, color: "#e04a4a", marginBottom: 8 }}>Page Error</p>
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6b6b80", wordBreak: "break-all" }}>{this.state.error}</p>
+      </div>
+    );
+    return this.props.children;
+  }
+}
+
 function RecapPage() {
   const [recaps, setRecaps] = useState([]);
   const [races, setRaces] = useState([]);
@@ -769,7 +784,7 @@ export default function App() {
         {activePage === "players" && <Players currentUser={currentUser} />}
         {activePage === "practice" && <PracticePicks />}
         {activePage === "season-preview" && <SeasonPreview />}
-        {activePage === "recap" && <RecapPage />}
+        {activePage === "recap" && <PageErrorBoundary><RecapPage /></PageErrorBoundary>}
       </div>
       <BottomNav active={activePage} onChange={setActivePage} hasSubmittedPicks={hasSubmittedPicks} />
     </>
