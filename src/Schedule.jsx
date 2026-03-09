@@ -34,7 +34,7 @@ function shortName(fullName) {
   return parts.length < 2 ? fullName : `${parts[0][0]}. ${parts.slice(1).join(" ")}`;
 }
 
-export default function Schedule({ currentUser, onNavigate }) {
+export default function Schedule({ currentUser, onNavigate, initialView }) {
   const [schedule, setSchedule] = useState([]);
   const [races, setRaces] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -47,7 +47,7 @@ export default function Schedule({ currentUser, onNavigate }) {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [expandedRooting, setExpandedRooting] = useState(null);
   const [expandedBoxScore, setExpandedBoxScore] = useState(null);
-  const [scheduleView, setScheduleView] = useState("matchups"); // "matchups" | "recap"
+  const [scheduleView, setScheduleView] = useState(initialView || "matchups"); // "matchups" | "recap"
   const [recaps, setRecaps] = useState([]);
 
   useEffect(() => {
@@ -825,54 +825,21 @@ export default function Schedule({ currentUser, onNavigate }) {
             {/* Matchups / Recap toggle */}
             {hasRecap && (
               <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-                {[{ id: "matchups", label: "Matchups" }, { id: "recap", label: "📝 Race Recap" }].map(tab => (
-                  <button key={tab.id} onClick={() => setScheduleView(tab.id)} style={{
-                    flex: 1, padding: "10px", borderRadius: 10, cursor: "pointer",
-                    border: `1.5px solid ${scheduleView === tab.id ? BLUEDARK : BORDER}`,
-                    background: scheduleView === tab.id ? `${BLUE}12` : "#fff",
-                    color: scheduleView === tab.id ? BLUEDARK : TEXT2,
-                    fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em"
-                  }}>{tab.label}</button>
-                ))}
+                <button style={{
+                  flex: 1, padding: "10px", borderRadius: 10, cursor: "default",
+                  border: `1.5px solid ${BLUEDARK}`,
+                  background: `${BLUE}12`, color: BLUEDARK,
+                  fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em"
+                }}>Matchups</button>
+                <button onClick={() => window.open(`/recaps/round${activeRound}.html`, "_blank")} style={{
+                  flex: 1, padding: "10px", borderRadius: 10, cursor: "pointer",
+                  border: `1.5px solid ${BORDER}`,
+                  background: "#fff", color: TEXT2,
+                  fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em"
+                }}>Race Recap</button>
               </div>
             )}
 
-            {/* Recap view */}
-            {scheduleView === "recap" && activeRecap && (
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: "20px 18px", marginBottom: 20 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                    <span style={{ fontSize: 18 }}>📝</span>
-                    <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 14, color: DARK, textTransform: "uppercase", letterSpacing: "0.04em", margin: 0 }}>League Recap</p>
-                  </div>
-                  {activeRecap.league_recap.split("\n\n").map((para, idx) => (
-                    <p key={idx} style={{ fontFamily: FB, fontSize: 14, color: TEXT, lineHeight: 1.7, margin: idx === 0 ? 0 : "12px 0 0" }}>{para}</p>
-                  ))}
-                </div>
-                {(activeRecap.matchup_recaps || []).length > 0 && (
-                  <div>
-                    <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>Matchup Recaps</p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {(activeRecap.matchup_recaps || []).map((mr, idx) => (
-                        <div key={idx} style={{ background: "#fff", borderRadius: 12, border: `1px solid ${BORDER}`, padding: "14px 16px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-                            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>{mr.homeTeam}</span>
-                            <span style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>vs</span>
-                            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>{mr.awayTeam}</span>
-                          </div>
-                          <p style={{ fontFamily: FB, fontSize: 13, color: TEXT, lineHeight: 1.65, margin: 0 }}>{mr.recap}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {activeRecap.generated_at && (
-                  <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, textAlign: "center", marginTop: 16 }}>
-                    Generated {new Date(activeRecap.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
-                  </p>
-                )}
-              </div>
-            )}
           </>
         );
       })()}
@@ -893,7 +860,7 @@ export default function Schedule({ currentUser, onNavigate }) {
         </div>
       )}
 
-      {scheduleView === "matchups" && (<>
+      {(<>
       {loading ? (
         <div style={{ padding: "60px 0", textAlign: "center" }}>
           <p style={{ fontFamily: FB, fontSize: 14, color: TEXT2 }}>Loading schedule…</p>
