@@ -943,7 +943,10 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
       let teamDivision = null, teamChampPts = 0, teamStandingsRank = null, totalTeamsInDiv = 0;
       if (myTeam) {
         teamDivision = myTeam.division === "championship" ? "Championship" : "Second Division";
-        const divTeams = (teams || []).filter(t => t.division === myTeam.division);
+        // Only include teams that have matchups in the current season
+        const activeTeamIds = new Set();
+        currentSchedule.forEach(m => { activeTeamIds.add(m.home_team_id); activeTeamIds.add(m.away_team_id); });
+        const divTeams = (teams || []).filter(t => t.division === myTeam.division && activeTeamIds.has(t.id));
 
         // Compute W/L record and champ pts for each team in division
         const teamStats = divTeams.map(team => {
