@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Schedule from "./Schedule.jsx";
 import Rules from "./Rules.jsx";
@@ -9,7 +9,7 @@ import PlayerStandings from "./PlayerStandings.jsx";
 import TeamStandings from "./TeamStandings.jsx";
 import Strategy from "./Strategy.jsx";
 import F1Calendar from "./F1Calendar.jsx";
-import Recap from "./Recap.jsx";
+const Recap = lazy(() => import("./Recap.jsx"));
 import Players from "./Players.jsx";
 import PracticePicks from "./PracticePicks.jsx";
 import PickIntel from "./PickIntel.jsx";
@@ -645,7 +645,7 @@ export default function App() {
         {activePage === "players" && <Players currentUser={currentUser} />}
         {activePage === "practice" && <PracticePicks />}
         {activePage === "season-preview" && <SeasonPreview />}
-        {activePage === "recap" && <Recap />}
+        {activePage === "recap" && <Suspense fallback={<div style={{ padding: "60px 20px", textAlign: "center" }}><p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#6b6b80" }}>Loading recaps...</p></div>}><Recap /></Suspense>}
       </div>
       <BottomNav active={activePage} onChange={setActivePage} hasSubmittedPicks={hasSubmittedPicks} />
     </>
