@@ -47,6 +47,8 @@ export default function Schedule({ currentUser, onNavigate }) {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [expandedRooting, setExpandedRooting] = useState(null);
   const [expandedBoxScore, setExpandedBoxScore] = useState(null);
+  const [scheduleView, setScheduleView] = useState("matchups"); // "matchups" | "recap"
+  const [recaps, setRecaps] = useState([]);
 
   useEffect(() => {
     async function load() {
@@ -67,6 +69,8 @@ export default function Schedule({ currentUser, onNavigate }) {
       setScores(scoresData || []);
       setPicks(picksData || []);
       setResults(resultsData || []);
+      var recapsResp = await supabase.from("recaps").select("*");
+      setRecaps(recapsResp.data || []);
       const ts = (scoresData || []).map(s => s.calculated_at).filter(Boolean).sort().reverse();
       if (ts.length > 0) setLastUpdated(ts[0]);
       setLoading(false);
@@ -94,6 +98,48 @@ export default function Schedule({ currentUser, onNavigate }) {
   const playerRankList = Object.entries(playerTotals).sort((a, b) => b[1] - a[1]);
   const playerRank = {};
   playerRankList.forEach(([pid, pts], i) => { playerRank[pid] = i + 1; });
+
+  // Compute team championship standings (F1-style points)
+  const TEAM_PTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1, 0, 0];
+  const teamChampPts = {};
+  const currentRaceIds = new Set(races.map(r => r.id));
+  const scoredRaceIds = [...new Set(scores.filter(s => currentRaceIds.has(s.race_id)).map(s => s.race_id))];
+  const activeTeamIds = new Set();
+  schedule.forEach(m => { if (m.home_team?.id) activeTeamIds.add(m.home_team.id); if (m.away_team?.id) activeTeamIds.add(m.away_team.id); });
+  const teamMatchupScore = (team, raceId) => {
+    if (!team) return 0;
+    const s1 = scoreMap[sk(team.player1_id, raceId)];
+    const s2 = scoreMap[sk(team.player2_id, raceId)];
+    const base = (s) => s ? (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) : 0;
+    return base(s1) + base(s2) + (s1?.pit_matchup_pts || 0);
+  };
+  ["championship", "second"].forEach(div => {
+    const divTeams = teams.filter(t => t.division === div && activeTeamIds.has(t.id));
+    scoredRaceIds.forEach(raceId => {
+      const raceResults = divTeams.map(team => {
+        const matchup = schedule.find(m => m.race_id === raceId && (m.home_team?.id === team.id || m.away_team?.id === team.id));
+        if (!matchup) return null;
+        const ms = teamMatchupScore(team, raceId);
+        const oppTeam = matchup.home_team?.id === team.id ? matchup.away_team : matchup.home_team;
+        const oppMs = oppTeam ? teamMatchupScore(oppTeam, raceId) : 0;
+        const won = ms > oppMs ? true : ms < oppMs ? false : null;
+        return { teamId: team.id, matchupScore: ms, won };
+      }).filter(Boolean);
+      const winners = raceResults.filter(r => r.won === true).sort((a, b) => b.matchupScore - a.matchupScore);
+      const tied = raceResults.filter(r => r.won === null).sort((a, b) => b.matchupScore - a.matchupScore);
+      const losers = raceResults.filter(r => r.won === false).sort((a, b) => b.matchupScore - a.matchupScore);
+      [...winners, ...tied, ...losers].forEach((r, idx) => {
+        teamChampPts[r.teamId] = (teamChampPts[r.teamId] || 0) + (idx < TEAM_PTS_TABLE.length ? TEAM_PTS_TABLE[idx] : 0);
+      });
+    });
+  });
+  // Rank teams by division
+  const teamRankByDiv = {};
+  ["championship", "second"].forEach(div => {
+    const divTeams = teams.filter(t => t.division === div && activeTeamIds.has(t.id));
+    divTeams.sort((a, b) => (teamChampPts[b.id] || 0) - (teamChampPts[a.id] || 0));
+    divTeams.forEach((t, i) => { teamRankByDiv[t.id] = i + 1; });
+  });
 
   const shortNameInitial = (name) => {
     if (!name) return "?";
@@ -325,6 +371,11 @@ export default function Schedule({ currentUser, onNavigate }) {
               <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15, color: TEXT, margin: 0 }}>
                 {team.name}
               </p>
+              {teamRankByDiv[team.id] && (
+                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, background: `${DARK}06`, padding: "1px 6px", borderRadius: 4, marginLeft: 2 }}>
+                  {teamRankByDiv[team.id]}{teamRankByDiv[team.id] === 1 ? "st" : teamRankByDiv[team.id] === 2 ? "nd" : teamRankByDiv[team.id] === 3 ? "rd" : "th"} · {teamChampPts[team.id] || 0}pts
+                </span>
+              )}
             </div>
             {/* Over/Under chip — always show */}
             <div style={{ marginTop: 4 }}>
@@ -434,9 +485,9 @@ export default function Schedule({ currentUser, onNavigate }) {
     // Vertical over/under bar
     const barMin = 1.5, barMax = 4.0;
     const barLine = boxLine != null ? boxLine : 2.75;
-    const goldPct = Math.max(5, Math.min(95, ((barMax - barLine) / (barMax - barMin)) * 100));
+    const goldPct = showBoxLine ? Math.max(5, Math.min(95, ((barMax - barLine) / (barMax - barMin)) * 100)) : 50;
     const actualPitTime = resultsMap[raceId]?.pit_stop_time;
-    const actualPitPct = actualPitTime != null ? Math.max(2, Math.min(98, ((barMax - actualPitTime) / (barMax - barMin)) * 100)) : null;
+    const actualPitPct = (showBoxLine && actualPitTime != null) ? Math.max(2, Math.min(98, ((barMax - actualPitTime) / (barMax - barMin)) * 100)) : null;
 
     return (
       <div key={m.id} style={{
@@ -452,24 +503,27 @@ export default function Schedule({ currentUser, onNavigate }) {
         }}>
           {/* Gold (Over) portion */}
           <div style={{
-            height: `${goldPct}%`, background: `${GOLD}40`,
+            height: `${goldPct}%`, background: showBoxLine ? `${GOLD}40` : `${BORDER}20`,
             display: "flex", flexDirection: "column", alignItems: "center",
             justifyContent: "space-between", padding: "6px 0 0"
           }}>
-            <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: GOLD }}>4.0</span>
+            {showBoxLine && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: GOLD }}>4.0</span>}
+            {!showBoxLine && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2 }}>4.0</span>}
           </div>
-          {/* Line number at the split */}
-          <div style={{
-            position: "absolute", left: 0, right: 0, top: `${goldPct}%`,
-            transform: "translateY(-50%)", display: "flex", justifyContent: "center", zIndex: 2
-          }}>
-            <span style={{
-              fontFamily: FD, fontWeight: 900, fontSize: 11, color: "#fff",
-              background: "#6dc0eb",
-              padding: "2px 5px", borderRadius: 6, lineHeight: 1.2,
-              boxShadow: "0 1px 3px rgba(0,0,0,0.25)"
-            }}>{barLine.toFixed(2)}</span>
-          </div>
+          {/* Line number at the split — only when all 4 picks are in */}
+          {showBoxLine && (
+            <div style={{
+              position: "absolute", left: 0, right: 0, top: `${goldPct}%`,
+              transform: "translateY(-50%)", display: "flex", justifyContent: "center", zIndex: 2
+            }}>
+              <span style={{
+                fontFamily: FD, fontWeight: 900, fontSize: 11, color: "#fff",
+                background: "#6dc0eb",
+                padding: "2px 5px", borderRadius: 6, lineHeight: 1.2,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.25)"
+              }}>{barLine.toFixed(2)}</span>
+            </div>
+          )}
           {/* Actual pit stop dot */}
           {actualPitPct !== null && (
             <div style={{
@@ -486,11 +540,12 @@ export default function Schedule({ currentUser, onNavigate }) {
           )}
           {/* Purple (Under) portion */}
           <div style={{
-            height: `${100 - goldPct}%`, background: "#7c5cbf50",
+            height: `${100 - goldPct}%`, background: showBoxLine ? "#7c5cbf50" : `${BORDER}20`,
             display: "flex", flexDirection: "column", alignItems: "center",
             justifyContent: "flex-end", padding: "0 0 6px"
           }}>
-            <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: "#5a3d99" }}>1.5</span>
+            {showBoxLine && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: "#5a3d99" }}>1.5</span>}
+            {!showBoxLine && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: TEXT2 }}>1.5</span>}
           </div>
         </div>
 
@@ -693,7 +748,7 @@ export default function Schedule({ currentUser, onNavigate }) {
       <p style={{ fontFamily: FD, fontWeight: 300, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: TEXT2, marginBottom: 10 }}>Race Round</p>
       <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none", marginBottom: 12 }}>
         {races.map(r => (
-          <button key={r.round} onClick={() => setActiveRound(r.round)} style={{
+          <button key={r.round} onClick={() => { setActiveRound(r.round); setScheduleView("matchups"); }} style={{
             flexShrink: 0, width: 36, height: 36, borderRadius: "50%",
             border: `1px solid ${activeRound === r.round ? DARK : BORDER}`,
             background: activeRound === r.round ? DARK : "transparent",
@@ -762,17 +817,65 @@ export default function Schedule({ currentUser, onNavigate }) {
           </p>
         </div>
       )}
-      {raceHasScores && onNavigate && (
-        <button onClick={() => onNavigate("recap")} style={{
-          width: "100%", padding: "12px", borderRadius: 10, marginBottom: 14,
-          border: `1px solid ${BLUE}30`, background: `${BLUE}08`,
-          fontFamily: FD, fontWeight: 700, fontSize: 12, color: BLUEDARK,
-          cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.06em",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 6
-        }}>
-          <span style={{ fontSize: 14 }}>📝</span> Read the Race Recap
-        </button>
-      )}
+      {raceHasScores && (() => {
+        const activeRecap = recaps.find(r => r.race_id === currentRace?.id);
+        const hasRecap = !!activeRecap;
+        return (
+          <>
+            {/* Matchups / Recap toggle */}
+            {hasRecap && (
+              <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+                {[{ id: "matchups", label: "Matchups" }, { id: "recap", label: "📝 Race Recap" }].map(tab => (
+                  <button key={tab.id} onClick={() => setScheduleView(tab.id)} style={{
+                    flex: 1, padding: "10px", borderRadius: 10, cursor: "pointer",
+                    border: `1.5px solid ${scheduleView === tab.id ? BLUEDARK : BORDER}`,
+                    background: scheduleView === tab.id ? `${BLUE}12` : "#fff",
+                    color: scheduleView === tab.id ? BLUEDARK : TEXT2,
+                    fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em"
+                  }}>{tab.label}</button>
+                ))}
+              </div>
+            )}
+
+            {/* Recap view */}
+            {scheduleView === "recap" && activeRecap && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: "20px 18px", marginBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                    <span style={{ fontSize: 18 }}>📝</span>
+                    <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 14, color: DARK, textTransform: "uppercase", letterSpacing: "0.04em", margin: 0 }}>League Recap</p>
+                  </div>
+                  {activeRecap.league_recap.split("\n\n").map((para, idx) => (
+                    <p key={idx} style={{ fontFamily: FB, fontSize: 14, color: TEXT, lineHeight: 1.7, margin: idx === 0 ? 0 : "12px 0 0" }}>{para}</p>
+                  ))}
+                </div>
+                {(activeRecap.matchup_recaps || []).length > 0 && (
+                  <div>
+                    <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>Matchup Recaps</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {(activeRecap.matchup_recaps || []).map((mr, idx) => (
+                        <div key={idx} style={{ background: "#fff", borderRadius: 12, border: `1px solid ${BORDER}`, padding: "14px 16px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>{mr.homeTeam}</span>
+                            <span style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>vs</span>
+                            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>{mr.awayTeam}</span>
+                          </div>
+                          <p style={{ fontFamily: FB, fontSize: 13, color: TEXT, lineHeight: 1.65, margin: 0 }}>{mr.recap}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {activeRecap.generated_at && (
+                  <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, textAlign: "center", marginTop: 16 }}>
+                    Generated {new Date(activeRecap.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </p>
+                )}
+              </div>
+            )}
+          </>
+        );
+      })()}
       {raceHasScores && (
         <div style={{ display: "flex", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -790,6 +893,7 @@ export default function Schedule({ currentUser, onNavigate }) {
         </div>
       )}
 
+      {scheduleView === "matchups" && (<>
       {loading ? (
         <div style={{ padding: "60px 0", textAlign: "center" }}>
           <p style={{ fontFamily: FB, fontSize: 14, color: TEXT2 }}>Loading schedule…</p>
@@ -827,6 +931,7 @@ export default function Schedule({ currentUser, onNavigate }) {
           )}
         </>
       )}
+      </>)}
 
       {lastUpdated && (
         <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, textAlign: "center", marginTop: 20 }}>
