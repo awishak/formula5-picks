@@ -141,6 +141,26 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
     divTeams.forEach((t, i) => { teamRankByDiv[t.id] = i + 1; });
   });
 
+  // Compute team W-L records
+  const teamRecord = {};
+  teams.forEach(t => {
+    if (!activeTeamIds.has(t.id)) return;
+    let w = 0, l = 0, tie = 0;
+    const teamMatchups = schedule.filter(m => m.home_team?.id === t.id || m.away_team?.id === t.id);
+    teamMatchups.forEach(m => {
+      const rId = m.race_id;
+      const hasS = scores.some(s => s.race_id === rId);
+      if (!hasS) return;
+      const ms = teamMatchupScore(t, rId);
+      const oppTeam = m.home_team?.id === t.id ? m.away_team : m.home_team;
+      const oppMs = oppTeam ? teamMatchupScore(oppTeam, rId) : 0;
+      if (ms > oppMs) w++;
+      else if (ms < oppMs) l++;
+      else tie++;
+    });
+    teamRecord[t.id] = `${w}-${l}${tie > 0 ? `-${tie}` : ""}`;
+  });
+
   const shortNameInitial = (name) => {
     if (!name) return "?";
     const parts = name.split(" ");
@@ -362,33 +382,54 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
       const sub1 = higher ? p1Sub : p2Sub;
       const sub2 = higher ? p2Sub : p1Sub;
 
+      const rank = teamRankByDiv[team.id];
+      const ordSuffix = (n) => n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th";
+      const pts = teamChampPts[team.id] || 0;
+      const record = teamRecord[team.id] || "0-0";
+
       return (
-        <div style={{ display: "flex", alignItems: "center", padding: "10px 12px", gap: 8 }}>
-          <TeamLogo name={team.name} size={42} division={div} logoUrl={team.logo_url} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <div style={{ padding: "10px 12px" }}>
+          {/* Row 1: Team name spanning top, total score on right */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, flex: 1, minWidth: 0 }}>
               {isMyTeam && <span style={{ fontSize: 13 }}>⭐</span>}
-              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15, color: TEXT, margin: 0 }}>
+              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15, color: TEXT, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {team.name}
               </p>
-              {teamRankByDiv[team.id] && (
-                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, background: `${DARK}06`, padding: "1px 6px", borderRadius: 4, marginLeft: 2 }}>
-                  {teamRankByDiv[team.id]}{teamRankByDiv[team.id] === 1 ? "st" : teamRankByDiv[team.id] === 2 ? "nd" : teamRankByDiv[team.id] === 3 ? "rd" : "th"} · {teamChampPts[team.id] || 0}pts
-                </span>
-              )}
             </div>
-            {/* Over/Under chip — always show */}
-            <div style={{ marginTop: 4 }}>
-              {overUnderChip(isOver, "normal")}
+            <div style={{ flexShrink: 0 }}>
+              {totalCell(total, won)}
             </div>
           </div>
 
-          {/* Score area — always show the structure */}
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            {playerScoreCell(name1, score1, sub1)}
-            {playerScoreCell(name2, score2, sub2)}
-            {boxBoxCell(boxBonus)}
-            {totalCell(total, won)}
+          {/* Row 2: Over/Under chip */}
+          <div style={{ marginBottom: 8 }}>
+            {overUnderChip(isOver, "normal")}
+          </div>
+
+          {/* Row 3: Logo column (pts above, rank+record below) + player scores + BOX BOX */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* Logo column */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, minWidth: 48 }}>
+              {rank && (
+                <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: BLUEDARK, marginBottom: 2 }}>
+                  {pts}pts
+                </span>
+              )}
+              <TeamLogo name={team.name} size={40} division={div} logoUrl={team.logo_url} />
+              {rank && (
+                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, marginTop: 2 }}>
+                  {rank}{ordSuffix(rank)} · {record}
+                </span>
+              )}
+            </div>
+
+            {/* Player scores + BOX BOX */}
+            <div style={{ display: "flex", alignItems: "center", gap: 5, flex: 1, justifyContent: "flex-end" }}>
+              {playerScoreCell(name1, score1, sub1)}
+              {playerScoreCell(name2, score2, sub2)}
+              {boxBoxCell(boxBonus)}
+            </div>
           </div>
         </div>
       );
@@ -807,6 +848,16 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
       })()}
 
       {/* Outline legend — show for scored races */}
+      {raceHasScores && (
+        <div style={{
+          padding: "12px 14px", borderRadius: 12, marginBottom: 14,
+          background: `${ORANGE}08`, border: `1px solid ${ORANGE}25`
+        }}>
+          <p style={{ fontFamily: FB, fontSize: 12, color: TEXT, margin: 0, lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 700 }}>Hey!</span> I'm working through the kinks in this first week. I believe these are the final scores but I'll confirm when they are all ready to go.
+          </p>
+        </div>
+      )}
       {raceHasScores && (() => {
         const activeRecap = recaps.find(r => r.race_id === currentRace?.id);
         const hasRecap = !!activeRecap;
@@ -815,21 +866,54 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
             {/* Matchups / Recap toggle */}
             {hasRecap && (
               <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-                <button style={{
-                  flex: 1, padding: "10px", borderRadius: 10, cursor: "default",
-                  border: `1.5px solid ${BLUEDARK}`,
-                  background: `${BLUE}12`, color: BLUEDARK,
-                  fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em"
-                }}>Matchups</button>
-                <button onClick={() => window.open(`/recaps/round${activeRound}.html`, "_blank")} style={{
-                  flex: 1, padding: "10px", borderRadius: 10, cursor: "pointer",
-                  border: `1.5px solid ${BORDER}`,
-                  background: "#fff", color: TEXT2,
-                  fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em"
-                }}>Race Recap</button>
+                {[{ id: "matchups", label: "Matchups" }, { id: "recap", label: "📝 Race Recap" }].map(tab => (
+                  <button key={tab.id} onClick={() => setScheduleView(tab.id)} style={{
+                    flex: 1, padding: "10px", borderRadius: 10, cursor: "pointer",
+                    border: `1.5px solid ${scheduleView === tab.id ? BLUEDARK : BORDER}`,
+                    background: scheduleView === tab.id ? `${BLUE}12` : "#fff",
+                    color: scheduleView === tab.id ? BLUEDARK : TEXT2,
+                    fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em"
+                  }}>{tab.label}</button>
+                ))}
               </div>
             )}
 
+            {/* Recap view */}
+            {scheduleView === "recap" && activeRecap && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: "20px 18px", marginBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                    <span style={{ fontSize: 18 }}>📝</span>
+                    <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 14, color: DARK, textTransform: "uppercase", letterSpacing: "0.04em", margin: 0 }}>League Recap</p>
+                  </div>
+                  {activeRecap.league_recap.split("\n\n").map((para, idx) => (
+                    <p key={idx} style={{ fontFamily: FB, fontSize: 14, color: TEXT, lineHeight: 1.7, margin: idx === 0 ? 0 : "12px 0 0" }}>{para}</p>
+                  ))}
+                </div>
+                {(activeRecap.matchup_recaps || []).length > 0 && (
+                  <div>
+                    <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>Matchup Recaps</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {(activeRecap.matchup_recaps || []).map((mr, idx) => (
+                        <div key={idx} style={{ background: "#fff", borderRadius: 12, border: `1px solid ${BORDER}`, padding: "14px 16px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>{mr.homeTeam}</span>
+                            <span style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>vs</span>
+                            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: TEXT }}>{mr.awayTeam}</span>
+                          </div>
+                          <p style={{ fontFamily: FB, fontSize: 13, color: TEXT, lineHeight: 1.65, margin: 0 }}>{mr.recap}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {activeRecap.generated_at && (
+                  <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, textAlign: "center", marginTop: 16 }}>
+                    Generated {new Date(activeRecap.generated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </p>
+                )}
+              </div>
+            )}
           </>
         );
       })()}
@@ -850,7 +934,7 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
         </div>
       )}
 
-      {(<>
+      {scheduleView === "matchups" && (<>
       {loading ? (
         <div style={{ padding: "60px 0", textAlign: "center" }}>
           <p style={{ fontFamily: FB, fontSize: 14, color: TEXT2 }}>Loading schedule…</p>
