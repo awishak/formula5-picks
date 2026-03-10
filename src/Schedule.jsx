@@ -73,6 +73,38 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
       setRecaps(recapsResp.data || []);
       const ts = (scoresData || []).map(s => s.calculated_at).filter(Boolean).sort().reverse();
       if (ts.length > 0) setLastUpdated(ts[0]);
+
+      // Default to the right round:
+      // Stay on last scored race until the Tuesday before the next race
+      if (racesData && racesData.length > 0) {
+        const now = new Date();
+        const scoredRaceIds = new Set((scoresData || []).map(s => s.race_id));
+        const lastScored = [...racesData].reverse().find(r => scoredRaceIds.has(r.id));
+        const nextRace = racesData.find(r => !scoredRaceIds.has(r.id) && r.race_date >= now.toISOString().split("T")[0]);
+
+        if (lastScored && nextRace) {
+          // Find the Tuesday before the next race
+          const raceDate = new Date(nextRace.race_date + "T00:00:00");
+          const dayOfWeek = raceDate.getUTCDay(); // 0=Sun
+          const daysBack = dayOfWeek >= 2 ? dayOfWeek - 2 : dayOfWeek + 5;
+          const tuesday = new Date(raceDate);
+          tuesday.setUTCDate(tuesday.getUTCDate() - daysBack);
+          tuesday.setUTCHours(0, 0, 0, 0);
+
+          if (now >= tuesday) {
+            // It's Tuesday or later before the next race — show next race
+            setActiveRound(nextRace.round);
+          } else {
+            // Still before Tuesday — stay on last scored race
+            setActiveRound(lastScored.round);
+          }
+        } else if (nextRace) {
+          setActiveRound(nextRace.round);
+        } else if (lastScored) {
+          setActiveRound(lastScored.round);
+        }
+      }
+
       setLoading(false);
     }
     load();
