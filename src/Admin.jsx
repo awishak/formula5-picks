@@ -84,7 +84,7 @@ export default function Admin() {
     async function load() {
       const { data: racesData } = await supabase
         .from("races")
-        .select("id, race_name, round, race_date, pit_stop_question")
+        .select("id, race_name, round, race_date, pit_stop_question, top_drivers, mid_drivers")
         .order("round", { ascending: true });
       setRaces(racesData || []);
 
@@ -1176,9 +1176,8 @@ export default function Admin() {
           if (error) { setDriverPoolStatus("Error: " + error.message); }
           else {
             setDriverPoolStatus("Saved!");
-            // Update local races array
-            const idx = races.findIndex(r => r.round === driverPoolRound);
-            if (idx >= 0) { races[idx].top_drivers = top; races[idx].mid_drivers = mid; }
+            // Update local races array properly
+            setRaces(prev => prev.map(r => r.round === driverPoolRound ? { ...r, top_drivers: top, mid_drivers: mid } : r));
           }
           setDriverPoolSaving(false);
         }
