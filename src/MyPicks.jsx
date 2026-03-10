@@ -1044,14 +1044,6 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                   </div>
                   <div style={{ width: 1, background: BORDER, margin: "0 4px" }} />
                   <div style={{ textAlign: "center" }}>
-                    <p style={{ fontFamily: FB, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.04em", margin: "0 0 2px" }}>Standings</p>
-                    <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: seasonStats.teamStandingsRank <= 3 ? GOLD : TEXT, margin: 0 }}>
-                      {seasonStats.teamStandingsRank}{ps(seasonStats.teamStandingsRank)}
-                    </p>
-                    <p style={{ fontFamily: FB, fontSize: 9, color: TEXT2, margin: 0 }}>of {seasonStats.totalTeamsInDiv}</p>
-                  </div>
-                  <div style={{ width: 1, background: BORDER, margin: "0 4px" }} />
-                  <div style={{ textAlign: "center" }}>
                     <p style={{ fontFamily: FB, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.04em", margin: "0 0 2px" }}>Champ Pts</p>
                     <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: GREEN, margin: 0 }}>{seasonStats.teamChampPts}</p>
                   </div>
@@ -1059,6 +1051,14 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                   <div style={{ textAlign: "center" }}>
                     <p style={{ fontFamily: FB, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.04em", margin: "0 0 2px" }}>Record</p>
                     <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 18, color: TEXT, margin: 0 }}>{seasonStats.teamRecord}</p>
+                  </div>
+                  <div style={{ width: 1, background: BORDER, margin: "0 4px" }} />
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{ fontFamily: FB, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.04em", margin: "0 0 2px" }}>Standings</p>
+                    <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: seasonStats.teamStandingsRank <= 3 ? GOLD : TEXT, margin: 0 }}>
+                      {seasonStats.teamStandingsRank}{ps(seasonStats.teamStandingsRank)}
+                    </p>
+                    <p style={{ fontFamily: FB, fontSize: 9, color: TEXT2, margin: 0 }}>of {seasonStats.totalTeamsInDiv}</p>
                   </div>
                 </div>
               </div>
