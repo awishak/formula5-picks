@@ -1172,11 +1172,12 @@ export default function Admin() {
           if (top.length !== 3) { setDriverPoolStatus("Need exactly 3 top drivers"); return; }
           if (mid.length !== 7) { setDriverPoolStatus("Need exactly 7 midfield drivers"); return; }
           setDriverPoolSaving(true);
-          const { error } = await supabase.from("races").update({ top_drivers: top, mid_drivers: mid }).eq("id", race.id);
+          const { data, error } = await supabase.from("races").update({ top_drivers: top, mid_drivers: mid }).eq("id", race.id).select();
           if (error) { setDriverPoolStatus("Error: " + error.message); }
-          else {
-            setDriverPoolStatus("Saved!");
-            // Update local races array properly
+          else if (!data || data.length === 0) {
+            setDriverPoolStatus("Error: Update blocked — check Supabase RLS policies on the races table. You may need to allow UPDATE on the races table.");
+          } else {
+            setDriverPoolStatus("✅ Saved! Top: " + top.join(", "));
             setRaces(prev => prev.map(r => r.round === driverPoolRound ? { ...r, top_drivers: top, mid_drivers: mid } : r));
           }
           setDriverPoolSaving(false);
@@ -1251,10 +1252,10 @@ export default function Admin() {
                 {driverPoolStatus && (
                   <div style={{
                     padding: "10px 14px", borderRadius: 10, marginTop: 12,
-                    background: driverPoolStatus === "Saved!" ? `${GREEN}10` : `${RED}10`,
-                    border: `1px solid ${driverPoolStatus === "Saved!" ? `${GREEN}30` : `${RED}30`}`,
+                    background: driverPoolStatus.startsWith("✅") ? `${GREEN}10` : `${RED}10`,
+                    border: `1px solid ${driverPoolStatus.startsWith("✅") ? `${GREEN}30` : `${RED}30`}`,
                   }}>
-                    <p style={{ fontFamily: FB, fontSize: 13, color: driverPoolStatus === "Saved!" ? GREEN : RED, margin: 0 }}>{driverPoolStatus}</p>
+                    <p style={{ fontFamily: FB, fontSize: 13, color: driverPoolStatus.startsWith("✅") ? GREEN : RED, margin: 0 }}>{driverPoolStatus}</p>
                   </div>
                 )}
               </div>
