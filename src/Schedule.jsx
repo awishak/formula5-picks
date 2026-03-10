@@ -389,27 +389,9 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
 
       return (
         <div style={{ padding: "10px 12px" }}>
-          {/* Row 1: Team name spanning top, total score on right */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, flex: 1, minWidth: 0 }}>
-              {isMyTeam && <span style={{ fontSize: 13 }}>⭐</span>}
-              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15, color: TEXT, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {team.name}
-              </p>
-            </div>
-            <div style={{ flexShrink: 0 }}>
-              {totalCell(total, won)}
-            </div>
-          </div>
-
-          {/* Row 2: Over/Under chip */}
-          <div style={{ marginBottom: 8 }}>
-            {overUnderChip(isOver, "normal")}
-          </div>
-
-          {/* Row 3: Logo column (pts above, rank+record below) + player scores + BOX BOX */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {/* Logo column */}
+          {/* Top section: Logo column | Name + O/U | Total score */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+            {/* Logo column: pts above, logo, rank+record below */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, minWidth: 48 }}>
               {rank && (
                 <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: BLUEDARK, marginBottom: 2 }}>
@@ -424,12 +406,30 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
               )}
             </div>
 
-            {/* Player scores + BOX BOX */}
-            <div style={{ display: "flex", alignItems: "center", gap: 5, flex: 1, justifyContent: "flex-end" }}>
-              {playerScoreCell(name1, score1, sub1)}
-              {playerScoreCell(name2, score2, sub2)}
-              {boxBoxCell(boxBonus)}
+            {/* Name + Over/Under */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                {isMyTeam && <span style={{ fontSize: 13 }}>⭐</span>}
+                <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15, color: TEXT, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {team.name}
+                </p>
+              </div>
+              <div style={{ marginTop: 4 }}>
+                {overUnderChip(isOver, "normal")}
+              </div>
             </div>
+
+            {/* Total score on the right */}
+            <div style={{ flexShrink: 0 }}>
+              {totalCell(total, won)}
+            </div>
+          </div>
+
+          {/* Bottom section: Player scores + BOX BOX */}
+          <div style={{ display: "flex", alignItems: "center", gap: 5, justifyContent: "flex-end" }}>
+            {playerScoreCell(name1, score1, sub1)}
+            {playerScoreCell(name2, score2, sub2)}
+            {boxBoxCell(boxBonus)}
           </div>
         </div>
       );
