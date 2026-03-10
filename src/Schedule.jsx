@@ -388,7 +388,7 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
       const record = teamRecord[team.id] || "0-0";
 
       return (
-        <div style={{ padding: "10px 12px" }}>
+        <div style={{ padding: "8px 12px" }}>
           <div style={{ display: "flex", gap: 10 }}>
             {/* Logo column: pts above, logo, rank+record below */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, minWidth: 48 }}>
@@ -405,10 +405,10 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
               )}
             </div>
 
-            {/* Right side: name row + stats row */}
+            {/* Right side: name + total on top, single stats line below */}
             <div style={{ flex: 1, minWidth: 0 }}>
-              {/* Name row: team name left, total score far right */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
+              {/* Name row */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
                   {isMyTeam && <span style={{ fontSize: 13 }}>⭐</span>}
                   <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15, color: TEXT, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -420,14 +420,12 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
                 </div>
               </div>
 
-              {/* Stats row: O/U chip left, player scores + BOX BOX right */}
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {/* Single stats line: O/U chip + player scores + BOX BOX, centered */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                 {overUnderChip(isOver, "normal")}
-                <div style={{ display: "flex", alignItems: "center", gap: 5, marginLeft: "auto" }}>
-                  {playerScoreCell(name1, score1, sub1)}
-                  {playerScoreCell(name2, score2, sub2)}
-                  {boxBoxCell(boxBonus)}
-                </div>
+                {playerScoreCell(name1, score1, sub1)}
+                {playerScoreCell(name2, score2, sub2)}
+                {boxBoxCell(boxBonus)}
               </div>
             </div>
           </div>
