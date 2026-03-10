@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
   ORANGE = "#e08a2e", GREEN = "#22cc66", RED = "#e04a4a",
   TEXT = "#1e1e2a", TEXT2 = "#6b6b80", BORDER = "#d8d2c4",
@@ -7,44 +5,27 @@ const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
 const FD = "'Geologica', sans-serif";
 const FB = "'DM Sans', sans-serif";
 
-// Collapsible section
-function Section({ title, icon, children, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen);
+// Section header — always open, no dropdown
+function Section({ title, children }) {
   return (
     <div style={{
       background: "#fff", borderRadius: 14, overflow: "hidden",
       border: `1px solid ${BORDER}`, marginBottom: 10,
       boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
     }}>
-      <button
-        onClick={() => setOpen(!open)}
-        style={{
-          width: "100%", padding: "14px 16px",
-          display: "flex", alignItems: "center", gap: 10,
-          background: "transparent", border: "none", cursor: "pointer",
-          textAlign: "left"
-        }}
-      >
-        <span style={{ fontSize: 18 }}>{icon}</span>
+      <div style={{ padding: "14px 16px 0" }}>
         <span style={{
           fontFamily: FD, fontWeight: 800, fontSize: 14, color: DARK,
-          flex: 1, textTransform: "uppercase", letterSpacing: "0.04em"
+          textTransform: "uppercase", letterSpacing: "0.04em"
         }}>{title}</span>
-        <span style={{
-          fontSize: 12, color: TEXT2, transition: "transform 0.2s",
-          transform: open ? "rotate(180deg)" : "rotate(0deg)"
-        }}>▼</span>
-      </button>
-      {open && (
-        <div style={{ padding: "0 16px 16px", borderTop: `1px solid ${BORDER}40` }}>
-          {children}
-        </div>
-      )}
+      </div>
+      <div style={{ padding: "4px 16px 16px" }}>
+        {children}
+      </div>
     </div>
   );
 }
 
-// Points table row
 function PtsRow({ left, right, highlight }) {
   return (
     <div style={{
@@ -60,7 +41,6 @@ function PtsRow({ left, right, highlight }) {
   );
 }
 
-// Inline badge
 function Badge({ text, color = BLUEDARK, bg }) {
   return (
     <span style={{
@@ -104,13 +84,13 @@ export default function Rules() {
       </p>
 
       {/* SCHEDULE */}
-      <Section title="Weekly Schedule" icon="📅" defaultOpen={true}>
-        <P>Picks open every <strong>Tuesday at noon</strong> and lock on <strong>Friday at noon</strong>. If you don't submit by the deadline, you receive <Badge text="0 PTS" color={RED} /> for that race.</P>
+      <Section title="Weekly Schedule">
+        <P>Picks open by <strong>5 PM Pacific on Tuesdays</strong> and lock on <strong>Friday at noon</strong>. If you don't submit by the deadline, you receive <Badge text="0 PTS" color={RED} /> for that race.</P>
         <P>The season runs <strong>24 races</strong> split into two halves of 12. Team standings reset between halves. Individual (Formula 50) standings run all 24 races.</P>
       </Section>
 
       {/* HOW TO WIN */}
-      <Section title="How to Win" icon="🏆" defaultOpen={true}>
+      <Section title="How to Win">
         <Label>Players Championship</Label>
         <P>Your Individual Score each race is your total points. The player with the most total points after 24 races wins. Additionally, the <strong>top 10 players each week</strong> earn bonus points: 1st gets <Badge text="+10" color={ORANGE} />, 2nd <Badge text="+9" color={ORANGE} />, down to 10th getting <Badge text="+1" color={ORANGE} />.</P>
 
@@ -119,7 +99,7 @@ export default function Rules() {
       </Section>
 
       {/* THE PICKS */}
-      <Section title="The Picks" icon="🎯">
+      <Section title="The Picks">
         <Label>1. Top Pick</Label>
         <P>Choose <strong>1 driver</strong> from the top 5 in the F1 championship standings. You earn the F1 points they score in the race:</P>
         <div style={{
@@ -153,7 +133,7 @@ export default function Rules() {
       </Section>
 
       {/* THE NEEDLE */}
-      <Section title="The Needle 🏎️" icon="⏱️">
+      <Section title="The Needle">
         <P>Each race designates a specific pit stop to bet on (e.g. "Red Bull Racing's 1st pit stop"). Guess the duration in seconds using the dial (1.5s – 4.0s).</P>
         <div style={{
           background: `${DARK}04`, borderRadius: 10, padding: "8px 12px", margin: "8px 0"
@@ -171,28 +151,21 @@ export default function Rules() {
       </Section>
 
       {/* INDIVIDUAL SCORE */}
-      <Section title="Individual Score" icon="👤">
+      <Section title="Individual Score">
         <P>Your Individual Score each week is the sum of:</P>
         <div style={{
           background: `${DARK}04`, borderRadius: 10, padding: "10px 12px", margin: "8px 0"
         }}>
-          <PtsRow left="Top Pick (F1 points)" right="0–25" />
-          <PtsRow left="4 Midfield Picks (F1 points)" right="0–72" />
+          <PtsRow left="Top Pick (F1 points)" right="−1 to 25" />
+          <PtsRow left="4 Midfield Picks (F1 points each)" right="−1 to 25 each" />
           <PtsRow left="Finishing Order bonus" right="0 or +6" />
           <PtsRow left="Best Finish bonus" right="0 or +3" />
-          <PtsRow left="Pit Stop needle" right="0–5" />
-          <div style={{
-            display: "flex", justifyContent: "space-between", padding: "6px 0 2px",
-            marginTop: 4, borderTop: `1px solid ${BORDER}`
-          }}>
-            <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 13, color: DARK }}>Theoretical Maximum</span>
-            <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 13, color: ORANGE }}>114 pts</span>
-          </div>
+          <PtsRow left="Pit Stop needle" right="0 to 5" />
         </div>
       </Section>
 
-      {/* FORMULA 50 */}
-      <Section title="Player Standings" icon="📊">
+      {/* PLAYER STANDINGS */}
+      <Section title="Player Standings">
         <P>After each race, all players across both divisions are ranked by Individual Score on a single unified leaderboard.</P>
         <P>The <strong>top 10 players</strong> each week earn bonus points: 1st gets <Badge text="+10" color={ORANGE} />, 2nd gets <Badge text="+9" color={ORANGE} />, and so on down to 10th getting <Badge text="+1" color={ORANGE} />. Non-submitters get <Badge text="0 PTS" color={RED} />.</P>
         <P>Player standings accumulate across <strong>all 24 races</strong> and never reset.</P>
@@ -201,17 +174,23 @@ export default function Rules() {
         <div style={{
           background: `${DARK}04`, borderRadius: 10, padding: "8px 12px", margin: "8px 0"
         }}>
-          <PtsRow left="1. Score without the needle" right="" />
-          <PtsRow left="2. Got finishing order right?" right="" />
+          <PtsRow left="1. Individual score without the needle" right="" />
+          <PtsRow left="2. Correct finishing order" right="" />
           <PtsRow left="3. Earlier submission time" right="" />
         </div>
 
         <Label>Season Tiebreaker</Label>
-        <P>If tied at season's end, the tiebreaker is total <strong>Prediction Index</strong> — the raw sum of all Individual Scores earned across every race.</P>
+        <div style={{
+          background: `${DARK}04`, borderRadius: 10, padding: "8px 12px", margin: "8px 0"
+        }}>
+          <PtsRow left="1. Most race wins (1st place weekly finishes)" right="" />
+          <PtsRow left="2. Most podiums (top 3 weekly finishes)" right="" />
+          <PtsRow left="3. Most top 10 weekly finishes" right="" />
+        </div>
       </Section>
 
       {/* TEAMS & BOX BOX */}
-      <Section title="Teams & The BOX BOX Line" icon="📦">
+      <Section title="Teams & The BOX BOX Line">
         <P>Players are organized into <strong>2-player teams</strong>. Each race, your team faces another team in a round-robin schedule. There are two divisions — <Badge text="CHAMPIONSHIP" color={GOLD} bg={`${GOLD}15`} /> and <Badge text="SECOND DIVISION" color={PURPLE} bg={`${PURPLE}15`} /> — each with 12 teams.</P>
 
         <Label>The BOX BOX Line</Label>
@@ -222,7 +201,7 @@ export default function Rules() {
       </Section>
 
       {/* MATCHUP SCORE */}
-      <Section title="Matchup Score" icon="⚔️">
+      <Section title="Matchup Score">
         <P><strong>Matchup Score</strong> = Player 1's score (no needle) + Player 2's score (no needle) + BOX BOX Line bonus</P>
         <div style={{
           background: `${DARK}04`, borderRadius: 10, padding: "8px 12px", margin: "8px 0"
@@ -234,7 +213,7 @@ export default function Rules() {
       </Section>
 
       {/* TEAM STANDINGS */}
-      <Section title="Team Championship" icon="🏁">
+      <Section title="Team Championship">
         <P>Each division has its own standings. After each race, the 6 winning teams are ranked by Matchup Score, then the 6 losing teams by Matchup Score. Points are awarded:</P>
         <div style={{
           background: `${DARK}04`, borderRadius: 10, padding: "8px 12px", margin: "8px 0"
@@ -265,11 +244,16 @@ export default function Rules() {
         </div>
 
         <Label>Season Tiebreaker</Label>
-        <P>1. Total wins → 2. Average Matchup Score to one decimal place.</P>
+        <div style={{
+          background: `${DARK}04`, borderRadius: 10, padding: "8px 12px", margin: "8px 0"
+        }}>
+          <PtsRow left="1. Higher average Matchup Score" right="" />
+          <PtsRow left="2. More matchup wins" right="" />
+        </div>
       </Section>
 
       {/* SEASON STRUCTURE */}
-      <Section title="Season Structure" icon="📆">
+      <Section title="Season Structure">
         <P>Each half is <strong>12 races</strong>. Team standings reset between halves. Formula 50 does <strong>not</strong> reset.</P>
         <P>The second half champion — the team with the most Team Points in the second half — is the <strong>overall season champion</strong>. The first half determines your division for the second half.</P>
 
@@ -278,7 +262,7 @@ export default function Rules() {
       </Section>
 
       {/* PROMOTION & RELEGATION */}
-      <Section title="Promotion & Relegation" icon="↕️">
+      <Section title="Promotion & Relegation">
         <P>Race Week 12 serves as both the regular season finale and the promotion/relegation playoff weekend.</P>
 
         <Label>Automatic</Label>
@@ -286,8 +270,8 @@ export default function Rules() {
           background: `${GREEN}08`, borderRadius: 10, padding: "10px 12px", margin: "8px 0",
           border: `1px solid ${GREEN}25`
         }}>
-          <P style={{ margin: "0 0 4px" }}>⬆️ <strong>Top 3 in Second Division</strong> → automatically promoted to Championship</P>
-          <P style={{ margin: 0 }}>⬇️ <strong>Bottom 3 in Championship</strong> (10th, 11th, 12th) → automatically relegated to Second Division</P>
+          <P style={{ margin: "0 0 4px" }}><strong>Top 3 in Second Division</strong> are automatically promoted to Championship</P>
+          <P style={{ margin: 0 }}><strong>Bottom 3 in Championship</strong> (10th, 11th, 12th) are automatically relegated to Second Division</P>
         </div>
 
         <Label>Playoff Matches</Label>
@@ -295,8 +279,8 @@ export default function Rules() {
           background: `${ORANGE}08`, borderRadius: 10, padding: "10px 12px", margin: "8px 0",
           border: `1px solid ${ORANGE}25`
         }}>
-          <P style={{ margin: "0 0 4px" }}>🔥 <strong>#4 and #5 in Second Division</strong> play a promotion playoff during Race Week 12</P>
-          <P style={{ margin: 0 }}>🔥 <strong>#8 and #9 in Championship</strong> play a relegation playoff during Race Week 12</P>
+          <P style={{ margin: "0 0 4px" }}><strong>#4 and #5 in Second Division</strong> play a promotion playoff during Race Week 12</P>
+          <P style={{ margin: 0 }}><strong>#8 and #9 in Championship</strong> play a relegation playoff during Race Week 12</P>
         </div>
 
         <P style={{ fontSize: 11.5, color: TEXT2 }}>
