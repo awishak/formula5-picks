@@ -389,8 +389,7 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
 
       return (
         <div style={{ padding: "10px 12px" }}>
-          {/* Top section: Logo column | Name + O/U | Total score */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          <div style={{ display: "flex", gap: 10 }}>
             {/* Logo column: pts above, logo, rank+record below */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, minWidth: 48 }}>
               {rank && (
@@ -406,30 +405,31 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
               )}
             </div>
 
-            {/* Name + Over/Under */}
+            {/* Right side: name row + stats row */}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                {isMyTeam && <span style={{ fontSize: 13 }}>⭐</span>}
-                <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15, color: TEXT, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {team.name}
-                </p>
+              {/* Name row: team name left, total score far right */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
+                  {isMyTeam && <span style={{ fontSize: 13 }}>⭐</span>}
+                  <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 15, color: TEXT, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {team.name}
+                  </p>
+                </div>
+                <div style={{ flexShrink: 0, marginLeft: 8 }}>
+                  {totalCell(total, won)}
+                </div>
               </div>
-              <div style={{ marginTop: 4 }}>
+
+              {/* Stats row: O/U chip left, player scores + BOX BOX right */}
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 {overUnderChip(isOver, "normal")}
+                <div style={{ display: "flex", alignItems: "center", gap: 5, marginLeft: "auto" }}>
+                  {playerScoreCell(name1, score1, sub1)}
+                  {playerScoreCell(name2, score2, sub2)}
+                  {boxBoxCell(boxBonus)}
+                </div>
               </div>
             </div>
-
-            {/* Total score on the right */}
-            <div style={{ flexShrink: 0 }}>
-              {totalCell(total, won)}
-            </div>
-          </div>
-
-          {/* Bottom section: Player scores + BOX BOX */}
-          <div style={{ display: "flex", alignItems: "center", gap: 5, justifyContent: "flex-end" }}>
-            {playerScoreCell(name1, score1, sub1)}
-            {playerScoreCell(name2, score2, sub2)}
-            {boxBoxCell(boxBonus)}
           </div>
         </div>
       );
