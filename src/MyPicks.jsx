@@ -714,17 +714,17 @@ function StepReview({ topPick, order, bestFinish, pitGuess }) {
     <div>
       <StepHeading title="Review Picks" subtitle="Double-check everything before locking in" />
       <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: 16, marginBottom: 12 }}>
-        <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>Top Pick</p>
-        <p style={{ fontFamily: FB, fontWeight: 600, fontSize: 16, color: DARK, margin: 0 }}>{topPick}</p>
-      </div>
-      <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: 16, marginBottom: 12 }}>
         <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>Finishing Order</p>
-        {order.map((d, i) => (
-          <div key={d} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: i < order.length - 1 ? `1px solid ${BG2}` : "none" }}>
-            <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BLUE, minWidth: 20 }}>{i + 1}</span>
-            <span style={{ fontFamily: FB, fontSize: 14, color: TEXT }}>{d}</span>
-          </div>
-        ))}
+        {order.map((d, i) => {
+          const isTop = d === topPick;
+          return (
+            <div key={d} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: i < order.length - 1 ? `1px solid ${BG2}` : "none" }}>
+              <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BLUE, minWidth: 20 }}>{i + 1}</span>
+              <span style={{ fontFamily: FB, fontSize: 14, color: TEXT }}>{d}</span>
+              {isTop && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 8, color: BLUEDARK, background: `${BLUE}15`, padding: "2px 6px", borderRadius: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>TOP</span>}
+            </div>
+          );
+        })}
       </div>
       <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
         <div style={{ flex: 1, background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: 16 }}>
@@ -1111,7 +1111,10 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
 
             {/* Drivers */}
             <div style={{ display: "flex", gap: 4, marginBottom: 8, overflow: "auto" }}>
-              {(h.pick.finishing_order || []).map((d, i) => {
+              {(() => {
+                const fo = h.pick.finishing_order || [];
+                const drivers = fo.includes(h.pick.top_pick) ? fo : [h.pick.top_pick, ...fo];
+                return drivers.map((d, i) => {
                 const isTop = d === h.pick.top_pick;
                 const pts = h.driverPts[d];
                 const pc = pts === undefined ? TEXT2 : pts < 0 ? RED : pts > 0 ? ORANGE : TEXT2;
@@ -1148,7 +1151,8 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                     )}
                   </div>
                 );
-              })}
+              });
+              })()}
             </div>
             {/* Bonuses */}
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -1435,12 +1439,21 @@ function MyPicksInner({ currentUser, onNavigate }) {
         <div style={{ maxWidth: 360, margin: "0 auto 24px" }}>
           <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: 16, marginBottom: 12 }}>
             <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>Your Drivers</p>
-            {(pick.finishing_order || []).map((d, i) => (
-              <div key={d} style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", borderBottom: i < (pick.finishing_order || []).length - 1 ? `1px solid ${BG2}` : "none" }}>
-                <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BLUE, minWidth: 20 }}>{i + 1}</span>
-                <span style={{ fontFamily: FB, fontSize: 14, color: TEXT }}>{d}</span>
-              </div>
-            ))}
+            {(() => {
+              // Ensure all 5 drivers are shown in the user's chosen order
+              const fo = pick.finishing_order || [];
+              const drivers = fo.includes(pick.top_pick) ? fo : [pick.top_pick, ...fo];
+              return drivers.map((d, i) => {
+                const isTop = d === pick.top_pick;
+                return (
+                  <div key={d} style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", borderBottom: i < drivers.length - 1 ? `1px solid ${BG2}` : "none" }}>
+                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BLUE, minWidth: 20 }}>{i + 1}</span>
+                    <span style={{ fontFamily: FB, fontSize: 14, color: TEXT }}>{d}</span>
+                    {isTop && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 8, color: BLUEDARK, background: `${BLUE}15`, padding: "2px 6px", borderRadius: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>TOP</span>}
+                  </div>
+                );
+              });
+            })()}
           </div>
           <div style={{ display: "flex", gap: 12 }}>
             <div style={{ flex: 1, background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: 16 }}>
