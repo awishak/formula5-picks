@@ -534,7 +534,7 @@ export default function PickIntel({ currentUser }) {
             <thead>
               <tr style={{ background: `${DARK}08` }}>
                 <th style={{ ...thStyle, cursor: "pointer" }} onClick={() => handleSort("name")}>Player{arrow("name")}</th>
-                <th style={{ ...thStyle, color: ORANGE, cursor: "pointer" }} onClick={() => handleSort("top")}>Top{arrow("top")}</th>
+                <th style={thStyle}>1st</th>
                 <th style={thStyle}>2nd</th>
                 <th style={thStyle}>3rd</th>
                 <th style={thStyle}>4th</th>
@@ -549,11 +549,13 @@ export default function PickIntel({ currentUser }) {
                 return (
                   <tr key={pk.player_id} style={{ background: isMe ? `${BLUE}10` : i % 2 === 0 ? "#fff" : `${DARK}03`, borderBottom: `1px solid ${BORDER}30` }}>
                     <td style={{ ...tdStyle, fontWeight: isMe ? 700 : 500, color: isMe ? BLUEDARK : TEXT, minWidth: 80 }}>{shortName(pk.playerName)}{isMe ? " ⭐" : ""}</td>
-                    <td style={{ ...tdStyle, fontWeight: 700, color: ORANGE }}>{lastName(pk.top_pick)}</td>
-                    <td style={{ ...tdStyle, color: TEXT2 }}>{pk.fo[1] ? lastName(pk.fo[1]) : "—"}</td>
-                    <td style={{ ...tdStyle, color: TEXT2 }}>{pk.fo[2] ? lastName(pk.fo[2]) : "—"}</td>
-                    <td style={{ ...tdStyle, color: TEXT2 }}>{pk.fo[3] ? lastName(pk.fo[3]) : "—"}</td>
-                    <td style={{ ...tdStyle, color: TEXT2 }}>{pk.fo[4] ? lastName(pk.fo[4]) : "—"}</td>
+                    {[0, 1, 2, 3, 4].map(idx => {
+                      const d = pk.fo[idx];
+                      const isTop = d && d === pk.top_pick;
+                      return (
+                        <td key={idx} style={{ ...tdStyle, fontWeight: isTop ? 700 : 400, color: isTop ? ORANGE : TEXT2 }}>{d ? lastName(d) : "—"}</td>
+                      );
+                    })}
                     <td style={{ ...tdStyle, fontFamily: FD, fontWeight: 700, color: BLUEDARK }}>{formatBf(pk.best_finish)}</td>
                     <td style={{ ...tdStyle, fontFamily: FD, fontWeight: 700, color: BLUEDARK }}>{pk.pit_guess != null ? Number(pk.pit_guess).toFixed(1) : "—"}</td>
                   </tr>
