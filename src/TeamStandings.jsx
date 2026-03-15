@@ -138,7 +138,7 @@ export default function TeamStandings({ currentUser }) {
             const oppWithoutBB = opponentMatchupScore !== null ? opponentMatchupScore - ((teams || []).find(t => t.id === opponentId) ? (scoreMap[scoreKey(((teams || []).find(t => t.id === opponentId)).player1_id, raceId)]?.pit_matchup_pts || 0) : 0) : null;
             const decidedByBoxBox = opponentMatchupScore !== null && Math.abs(scoreWithoutBB - (oppWithoutBB || 0)) <= 6;
 
-            weeklyResults.push({ raceId, raceName: raceMap[raceId]?.race_name || "Race", round: raceMap[raceId]?.round || 0, matchupScore, won, boxBoxCorrect, opponentId, opponentName, opponentMatchupScore, p1Score, p2Score, decidedByBoxBox });
+            weeklyResults.push({ raceId, raceName: raceMap[raceId]?.race_name || "Race", round: raceMap[raceId]?.round || 0, matchupScore, won, boxBoxCorrect, boxBoxBonus, opponentId, opponentName, opponentMatchupScore, p1Score, p2Score, decidedByBoxBox });
           });
 
           pScoreTotals[p1] = p1Total;
@@ -335,14 +335,17 @@ export default function TeamStandings({ currentUser }) {
                           const letter = wr.won === true ? "W" : wr.won === false ? "L" : "D";
                           const color = wr.won === true ? GREEN : wr.won === false ? RED : TEXT2;
                           const hasBBBorder = wr.decidedByBoxBox;
+                          const noPitStop = wr.boxBoxBonus === 0;
+                          const showDashedGray = hasBBBorder && noPitStop;
                           return (
                             <span key={i} style={{
-                              fontFamily: FD, fontWeight: 800, fontSize: 10, color,
+                              fontFamily: FD, fontWeight: 800, fontSize: 10,
+                              color: showDashedGray ? TEXT2 : color,
                               width: 18, height: 18, display: "inline-flex", alignItems: "center", justifyContent: "center",
                               borderRadius: 4,
-                              border: hasBBBorder ? `2px solid ${color}` : "none",
-                              background: hasBBBorder ? `${color}12` : "transparent"
-                            }}>{letter}</span>
+                              border: showDashedGray ? `1.5px dashed ${BORDER}` : hasBBBorder ? `2px solid ${color}` : "none",
+                              background: showDashedGray ? "transparent" : hasBBBorder ? `${color}12` : "transparent"
+                            }}>{showDashedGray ? "—" : letter}</span>
                           );
                         })}
                       </div>
