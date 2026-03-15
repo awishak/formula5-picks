@@ -220,6 +220,11 @@ export default function PlayerStandings({ currentUser }) {
   const hasScores = standings.some(s => s.raceCount > 0);
   const myPlayerId = standings.find(s => s.name === currentUser)?.id;
 
+  // Points-based rank (always, regardless of sort)
+  const pointsRanked = [...standings].sort((a, b) => b.totalPts - a.totalPts);
+  const pointsRank = {};
+  pointsRanked.forEach((p, i) => { pointsRank[p.id] = i + 1; });
+
   const sortedStandings = [...standings].sort((a, b) => {
     switch (sortBy) {
       case "points": return b.totalPts - a.totalPts || (b.lastRacePts || 0) - (a.lastRacePts || 0);
@@ -313,9 +318,9 @@ export default function PlayerStandings({ currentUser }) {
               <button onClick={() => setExpanded(isExpanded ? null : p.id)} style={{
                 width: "100%", padding: "10px 14px", borderRadius: 12,
                 border: `2px solid ${
-                  sortBy === "points" && rank === 1 ? GOLD
-                  : sortBy === "points" && rank === 2 ? SILVER
-                  : sortBy === "points" && rank === 3 ? BRONZE
+                  pointsRank[p.id] === 1 ? GOLD
+                  : pointsRank[p.id] === 2 ? SILVER
+                  : pointsRank[p.id] === 3 ? BRONZE
                   : isMe ? BLUE : BORDER
                 }`,
                 background: isMe ? "rgba(108,184,224,0.08)" : "#fff",
@@ -332,14 +337,14 @@ export default function PlayerStandings({ currentUser }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
                     {logoUrl && <img src={logoUrl} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover" }} />}
                     <p style={{ fontFamily: FB, fontSize: 11, color: TEXT2, margin: 0 }}>{teamName || ""}</p>
-                    {sortBy === "points" && rank === 1 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: GOLD, background: `${GOLD}15`, padding: "1px 6px", borderRadius: 4 }}>Race Winner</span>}
-                    {sortBy === "points" && rank === 2 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: SILVER, background: `${SILVER}20`, padding: "1px 6px", borderRadius: 4 }}>P2</span>}
-                    {sortBy === "points" && rank === 3 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: BRONZE, background: `${BRONZE}15`, padding: "1px 6px", borderRadius: 4 }}>P3</span>}
+                    {pointsRank[p.id] === 1 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: GOLD, background: `${GOLD}15`, padding: "1px 6px", borderRadius: 4 }}>Race Winner</span>}
+                    {pointsRank[p.id] === 2 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: SILVER, background: `${SILVER}20`, padding: "1px 6px", borderRadius: 4 }}>P2</span>}
+                    {pointsRank[p.id] === 3 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: BRONZE, background: `${BRONZE}15`, padding: "1px 6px", borderRadius: 4 }}>P3</span>}
                   </div>
                 </div>
                 <div style={{ width: 90, display: "flex", flexShrink: 0 }}>
                   <div style={{ width: 45, textAlign: "center" }}>
-                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.totalPts > 0 ? DARK : TEXT2 }}>{p.totalPts}</span>
+                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 20, color: p.totalPts > 0 ? BLUEDARK : TEXT2 }}>{p.totalPts}</span>
                   </div>
                   <div style={{ width: 45, textAlign: "center" }}>
                     <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.lastRacePts != null ? BLUEDARK : TEXT2 }}>{p.lastRacePts != null ? p.lastRacePts : "—"}</span>
