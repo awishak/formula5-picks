@@ -137,6 +137,16 @@ export default function PlayerStandings({ currentUser }) {
         });
         setRaceScores(raceScoresMap);
 
+        // Compute last race pts for each player
+        const scoredRaceIds = new Set((scores || []).map(s => s.race_id));
+        const scoredRaces = (raceData || []).filter(r => scoredRaceIds.has(r.id));
+        const maxRound = scoredRaces.length > 0 ? Math.max(...scoredRaces.map(r => r.round)) : 0;
+        const lastRaceId = scoredRaces.find(r => r.round === maxRound)?.id;
+        Object.values(playerMap).forEach(p => {
+          const lastScore = lastRaceId ? (raceScoresMap[p.id] || []).find(s => s.race_id === lastRaceId) : null;
+          p.lastRacePts = lastScore ? lastScore.total_pts : null;
+        });
+
         const racesWithScores = new Set();
         (scores || []).forEach(s => racesWithScores.add(s.race_id));
         const rankings = {};
@@ -159,7 +169,7 @@ export default function PlayerStandings({ currentUser }) {
 
         const sorted = Object.values(playerMap);
         sorted.forEach(p => { p.pts2025 = PTS_2025[p.name] || 0; p.trophies2025 = TROPHIES_2025[p.name] || ""; p.trophyCount2025 = countTrophies2025(p.name); });
-        sorted.sort((a, b) => (b.pts2025 || 0) - (a.pts2025 || 0));
+        sorted.sort((a, b) => b.totalPts - a.totalPts);
         setStandings(sorted);
         const ts = (scores || []).map(s => s.calculated_at).filter(Boolean).sort().reverse();
         if (ts.length > 0) setLastUpdated(ts[0]);
@@ -212,13 +222,12 @@ export default function PlayerStandings({ currentUser }) {
 
   const sortedStandings = [...standings].sort((a, b) => {
     switch (sortBy) {
-      case "points": return b.totalPts - a.totalPts || (b.pts2025 || 0) - (a.pts2025 || 0);
+      case "points": return b.totalPts - a.totalPts || (b.lastRacePts || 0) - (a.lastRacePts || 0);
+      case "lastrace": return (b.lastRacePts || 0) - (a.lastRacePts || 0) || b.totalPts - a.totalPts;
       case "first": return a.name.split(" ")[0].localeCompare(b.name.split(" ")[0]);
       case "last": return (a.name.split(" ").pop()).localeCompare(b.name.split(" ").pop());
       case "trophies": return b.trophies.length - a.trophies.length || b.totalPts - a.totalPts;
-      case "2025trophies": return b.trophyCount2025 - a.trophyCount2025 || (b.pts2025 || 0) - (a.pts2025 || 0);
-      case "2025":
-      default: return (b.pts2025 || 0) - (a.pts2025 || 0);
+      default: return b.totalPts - a.totalPts;
     }
   });
 
@@ -256,9 +265,8 @@ export default function PlayerStandings({ currentUser }) {
       <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
         <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "center", marginRight: 2 }}>Sort</span>
         {[
-          { id: "2025", label: "2025 Pts" },
-          { id: "2025trophies", label: "2025 Trophies" },
           { id: "points", label: "Points" },
+          { id: "lastrace", label: "Last Race" },
           { id: "first", label: "First Name" },
           { id: "last", label: "Last Name" },
           { id: "trophies", label: "Trophies" },
@@ -326,24 +334,9 @@ export default function PlayerStandings({ currentUser }) {
                 </div>
                 <div style={{ width: 50, textAlign: "center", flexShrink: 0 }}>
                   <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.totalPts > 0 ? DARK : TEXT2 }}>{p.totalPts}</span>
-                  {sortBy === "2025" && (
+                  {p.lastRacePts != null && (
                     <p style={{ fontFamily: FD, fontWeight: 600, fontSize: 9, color: TEXT2, margin: "1px 0 0" }}>
-                      {p.pts2025 > 0
-                        ? `2025 Points: ${p.pts2025}`
-                        : DID_NOT_PLAY_2025.has(p.name)
-                          ? "Did not play in 2025"
-                          : "Rookie"}
-                    </p>
-                  )}
-                  {sortBy === "2025trophies" && (
-                    <p style={{ fontFamily: FD, fontWeight: 600, fontSize: 9, color: TEXT2, margin: "1px 0 0" }}>
-                      {p.trophies2025
-                        ? `2025: ${p.trophies2025}`
-                        : DID_NOT_PLAY_2025.has(p.name)
-                          ? "Did not play in 2025"
-                          : p.pts2025 > 0
-                            ? "No podiums in 2025"
-                            : "Rookie"}
+                      Last: {p.lastRacePts}
                     </p>
                   )}
                 </div>
