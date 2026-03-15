@@ -181,11 +181,33 @@ export default function TeamStandings({ currentUser }) {
             const winners = raceResults.filter(r => r.won === true).sort((a, b) => b.matchupScore - a.matchupScore);
             const ties = raceResults.filter(r => r.won === null).sort((a, b) => { if (a.boxBoxCorrect && !b.boxBoxCorrect) return -1; if (!a.boxBoxCorrect && b.boxBoxCorrect) return 1; return b.matchupScore - a.matchupScore; });
             const losers = raceResults.filter(r => r.won === false).sort((a, b) => b.matchupScore - a.matchupScore);
-            [...winners, ...ties, ...losers].forEach((r, idx) => {
-              const pts = idx < TEAM_PTS_TABLE.length ? TEAM_PTS_TABLE[idx] : 0;
-              const team = teamData.find(t => t.id === r.teamId);
-              if (team) { team.totalTeamPts += pts; const wr = team.weeklyResults.find(w => w.raceId === raceId); if (wr) wr.teamPtsEarned = pts; }
-            });
+            const ranked = [...winners, ...ties, ...losers];
+            let idx = 0;
+            while (idx < ranked.length) {
+              let groupEnd = idx + 1;
+              const r = ranked[idx];
+              const isTied = r.won === null;
+              if (isTied) {
+                while (groupEnd < ranked.length && ranked[groupEnd].won === null && ranked[groupEnd].boxBoxCorrect === r.boxBoxCorrect) groupEnd++;
+              }
+              const groupSize = groupEnd - idx;
+              if (groupSize > 1 && isTied) {
+                let totalPts = 0;
+                for (let i = idx; i < groupEnd; i++) totalPts += (i < TEAM_PTS_TABLE.length ? TEAM_PTS_TABLE[i] : 0);
+                const splitPts = totalPts / groupSize;
+                for (let i = idx; i < groupEnd; i++) {
+                  const team = teamData.find(t => t.id === ranked[i].teamId);
+                  if (team) { team.totalTeamPts += splitPts; const wr = team.weeklyResults.find(w => w.raceId === raceId); if (wr) wr.teamPtsEarned = splitPts; }
+                }
+              } else {
+                for (let i = idx; i < groupEnd; i++) {
+                  const pts = i < TEAM_PTS_TABLE.length ? TEAM_PTS_TABLE[i] : 0;
+                  const team = teamData.find(t => t.id === ranked[i].teamId);
+                  if (team) { team.totalTeamPts += pts; const wr = team.weeklyResults.find(w => w.raceId === raceId); if (wr) wr.teamPtsEarned = pts; }
+                }
+              }
+              idx = groupEnd;
+            }
           });
         });
 

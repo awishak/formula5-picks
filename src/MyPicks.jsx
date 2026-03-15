@@ -895,6 +895,11 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
         const base = (s) => s ? (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) : 0;
         return base(s1) + base(s2) + (s1?.pit_matchup_pts || 0);
       };
+      const teamBoxBox = (team, raceId) => {
+        if (!team) return 0;
+        const s1 = currentScores.find(s => s.player_id === team.player1_id && s.race_id === raceId);
+        return s1?.pit_matchup_pts || 0;
+      };
 
       const myPicks = currentPicks.filter(pk => pk.player_id === me.id);
       let totalSeasonPts = 0, wins = 0, losses = 0, ties = 0, teamWins = 0, teamLosses = 0, teamTies = 0;
@@ -961,15 +966,37 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
             const opp = (teams || []).find(t => t.id === oppId);
             const oppTS = opp ? teamScore(opp, raceId) : 0;
             const won = myTS > oppTS ? true : myTS < oppTS ? false : null;
-            return { teamId: team.id, matchupScore: myTS, won };
+            const bb = teamBoxBox(team, raceId);
+            return { teamId: team.id, matchupScore: myTS, won, bb };
           }).filter(Boolean);
 
           const winners = raceResults.filter(r => r.won === true).sort((a, b) => b.matchupScore - a.matchupScore);
-          const tiedTeams = raceResults.filter(r => r.won === null).sort((a, b) => b.matchupScore - a.matchupScore);
+          const tiedTeams = raceResults.filter(r => r.won === null).sort((a, b) => b.bb - a.bb);
           const losers = raceResults.filter(r => r.won === false).sort((a, b) => b.matchupScore - a.matchupScore);
-          [...winners, ...tiedTeams, ...losers].forEach((r, idx) => {
-            teamPtsMap[r.teamId] = (teamPtsMap[r.teamId] || 0) + (idx < TEAM_PTS_TABLE.length ? TEAM_PTS_TABLE[idx] : 0);
-          });
+          const ranked = [...winners, ...tiedTeams, ...losers];
+          let idx = 0;
+          while (idx < ranked.length) {
+            let groupEnd = idx + 1;
+            const r = ranked[idx];
+            const isTied = r.won === null;
+            if (isTied) {
+              while (groupEnd < ranked.length && ranked[groupEnd].won === null && ranked[groupEnd].bb === r.bb) groupEnd++;
+            }
+            const groupSize = groupEnd - idx;
+            if (groupSize > 1 && isTied) {
+              let totalPts = 0;
+              for (let i = idx; i < groupEnd; i++) totalPts += (i < TEAM_PTS_TABLE.length ? TEAM_PTS_TABLE[i] : 0);
+              const splitPts = totalPts / groupSize;
+              for (let i = idx; i < groupEnd; i++) {
+                teamPtsMap[ranked[i].teamId] = (teamPtsMap[ranked[i].teamId] || 0) + splitPts;
+              }
+            } else {
+              for (let i = idx; i < groupEnd; i++) {
+                teamPtsMap[ranked[i].teamId] = (teamPtsMap[ranked[i].teamId] || 0) + (i < TEAM_PTS_TABLE.length ? TEAM_PTS_TABLE[i] : 0);
+              }
+            }
+            idx = groupEnd;
+          }
         });
 
         const teamStats = divTeams.map(t => ({ teamId: t.id, cp: teamPtsMap[t.id] || 0 })).sort((a, b) => b.cp - a.cp);

@@ -145,6 +145,11 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
     const base = (s) => s ? (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) + (s.best_finish_bonus || 0) : 0;
     return base(s1) + base(s2) + (s1?.pit_matchup_pts || 0);
   };
+  const teamBoxBoxPts = (team, raceId) => {
+    if (!team) return 0;
+    const s1 = scoreMap[sk(team.player1_id, raceId)];
+    return s1?.pit_matchup_pts || 0;
+  };
   ["championship", "second"].forEach(div => {
     const divTeams = teams.filter(t => t.division === div && activeTeamIds.has(t.id));
     scoredRaceIds.forEach(raceId => {
@@ -155,14 +160,39 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
         const oppTeam = matchup.home_team?.id === team.id ? matchup.away_team : matchup.home_team;
         const oppMs = oppTeam ? teamMatchupScore(oppTeam, raceId) : 0;
         const won = ms > oppMs ? true : ms < oppMs ? false : null;
-        return { teamId: team.id, matchupScore: ms, won };
+        const bb = teamBoxBoxPts(team, raceId);
+        return { teamId: team.id, matchupScore: ms, won, bb };
       }).filter(Boolean);
       const winners = raceResults.filter(r => r.won === true).sort((a, b) => b.matchupScore - a.matchupScore);
-      const tied = raceResults.filter(r => r.won === null).sort((a, b) => b.matchupScore - a.matchupScore);
+      const tied = raceResults.filter(r => r.won === null).sort((a, b) => b.bb - a.bb);
       const losers = raceResults.filter(r => r.won === false).sort((a, b) => b.matchupScore - a.matchupScore);
-      [...winners, ...tied, ...losers].forEach((r, idx) => {
-        teamChampPts[r.teamId] = (teamChampPts[r.teamId] || 0) + (idx < TEAM_PTS_TABLE.length ? TEAM_PTS_TABLE[idx] : 0);
-      });
+      const ranked = [...winners, ...tied, ...losers];
+      // Assign points — split for groups with same bb in tied section
+      let idx = 0;
+      while (idx < ranked.length) {
+        // Find group of tied teams with same bb (only matters in the tied section)
+        let groupEnd = idx + 1;
+        const r = ranked[idx];
+        const isTied = r.won === null;
+        if (isTied) {
+          while (groupEnd < ranked.length && ranked[groupEnd].won === null && ranked[groupEnd].bb === r.bb) groupEnd++;
+        }
+        const groupSize = groupEnd - idx;
+        if (groupSize > 1 && isTied) {
+          // Split points across positions
+          let totalPts = 0;
+          for (let i = idx; i < groupEnd; i++) totalPts += (i < TEAM_PTS_TABLE.length ? TEAM_PTS_TABLE[i] : 0);
+          const splitPts = totalPts / groupSize;
+          for (let i = idx; i < groupEnd; i++) {
+            teamChampPts[ranked[i].teamId] = (teamChampPts[ranked[i].teamId] || 0) + splitPts;
+          }
+        } else {
+          for (let i = idx; i < groupEnd; i++) {
+            teamChampPts[ranked[i].teamId] = (teamChampPts[ranked[i].teamId] || 0) + (i < TEAM_PTS_TABLE.length ? TEAM_PTS_TABLE[i] : 0);
+          }
+        }
+        idx = groupEnd;
+      }
     });
   });
   // Rank teams by division
