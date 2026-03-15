@@ -133,6 +133,7 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
   const [nextRace, setNextRace] = useState(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [latestScoredRound, setLatestScoredRound] = useState(null);
   const [playerPhoto, setPlayerPhoto] = useState(null);
   const [showChooser, setShowChooser] = useState(false);
   const [allPlayers, setAllPlayers] = useState([]);
@@ -144,16 +145,24 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
     async function load() {
       try {
         const today = new Date().toISOString().split("T")[0];
-        const [{ data: raceData }, { data: latestScore }, { data: playerData }, { data: playersAll }] = await Promise.all([
+        const [{ data: raceData }, { data: latestScore }, { data: playerData }, { data: playersAll }, { data: scoredRaces }] = await Promise.all([
           supabase.from("races").select("*").gte("race_date", today).order("race_date", { ascending: true }).limit(1).maybeSingle(),
           supabase.from("scores").select("calculated_at").order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
           supabase.from("players").select("id, name, photo_url").eq("name", currentUser).maybeSingle(),
-          supabase.from("players").select("name, photo_url").order("name")
+          supabase.from("players").select("name, photo_url").order("name"),
+          supabase.from("races").select("id, round, race_name, season").eq("season", 2026).order("round", { ascending: false })
         ]);
         if (raceData) setNextRace(raceData);
         if (latestScore?.calculated_at) setLastUpdated(latestScore.calculated_at);
         if (playerData?.photo_url) setPlayerPhoto(playerData.photo_url);
         if (playersAll) setAllPlayers(playersAll);
+        // Find latest round that has scores
+        if (scoredRaces) {
+          const { data: allScores } = await supabase.from("scores").select("race_id").limit(1000);
+          const scoredIds = new Set((allScores || []).map(s => s.race_id));
+          const latest = scoredRaces.find(r => scoredIds.has(r.id));
+          if (latest) setLatestScoredRound(latest.round);
+        }
         if (raceData && playerData) {
           const { data: existing } = await supabase.from("picks").select("id").eq("player_id", playerData.id).eq("race_id", raceData.id).maybeSingle();
           setHasSubmitted(!!existing);
@@ -280,14 +289,16 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
       </div>
 
       {/* Recap button */}
-      <button onClick={() => window.open("/recaps/round1.html", "_blank")} style={{
-        width: "100%", padding: "14px", borderRadius: 12, marginBottom: 24,
-        border: `1.5px solid ${BORDER}`, background: "#fff",
-        fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 13, color: BLUEDARK,
-        cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.04em"
-      }}>
-        Read the Round 1 Recap
-      </button>
+      {latestScoredRound && (
+        <button onClick={() => window.open(`/recaps/round${latestScoredRound}.html`, "_blank")} style={{
+          width: "100%", padding: "14px", borderRadius: 12, marginBottom: 24,
+          border: `1.5px solid ${BORDER}`, background: "#fff",
+          fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 13, color: BLUEDARK,
+          cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.04em"
+        }}>
+          Read the Round {latestScoredRound} Recap
+        </button>
+      )}
 
       {/* All navigation — unified 3-across grid */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
