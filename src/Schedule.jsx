@@ -908,13 +908,14 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
       })()}
 
       {/* Outline legend — show for scored races */}
-      {raceHasScores && (
+      {/* Round-specific notices */}
+      {activeRound === 2 && raceHasScores && (
         <div style={{
           padding: "12px 14px", borderRadius: 12, marginBottom: 14,
-          background: `${ORANGE}08`, border: `1px solid ${ORANGE}25`
+          background: `${BLUE}08`, border: `1px solid ${BLUE}25`
         }}>
           <p style={{ fontFamily: FB, fontSize: 12, color: TEXT, margin: 0, lineHeight: 1.5 }}>
-            <span style={{ fontWeight: 700 }}>Hey!</span> I'm working through the kinks in this first week. I believe these are the final scores but I'll confirm when they are all ready to go.
+            No McLaren pit stop this week — which is kind of crazy — so BOX BOX is 0 for every team. Sorry about that. Anything outlined in green this week is a matchup that could have been different based on McLaren's first pit stop.
           </p>
         </div>
       )}
