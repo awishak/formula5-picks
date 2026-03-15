@@ -340,7 +340,7 @@ export default function TeamStandings({ currentUser }) {
                           return (
                             <span key={i} style={{
                               fontFamily: FD, fontWeight: 800, fontSize: 10,
-                              color: showDashedGray ? TEXT2 : color,
+                              color: color,
                               width: 18, height: 18, display: "inline-flex", alignItems: "center", justifyContent: "center",
                               borderRadius: 4,
                               border: showDashedGray ? `1.5px dashed ${BORDER}` : hasBBBorder ? `2px solid ${color}` : "none",
