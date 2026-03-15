@@ -84,7 +84,7 @@ export default function Admin() {
     async function load() {
       const { data: racesData } = await supabase
         .from("races")
-        .select("id, race_name, round, race_date, pit_stop_question, top_drivers, mid_drivers")
+        .select("id, race_name, round, race_date, pit_stop_question")
         .order("round", { ascending: true });
       setRaces(racesData || []);
 
@@ -388,15 +388,11 @@ export default function Admin() {
     try {
       const finishOrder = parseFinishOrder(finishOrderText);
       const dnfs = parseDNFs(dnfText);
-      const pitTime = parseFloat(pitStopTime);
+      const pitTime = pitStopTime ? parseFloat(pitStopTime) : null;
+      const hasPitTime = pitTime !== null && !isNaN(pitTime);
 
       if (finishOrder.length < 5) {
         setError("Need at least 5 drivers in finishing order");
-        setScoring(false);
-        return;
-      }
-      if (isNaN(pitTime)) {
-        setError("Invalid pit stop time");
         setScoring(false);
         return;
       }
@@ -539,7 +535,7 @@ export default function Admin() {
         const bestFinishBonus = bestFinishGuessNum === bestActualPos ? 3 : 0;
 
         // Pit stop needle
-        const pitIndividualPts = pick.pit_guess ? needleScore(pick.pit_guess, pitTime) : 0;
+        const pitIndividualPts = (hasPitTime && pick.pit_guess) ? needleScore(pick.pit_guess, pitTime) : 0;
 
         const totalPts = topPickPts + midfieldPts + orderBonus + bestFinishBonus + pitIndividualPts;
 
@@ -603,7 +599,7 @@ export default function Admin() {
 
         // Determine who wins the BOX BOX
         let overBonus = 0, underBonus = 0;
-        if (boxBoxLine !== null) {
+        if (hasPitTime && boxBoxLine !== null) {
           if (pitTime > boxBoxLine) {
             // Actual > line = OVER wins
             overBonus = 5;
@@ -1172,13 +1168,13 @@ export default function Admin() {
           if (top.length !== 3) { setDriverPoolStatus("Need exactly 3 top drivers"); return; }
           if (mid.length !== 7) { setDriverPoolStatus("Need exactly 7 midfield drivers"); return; }
           setDriverPoolSaving(true);
-          const { data, error } = await supabase.from("races").update({ top_drivers: top, mid_drivers: mid }).eq("id", race.id).select();
+          const { error } = await supabase.from("races").update({ top_drivers: top, mid_drivers: mid }).eq("id", race.id);
           if (error) { setDriverPoolStatus("Error: " + error.message); }
-          else if (!data || data.length === 0) {
-            setDriverPoolStatus("Error: Update blocked — check Supabase RLS policies on the races table. You may need to allow UPDATE on the races table.");
-          } else {
-            setDriverPoolStatus("✅ Saved! Top: " + top.join(", "));
-            setRaces(prev => prev.map(r => r.round === driverPoolRound ? { ...r, top_drivers: top, mid_drivers: mid } : r));
+          else {
+            setDriverPoolStatus("Saved!");
+            // Update local races array
+            const idx = races.findIndex(r => r.round === driverPoolRound);
+            if (idx >= 0) { races[idx].top_drivers = top; races[idx].mid_drivers = mid; }
           }
           setDriverPoolSaving(false);
         }
@@ -1252,10 +1248,10 @@ export default function Admin() {
                 {driverPoolStatus && (
                   <div style={{
                     padding: "10px 14px", borderRadius: 10, marginTop: 12,
-                    background: driverPoolStatus.startsWith("✅") ? `${GREEN}10` : `${RED}10`,
-                    border: `1px solid ${driverPoolStatus.startsWith("✅") ? `${GREEN}30` : `${RED}30`}`,
+                    background: driverPoolStatus === "Saved!" ? `${GREEN}10` : `${RED}10`,
+                    border: `1px solid ${driverPoolStatus === "Saved!" ? `${GREEN}30` : `${RED}30`}`,
                   }}>
-                    <p style={{ fontFamily: FB, fontSize: 13, color: driverPoolStatus.startsWith("✅") ? GREEN : RED, margin: 0 }}>{driverPoolStatus}</p>
+                    <p style={{ fontFamily: FB, fontSize: 13, color: driverPoolStatus === "Saved!" ? GREEN : RED, margin: 0 }}>{driverPoolStatus}</p>
                   </div>
                 )}
               </div>
