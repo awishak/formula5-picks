@@ -911,10 +911,11 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
       {/* Round-specific notices */}
       {activeRound === 2 && raceHasScores && (
         <div style={{
-          padding: "12px 14px", borderRadius: 12, marginBottom: 14,
-          background: `${BLUE}08`, border: `1px solid ${BLUE}25`
+          padding: "16px 18px", borderRadius: 14, marginBottom: 16,
+          background: `${ORANGE}12`, border: `2px solid ${ORANGE}40`
         }}>
-          <p style={{ fontFamily: FB, fontSize: 12, color: TEXT, margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 13, color: ORANGE, textTransform: "uppercase", letterSpacing: "0.04em", margin: "0 0 8px" }}>Round 2 Notice</p>
+          <p style={{ fontFamily: FB, fontSize: 14, color: TEXT, margin: 0, lineHeight: 1.6, fontWeight: 500 }}>
             No McLaren pit stop this week — which is kind of crazy — so BOX BOX is 0 for every team. Sorry about that. Anything outlined in green this week is a matchup that could have been different based on McLaren's first pit stop.
           </p>
         </div>
