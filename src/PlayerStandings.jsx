@@ -285,11 +285,16 @@ export default function PlayerStandings({ currentUser }) {
         {/* Column headers */}
         <div style={{ display: "flex", alignItems: "center", padding: "0 14px 4px", gap: 0 }}>
           <div style={{ minWidth: 28 }} />
-          <div style={{ flex: 1, marginLeft: 86 }}>
+          <div style={{ flex: 1, marginLeft: 50 }}>
             <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em" }}>Player</span>
           </div>
-          <div style={{ width: 50, textAlign: "center", flexShrink: 0 }}>
-            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em" }}>Pts</span>
+          <div style={{ width: 90, display: "flex", flexShrink: 0 }}>
+            <div style={{ width: 45, textAlign: "center" }}>
+              <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em" }}>Total</span>
+            </div>
+            <div style={{ width: 45, textAlign: "center" }}>
+              <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em" }}>Last</span>
+            </div>
           </div>
           <div style={{ width: 44, textAlign: "center", flexShrink: 0 }} />
           <div style={{ width: 16 }} />
@@ -317,8 +322,7 @@ export default function PlayerStandings({ currentUser }) {
                 display: "flex", alignItems: "center", gap: 0, cursor: "pointer", textAlign: "left"
               }}>
                 <div style={{ minWidth: 28, textAlign: "center", fontFamily: FD, fontWeight: 900, fontSize: 16, color: TEXT2 }}>{rank}</div>
-                <div style={{ marginLeft: 8 }}><TeamLogo name={teamName} size={36} division={division} logoUrl={logoUrl} /></div>
-                <div style={{ marginLeft: 6 }}><PlayerAvatar name={p.name} size={36} photoUrl={p.photo_url} /></div>
+                <div style={{ marginLeft: 8 }}><PlayerAvatar name={p.name} size={36} photoUrl={p.photo_url} /></div>
                 <div style={{ flex: 1, minWidth: 0, marginLeft: 6 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <p style={{ fontFamily: FB, fontWeight: isMe ? 700 : 500, fontSize: 16, color: isMe ? BLUEDARK : TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -326,19 +330,20 @@ export default function PlayerStandings({ currentUser }) {
                     </p>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                    {logoUrl && <img src={logoUrl} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover" }} />}
                     <p style={{ fontFamily: FB, fontSize: 11, color: TEXT2, margin: 0 }}>{teamName || ""}</p>
                     {sortBy === "points" && rank === 1 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: GOLD, background: `${GOLD}15`, padding: "1px 6px", borderRadius: 4 }}>Race Winner</span>}
                     {sortBy === "points" && rank === 2 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: SILVER, background: `${SILVER}20`, padding: "1px 6px", borderRadius: 4 }}>P2</span>}
                     {sortBy === "points" && rank === 3 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: BRONZE, background: `${BRONZE}15`, padding: "1px 6px", borderRadius: 4 }}>P3</span>}
                   </div>
                 </div>
-                <div style={{ width: 50, textAlign: "center", flexShrink: 0 }}>
-                  <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.totalPts > 0 ? DARK : TEXT2 }}>{p.totalPts}</span>
-                  {p.lastRacePts != null && (
-                    <p style={{ fontFamily: FD, fontWeight: 600, fontSize: 9, color: TEXT2, margin: "1px 0 0" }}>
-                      Last: {p.lastRacePts}
-                    </p>
-                  )}
+                <div style={{ width: 90, display: "flex", flexShrink: 0 }}>
+                  <div style={{ width: 45, textAlign: "center" }}>
+                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.totalPts > 0 ? DARK : TEXT2 }}>{p.totalPts}</span>
+                  </div>
+                  <div style={{ width: 45, textAlign: "center" }}>
+                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.lastRacePts != null ? BLUEDARK : TEXT2 }}>{p.lastRacePts != null ? p.lastRacePts : "—"}</span>
+                  </div>
                 </div>
                 <div style={{ width: 44, textAlign: "center", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                   {p.podiums > 0 && (
