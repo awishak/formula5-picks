@@ -345,7 +345,7 @@ export default function TeamStandings({ currentUser }) {
                               borderRadius: 4,
                               border: showDashedGray ? `1.5px dashed ${BORDER}` : hasBBBorder ? `2px solid ${color}` : "none",
                               background: showDashedGray ? "transparent" : hasBBBorder ? `${color}12` : "transparent"
-                            }}>{showDashedGray ? "—" : letter}</span>
+                            }}>{letter}</span>
                           );
                         })}
                       </div>
