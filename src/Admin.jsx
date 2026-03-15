@@ -33,20 +33,31 @@ const WEEKLY_BONUS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 const DRIVER_NAMES = {
   1: "Max Verstappen", 4: "Lando Norris", 16: "Charles Leclerc",
   44: "Lewis Hamilton", 63: "George Russell", 81: "Oscar Piastri",
-  55: "Carlos Sainz", 14: "Fernando Alonso", 12: "Andrea Kimi Antonelli",
-  23: "Alex Albon", 18: "Lance Stroll", 10: "Pierre Gasly",
-  22: "Yuki Tsunoda", 7: "Jack Doohan", 27: "Nico Hulkenberg",
-  5: "Gabriel Bortoleto", 87: "Oliver Bearman", 31: "Esteban Ocon",
-  30: "Liam Lawson", 6: "Isack Hadjar"
+  55: "Carlos Sainz", 14: "Fernando Alonso", 12: "Kimi Antonelli",
+  23: "Alexander Albon", 18: "Lance Stroll", 10: "Pierre Gasly",
+  27: "Nico Hulkenberg", 5: "Gabriel Bortoleto", 87: "Oliver Bearman",
+  31: "Esteban Ocon", 30: "Isack Hadjar", 6: "Arvid Lindblad",
+  11: "Sergio Perez", 77: "Valtteri Bottas", 24: "Franco Colapinto",
+  22: "Liam Lawson"
 };
 
 const DRIVER_TEAMS = {
   1: "Red Bull", 30: "Red Bull", 4: "McLaren", 81: "McLaren",
   16: "Ferrari", 44: "Ferrari", 63: "Mercedes", 12: "Mercedes",
   55: "Williams", 23: "Williams", 14: "Aston Martin", 18: "Aston Martin",
-  10: "Alpine", 7: "Alpine", 22: "Racing Bulls", 6: "Racing Bulls",
-  27: "Sauber", 5: "Sauber", 87: "Haas", 31: "Haas"
+  10: "Alpine", 24: "Alpine", 22: "Racing Bulls", 6: "Racing Bulls",
+  27: "Audi", 5: "Audi", 87: "Haas", 31: "Haas",
+  11: "Cadillac", 77: "Cadillac"
 };
+
+const ALL_2026_DRIVERS = [
+  "Max Verstappen", "Isack Hadjar", "Lando Norris", "Oscar Piastri",
+  "Charles Leclerc", "Lewis Hamilton", "George Russell", "Kimi Antonelli",
+  "Carlos Sainz", "Alexander Albon", "Fernando Alonso", "Lance Stroll",
+  "Pierre Gasly", "Franco Colapinto", "Liam Lawson", "Arvid Lindblad",
+  "Nico Hulkenberg", "Gabriel Bortoleto", "Oliver Bearman", "Esteban Ocon",
+  "Sergio Perez", "Valtteri Bottas"
+];
 
 export default function Admin() {
   const [races, setRaces] = useState([]);
@@ -54,6 +65,11 @@ export default function Admin() {
   const [finishOrderText, setFinishOrderText] = useState("");
   const [pitStopTime, setPitStopTime] = useState("");
   const [dnfText, setDnfText] = useState("");
+  const [dndAvailable, setDndAvailable] = useState([]);
+  const [dndFinish, setDndFinish] = useState([]);
+  const [dndDnf, setDndDnf] = useState([]);
+  const [dragItem, setDragItem] = useState(null);
+  const [dragSource, setDragSource] = useState(null);
   const [loading, setLoading] = useState(true);
   const [scoring, setScoring] = useState(false);
   const [preview, setPreview] = useState(null);
@@ -75,6 +91,7 @@ export default function Admin() {
   const [selectedPitIdx, setSelectedPitIdx] = useState(null);
   const [rawApiDump, setRawApiDump] = useState(null);
   const [driverPoolRound, setDriverPoolRound] = useState(null);
+  const [inputMode, setInputMode] = useState("builder"); // "builder" | "text"
   const [topDrivers, setTopDrivers] = useState(["", "", ""]);
   const [midDrivers, setMidDrivers] = useState(["", "", "", "", "", "", ""]);
   const [driverPoolStatus, setDriverPoolStatus] = useState("");
@@ -1436,6 +1453,138 @@ export default function Admin() {
         Or enter manually below:
       </p>
 
+      {/* Input mode toggle */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+        {[{ id: "builder", label: "Driver Builder" }, { id: "text", label: "Text Input" }].map(tab => (
+          <button key={tab.id} onClick={() => setInputMode(tab.id)} style={{
+            flex: 1, padding: "8px", borderRadius: 8, cursor: "pointer",
+            border: `1.5px solid ${inputMode === tab.id ? BLUEDARK : BORDER}`,
+            background: inputMode === tab.id ? `${BLUE}12` : "#fff",
+            color: inputMode === tab.id ? BLUEDARK : TEXT2,
+            fontFamily: FD, fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.04em"
+          }}>{tab.label}</button>
+        ))}
+      </div>
+
+      {/* DRIVER BUILDER MODE */}
+      {inputMode === "builder" && (() => {
+        const ALL_DRIVERS = Object.values(DRIVER_NAMES).sort();
+        const finishList = parseFinishOrder(finishOrderText);
+        const dnfList = parseDNFs(dnfText);
+        const usedSet = new Set([...finishList.map(d => d.toLowerCase()), ...dnfList.map(d => d.toLowerCase())]);
+        const available = ALL_DRIVERS.filter(d => !usedSet.has(d.toLowerCase()));
+
+        const addToFinish = (driver) => {
+          const newList = [...finishList, driver];
+          setFinishOrderText(newList.join("\n"));
+        };
+        const addToDnf = (driver) => {
+          const newList = [...dnfList, driver];
+          setDnfText(newList.join("\n"));
+        };
+        const removeFromFinish = (idx) => {
+          const newList = finishList.filter((_, i) => i !== idx);
+          setFinishOrderText(newList.join("\n"));
+        };
+        const removeFromDnf = (idx) => {
+          const newList = dnfList.filter((_, i) => i !== idx);
+          setDnfText(newList.join("\n"));
+        };
+        const moveUp = (idx) => {
+          if (idx === 0) return;
+          const newList = [...finishList];
+          [newList[idx - 1], newList[idx]] = [newList[idx], newList[idx - 1]];
+          setFinishOrderText(newList.join("\n"));
+        };
+        const moveDown = (idx) => {
+          if (idx >= finishList.length - 1) return;
+          const newList = [...finishList];
+          [newList[idx], newList[idx + 1]] = [newList[idx + 1], newList[idx]];
+          setFinishOrderText(newList.join("\n"));
+        };
+
+        const teamColorMap = {};
+        Object.entries(DRIVER_TEAMS).forEach(([num, team]) => {
+          teamColorMap[DRIVER_NAMES[num]] = team;
+        });
+        const TEAM_COLORS = {
+          "Red Bull": "#3671C6", "McLaren": "#FF8000", "Ferrari": "#E8002D",
+          "Mercedes": "#27F4D2", "Williams": "#64C4FF", "Aston Martin": "#229971",
+          "Alpine": "#0093CC", "Racing Bulls": "#6692FF", "Audi": "#52E252",
+          "Haas": "#B6BABD", "Cadillac": "#C0C0C0"
+        };
+        const getTeamColor = (driver) => TEAM_COLORS[teamColorMap[driver]] || BORDER;
+
+        const chipStyle = (driver, clickable = true) => ({
+          padding: "6px 10px", borderRadius: 8, cursor: clickable ? "pointer" : "default",
+          border: `2px solid ${getTeamColor(driver)}`,
+          background: "#fff", fontFamily: FB, fontSize: 12, fontWeight: 600, color: TEXT,
+          display: "inline-flex", alignItems: "center", gap: 4
+        });
+
+        return (
+          <div>
+            {/* Available */}
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                Available ({available.length})
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {available.map(driver => (
+                  <div key={driver} style={{ display: "flex", gap: 2 }}>
+                    <button onClick={() => addToFinish(driver)} style={chipStyle(driver)}>
+                      {driver}
+                    </button>
+                    <button onClick={() => addToDnf(driver)} style={{
+                      padding: "4px 6px", borderRadius: "0 6px 6px 0", border: `1px solid ${RED}30`,
+                      background: `${RED}08`, cursor: "pointer", fontFamily: FD, fontWeight: 800,
+                      fontSize: 9, color: RED, marginLeft: -4
+                    }}>DNF</button>
+                  </div>
+                ))}
+                {available.length === 0 && <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, fontStyle: "italic" }}>All drivers placed</p>}
+              </div>
+            </div>
+
+            {/* Finishing Order */}
+            <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 12, border: `2px solid ${GREEN}40`, background: `${GREEN}04` }}>
+              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: GREEN, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                Finishing Order ({finishList.length})
+              </p>
+              {finishList.length === 0 && <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, fontStyle: "italic" }}>Click drivers above to add them in order</p>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {finishList.map((driver, idx) => (
+                  <div key={driver} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 13, color: TEXT2, minWidth: 28, textAlign: "right" }}>P{idx + 1}</span>
+                    <div style={{ ...chipStyle(driver, false), flex: 1 }}>{driver}</div>
+                    <button onClick={() => moveUp(idx)} disabled={idx === 0} style={{ padding: "4px 6px", borderRadius: 4, border: `1px solid ${BORDER}`, background: idx === 0 ? "#f5f3ef" : "#fff", cursor: idx === 0 ? "default" : "pointer", fontSize: 10, color: TEXT2 }}>▲</button>
+                    <button onClick={() => moveDown(idx)} disabled={idx >= finishList.length - 1} style={{ padding: "4px 6px", borderRadius: 4, border: `1px solid ${BORDER}`, background: idx >= finishList.length - 1 ? "#f5f3ef" : "#fff", cursor: idx >= finishList.length - 1 ? "default" : "pointer", fontSize: 10, color: TEXT2 }}>▼</button>
+                    <button onClick={() => removeFromFinish(idx)} style={{ padding: "4px 8px", borderRadius: 4, border: `1px solid ${RED}30`, background: `${RED}06`, cursor: "pointer", fontSize: 10, color: RED, fontWeight: 700 }}>X</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* DNF/DNS */}
+            <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 12, border: `2px solid ${RED}40`, background: `${RED}04` }}>
+              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: RED, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                DNF / DNS ({dnfList.length})
+              </p>
+              {dnfList.length === 0 && <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, fontStyle: "italic" }}>Click DNF on drivers above, or they'll go here if they didn't finish</p>}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {dnfList.map((driver, idx) => (
+                  <button key={driver} onClick={() => removeFromDnf(idx)} style={{ ...chipStyle(driver), borderColor: RED, cursor: "pointer" }}>
+                    {driver} <span style={{ color: RED, fontWeight: 800, fontSize: 10 }}>X</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* TEXT INPUT MODE */}
+      {inputMode === "text" && (<>
       {/* Finishing order input */}
       <div style={{ marginBottom: 16 }}>
         <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>
@@ -1471,6 +1620,7 @@ export default function Admin() {
           }}
         />
       </div>
+      </>)}
 
       {/* Pit stop time */}
       <div style={{ marginBottom: 20 }}>
