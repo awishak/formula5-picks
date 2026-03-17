@@ -916,6 +916,16 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
       const resultMap = {};
       (results || []).forEach(r => { resultMap[r.race_id] = r; });
 
+      // Build pick percentages per race: how many players picked each driver
+      const pickPctPerRace = {};
+      currentPicks.forEach(pk => {
+        if (!pickPctPerRace[pk.race_id]) pickPctPerRace[pk.race_id] = { total: 0, drivers: {} };
+        pickPctPerRace[pk.race_id].total += 1;
+        (pk.finishing_order || []).forEach(d => {
+          pickPctPerRace[pk.race_id].drivers[d] = (pickPctPerRace[pk.race_id].drivers[d] || 0) + 1;
+        });
+      });
+
       const myPicks = currentPicks.filter(pk => pk.player_id === me.id);
       let totalSeasonPts = 0, wins = 0, losses = 0, ties = 0, teamWins = 0, teamLosses = 0, teamTies = 0;
 
@@ -944,7 +954,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
           }
         }
 
-        return { pick: pk, race, score, driverPts, total, rank, totalPlayers: ranked.length, teamResult, allDriverPts: allDriverPtsPerRace[pk.race_id] || {}, result: resultMap[pk.race_id] || null };
+        return { pick: pk, race, score, driverPts, total, rank, totalPlayers: ranked.length, teamResult, allDriverPts: allDriverPtsPerRace[pk.race_id] || {}, result: resultMap[pk.race_id] || null, pickPct: pickPctPerRace[pk.race_id] || { total: 0, drivers: {} } };
       }).filter(e => e.race).sort((a, b) => b.race.round - a.race.round);
 
       const scoredEntries = entries.filter(e => e.total !== null);
@@ -1159,6 +1169,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
               const topPool = new Set((h.race.top_drivers || []).map(d => d.toLowerCase()));
               const allDP = h.allDriverPts || {};
               const finishOrder = h.result?.finishing_order || [];
+              const pctData = h.pickPct || { total: 0, drivers: {} };
 
               // Build all drivers from multiple sources: fallback list + results + allDriverPts
               const driverSet = new Set(Object.keys(F1_TEAMS_FALLBACK));
@@ -1218,7 +1229,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                           display: "flex", alignItems: "center", padding: "5px 8px",
                           borderRadius: 8, background: rowBg,
                           border: `1.5px solid ${rowBorder}`,
-                          opacity: isUnavailable ? 0.3 : 1,
+                          opacity: isUnavailable ? 0.5 : 1,
                         }}>
                           {/* Position */}
                           <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 12, color: posColor, width: 36, textAlign: "right", flexShrink: 0 }}>
@@ -1250,7 +1261,9 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                                 <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 7, color: ORANGE, background: `${ORANGE}15`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>YOUR PICK</span>
                               )}
                               {isAvailNotPicked && (
-                                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: TEXT2, background: `${DARK}06`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>AVAILABLE</span>
+                                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: TEXT2, background: `${DARK}06`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>
+                                  AVAILABLE{pctData.total > 0 ? ` · ${Math.round((pctData.drivers[dr.name] || 0) / pctData.total * 100)}% picked` : ""}
+                                </span>
                               )}
                               {dr.isTopPool && !dr.isTopPick && (
                                 <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: TEXT2, background: `${DARK}06`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>TOP 3 OPTION</span>
@@ -1314,6 +1327,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
               </span>
               <span style={{ padding: "5px 10px", borderRadius: 8, background: `${DARK}04`, fontFamily: FB, fontSize: 13, fontWeight: 600, color: TEXT2 }}>
                 Pit {h.pick.pit_guess != null ? Number(h.pick.pit_guess).toFixed(1) + "s" : "—"}
+                {h.result?.pit_stop_time != null && <span style={{ color: TEXT2, marginLeft: 4 }}>(actual {Number(h.result.pit_stop_time).toFixed(1)}s)</span>}
                 {h.score && <span style={{ color: h.score.pit_individual_pts > 0 ? ORANGE : TEXT2, marginLeft: 4 }}>+{h.score.pit_individual_pts || 0}</span>}
               </span>
               {h.score && <span style={{ padding: "5px 10px", borderRadius: 8, background: h.score.order_bonus > 0 ? `${ORANGE}10` : `${DARK}04`, fontFamily: FB, fontSize: 13, fontWeight: 600, color: h.score.order_bonus > 0 ? ORANGE : TEXT2 }}>{h.score.order_bonus > 0 ? "Order ✓+6" : "Order ✗"}</span>}
