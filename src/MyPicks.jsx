@@ -1153,39 +1153,42 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
 
             {/* Driver Grid */}
             {h.total !== null ? (() => {
-              const PTS_TO_POS = {25:"P1",18:"P2",15:"P3",12:"P4",10:"P5",8:"P6",6:"P7",4:"P8",2:"P9",1:"P10"};
               const myPickSet = new Set((h.pick.finishing_order || []).map(d => d.toLowerCase()));
               const topPickName = (h.pick.top_pick || "").toLowerCase();
               const availablePool = new Set([...(h.race.top_drivers || []), ...(h.race.mid_drivers || [])].map(d => d.toLowerCase()));
               const allDP = h.allDriverPts || {};
               const finishOrder = h.result?.finishing_order || [];
 
-              // Build all 22 drivers with their data
-              const allDrivers = Object.keys(F1_TEAMS_FALLBACK);
+              // Build all drivers from multiple sources: fallback list + results + allDriverPts
+              const driverSet = new Set(Object.keys(F1_TEAMS_FALLBACK));
+              const finishOrder = h.result?.finishing_order || [];
+              finishOrder.forEach(d => driverSet.add(d));
+              Object.keys(allDP).forEach(d => driverSet.add(d));
+              Object.keys(h.driverPts || {}).forEach(d => driverSet.add(d));
+
+              const allDrivers = Array.from(driverSet);
+              const finishIndex = {};
+              finishOrder.forEach((d, i) => { finishIndex[d.toLowerCase()] = i; });
+
               const driverRows = allDrivers.map(name => {
                 const lc = name.toLowerCase();
                 const isPicked = myPickSet.has(lc);
                 const isAvailable = availablePool.has(lc);
                 const isTopPick = lc === topPickName;
-                // Get pts: from my picks if I picked them, otherwise from allDriverPts
-                const pts = allDP[name] ?? (isPicked ? (h.driverPts[name] ?? null) : null);
-                const pos = pts !== null ? (PTS_TO_POS[pts] || (pts === 0 ? "P11+" : pts === -1 ? "DNF" : `${pts}`)) : null;
-                const posNum = pts !== null ? (pts === -1 ? 999 : pts === 0 ? 11 : ({25:1,18:2,15:3,12:4,10:5,8:6,6:7,4:8,2:9,1:10}[pts] || 20)) : 998;
+                // Get pts: check allDriverPts first, then my driverPts
+                const pts = allDP[name] ?? h.driverPts[name] ?? null;
+                // Position from finishing order
+                const finIdx = finishIndex[lc];
+                const pos = finIdx !== undefined ? (finIdx < 15 ? `P${finIdx + 1}` : (pts === -1 ? "DNF" : `P${finIdx + 1}`)) : (pts === -1 ? "DNF" : null);
+                const sortOrder = finIdx !== undefined ? finIdx : 9999;
                 const team = F1_TEAMS_FALLBACK[name] || "";
                 const tc = F1_TEAM_COLORS[team] || BORDER;
                 const info = findDriver(driverMap, name);
-                return { name, pts, pos, posNum, team, tc, isPicked, isAvailable, isTopPick, info };
+                return { name, pts, pos, sortOrder, team, tc, isPicked, isAvailable, isTopPick, info };
               });
 
-              // Sort by finishing position (best first), unavailable at bottom, DNF after finishers
-              driverRows.sort((a, b) => {
-                const aKnown = a.pts !== null;
-                const bKnown = b.pts !== null;
-                if (aKnown && !bKnown) return -1;
-                if (!aKnown && bKnown) return 1;
-                if (!aKnown && !bKnown) return 0;
-                return a.posNum - b.posNum;
-              });
+              // Sort by actual finishing position
+              driverRows.sort((a, b) => a.sortOrder - b.sortOrder);
 
               return (
                 <div style={{ marginBottom: 8 }}>
