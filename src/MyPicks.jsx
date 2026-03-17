@@ -1271,7 +1271,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                                 </span>
                               )}
                               {dr.isTopPool && !dr.isTopPick && (
-                                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: TEXT2, background: `${DARK}06`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>TOP 3 OPTION</span>
+                                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: BLUEDARK, background: `${BLUE}12`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>TOP 3 OPTION</span>
                               )}
                             </div>
                           </div>
