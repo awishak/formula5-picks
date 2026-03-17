@@ -1162,7 +1162,6 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
 
               // Build all drivers from multiple sources: fallback list + results + allDriverPts
               const driverSet = new Set(Object.keys(F1_TEAMS_FALLBACK));
-              const finishOrder = h.result?.finishing_order || [];
               finishOrder.forEach(d => driverSet.add(d));
               Object.keys(allDP).forEach(d => driverSet.add(d));
               Object.keys(h.driverPts || {}).forEach(d => driverSet.add(d));
