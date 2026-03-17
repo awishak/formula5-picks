@@ -40,23 +40,24 @@ const FB       = "'DM Sans', sans-serif";
 // ── Shared UI ───────────────────────────────────────────
 // ── F1 Driver → Team fallback map ───────────────────────
 const F1_TEAMS_FALLBACK = {
-  "Max Verstappen": "Red Bull", "Liam Lawson": "Red Bull",
+  "Max Verstappen": "Red Bull", "Isack Hadjar": "Red Bull",
   "Lando Norris": "McLaren", "Oscar Piastri": "McLaren",
   "Charles Leclerc": "Ferrari", "Lewis Hamilton": "Ferrari",
-  "George Russell": "Mercedes", "Andrea Kimi Antonelli": "Mercedes",
-  "Carlos Sainz": "Williams", "Alex Albon": "Williams",
+  "George Russell": "Mercedes", "Kimi Antonelli": "Mercedes",
+  "Carlos Sainz": "Williams", "Alexander Albon": "Williams",
   "Fernando Alonso": "Aston Martin", "Lance Stroll": "Aston Martin",
-  "Pierre Gasly": "Alpine", "Jack Doohan": "Alpine",
-  "Yuki Tsunoda": "Racing Bulls", "Isack Hadjar": "Racing Bulls",
-  "Nico Hulkenberg": "Sauber", "Gabriel Bortoleto": "Sauber",
+  "Pierre Gasly": "Alpine", "Franco Colapinto": "Alpine",
+  "Liam Lawson": "Racing Bulls", "Arvid Lindblad": "Racing Bulls",
+  "Nico Hulkenberg": "Audi", "Gabriel Bortoleto": "Audi",
   "Oliver Bearman": "Haas", "Esteban Ocon": "Haas",
+  "Sergio Perez": "Cadillac", "Valtteri Bottas": "Cadillac",
 };
 
 const F1_TEAM_COLORS = {
   "Red Bull": "#3671C6", "McLaren": "#FF8000", "Ferrari": "#E8002D",
   "Mercedes": "#27F4D2", "Williams": "#64C4FF", "Aston Martin": "#229971",
-  "Alpine": "#0093CC", "Racing Bulls": "#6692FF", "Sauber": "#52E252",
-  "Haas": "#B6BABD",
+  "Alpine": "#0093CC", "Racing Bulls": "#6692FF", "Audi": "#52E252",
+  "Haas": "#B6BABD", "Cadillac": "#C0C0C0",
 };
 
 // ── OpenF1 API: fetch driver data (name, team, headshot) ─
@@ -858,7 +859,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
         supabase.from("players").select("id, name"),
         supabase.from("picks").select("*"),
         supabase.from("scores").select("*"),
-        supabase.from("races").select("id, race_name, round, season").order("round", { ascending: true }),
+        supabase.from("races").select("id, race_name, round, season, top_drivers, mid_drivers").order("round", { ascending: true }),
         supabase.from("teams").select("*"),
         supabase.from("schedule").select("*")
       ]);
@@ -886,6 +887,16 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
         raceTotals[s.race_id].push({ pid: s.player_id, total });
       });
       Object.values(raceTotals).forEach(arr => arr.sort((a, b) => b.total - a.total));
+
+      // Build union of all driver_pts per race (from all players) to get pts for all available drivers
+      const allDriverPtsPerRace = {};
+      currentScores.forEach(s => {
+        const dp = s.driver_pts ? (typeof s.driver_pts === "string" ? JSON.parse(s.driver_pts) : s.driver_pts) : {};
+        if (!allDriverPtsPerRace[s.race_id]) allDriverPtsPerRace[s.race_id] = {};
+        Object.entries(dp).forEach(([drv, pts]) => {
+          if (!(drv in allDriverPtsPerRace[s.race_id])) allDriverPtsPerRace[s.race_id][drv] = pts;
+        });
+      });
 
       // Helper: compute team score for a given team + race
       const teamScore = (team, raceId) => {
@@ -929,7 +940,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
           }
         }
 
-        return { pick: pk, race, score, driverPts, total, rank, totalPlayers: ranked.length, teamResult };
+        return { pick: pk, race, score, driverPts, total, rank, totalPlayers: ranked.length, teamResult, allDriverPts: allDriverPtsPerRace[pk.race_id] || {} };
       }).filter(e => e.race).sort((a, b) => b.race.round - a.race.round);
 
       const scoredEntries = entries.filter(e => e.total !== null);
@@ -1136,15 +1147,79 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
               </div>
             )}
 
-            {/* Drivers */}
-            <div style={{ display: "flex", gap: 4, marginBottom: 8, overflow: "auto" }}>
+            {/* Driver Grid */}
+            {h.total !== null ? (() => {
+              const PTS_TO_POS = {25:"P1",18:"P2",15:"P3",12:"P4",10:"P5",8:"P6",6:"P7",4:"P8",2:"P9",1:"P10"};
+              const myPicks = new Set((h.pick.finishing_order || []).map(d => d.toLowerCase()));
+              const topPickName = h.pick.top_pick;
+              const availablePool = new Set([...(h.race.top_drivers || []), ...(h.race.mid_drivers || [])].map(d => d.toLowerCase()));
+              const allDriverPts = h.allDriverPts || {};
+
+              // Build sorted list of all 22 drivers
+              const allDrivers = Object.keys(F1_TEAMS_FALLBACK);
+              const driverRows = allDrivers.map(name => {
+                const lc = name.toLowerCase();
+                const isPicked = myPicks.has(lc);
+                const isAvailable = availablePool.has(lc);
+                const isTopPick = topPickName && name.toLowerCase() === topPickName.toLowerCase();
+                const pts = isPicked ? (h.driverPts[name] ?? null) : (allDriverPts[name] ?? null);
+                const pos = pts !== null ? (PTS_TO_POS[pts] || (pts === 0 ? "P11+" : pts === -1 ? "DNF" : `${pts}`)) : null;
+                const team = F1_TEAMS_FALLBACK[name] || "";
+                const tc = F1_TEAM_COLORS[team] || BORDER;
+                let category;
+                if (!isAvailable) category = "unavailable";
+                else if (!isPicked) category = "available";
+                else if (pts === -1) category = "dnf";
+                else if (pts > 0) category = "scored";
+                else category = "zero";
+                return { name, pts, pos, team, tc, isPicked, isAvailable, isTopPick, category };
+              });
+
+              // Sort: scored picks first by pts desc, zero picks, dnf picks, available not picked by pts desc, unavailable
+              const catOrder = { scored: 0, zero: 1, dnf: 2, available: 3, unavailable: 4 };
+              driverRows.sort((a, b) => {
+                if (catOrder[a.category] !== catOrder[b.category]) return catOrder[a.category] - catOrder[b.category];
+                return (b.pts || 0) - (a.pts || 0);
+              });
+
+              const catColors = { scored: ORANGE, zero: "#c9a820", dnf: RED, available: TEXT2, unavailable: `${TEXT2}40` };
+              const catBg = { scored: `${ORANGE}08`, zero: "#c9a82008", dnf: `${RED}06`, available: `${DARK}02`, unavailable: "transparent" };
+              const catBorder = { scored: `${ORANGE}30`, zero: "#c9a82020", dnf: `${RED}20`, available: `${BORDER}50`, unavailable: `${BORDER}20` };
+
+              return (
+                <div style={{ marginBottom: 8 }}>
+                  <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>Driver Grid</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    {driverRows.map(dr => (
+                      <div key={dr.name} style={{
+                        display: "flex", alignItems: "center", gap: 8, padding: "5px 8px",
+                        borderRadius: 8, background: catBg[dr.category],
+                        border: `1.5px solid ${catBorder[dr.category]}`,
+                        opacity: dr.category === "unavailable" ? 0.35 : 1,
+                      }}>
+                        <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: catColors[dr.category], minWidth: 32, textAlign: "right" }}>
+                          {dr.pos || "—"}
+                        </span>
+                        <div style={{ width: 4, height: 18, borderRadius: 2, background: dr.tc, flexShrink: 0 }} />
+                        <span style={{ fontFamily: FB, fontWeight: dr.isPicked ? 700 : 400, fontSize: 13, color: dr.category === "unavailable" ? TEXT2 : TEXT, flex: 1 }}>
+                          {dr.name}
+                          {dr.isTopPick && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 8, color: BLUEDARK, background: `${BLUE}15`, padding: "1px 5px", borderRadius: 3, marginLeft: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>TOP</span>}
+                        </span>
+                        <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 13, color: catColors[dr.category], minWidth: 28, textAlign: "right" }}>
+                          {dr.pts !== null ? (dr.pts > 0 ? `+${dr.pts}` : `${dr.pts}`) : ""}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })() : (
+              <div style={{ display: "flex", gap: 4, marginBottom: 8, overflow: "auto" }}>
               {(() => {
                 const fo = h.pick.finishing_order || [];
                 const drivers = fo.includes(h.pick.top_pick) ? fo : [h.pick.top_pick, ...fo];
                 return drivers.map((d, i) => {
                 const isTop = d === h.pick.top_pick;
-                const pts = h.driverPts[d];
-                const pc = pts === undefined ? TEXT2 : pts < 0 ? RED : pts > 0 ? ORANGE : TEXT2;
                 const info = findDriver(driverMap, d);
                 const teamName = info.team || F1_TEAMS_FALLBACK[d] || "";
                 const tc = info.teamColor || F1_TEAM_COLORS[teamName] || BLUE;
@@ -1171,16 +1246,12 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                     </div>
                     <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{last}</p>
                     {teamName && <p style={{ fontFamily: FB, fontSize: 7, color: tc, margin: "1px 0 0" }}>{teamName}</p>}
-                    {pts !== undefined && (
-                      <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: pc, background: `${pc}12`, padding: "1px 5px", borderRadius: 4, display: "inline-block", marginTop: 3 }}>
-                        {pts > 0 ? `+${pts}` : pts}
-                      </span>
-                    )}
                   </div>
                 );
               });
               })()}
             </div>
+            )}
             {/* Bonuses */}
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               <span style={{ padding: "5px 10px", borderRadius: 8, background: `${DARK}04`, fontFamily: FB, fontSize: 13, fontWeight: 600, color: TEXT2 }}>
