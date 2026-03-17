@@ -855,13 +855,14 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
 
   useEffect(() => {
     async function load() {
-      const [{ data: players }, { data: picks }, { data: scores }, { data: races }, { data: teams }, { data: schedule }] = await Promise.all([
+      const [{ data: players }, { data: picks }, { data: scores }, { data: races }, { data: teams }, { data: schedule }, { data: results }] = await Promise.all([
         supabase.from("players").select("id, name"),
         supabase.from("picks").select("*"),
         supabase.from("scores").select("*"),
         supabase.from("races").select("id, race_name, round, season, top_drivers, mid_drivers").order("round", { ascending: true }),
         supabase.from("teams").select("*"),
-        supabase.from("schedule").select("*")
+        supabase.from("schedule").select("*"),
+        supabase.from("results").select("*")
       ]);
       const me = (players || []).find(p => p.name === currentUser);
       if (!me) { setLoading(false); return; }
@@ -912,6 +913,9 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
         return s1?.pit_matchup_pts || 0;
       };
 
+      const resultMap = {};
+      (results || []).forEach(r => { resultMap[r.race_id] = r; });
+
       const myPicks = currentPicks.filter(pk => pk.player_id === me.id);
       let totalSeasonPts = 0, wins = 0, losses = 0, ties = 0, teamWins = 0, teamLosses = 0, teamTies = 0;
 
@@ -940,7 +944,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
           }
         }
 
-        return { pick: pk, race, score, driverPts, total, rank, totalPlayers: ranked.length, teamResult, allDriverPts: allDriverPtsPerRace[pk.race_id] || {} };
+        return { pick: pk, race, score, driverPts, total, rank, totalPlayers: ranked.length, teamResult, allDriverPts: allDriverPtsPerRace[pk.race_id] || {}, result: resultMap[pk.race_id] || null };
       }).filter(e => e.race).sort((a, b) => b.race.round - a.race.round);
 
       const scoredEntries = entries.filter(e => e.total !== null);
@@ -1150,66 +1154,109 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
             {/* Driver Grid */}
             {h.total !== null ? (() => {
               const PTS_TO_POS = {25:"P1",18:"P2",15:"P3",12:"P4",10:"P5",8:"P6",6:"P7",4:"P8",2:"P9",1:"P10"};
-              const myPicks = new Set((h.pick.finishing_order || []).map(d => d.toLowerCase()));
-              const topPickName = h.pick.top_pick;
+              const myPickSet = new Set((h.pick.finishing_order || []).map(d => d.toLowerCase()));
+              const topPickName = (h.pick.top_pick || "").toLowerCase();
               const availablePool = new Set([...(h.race.top_drivers || []), ...(h.race.mid_drivers || [])].map(d => d.toLowerCase()));
-              const allDriverPts = h.allDriverPts || {};
+              const allDP = h.allDriverPts || {};
+              const finishOrder = h.result?.finishing_order || [];
 
-              // Build sorted list of all 22 drivers
+              // Build all 22 drivers with their data
               const allDrivers = Object.keys(F1_TEAMS_FALLBACK);
               const driverRows = allDrivers.map(name => {
                 const lc = name.toLowerCase();
-                const isPicked = myPicks.has(lc);
+                const isPicked = myPickSet.has(lc);
                 const isAvailable = availablePool.has(lc);
-                const isTopPick = topPickName && name.toLowerCase() === topPickName.toLowerCase();
-                const pts = isPicked ? (h.driverPts[name] ?? null) : (allDriverPts[name] ?? null);
+                const isTopPick = lc === topPickName;
+                // Get pts: from my picks if I picked them, otherwise from allDriverPts
+                const pts = allDP[name] ?? (isPicked ? (h.driverPts[name] ?? null) : null);
                 const pos = pts !== null ? (PTS_TO_POS[pts] || (pts === 0 ? "P11+" : pts === -1 ? "DNF" : `${pts}`)) : null;
+                const posNum = pts !== null ? (pts === -1 ? 999 : pts === 0 ? 11 : ({25:1,18:2,15:3,12:4,10:5,8:6,6:7,4:8,2:9,1:10}[pts] || 20)) : 998;
                 const team = F1_TEAMS_FALLBACK[name] || "";
                 const tc = F1_TEAM_COLORS[team] || BORDER;
-                let category;
-                if (!isAvailable) category = "unavailable";
-                else if (!isPicked) category = "available";
-                else if (pts === -1) category = "dnf";
-                else if (pts > 0) category = "scored";
-                else category = "zero";
-                return { name, pts, pos, team, tc, isPicked, isAvailable, isTopPick, category };
+                const info = findDriver(driverMap, name);
+                return { name, pts, pos, posNum, team, tc, isPicked, isAvailable, isTopPick, info };
               });
 
-              // Sort: scored picks first by pts desc, zero picks, dnf picks, available not picked by pts desc, unavailable
-              const catOrder = { scored: 0, zero: 1, dnf: 2, available: 3, unavailable: 4 };
+              // Sort by finishing position (best first), unavailable at bottom, DNF after finishers
               driverRows.sort((a, b) => {
-                if (catOrder[a.category] !== catOrder[b.category]) return catOrder[a.category] - catOrder[b.category];
-                return (b.pts || 0) - (a.pts || 0);
+                const aKnown = a.pts !== null;
+                const bKnown = b.pts !== null;
+                if (aKnown && !bKnown) return -1;
+                if (!aKnown && bKnown) return 1;
+                if (!aKnown && !bKnown) return 0;
+                return a.posNum - b.posNum;
               });
-
-              const catColors = { scored: ORANGE, zero: "#c9a820", dnf: RED, available: TEXT2, unavailable: `${TEXT2}40` };
-              const catBg = { scored: `${ORANGE}08`, zero: "#c9a82008", dnf: `${RED}06`, available: `${DARK}02`, unavailable: "transparent" };
-              const catBorder = { scored: `${ORANGE}30`, zero: "#c9a82020", dnf: `${RED}20`, available: `${BORDER}50`, unavailable: `${BORDER}20` };
 
               return (
                 <div style={{ marginBottom: 8 }}>
-                  <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>Driver Grid</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                    {driverRows.map(dr => (
-                      <div key={dr.name} style={{
-                        display: "flex", alignItems: "center", gap: 8, padding: "5px 8px",
-                        borderRadius: 8, background: catBg[dr.category],
-                        border: `1.5px solid ${catBorder[dr.category]}`,
-                        opacity: dr.category === "unavailable" ? 0.35 : 1,
-                      }}>
-                        <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: catColors[dr.category], minWidth: 32, textAlign: "right" }}>
-                          {dr.pos || "—"}
-                        </span>
-                        <div style={{ width: 4, height: 18, borderRadius: 2, background: dr.tc, flexShrink: 0 }} />
-                        <span style={{ fontFamily: FB, fontWeight: dr.isPicked ? 700 : 400, fontSize: 13, color: dr.category === "unavailable" ? TEXT2 : TEXT, flex: 1 }}>
-                          {dr.name}
-                          {dr.isTopPick && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 8, color: BLUEDARK, background: `${BLUE}15`, padding: "1px 5px", borderRadius: 3, marginLeft: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>TOP</span>}
-                        </span>
-                        <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 13, color: catColors[dr.category], minWidth: 28, textAlign: "right" }}>
-                          {dr.pts !== null ? (dr.pts > 0 ? `+${dr.pts}` : `${dr.pts}`) : ""}
-                        </span>
-                      </div>
-                    ))}
+                  <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>Driver Grid — Race Result</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    {driverRows.map(dr => {
+                      const isDNF = dr.pts === -1;
+                      const isScored = dr.isPicked && dr.pts > 0;
+                      const isZero = dr.isPicked && dr.pts === 0;
+                      const isDNFPick = dr.isPicked && isDNF;
+                      const isAvailNotPicked = dr.isAvailable && !dr.isPicked;
+                      const isUnavailable = !dr.isAvailable;
+
+                      let rowBg, rowBorder, nameColor, posColor;
+                      if (isScored) { rowBg = `${ORANGE}10`; rowBorder = `${ORANGE}35`; nameColor = TEXT; posColor = ORANGE; }
+                      else if (isZero) { rowBg = "#c9a82008"; rowBorder = "#c9a82025"; nameColor = TEXT; posColor = "#c9a820"; }
+                      else if (isDNFPick) { rowBg = `${RED}08`; rowBorder = `${RED}25`; nameColor = TEXT; posColor = RED; }
+                      else if (isAvailNotPicked) { rowBg = `${DARK}03`; rowBorder = `${BORDER}60`; nameColor = TEXT2; posColor = TEXT2; }
+                      else { rowBg = "transparent"; rowBorder = `${BORDER}20`; nameColor = `${TEXT2}60`; posColor = `${TEXT2}40`; }
+
+                      const parts = dr.name.split(" ");
+                      const first = parts[0], last = parts.slice(1).join(" ");
+
+                      return (
+                        <div key={dr.name} style={{
+                          display: "flex", alignItems: "center", padding: "5px 8px",
+                          borderRadius: 8, background: rowBg,
+                          border: `1.5px solid ${rowBorder}`,
+                          opacity: isUnavailable ? 0.3 : 1,
+                        }}>
+                          {/* Position */}
+                          <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 12, color: posColor, width: 36, textAlign: "right", flexShrink: 0 }}>
+                            {dr.pos || "—"}
+                          </span>
+                          {/* Team color bar */}
+                          <div style={{ width: 4, height: 24, borderRadius: 2, background: dr.tc, margin: "0 8px", flexShrink: 0 }} />
+                          {/* Driver headshot */}
+                          <div style={{
+                            width: 28, height: 28, borderRadius: "50%", overflow: "hidden", flexShrink: 0, marginRight: 8,
+                            background: `${dr.tc}20`, display: "flex", alignItems: "center", justifyContent: "center",
+                            border: `2px solid ${dr.tc}40`, position: "relative"
+                          }}>
+                            <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: dr.tc }}>{first[0]}{(last[0] || "")}</span>
+                            {dr.info.headshot && (
+                              <img src={dr.info.headshot} alt={dr.name} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                            )}
+                          </div>
+                          {/* Name + badges */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontFamily: FB, fontWeight: dr.isPicked ? 700 : 400, fontSize: 13, color: nameColor, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {dr.name}
+                              </span>
+                              {dr.isTopPick && (
+                                <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 7, color: "#fff", background: BLUEDARK, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>TOP PICK</span>
+                              )}
+                              {dr.isPicked && !dr.isTopPick && (
+                                <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 7, color: ORANGE, background: `${ORANGE}15`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>YOUR PICK</span>
+                              )}
+                              {isAvailNotPicked && (
+                                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: TEXT2, background: `${DARK}06`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>AVAILABLE</span>
+                              )}
+                            </div>
+                          </div>
+                          {/* Points */}
+                          <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: posColor, minWidth: 36, textAlign: "right", flexShrink: 0 }}>
+                            {dr.pts !== null ? (dr.pts > 0 ? `+${dr.pts}` : `${dr.pts}`) : ""}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
