@@ -1156,6 +1156,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
               const myPickSet = new Set((h.pick.finishing_order || []).map(d => d.toLowerCase()));
               const topPickName = (h.pick.top_pick || "").toLowerCase();
               const availablePool = new Set([...(h.race.top_drivers || []), ...(h.race.mid_drivers || [])].map(d => d.toLowerCase()));
+              const topPool = new Set((h.race.top_drivers || []).map(d => d.toLowerCase()));
               const allDP = h.allDriverPts || {};
               const finishOrder = h.result?.finishing_order || [];
 
@@ -1174,6 +1175,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                 const lc = name.toLowerCase();
                 const isPicked = myPickSet.has(lc);
                 const isAvailable = availablePool.has(lc);
+                const isTopPool = topPool.has(lc);
                 const isTopPick = lc === topPickName;
                 // Get pts: check allDriverPts first, then my driverPts
                 const pts = allDP[name] ?? h.driverPts[name] ?? null;
@@ -1184,7 +1186,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                 const team = F1_TEAMS_FALLBACK[name] || "";
                 const tc = F1_TEAM_COLORS[team] || BORDER;
                 const info = findDriver(driverMap, name);
-                return { name, pts, pos, sortOrder, team, tc, isPicked, isAvailable, isTopPick, info };
+                return { name, pts, pos, sortOrder, team, tc, isPicked, isAvailable, isTopPool, isTopPick, info };
               });
 
               // Sort by actual finishing position
@@ -1250,6 +1252,9 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                               )}
                               {isAvailNotPicked && (
                                 <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: TEXT2, background: `${DARK}06`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>AVAILABLE</span>
+                              )}
+                              {dr.isTopPool && !dr.isTopPick && (
+                                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: TEXT2, background: `${DARK}06`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>TOP 3 OPTION</span>
                               )}
                             </div>
                           </div>
