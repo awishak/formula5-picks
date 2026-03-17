@@ -1260,9 +1260,14 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                               {dr.isPicked && !dr.isTopPick && (
                                 <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 7, color: ORANGE, background: `${ORANGE}15`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>YOUR PICK</span>
                               )}
-                              {isAvailNotPicked && (
-                                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: TEXT2, background: `${DARK}06`, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>
-                                  AVAILABLE{pctData.total > 0 ? ` · ${Math.round((pctData.drivers[dr.name] || 0) / pctData.total * 100)}% picked` : ""}
+                              {dr.isPicked && pctData.total > 0 && (
+                                <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 9, color: TEXT2 }}>
+                                  {Math.round((pctData.drivers[dr.name] || 0) / pctData.total * 100)}%
+                                </span>
+                              )}
+                              {isAvailNotPicked && pctData.total > 0 && (
+                                <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2 }}>
+                                  {Math.round((pctData.drivers[dr.name] || 0) / pctData.total * 100)}% picked
                                 </span>
                               )}
                               {dr.isTopPool && !dr.isTopPick && (
