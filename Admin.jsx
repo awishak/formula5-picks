@@ -1156,35 +1156,135 @@ export default function Admin() {
 
       {/* DRIVER POOLS TAB */}
       {adminTab === "drivers" && (() => {
-        async function loadDriverPool(round) {
+        // All 20 drivers sorted alphabetically for dropdown menus
+        const ALL_DRIVERS = Object.values(DRIVER_NAMES).sort((a, b) => a.localeCompare(b));
+
+        // Team color map for chips
+        const TEAM_COLORS = {
+          "Red Bull": "#3671C6", "McLaren": "#FF8000", "Ferrari": "#E8002D",
+          "Mercedes": "#27F4D2", "Williams": "#64C4FF", "Aston Martin": "#229971",
+          "Alpine": "#FF87BC", "Racing Bulls": "#6692FF", "Sauber": "#52E252",
+          "Haas": "#B6BABD"
+        };
+
+        function driverTeam(name) {
+          const entry = Object.entries(DRIVER_NAMES).find(([, n]) => n === name);
+          if (!entry) return "";
+          return DRIVER_TEAMS[parseInt(entry[0])] || "";
+        }
+
+        function driverColor(name) {
+          return TEAM_COLORS[driverTeam(name)] || BORDER;
+        }
+
+        // Collect all currently selected drivers to exclude from other dropdowns
+        const allSelected = [...topDrivers, ...midDrivers].filter(d => d);
+
+        function loadDriverPool(round) {
           const race = races.find(r => r.round === round);
           if (!race) return;
-          setTopDrivers((race.top_drivers && race.top_drivers.length === 3) ? race.top_drivers : ["", "", ""]);
-          setMidDrivers((race.mid_drivers && race.mid_drivers.length === 7) ? race.mid_drivers : ["", "", "", "", "", "", ""]);
+          setTopDrivers((race.top_drivers && race.top_drivers.length === 3) ? [...race.top_drivers] : ["", "", ""]);
+          setMidDrivers((race.mid_drivers && race.mid_drivers.length === 7) ? [...race.mid_drivers] : ["", "", "", "", "", "", ""]);
           setDriverPoolStatus("");
         }
 
         async function saveDriverPool() {
           const race = races.find(r => r.round === driverPoolRound);
           if (!race) return;
-          const top = topDrivers.filter(d => d.trim());
-          const mid = midDrivers.filter(d => d.trim());
+          const top = topDrivers.filter(d => d);
+          const mid = midDrivers.filter(d => d);
           if (top.length !== 3) { setDriverPoolStatus("Need exactly 3 top drivers"); return; }
           if (mid.length !== 7) { setDriverPoolStatus("Need exactly 7 midfield drivers"); return; }
+
+          // Check for duplicates
+          const combined = [...top, ...mid];
+          const dupes = combined.filter((d, i) => combined.indexOf(d) !== i);
+          if (dupes.length > 0) { setDriverPoolStatus(`Duplicate driver: ${dupes[0]}`); return; }
+
           setDriverPoolSaving(true);
-          const { error } = await supabase.from("races").update({ top_drivers: top, mid_drivers: mid }).eq("id", race.id);
+          const { data: updated, error } = await supabase
+            .from("races")
+            .update({ top_drivers: top, mid_drivers: mid })
+            .eq("id", race.id)
+            .select();
+          if (error) {
+            setDriverPoolStatus("Error: " + error.message);
+          } else if (!updated || updated.length === 0) {
+            setDriverPoolStatus("Error: Save returned no rows — check RLS policies on the races table");
+          } else {
+            setDriverPoolStatus("saved");
+            // Update local races array immutably
+            setRaces(prev => prev.map(r => r.round === driverPoolRound ? { ...r, top_drivers: top, mid_drivers: mid } : r));
+          }
+          setDriverPoolSaving(false);
+        }
+
+        async function clearDriverPool() {
+          const race = races.find(r => r.round === driverPoolRound);
+          if (!race) return;
+          if (!window.confirm(`Clear driver pools for Round ${driverPoolRound}? Players won't be able to pick until new pools are set.`)) return;
+          setDriverPoolSaving(true);
+          const { error } = await supabase.from("races").update({ top_drivers: null, mid_drivers: null }).eq("id", race.id).select();
           if (error) { setDriverPoolStatus("Error: " + error.message); }
           else {
-            setDriverPoolStatus("Saved!");
-            // Update local races array
-            const idx = races.findIndex(r => r.round === driverPoolRound);
-            if (idx >= 0) { races[idx].top_drivers = top; races[idx].mid_drivers = mid; }
+            setTopDrivers(["", "", ""]);
+            setMidDrivers(["", "", "", "", "", "", ""]);
+            setDriverPoolStatus("");
+            setRaces(prev => prev.map(r => r.round === driverPoolRound ? { ...r, top_drivers: null, mid_drivers: null } : r));
           }
           setDriverPoolSaving(false);
         }
 
         const selectedRacePool = races.find(r => r.round === driverPoolRound);
-        const hasPool = selectedRacePool && selectedRacePool.top_drivers && selectedRacePool.top_drivers.length > 0;
+        const hasPool = selectedRacePool?.top_drivers?.length > 0 && selectedRacePool?.mid_drivers?.length > 0;
+
+        // Dropdown component for driver selection
+        function DriverSelect({ value, onChange, label, otherSelected }) {
+          const team = driverTeam(value);
+          const color = driverColor(value);
+          return (
+            <div style={{ marginBottom: 6 }}>
+              <div style={{ position: "relative" }}>
+                <select
+                  value={value}
+                  onChange={e => onChange(e.target.value)}
+                  style={{
+                    width: "100%", padding: "10px 12px", paddingLeft: value ? 16 : 12,
+                    borderRadius: 10,
+                    border: `2px solid ${value ? color : BORDER}`,
+                    fontFamily: FB, fontSize: 14, fontWeight: value ? 600 : 400,
+                    color: value ? TEXT : TEXT2,
+                    background: value ? `${color}08` : "#fff",
+                    boxSizing: "border-box",
+                    appearance: "auto",
+                  }}
+                >
+                  <option value="">{label}</option>
+                  {ALL_DRIVERS.map(name => {
+                    const disabled = otherSelected.includes(name) && name !== value;
+                    return (
+                      <option key={name} value={name} disabled={disabled}>
+                        {name} — {driverTeam(name)}{disabled ? " (already selected)" : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+                {value && team && (
+                  <span style={{
+                    position: "absolute", right: 40, top: "50%", transform: "translateY(-50%)",
+                    fontFamily: FB, fontSize: 10, fontWeight: 600,
+                    color: color, background: `${color}15`,
+                    padding: "2px 8px", borderRadius: 6, pointerEvents: "none",
+                  }}>{team}</span>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        // Count how many slots are filled
+        const topFilled = topDrivers.filter(d => d).length;
+        const midFilled = midDrivers.filter(d => d).length;
 
         return (
           <div>
@@ -1215,48 +1315,148 @@ export default function Admin() {
 
             {driverPoolRound && (
               <div>
+                {/* Show saved pool status banner */}
+                {hasPool && driverPoolStatus === "" && (
+                  <div style={{
+                    padding: "14px 16px", borderRadius: 12, marginBottom: 20,
+                    background: `${GREEN}08`, border: `1px solid ${GREEN}25`,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                      <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: GREEN }}>POOLS SET — READY FOR PICKS</span>
+                    </div>
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>
+                      Top 3
+                    </p>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                      {(selectedRacePool.top_drivers || []).map(d => (
+                        <span key={d} style={{
+                          padding: "4px 10px", borderRadius: 8,
+                          background: `${driverColor(d)}15`, border: `1px solid ${driverColor(d)}40`,
+                          fontFamily: FB, fontSize: 12, fontWeight: 600, color: TEXT,
+                        }}>{d} <span style={{ color: driverColor(d), fontSize: 10, fontWeight: 700 }}>{driverTeam(d)}</span></span>
+                      ))}
+                    </div>
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>
+                      Midfield 7
+                    </p>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {(selectedRacePool.mid_drivers || []).map(d => (
+                        <span key={d} style={{
+                          padding: "4px 10px", borderRadius: 8,
+                          background: `${driverColor(d)}15`, border: `1px solid ${driverColor(d)}40`,
+                          fontFamily: FB, fontSize: 12, fontWeight: 600, color: TEXT,
+                        }}>{d} <span style={{ color: driverColor(d), fontSize: 10, fontWeight: 700 }}>{driverTeam(d)}</span></span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Just-saved confirmation */}
+                {driverPoolStatus === "saved" && (
+                  <div style={{
+                    padding: "14px 16px", borderRadius: 12, marginBottom: 20,
+                    background: `${GREEN}08`, border: `1px solid ${GREEN}25`,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                      <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: GREEN }}>SAVED — PICKS ARE LIVE</span>
+                    </div>
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>
+                      Top 3
+                    </p>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                      {topDrivers.filter(d => d).map(d => (
+                        <span key={d} style={{
+                          padding: "4px 10px", borderRadius: 8,
+                          background: `${driverColor(d)}15`, border: `1px solid ${driverColor(d)}40`,
+                          fontFamily: FB, fontSize: 12, fontWeight: 600, color: TEXT,
+                        }}>{d} <span style={{ color: driverColor(d), fontSize: 10, fontWeight: 700 }}>{driverTeam(d)}</span></span>
+                      ))}
+                    </div>
+                    <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>
+                      Midfield 7
+                    </p>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {midDrivers.filter(d => d).map(d => (
+                        <span key={d} style={{
+                          padding: "4px 10px", borderRadius: 8,
+                          background: `${driverColor(d)}15`, border: `1px solid ${driverColor(d)}40`,
+                          fontFamily: FB, fontSize: 12, fontWeight: 600, color: TEXT,
+                        }}>{d} <span style={{ color: driverColor(d), fontSize: 10, fontWeight: 700 }}>{driverTeam(d)}</span></span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Error status */}
+                {driverPoolStatus && driverPoolStatus !== "saved" && driverPoolStatus !== "" && (
+                  <div style={{
+                    padding: "10px 14px", borderRadius: 10, marginBottom: 16,
+                    background: `${RED}10`, border: `1px solid ${RED}30`,
+                  }}>
+                    <p style={{ fontFamily: FB, fontSize: 13, color: RED, margin: 0 }}>{driverPoolStatus}</p>
+                  </div>
+                )}
+
+                {/* Top Drivers dropdowns */}
                 <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>
-                  Top Drivers (3) — players pick 1
+                  Top Drivers ({topFilled}/3) — players pick 1
                 </label>
                 {topDrivers.map((d, i) => (
-                  <input key={`top-${i}`} value={d} onChange={e => { const arr = [...topDrivers]; arr[i] = e.target.value; setTopDrivers(arr); }}
-                    placeholder={`Top Driver ${i + 1}`}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1px solid ${BORDER}`, fontFamily: FB, fontSize: 14, color: TEXT, marginBottom: 6, boxSizing: "border-box" }}
+                  <DriverSelect
+                    key={`top-${i}`}
+                    value={d}
+                    label={`Top Driver ${i + 1}...`}
+                    otherSelected={allSelected}
+                    onChange={val => { const arr = [...topDrivers]; arr[i] = val; setTopDrivers(arr); setDriverPoolStatus(""); }}
                   />
                 ))}
 
+                {/* Midfield Drivers dropdowns */}
                 <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, marginTop: 16 }}>
-                  Midfield Drivers (7) — players pick 4
+                  Midfield Drivers ({midFilled}/7) — players pick 4
                 </label>
                 {midDrivers.map((d, i) => (
-                  <input key={`mid-${i}`} value={d} onChange={e => { const arr = [...midDrivers]; arr[i] = e.target.value; setMidDrivers(arr); }}
-                    placeholder={`Midfield Driver ${i + 1}`}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1px solid ${BORDER}`, fontFamily: FB, fontSize: 14, color: TEXT, marginBottom: 6, boxSizing: "border-box" }}
+                  <DriverSelect
+                    key={`mid-${i}`}
+                    value={d}
+                    label={`Midfield Driver ${i + 1}...`}
+                    otherSelected={allSelected}
+                    onChange={val => { const arr = [...midDrivers]; arr[i] = val; setMidDrivers(arr); setDriverPoolStatus(""); }}
                   />
                 ))}
 
+                {/* Save button */}
                 <button
                   onClick={saveDriverPool}
-                  disabled={driverPoolSaving}
+                  disabled={driverPoolSaving || topFilled !== 3 || midFilled !== 7}
                   style={{
                     width: "100%", padding: "14px", borderRadius: 12, marginTop: 12,
-                    background: driverPoolSaving ? BORDER : BLUEDARK, border: "none", color: "#fff",
+                    background: (driverPoolSaving || topFilled !== 3 || midFilled !== 7) ? BORDER : BLUEDARK,
+                    border: "none", color: "#fff",
                     fontFamily: FD, fontWeight: 800, fontSize: 14,
                     textTransform: "uppercase", letterSpacing: "0.06em",
-                    cursor: driverPoolSaving ? "wait" : "pointer", opacity: driverPoolSaving ? 0.6 : 1,
+                    cursor: (driverPoolSaving || topFilled !== 3 || midFilled !== 7) ? "default" : "pointer",
+                    opacity: driverPoolSaving ? 0.6 : 1,
                   }}
                 >
-                  {driverPoolSaving ? "Saving..." : "Save Driver Pool"}
+                  {driverPoolSaving ? "Saving..." : topFilled !== 3 || midFilled !== 7 ? `Select All Drivers (${topFilled + midFilled}/10)` : hasPool ? "Update Driver Pool" : "Save Driver Pool"}
                 </button>
 
-                {driverPoolStatus && (
-                  <div style={{
-                    padding: "10px 14px", borderRadius: 10, marginTop: 12,
-                    background: driverPoolStatus === "Saved!" ? `${GREEN}10` : `${RED}10`,
-                    border: `1px solid ${driverPoolStatus === "Saved!" ? `${GREEN}30` : `${RED}30`}`,
-                  }}>
-                    <p style={{ fontFamily: FB, fontSize: 13, color: driverPoolStatus === "Saved!" ? GREEN : RED, margin: 0 }}>{driverPoolStatus}</p>
-                  </div>
+                {/* Clear button (only if pool exists) */}
+                {hasPool && (
+                  <button
+                    onClick={clearDriverPool}
+                    disabled={driverPoolSaving}
+                    style={{
+                      width: "100%", padding: "10px", borderRadius: 12, marginTop: 8,
+                      background: "transparent", border: `1px solid ${RED}30`, color: RED,
+                      fontFamily: FD, fontWeight: 700, fontSize: 11,
+                      textTransform: "uppercase", letterSpacing: "0.06em",
+                      cursor: driverPoolSaving ? "default" : "pointer",
+                    }}
+                  >
+                    Clear Pool
+                  </button>
                 )}
               </div>
             )}
