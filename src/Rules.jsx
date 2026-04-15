@@ -86,16 +86,16 @@ export default function Rules() {
       {/* SCHEDULE */}
       <Section title="Weekly Schedule">
         <P>Picks open by <strong>5 PM Pacific on Tuesdays</strong> and lock on <strong>Friday at noon</strong>. If you don't submit by the deadline, you receive <Badge text="0 PTS" color={RED} /> for that race.</P>
-        <P>The season runs <strong>24 races</strong> split into two halves of 12. Team standings reset between halves. Individual (Formula 50) standings run all 24 races.</P>
+        <P>The season runs <strong>22 races</strong> split into two halves of 11. Team standings reset between halves. Individual (Formula 50) standings run all 22 races.</P>
       </Section>
 
       {/* HOW TO WIN */}
       <Section title="How to Win">
         <Label>Players Championship</Label>
-        <P>Your Individual Score each race is your total points. The player with the most total points after 24 races wins. Additionally, the <strong>top 10 players each week</strong> earn bonus points: 1st gets <Badge text="+10" color={ORANGE} />, 2nd <Badge text="+9" color={ORANGE} />, down to 10th getting <Badge text="+1" color={ORANGE} />.</P>
+        <P>Your Individual Score each race is your total points. The player with the most total points after 22 races wins. Additionally, the <strong>top 10 players each week</strong> earn bonus points: 1st gets <Badge text="+10" color={ORANGE} />, 2nd <Badge text="+9" color={ORANGE} />, down to 10th getting <Badge text="+1" color={ORANGE} />.</P>
 
         <Label>Team Championship</Label>
-        <P>Win your weekly matchup against another team. Accumulate Team Points across each 12-race half. The team with the most points in the <strong>second half</strong> is the overall season champion. The first half determines your division for the second half.</P>
+        <P>Win your weekly matchup against another team. Accumulate Team Points across each 11-race half. The team with the most points in the <strong>second half</strong> is the overall season champion. The first half determines your division for the second half.</P>
       </Section>
 
       {/* THE PICKS */}
@@ -168,7 +168,7 @@ export default function Rules() {
       <Section title="Player Standings">
         <P>After each race, all players across both divisions are ranked by Individual Score on a single unified leaderboard.</P>
         <P>The <strong>top 10 players</strong> each week earn bonus points: 1st gets <Badge text="+10" color={ORANGE} />, 2nd gets <Badge text="+9" color={ORANGE} />, and so on down to 10th getting <Badge text="+1" color={ORANGE} />. Non-submitters get <Badge text="0 PTS" color={RED} />.</P>
-        <P>Player standings accumulate across <strong>all 24 races</strong> and never reset.</P>
+        <P>Player standings accumulate across <strong>all 22 races</strong> and never reset.</P>
 
         <Label>Weekly Tiebreakers (in order)</Label>
         <div style={{
@@ -254,8 +254,8 @@ export default function Rules() {
 
       {/* SEASON STRUCTURE */}
       <Section title="Season Structure">
-        <P>Each half is <strong>12 races</strong>. Team standings reset between halves. Formula 50 does <strong>not</strong> reset.</P>
-        <P>The second half champion — the team with the most Team Points in the second half — is the <strong>overall season champion</strong>. The first half determines your division for the second half.</P>
+        <P>Each half is <strong>11 races</strong>. Team standings reset between halves. Formula 50 does <strong>not</strong> reset.</P>
+        <P>The second half champion, the team with the most Team Points in the second half, is the <strong>overall season champion</strong>. The first half determines your division for the second half.</P>
 
         <Label>Final Race of Each Half</Label>
         <P>Standings going into the last race determine matchups: #1 vs #12, #2 vs #11, #3 vs #10, and so on. Every team has something to play for on the final weekend.</P>
@@ -263,32 +263,28 @@ export default function Rules() {
 
       {/* PROMOTION & RELEGATION */}
       <Section title="Promotion & Relegation">
-        <P>Race Week 12 serves as both the regular season finale and the promotion/relegation playoff weekend.</P>
+        <P>The Bahrain and Saudi Arabian Grands Prix were cancelled due to safety concerns related to the war in Iran. That shortened the first half from 12 races to 11, which meant the Week 12 playoff no longer made sense. Here's how promotion and relegation work now.</P>
 
-        <Label>Automatic</Label>
+        <Label>Automatic Swaps</Label>
         <div style={{
           background: `${GREEN}08`, borderRadius: 10, padding: "10px 12px", margin: "8px 0",
           border: `1px solid ${GREEN}25`
         }}>
-          <P style={{ margin: "0 0 4px" }}><strong>Top 3 in Second Division</strong> are automatically promoted to Championship</P>
-          <P style={{ margin: 0 }}><strong>Bottom 3 in Championship</strong> (10th, 11th, 12th) are automatically relegated to Second Division</P>
+          <P style={{ margin: "0 0 4px" }}><strong>Top 4 in Second Division</strong> are automatically promoted to Championship</P>
+          <P style={{ margin: 0 }}><strong>Bottom 4 in Championship</strong> (9th, 10th, 11th, 12th) are automatically relegated to Second Division</P>
         </div>
 
-        <Label>Playoff Matches</Label>
+        <Label>The Matchup Position</Label>
         <div style={{
           background: `${ORANGE}08`, borderRadius: 10, padding: "10px 12px", margin: "8px 0",
           border: `1px solid ${ORANGE}25`
         }}>
-          <P style={{ margin: "0 0 4px" }}><strong>#4 and #5 in Second Division</strong> play a promotion playoff during Race Week 12</P>
-          <P style={{ margin: 0 }}><strong>#8 and #9 in Championship</strong> play a relegation playoff during Race Week 12</P>
+          <P style={{ margin: 0 }}>If the <strong>5th-place team in the Second Division</strong> has a higher scoring average than the <strong>8th-place team in the Championship Division</strong>, they swap too. This is tracked in the standings as the <strong>Matchup Position</strong>, with the leading team's scoring average highlighted in green.</P>
         </div>
 
         <P style={{ fontSize: 11.5, color: TEXT2 }}>
-          The other 20 teams play Race Week 12 normally. All 4 playoff teams still earn Formula 50 points that week.
+          After Round 11, divisions reset and the second half is an 11-race sprint for the Team Championship.
         </P>
-
-        <Label>Playoff Scoring</Label>
-        <P>No OVER/UNDER in the playoff. The higher-ranked team automatically gets <Badge text="+5 PTS" color={ORANGE} /> as a seeding advantage. Unlike normal weeks, <strong>pit stop needle points are included</strong> in the matchup score. If tied, the higher seed advances.</P>
       </Section>
     </div>
   );

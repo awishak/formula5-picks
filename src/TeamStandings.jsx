@@ -245,6 +245,14 @@ export default function TeamStandings({ currentUser }) {
   const secondTeams = standings.filter(t => t.division === "second");
   const hasData = racesCompleted > 0;
 
+  // Matchup Position: compare 8th in Championship vs 5th in Second Division
+  const champ8 = champTeams[7]; // 8th place (0-indexed)
+  const second5 = secondTeams[4]; // 5th place (0-indexed)
+  const champ8Avg = champ8 ? champ8.avgMatchupScore : 0;
+  const second5Avg = second5 ? second5.avgMatchupScore : 0;
+  // Second Division team must be strictly greater to swap
+  const matchupPositionLeader = second5Avg > champ8Avg ? "second" : "championship";
+
   function renderDivision(divTeams, divName, divLabel, divColor) {
     return (
       <div style={{ marginBottom: 30 }}>
@@ -268,19 +276,18 @@ export default function TeamStandings({ currentUser }) {
             const upcoming = isExpanded ? getUpcomingMatchups(t.id) : [];
             const pos = idx + 1;
 
-            const inRelegation = divName === "championship" && pos >= 10;
-            const inPlayoff = divName === "championship" && (pos === 8 || pos === 9);
-            const inPromotion = divName === "second" && pos <= 3;
-            const inMedPlayoff = divName === "second" && (pos === 4 || pos === 5);
+            const inRelegation = divName === "championship" && pos >= 9;
+            const inPromotion = divName === "second" && pos <= 4;
+            const isMatchupPosition = (divName === "championship" && pos === 8) || (divName === "second" && pos === 5);
 
             let zoneBorder = BORDER;
             if (inRelegation) zoneBorder = `${RED}60`;
-            else if (inPlayoff || inMedPlayoff) zoneBorder = `${ORANGE}50`;
+            else if (isMatchupPosition) zoneBorder = `${ORANGE}50`;
             else if (inPromotion) zoneBorder = `${GREEN}60`;
 
             let zoneBg = "#fff";
             if (inRelegation) zoneBg = `${RED}06`;
-            else if (inPlayoff || inMedPlayoff) zoneBg = `${ORANGE}06`;
+            else if (isMatchupPosition) zoneBg = `${ORANGE}06`;
             else if (inPromotion) zoneBg = `${GREEN}06`;
 
             // Your team gets a distinct style that doesn't conflict with zones
@@ -296,11 +303,10 @@ export default function TeamStandings({ currentUser }) {
 
             return (
               <div key={t.id}>
-                {divName === "championship" && pos === 8 && <ZoneSep label="Playoff Zone" color={ORANGE} />}
-                {divName === "championship" && pos === 10 && <ZoneSep label="Relegation Zone" color={RED} />}
+                {divName === "championship" && pos === 8 && <ZoneSep label="Matchup Position" color={ORANGE} />}
+                {divName === "championship" && pos === 9 && <ZoneSep label="Relegation Zone" color={RED} />}
                 {divName === "second" && pos === 1 && <ZoneSep label="Promotion Zone" color={GREEN} />}
-                {divName === "second" && pos === 4 && <ZoneSep label="Playoff Zone" color={ORANGE} />}
-                {divName === "second" && pos === 6 && <div style={{ padding: "6px 14px" }}><div style={{ height: 1, background: BORDER }} /></div>}
+                {divName === "second" && pos === 5 && <ZoneSep label="Matchup Position" color={ORANGE} />}
 
                 <button onClick={() => setExpanded(isExpanded ? null : t.id)} style={{
                   width: "100%", padding: "10px 14px", borderRadius: 12,
@@ -357,8 +363,16 @@ export default function TeamStandings({ currentUser }) {
                   <div style={{ minWidth: 36, textAlign: "center" }}>
                     <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, color: TEXT2 }}>{t.totalWins}</span>
                   </div>
-                  <div style={{ minWidth: 48, textAlign: "center" }}>
-                    <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, color: TEXT2 }}>{t.avgMatchupScore.toFixed(1)}</span>
+                  <div style={{ minWidth: 48, textAlign: "center", position: "relative" }}>
+                    {isMatchupPosition && (
+                      <div style={{
+                        position: "absolute", top: -2, right: -2, left: -2, bottom: -2,
+                        borderRadius: 8,
+                        border: matchupPositionLeader === divName ? `2px solid ${GREEN}` : `2px solid ${ORANGE}40`,
+                        pointerEvents: "none"
+                      }} />
+                    )}
+                    <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, color: isMatchupPosition ? (matchupPositionLeader === divName ? GREEN : ORANGE) : TEXT2 }}>{t.avgMatchupScore.toFixed(1)}</span>
                   </div>
                   <span style={{ fontSize: 11, color: TEXT2, transition: "transform 0.2s", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", width: 16, textAlign: "center" }}>▼</span>
                 </button>
@@ -486,11 +500,10 @@ export default function TeamStandings({ currentUser }) {
         </button>
         {promoOpen && (
           <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderTop: "none", borderRadius: "0 0 12px 12px", padding: "12px 14px", marginTop: -2, fontFamily: FB, fontSize: 12, color: TEXT2, lineHeight: 1.55 }}>
-            <p style={{ margin: "0 0 8px" }}>Your team's first goal is to be in the <strong style={{ color: GOLD }}>Championship Division</strong> in the second half of the season so you can compete for the <strong style={{ color: TEXT }}>2026 Team Championship</strong>.</p>
-            <p style={{ margin: "0 0 8px" }}>The first half of the season acts as a qualifier for the team championship. <strong style={{ color: TEXT }}>Eight teams</strong> from the Championship Division will qualify, and <strong style={{ color: TEXT }}>four teams</strong> from the Second Division will qualify.</p>
-            <p style={{ margin: "0 0 8px" }}>In other words, the <strong style={{ color: RED }}>bottom four teams</strong> in the Championship Division will be relegated. That's <strong style={{ color: RED }}>10th, 11th, and 12th place</strong> after 11 weeks, as well as the loser of a <strong style={{ color: ORANGE }}>Week 12 playoff</strong> between the 8th and 9th place teams.</p>
-            <p style={{ margin: "0 0 8px" }}>As for the Second Division, the <strong style={{ color: GREEN }}>top three teams</strong> after 11 weeks will qualify for the Championship Division in the second half. And <strong style={{ color: ORANGE }}>4th and 5th place</strong> will have a one-game playoff during Week 12 for the right to move up.</p>
-            <p style={{ margin: 0 }}>After Week 12, teams will be moved and standings will be <strong style={{ color: TEXT }}>reset</strong> — then there will be a <strong style={{ color: BLUEDARK }}>12-week sprint</strong> for the Team Championship.</p>
+            <p style={{ margin: "0 0 8px" }}>The Bahrain and Saudi Arabian Grands Prix were cancelled due to safety concerns related to the war in Iran. That shortened the first half from 12 races to 11, which meant the Week 12 playoff no longer made sense.</p>
+            <p style={{ margin: "0 0 8px" }}>Here's how it works now. The <strong style={{ color: RED }}>bottom four teams</strong> in the Championship Division (9th through 12th) are automatically relegated. The <strong style={{ color: GREEN }}>top four teams</strong> in the Second Division (1st through 4th) are automatically promoted.</p>
+            <p style={{ margin: "0 0 8px" }}>There's one more wrinkle. If the <strong style={{ color: ORANGE }}>5th-place team</strong> in the Second Division has a higher scoring average than the <strong style={{ color: ORANGE }}>8th-place team</strong> in the Championship Division, they swap too. We call that the <strong style={{ color: ORANGE }}>Matchup Position</strong>.</p>
+            <p style={{ margin: 0 }}>After Round 11, divisions reset and the second half is an <strong style={{ color: BLUEDARK }}>11-race sprint</strong> for the Team Championship.</p>
           </div>
         )}
       </div>
@@ -550,7 +563,7 @@ export default function TeamStandings({ currentUser }) {
               ))}
             </div>
 
-            <p style={{ margin: 0 }}>The team with the most championship points at the end of the <strong style={{ color: TEXT }}>second half</strong> (Races 13–24) wins the <strong style={{ color: GOLD }}>Team Championship</strong>.</p>
+            <p style={{ margin: 0 }}>The team with the most championship points at the end of the <strong style={{ color: TEXT }}>second half</strong> (Races 12–22) wins the <strong style={{ color: GOLD }}>Team Championship</strong>.</p>
           </div>
         )}
       </div>
