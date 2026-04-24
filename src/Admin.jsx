@@ -31,21 +31,23 @@ const WEEKLY_BONUS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
 // OpenF1 driver number → name mapping (matches your picks database)
 const DRIVER_NAMES = {
-  1: "Max Verstappen", 4: "Lando Norris", 16: "Charles Leclerc",
+  3: "Max Verstappen", 1: "Lando Norris", 16: "Charles Leclerc",
   44: "Lewis Hamilton", 63: "George Russell", 81: "Oscar Piastri",
   55: "Carlos Sainz", 14: "Fernando Alonso", 12: "Andrea Kimi Antonelli",
   23: "Alex Albon", 18: "Lance Stroll", 10: "Pierre Gasly",
-  22: "Yuki Tsunoda", 7: "Jack Doohan", 27: "Nico Hulkenberg",
+  43: "Franco Colapinto", 27: "Nico Hulkenberg",
   5: "Gabriel Bortoleto", 87: "Oliver Bearman", 31: "Esteban Ocon",
-  30: "Liam Lawson", 6: "Isack Hadjar"
+  30: "Liam Lawson", 6: "Isack Hadjar", 41: "Arvid Lindblad",
+  11: "Sergio Perez", 77: "Valtteri Bottas"
 };
 
 const DRIVER_TEAMS = {
-  1: "Red Bull", 30: "Red Bull", 4: "McLaren", 81: "McLaren",
+  3: "Red Bull", 6: "Red Bull", 1: "McLaren", 81: "McLaren",
   16: "Ferrari", 44: "Ferrari", 63: "Mercedes", 12: "Mercedes",
   55: "Williams", 23: "Williams", 14: "Aston Martin", 18: "Aston Martin",
-  10: "Alpine", 7: "Alpine", 22: "Racing Bulls", 6: "Racing Bulls",
-  27: "Sauber", 5: "Sauber", 87: "Haas", 31: "Haas"
+  10: "Alpine", 43: "Alpine", 41: "Racing Bulls", 30: "Racing Bulls",
+  27: "Sauber", 5: "Sauber", 87: "Haas", 31: "Haas",
+  11: "Cadillac", 77: "Cadillac"
 };
 
 export default function Admin() {
@@ -1164,7 +1166,7 @@ export default function Admin() {
           "Red Bull": "#3671C6", "McLaren": "#FF8000", "Ferrari": "#E8002D",
           "Mercedes": "#27F4D2", "Williams": "#64C4FF", "Aston Martin": "#229971",
           "Alpine": "#FF87BC", "Racing Bulls": "#6692FF", "Sauber": "#52E252",
-          "Haas": "#B6BABD"
+          "Haas": "#B6BABD", "Cadillac": "#C0C0C0"
         };
 
         function driverTeam(name) {
