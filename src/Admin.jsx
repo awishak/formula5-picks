@@ -86,7 +86,7 @@ export default function Admin() {
     async function load() {
       const { data: racesData } = await supabase
         .from("races")
-        .select("id, race_name, round, race_date, pit_stop_question")
+        .select("id, race_name, round, race_date, pit_stop_question, top_drivers, mid_drivers, pick_deadline")
         .order("round", { ascending: true });
       setRaces(racesData || []);
 
