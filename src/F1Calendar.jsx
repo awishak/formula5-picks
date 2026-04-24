@@ -13,8 +13,8 @@ const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
 const FD = "'Geologica', sans-serif";
 const FB = "'DM Sans', sans-serif";
 
-const SPRINT_ROUNDS = [2, 6, 7, 11, 14, 18];
-const SATURDAY_ROUNDS = [17, 22];
+const SPRINT_ROUNDS = [2, 4, 5, 9, 12, 16];
+const SATURDAY_ROUNDS = [15, 20];
 
 // Race start times in UTC (from official FIA announcements)
 // Local times → UTC: Australia 3pm AEDT (UTC+11)=04:00, China 3pm CST (UTC+8)=07:00,
@@ -31,54 +31,50 @@ const RACE_UTC = {
   1:  "2026-03-08T04:00:00Z",
   2:  "2026-03-15T07:00:00Z",
   3:  "2026-03-29T05:00:00Z",
-  4:  "2026-04-12T15:00:00Z",
-  5:  "2026-04-19T17:00:00Z",
-  6:  "2026-05-03T20:00:00Z",
-  7:  "2026-05-24T20:00:00Z",
-  8:  "2026-06-07T13:00:00Z",
-  9:  "2026-06-14T13:00:00Z",
-  10: "2026-06-28T13:00:00Z",
-  11: "2026-07-05T14:00:00Z",
-  12: "2026-07-19T13:00:00Z",
-  13: "2026-07-26T13:00:00Z",
-  14: "2026-08-23T13:00:00Z",
-  15: "2026-09-06T13:00:00Z",
-  16: "2026-09-13T13:00:00Z",
-  17: "2026-09-26T11:00:00Z",  // Saturday
-  18: "2026-10-11T12:00:00Z",
-  19: "2026-10-25T20:00:00Z",
-  20: "2026-11-01T19:00:00Z",
-  21: "2026-11-08T17:00:00Z",
-  22: "2026-11-22T04:00:00Z",  // Saturday night, technically Sunday UTC
-  23: "2026-11-29T16:00:00Z",
-  24: "2026-12-06T13:00:00Z"
+  4:  "2026-05-03T20:00:00Z",
+  5:  "2026-05-24T20:00:00Z",
+  6:  "2026-06-07T13:00:00Z",
+  7:  "2026-06-14T13:00:00Z",
+  8:  "2026-06-28T13:00:00Z",
+  9:  "2026-07-05T14:00:00Z",
+  10: "2026-07-19T13:00:00Z",
+  11: "2026-07-26T13:00:00Z",
+  12: "2026-08-23T13:00:00Z",
+  13: "2026-09-06T13:00:00Z",
+  14: "2026-09-13T13:00:00Z",
+  15: "2026-09-26T11:00:00Z",  // Saturday
+  16: "2026-10-11T12:00:00Z",
+  17: "2026-10-25T20:00:00Z",
+  18: "2026-11-01T19:00:00Z",
+  19: "2026-11-08T17:00:00Z",
+  20: "2026-11-22T04:00:00Z",  // Saturday night, technically Sunday UTC
+  21: "2026-11-29T16:00:00Z",
+  22: "2026-12-06T13:00:00Z"
 };
 
 const CIRCUITS = {
-  1:  { city: "Melbourne",   country: "🇦🇺", circuit: "Albert Park" },
-  2:  { city: "Shanghai",    country: "🇨🇳", circuit: "Shanghai International" },
-  3:  { city: "Suzuka",      country: "🇯🇵", circuit: "Suzuka Circuit" },
-  4:  { city: "Sakhir",      country: "🇧🇭", circuit: "Bahrain International" },
-  5:  { city: "Jeddah",      country: "🇸🇦", circuit: "Jeddah Corniche" },
-  6:  { city: "Miami",       country: "🇺🇸", circuit: "Miami International" },
-  7:  { city: "Montréal",    country: "🇨🇦", circuit: "Circuit Gilles Villeneuve" },
-  8:  { city: "Monaco",      country: "🇲🇨", circuit: "Circuit de Monaco" },
-  9:  { city: "Barcelona",   country: "🇪🇸", circuit: "Circuit de Barcelona-Catalunya" },
-  10: { city: "Spielberg",   country: "🇦🇹", circuit: "Red Bull Ring" },
-  11: { city: "Silverstone", country: "🇬🇧", circuit: "Silverstone Circuit" },
-  12: { city: "Spa",         country: "🇧🇪", circuit: "Spa-Francorchamps" },
-  13: { city: "Budapest",    country: "🇭🇺", circuit: "Hungaroring" },
-  14: { city: "Zandvoort",   country: "🇳🇱", circuit: "Circuit Zandvoort" },
-  15: { city: "Monza",       country: "🇮🇹", circuit: "Autodromo di Monza" },
-  16: { city: "Madrid",      country: "🇪🇸", circuit: "Madrid Street Circuit" },
-  17: { city: "Baku",        country: "🇦🇿", circuit: "Baku City Circuit" },
-  18: { city: "Singapore",   country: "🇸🇬", circuit: "Marina Bay" },
-  19: { city: "Austin",      country: "🇺🇸", circuit: "COTA" },
-  20: { city: "Mexico City", country: "🇲🇽", circuit: "Autódromo Hermanos Rodríguez" },
-  21: { city: "São Paulo",   country: "🇧🇷", circuit: "Interlagos" },
-  22: { city: "Las Vegas",   country: "🇺🇸", circuit: "Las Vegas Strip" },
-  23: { city: "Lusail",      country: "🇶🇦", circuit: "Lusail International" },
-  24: { city: "Abu Dhabi",   country: "🇦🇪", circuit: "Yas Marina" }
+  1:  { city: "Melbourne",   country: "\u{1F1E6}\u{1F1FA}", circuit: "Albert Park" },
+  2:  { city: "Shanghai",    country: "\u{1F1E8}\u{1F1F3}", circuit: "Shanghai International" },
+  3:  { city: "Suzuka",      country: "\u{1F1EF}\u{1F1F5}", circuit: "Suzuka Circuit" },
+  4:  { city: "Miami",       country: "\u{1F1FA}\u{1F1F8}", circuit: "Miami International" },
+  5:  { city: "Montr\u00e9al",    country: "\u{1F1E8}\u{1F1E6}", circuit: "Circuit Gilles Villeneuve" },
+  6:  { city: "Monaco",      country: "\u{1F1F2}\u{1F1E8}", circuit: "Circuit de Monaco" },
+  7:  { city: "Barcelona",   country: "\u{1F1EA}\u{1F1F8}", circuit: "Circuit de Barcelona-Catalunya" },
+  8:  { city: "Spielberg",   country: "\u{1F1E6}\u{1F1F9}", circuit: "Red Bull Ring" },
+  9:  { city: "Silverstone", country: "\u{1F1EC}\u{1F1E7}", circuit: "Silverstone Circuit" },
+  10: { city: "Spa",         country: "\u{1F1E7}\u{1F1EA}", circuit: "Spa-Francorchamps" },
+  11: { city: "Budapest",    country: "\u{1F1ED}\u{1F1FA}", circuit: "Hungaroring" },
+  12: { city: "Zandvoort",   country: "\u{1F1F3}\u{1F1F1}", circuit: "Circuit Zandvoort" },
+  13: { city: "Monza",       country: "\u{1F1EE}\u{1F1F9}", circuit: "Autodromo di Monza" },
+  14: { city: "Madrid",      country: "\u{1F1EA}\u{1F1F8}", circuit: "Madrid Street Circuit" },
+  15: { city: "Baku",        country: "\u{1F1E6}\u{1F1FF}", circuit: "Baku City Circuit" },
+  16: { city: "Singapore",   country: "\u{1F1F8}\u{1F1EC}", circuit: "Marina Bay" },
+  17: { city: "Austin",      country: "\u{1F1FA}\u{1F1F8}", circuit: "COTA" },
+  18: { city: "Mexico City", country: "\u{1F1F2}\u{1F1FD}", circuit: "Aut\u00f3dromo Hermanos Rodr\u00edguez" },
+  19: { city: "S\u00e3o Paulo",   country: "\u{1F1E7}\u{1F1F7}", circuit: "Interlagos" },
+  20: { city: "Las Vegas",   country: "\u{1F1FA}\u{1F1F8}", circuit: "Las Vegas Strip" },
+  21: { city: "Lusail",      country: "\u{1F1F6}\u{1F1E6}", circuit: "Lusail International" },
+  22: { city: "Abu Dhabi",   country: "\u{1F1E6}\u{1F1EA}", circuit: "Yas Marina" }
 };
 
 export default function F1Calendar() {
@@ -131,7 +127,7 @@ export default function F1Calendar() {
   return (
     <div style={{ padding: "20px 20px 100px" }}>
       <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: DARK, textTransform: "uppercase", letterSpacing: "0.03em", margin: "0 0 4px" }}>F1 Calendar</p>
-      <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 20 }}>2026 Season — 24 Grands Prix</p>
+      <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 20 }}>2026 Season — 22 Grands Prix</p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {races.map(r => {
@@ -143,7 +139,7 @@ export default function F1Calendar() {
           const isSaturday = SATURDAY_ROUNDS.includes(r.round);
           const isNext = !isPast && pastCount + 1 === r.round;
           const winner = winners[r.id];
-          const showBreak = r.round === 14;
+          const showBreak = r.round === 12;
 
           // Local time from UTC
           const utcStr = RACE_UTC[r.round];
