@@ -98,6 +98,7 @@ export default function PlayerStandings({ currentUser }) {
   const [schedule, setSchedule] = useState([]);
   const [allScores, setAllScores] = useState([]);
   const [sortBy, setSortBy] = useState("points");
+  const [lastRaceId, setLastRaceId] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -141,9 +142,10 @@ export default function PlayerStandings({ currentUser }) {
         const scoredRaceIds = new Set((scores || []).map(s => s.race_id));
         const scoredRaces = (raceData || []).filter(r => scoredRaceIds.has(r.id));
         const maxRound = scoredRaces.length > 0 ? Math.max(...scoredRaces.map(r => r.round)) : 0;
-        const lastRaceId = scoredRaces.find(r => r.round === maxRound)?.id;
+        const lastScoredRaceId = scoredRaces.find(r => r.round === maxRound)?.id;
+        setLastRaceId(lastScoredRaceId ?? null);
         Object.values(playerMap).forEach(p => {
-          const lastScore = lastRaceId ? (raceScoresMap[p.id] || []).find(s => s.race_id === lastRaceId) : null;
+          const lastScore = lastScoredRaceId ? (raceScoresMap[p.id] || []).find(s => s.race_id === lastScoredRaceId) : null;
           p.lastRacePts = lastScore ? lastScore.total_pts : null;
         });
 
@@ -225,6 +227,10 @@ export default function PlayerStandings({ currentUser }) {
   const pointsRank = {};
   pointsRanked.forEach((p, i) => { pointsRank[p.id] = i + 1; });
 
+  // Last-race rank (place each player earned in the most recent scored race)
+  const lastRaceRank = lastRaceId ? (raceRankings[lastRaceId] || {}) : {};
+  const byLastRace = sortBy === "lastrace";
+
   const sortedStandings = [...standings].sort((a, b) => {
     switch (sortBy) {
       case "points": return b.totalPts - a.totalPts || (b.lastRacePts || 0) - (a.lastRacePts || 0);
@@ -295,10 +301,10 @@ export default function PlayerStandings({ currentUser }) {
           </div>
           <div style={{ width: 90, display: "flex", flexShrink: 0 }}>
             <div style={{ width: 45, textAlign: "center" }}>
-              <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em" }}>Total</span>
+              <span style={{ fontFamily: FD, fontWeight: byLastRace ? 700 : 900, fontSize: 9, color: byLastRace ? TEXT2 : BLUEDARK, textTransform: "uppercase", letterSpacing: "0.08em" }}>Total</span>
             </div>
             <div style={{ width: 45, textAlign: "center" }}>
-              <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em" }}>Last</span>
+              <span style={{ fontFamily: FD, fontWeight: byLastRace ? 900 : 700, fontSize: 9, color: byLastRace ? BLUEDARK : TEXT2, textTransform: "uppercase", letterSpacing: "0.08em" }}>Last</span>
             </div>
           </div>
           <div style={{ width: 44, textAlign: "center", flexShrink: 0 }} />
@@ -312,15 +318,18 @@ export default function PlayerStandings({ currentUser }) {
           const isMyTeammate = myPlayerId && teammateId === myPlayerId;
           const playerRaceScoresList = (raceScores[p.id] || []).sort((a, b) => getRaceRound(a.race_id) - getRaceRound(b.race_id));
           const last3 = playerRaceScoresList.slice(-3).reverse();
+          // When sorting by last race, medals/border follow the last race's top 3; otherwise overall points.
+          const badgeRank = byLastRace ? lastRaceRank[p.id] : pointsRank[p.id];
+          const overallRank = pointsRank[p.id];
 
           return (
             <div key={p.id}>
               <button onClick={() => setExpanded(isExpanded ? null : p.id)} style={{
                 width: "100%", padding: "10px 14px", borderRadius: 12,
                 border: `2px solid ${
-                  pointsRank[p.id] === 1 ? GOLD
-                  : pointsRank[p.id] === 2 ? SILVER
-                  : pointsRank[p.id] === 3 ? BRONZE
+                  badgeRank === 1 ? GOLD
+                  : badgeRank === 2 ? SILVER
+                  : badgeRank === 3 ? BRONZE
                   : isMe ? BLUE : BORDER
                 }`,
                 background: isMe ? "rgba(108,184,224,0.08)" : "#fff",
@@ -337,9 +346,20 @@ export default function PlayerStandings({ currentUser }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
                     {logoUrl && <img src={logoUrl} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover" }} />}
                     <p style={{ fontFamily: FB, fontSize: 11, color: TEXT2, margin: 0 }}>{teamName || ""}</p>
-                    {pointsRank[p.id] === 1 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: GOLD, background: `${GOLD}15`, padding: "1px 6px", borderRadius: 4 }}>Race Winner</span>}
-                    {pointsRank[p.id] === 2 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: SILVER, background: `${SILVER}20`, padding: "1px 6px", borderRadius: 4 }}>P2</span>}
-                    {pointsRank[p.id] === 3 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: BRONZE, background: `${BRONZE}15`, padding: "1px 6px", borderRadius: 4 }}>P3</span>}
+                    {byLastRace ? (
+                      <>
+                        {badgeRank === 1 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: GOLD, background: `${GOLD}15`, padding: "1px 6px", borderRadius: 4 }}>Last Race Winner</span>}
+                        {badgeRank === 2 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: SILVER, background: `${SILVER}20`, padding: "1px 6px", borderRadius: 4 }}>Last P2</span>}
+                        {badgeRank === 3 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: BRONZE, background: `${BRONZE}15`, padding: "1px 6px", borderRadius: 4 }}>Last P3</span>}
+                        {overallRank <= 3 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: BLUEDARK, background: `${BLUE}18`, padding: "1px 6px", borderRadius: 4 }}>Overall P{overallRank}</span>}
+                      </>
+                    ) : (
+                      <>
+                        {badgeRank === 1 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: GOLD, background: `${GOLD}15`, padding: "1px 6px", borderRadius: 4 }}>Race Winner</span>}
+                        {badgeRank === 2 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: SILVER, background: `${SILVER}20`, padding: "1px 6px", borderRadius: 4 }}>P2</span>}
+                        {badgeRank === 3 && <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: BRONZE, background: `${BRONZE}15`, padding: "1px 6px", borderRadius: 4 }}>P3</span>}
+                      </>
+                    )}
                   </div>
                 </div>
                 <div style={{ width: 90, display: "flex", flexShrink: 0 }}>
@@ -347,7 +367,14 @@ export default function PlayerStandings({ currentUser }) {
                     <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 20, color: p.totalPts > 0 ? BLUEDARK : TEXT2 }}>{p.totalPts}</span>
                   </div>
                   <div style={{ width: 45, textAlign: "center" }}>
-                    <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 17, color: p.lastRacePts != null ? BLUEDARK : TEXT2 }}>{p.lastRacePts != null ? p.lastRacePts : "—"}</span>
+                    <span style={{
+                      fontFamily: FD, fontWeight: 900,
+                      fontSize: byLastRace ? 20 : 17,
+                      color: p.lastRacePts != null ? (byLastRace ? "#fff" : BLUEDARK) : TEXT2,
+                      background: byLastRace && p.lastRacePts != null ? BLUEDARK : "transparent",
+                      padding: byLastRace && p.lastRacePts != null ? "2px 8px" : 0,
+                      borderRadius: 8, display: "inline-block"
+                    }}>{p.lastRacePts != null ? p.lastRacePts : "—"}</span>
                   </div>
                 </div>
                 <div style={{ width: 44, textAlign: "center", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
