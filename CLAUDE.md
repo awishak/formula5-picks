@@ -16,7 +16,13 @@ PickIntel.jsx: pick intel display, depends on canonical driver names for headsho
 Rules.jsx: rules and glossary.
 PlayerStandings.jsx: individual standings and player stats.
 TeamStandings.jsx: team standings by championship points and division.
+RaceResults.jsx: per-round results browser, individual/team tabs, weekly bonus points.
+Strategy.jsx: Pit stop & BOX BOX tactics, pit-time reference pulled from 2025 sessions.
+F1Calendar.jsx: race calendar with UTC start times, sprint/Saturday round flags.
+Players.jsx: all players & team rosters, seasons-played descriptors, avatars.
 App.jsx: app shell, routing, F1 starting-light bottom nav, player switcher on HomePage.
+
+All components live in src/. Recaps are static HTML in public/recaps/, surfaced via the recap button in App.jsx and Schedule.jsx.
 
 ## Data model
 
