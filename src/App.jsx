@@ -12,6 +12,7 @@ import F1Calendar from "./F1Calendar.jsx";
 import Players from "./Players.jsx";
 import PracticePicks from "./PracticePicks.jsx";
 import PickIntel from "./PickIntel.jsx";
+import Recaps from "./Recaps.jsx";
 
 const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 
@@ -288,7 +289,7 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
 
       {/* Recap button */}
       {latestScoredRound && (
-        <button onClick={() => window.open(`/recaps/round${latestScoredRound}.html`, "_blank")} style={{
+        <button onClick={() => onNavigate("recaps")} style={{
           width: "100%", padding: "14px", borderRadius: 12, marginBottom: 24,
           border: `1.5px solid ${BORDER}`, background: "#fff",
           fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 13, color: BLUEDARK,
@@ -673,6 +674,7 @@ export default function App() {
         {activePage === "players" && <Players currentUser={currentUser} />}
         {activePage === "practice" && <PracticePicks />}
         {activePage === "season-preview" && <SeasonPreview />}
+        {activePage === "recaps" && <Recaps />}
       </div>
       <BottomNav active={activePage} onChange={navigateTo} hasSubmittedPicks={hasSubmittedPicks} />
     </>
