@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Formula 5 — Round 7 Recap</title>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;600;700;800;900&family=DM+Sans:wght@400;500;600;700&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#f5f3ef;color:#1e1e2a;padding:20px;max-width:640px;margin:0 auto}
+.header{text-align:center;margin-bottom:28px;padding:24px 0;border-bottom:2px solid #d8d2c4}
+.header h1{font-family:'Geologica',sans-serif;font-weight:900;font-size:28px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.header .sub{font-family:'Geologica',sans-serif;font-weight:300;font-size:14px;color:#6b6b80;text-transform:uppercase;letter-spacing:.1em}
+.header .race{font-family:'Geologica',sans-serif;font-weight:700;font-size:18px;color:#2a6fa8;margin-top:8px}
+.stitle{font-family:'Geologica',sans-serif;font-weight:800;font-size:14px;color:#2a6fa8;text-transform:uppercase;letter-spacing:.08em;margin:28px 0 12px}
+p{font-size:15px;line-height:1.75;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;border:1px solid #d8d2c4;padding:20px;margin-bottom:16px}
+.t10{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+.t10 th{font-family:'Geologica',sans-serif;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#6b6b80;text-align:left;padding:6px 8px;border-bottom:1px solid #d8d2c4}
+.t10 td{padding:8px;border-bottom:1px solid #d8d2c420;vertical-align:top}
+.t10 .rank{font-family:'Geologica',sans-serif;font-weight:900;font-size:16px;color:#6b6b80;text-align:center;width:30px}
+.t10 .name{font-weight:600;display:flex;align-items:center;gap:8px}
+.t10 .name img{width:48px;height:48px;border-radius:50%;object-fit:cover}
+.t10 .pts{font-family:'Geologica',sans-serif;font-weight:900;font-size:16px;color:#2a6fa8;text-align:right;width:50px}
+.t10 .desc{font-size:12px;color:#6b6b80;line-height:1.5;margin-top:2px}
+.matchup{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px}
+.matchup.champ{border:2px solid #c9a820}.matchup.second{border:2px solid #a0a0a0}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px}
+.mt{font-family:'Geologica',sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px}
+.mt img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.mdiv{font-family:'Geologica',sans-serif;font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:4px;display:inline-block}
+.mdiv.ch{background:#c9a82015;color:#c9a820}.mdiv.se{background:#a0a0a020;color:#6b6b80}
+.motw{display:inline-block;font-family:'Geologica',sans-serif;font-weight:800;font-size:9px;color:#e08a2e;background:#e08a2e12;border:1px solid #e08a2e30;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;margin-left:6px}
+.bbdecided{display:inline-block;font-family:'Geologica',sans-serif;font-weight:800;font-size:9px;color:#e08a2e;background:#e08a2e12;border:1px solid #e08a2e30;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;margin-left:6px}
+.matchup p{font-size:13px;line-height:1.65;margin-bottom:0}
+details.edits{background:#fff;border:1px solid #d8d2c4;border-radius:12px;margin-bottom:16px}
+details.edits summary{cursor:pointer;font-family:'Geologica',sans-serif;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#6b6b80;padding:14px 16px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.edits summary::-webkit-details-marker{display:none}
+details.edits summary .caret{transition:transform .2s}
+details.edits[open] summary .caret{transform:rotate(180deg)}
+details.edits[open] summary{border-bottom:1px solid #d8d2c4}
+.edits .ebody{padding:6px 16px 16px}
+.edits .dir{margin-top:14px;padding-top:12px;border-top:1px dashed #d8d2c4}
+.edits .dir:first-child{border-top:none;margin-top:6px}
+.edits .dlabel{font-family:'Geologica',sans-serif;font-weight:700;font-size:10px;color:#2a6fa8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.edits .dtext{font-size:13px;line-height:1.6;color:#555;font-style:italic}
+.footer{text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #d8d2c4;font-size:11px;color:#6b6b80}
+.backlink{display:inline-flex;align-items:center;gap:6px;font-family:'Geologica',sans-serif;font-weight:700;font-size:12px;color:#2a6fa8;text-decoration:none;text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px}
+a{color:#2a6fa8}
+.shead{font-family:'Geologica',sans-serif;font-weight:800;font-size:12px;color:#2a6fa8;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.shead img{width:48px;height:48px;border-radius:50%;object-fit:cover}
+.grade{margin-top:16px;padding-top:14px;border-top:1px dashed #c0392b55;display:flex;align-items:center;gap:12px}
+.grade .gl{flex:0 0 auto;font-family:'Geologica',sans-serif;font-weight:900;font-size:21px;color:#c0392b;border:2.5px solid #c0392b;border-radius:50%;width:50px;height:50px;display:flex;align-items:center;justify-content:center;transform:rotate(-8deg)}
+.grade .gnote{font-family:'Caveat',cursive;font-size:19px;line-height:1.3;color:#c0392b}
+.grade .gp{font-family:'Geologica',sans-serif;font-weight:700;font-size:9px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:1px}
+.report{background:#fff;border:2.5px solid #c0392b;border-radius:14px;padding:22px;margin-bottom:16px;text-align:center}
+.report .big{font-family:'Geologica',sans-serif;font-weight:900;font-size:64px;color:#c0392b;line-height:1;transform:rotate(-6deg);display:inline-block;margin-bottom:6px}
+.report .fg{font-family:'Geologica',sans-serif;font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin-bottom:12px}
+.report .summary{font-family:'Caveat',cursive;font-size:22px;line-height:1.35;color:#c0392b}
+</style></head><body>
+<a class="backlink" href="/" target="_top">&larr; Back to Formula 5</a>
+<div class="header"><div class="sub">The Commissioner's Report</div><h1>See Me After Class</h1><div class="race">Round 7 -- Spanish Grand Prix</div></div>
+
+<details class="edits">
+<summary><span>How This Recap Was Edited (Commissioner's Directions)</span><span class="caret">▼</span></summary>
+<div class="ebody">
+<div class="dir"><div class="dlabel">Direction 1 — The Storyline</div><div class="dtext">"the big stories: did joe mcglynn get the highest score of the year with 68? In any case, he's now in first place. Three way race for the first half championship. We knew Van City was good, and XLIX, but Drivetex scored big. East Bay Racing, highest scoring average, lost a heartbreaker 95-94. Match of the week. Cal Aggie Racing had a huge week to move them back into contention for promotion. second highest scoring average in the league. Stalloni losing 103-102 to XLIX. with the 5th and 11th highest scoring player of the week. That's a tough one. barcelona race was actually pretty fun to watch! Usually it's not. Lots of good races this season. Luxor keeps defying the odds and is now 7-0. Third LOWEST scoring average of the week. Francisco Soldavini did well in Boss GP this weekend in Germany."</div></div>
+<div class="dir"><div class="dlabel">Direction 2 — The Bit</div><div class="dtext">"the bit will be that i'm tired of grading, so i'm going to grade you on your recap for each section."</div></div>
+</div>
+</details>
+
+<div class="stitle">A Note From the Professor</div>
+<div class="card">
+<p>Hey, that race was pretty good! And the NBA Finals were pretty good! And the World Cup is pretty good! And SCU graduation yesterday was really good!</p>
+<p>You know what's not good? Grading. I love my students but I hate grading their work. I'd much rather talk with them about their progress than assign them a letter grade. But I'm neck deep in end-of-quarter assessment, and grades are due on Tuesday.</p>
+<p>So, since I'm in the grading mindset, and against my better judgment, I'm gonna grade Claude's recaps. I told Claude which stories to highlight, and I'd like to see some friendly, fair, and informative notes from the LLM. And while I usually love to be encouraging to my students, Claude is not my student. So I will be direct.</p>
+<p>Now, here are my grades for your work.</p>
+</div>
+
+<div class="stitle">Sixty-Eight, and First Place</div>
+<div class="card">
+<p class="shead"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/447a215c-371d-4212-95e1-dcef174e95f9.png?t=1772503336906"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2343928e-bdf3-415a-9f0a-ef3b6af5793f.png?t=1772417222653"> Sixty-Eight, and First Place</p>
+<p>Yes, to answer the only question anyone asked me this week: <strong>Joe McGlynn</strong> put up a <strong>68</strong>, and it is the highest single-round score anybody has managed all year. He took George Russell for the +18, ran a flawless 30-point midfield off Verstappen, Hadjar, Gasly, and Colapinto, stacked on the order and best-finish bonuses, and topped the week to claim the +10 on top of it. There was no weakness in the run. It was a clean sheet.</p>
+<p>More importantly, it moves McGlynn into <strong>first place overall</strong> at 304, leapfrogging the entire field, including yours truly in second. Remember last week's punchline, the one where we were all relieved an actual racecar driver had finally taken the lead? That was <strong>Francisco Soldavini</strong>, who led through Round 6. He just got passed by a guy from grad school in Texas. The professional has been caught by the amateurs. We have learned nothing and I could not be happier.</p>
+<div class="grade"><div class="gl">C-</div><div class="gnote"><span class="gp">Prof. Ishak</span>Started boring, ended weakly.</div></div>
+</div>
+
+<div class="stitle">The Pro Had a Better Weekend Elsewhere</div>
+<div class="card">
+<p class="shead"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/40d29a8a-3349-4d7a-87b9-e74cedda7c19.png?t=1775102877270"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2cfbbd19-61c8-4c6a-87c1-6367a3f5483a.png?t=1772676769760"> The Pro Had a Better Weekend Elsewhere</p>
+<p>Before anyone files <strong>Francisco Soldavini</strong> under "fallen off," let the record show where he actually spent his weekend. While McGlynn was beating him in a pretend racing league, Soldavini was in Germany doing well in an actual Boss GP race, in an actual car, at actual speed, with actual physical consequences for getting it wrong. There is a real and humbling gap between his Saturday and mine.</p>
+<p>His Garra Dynamics still took the loss to Van City, and 47 was a quiet day by his standards. But it is hard to feel too bad for the one man in this league who can lose a fantasy round and then go win something with a steering wheel in his hands. The rest of us close the laptop and go do the dishes. Soldavini closes the laptop and goes racing. We will allow him this.</p>
+<div class="grade"><div class="gl">B-</div><div class="gnote"><span class="gp">Prof. Ishak</span>I mean, yeah, this is a good story to talk about given this is an auto racing fantasy league, but you're leaning too heavily on it. He lost in F5. Should be a note later, not the second story. "Go do the dishes" is weak.</div></div>
+</div>
+
+<div class="stitle">A Three-Horse Race</div>
+<div class="card">
+<p class="shead"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/0a09b0a7-8d2c-451a-9541-29b3046aaee3.png?t=1772417253012"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/579bad3e-bbc9-42f2-9371-22abd9da04d4.png?t=1772469411331"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2343928e-bdf3-415a-9f0a-ef3b6af5793f.png?t=1772417222653"> A Three-Horse Race</p>
+<p>The first-half Championship is now a proper fight at the front. <strong>Van City Corsa</strong> sit top at 91, having topped the division all season, and <strong>XLIX</strong> are right behind at 80. None of that is a surprise; we knew both teams were good. The surprise is who is suddenly breathing down their necks.</p>
+<p><strong>Drivetex</strong> scored big. They led the entire Championship Division this week, banked the full 25 championship points, and climbed to third at 70. With five races still to run in the half and 25 points on the table every week, a 21-point gap to first is nothing. Nick Brody and Joe McGlynn have turned a quiet season into a contender's season at exactly the right moment. This is a three-horse race now, and Drivetex is the horse nobody penciled in.</p>
+<div class="grade"><div class="gl">B</div><div class="gnote"><span class="gp">Prof. Ishak</span>I would have liked more horse metaphors.</div></div>
+</div>
+
+<div class="stitle">Decided by a Point, Twice</div>
+<div class="card">
+<p>Here is where I get to eat my own cooking. Last week I stood up, declared the OVER bonus a coin flip with a 1 percent influence rule, and walked out of my own recap over it. This week that same line reached out and ruined two teams who did everything right. The OVER went three-for-three flipping matchups, and in two of them the team that <em>outscored its opponent on base</em> still lost by a single point.</p>
+<p><strong>East Bay Racing</strong>, who carry the highest scoring average in the entire league, beat Juicero on base and lost 95-94 on the line. <strong>Stalloni 1851</strong>, who got the 5th- and 11th-highest individual scores of the entire week out of Jack Civitts and Scott Schertler, beat XLIX on base and lost 103-102 the same way. Two of the best offensive performances of the round, both turned into losses by a pit-stop average. I designed this rule. I have no one to be mad at but myself, which is the worst kind of mad.</p>
+<div class="grade"><div class="gl">F-</div><div class="gnote"><span class="gp">Prof. Ishak</span>This section is too much about my reaction and not enough about the fact that two of the highest-scoring matchups of the year were decided by a point. Don't be too cute. Don't bury the lede (which I'm kind of doing here).</div></div>
+</div>
+
+<div class="stitle">Cal Aggie Means It</div>
+<div class="card">
+<p class="shead"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/f3eab88a-5d25-4e3b-b7fc-2aa7a9ea4385.png?t=1772417213026"> Cal Aggie Means It</p>
+<p>The cost-cap exiles are making noise. <strong>Cal Aggie Racing</strong> put up the single best score in the entire Second Division this week, won big over TJ Premium, and took home the full 25 championship points. It pulls them up to 59 and right back into the promotion conversation they were supposed to have forfeited when the league relegated them for signing the last two individual champions. Spite is a powerful fuel.</p>
+<p>They also now own the second-highest scoring average in the entire league at 74.4, behind only East Bay. Andrew Ishak, the relegated commissioner, posted 62 and the 4th-best score of the week, because of course he did. The top four in the Second Division are still ahead, but Cal Aggie just served notice that they do not intend to spend the year down here quietly. I would know. It's my team. I'm allowed to gloat in my own recap.</p>
+<div class="grade"><div class="gl">D</div><div class="gnote"><span class="gp">Prof. Ishak</span>Conflict of interest. I think the bigger story here is that Andrew had to run the bot picks and then play against them. That's weird. Also, this is kind of sycophantic overall.</div></div>
+</div>
+
+<div class="stitle">Luxor, Explained by Nobody</div>
+<div class="card">
+<p class="shead"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8743272f-21a4-443c-af8b-819ea11615a2.png?t=1772677485951"> Luxor, Explained by Nobody</p>
+<p><strong>Luxor Motorsport</strong> are now <strong>7-0</strong>. The only undefeated team in all of Formula 5, and a team that, by the numbers, has no business being one. Here is the stat that breaks my brain: among the twelve teams that actually won their matchup this week, Luxor posted the third-lowest scoring output. They did not win big. They barely won at all. They just, once again, won.</p>
+<p><strong>Pavly Attalah</strong> and <strong>Chris Malek</strong> have built an entire perfect season out of doing precisely enough and not one point more. There is no model that predicts this. There is no scouting report that explains it. They sit fifth in the Second Division on points despite a record nobody else can match, because their scoring average keeps insisting they are ordinary. The record insists otherwise. At some point we stop calling it luck and start calling it a haunting.</p>
+<div class="grade"><div class="gl">F</div><div class="gnote"><span class="gp">Prof. Ishak</span>"Breaks my brain"? I hate your language choices sometimes.</div></div>
+</div>
+
+<div class="stitle">Matchup Recaps</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8ae6c08b-ce0e-4383-91c2-ceb17ba3db1a.png?t=1772417238558"> Juicero Silicon Valley 95, East Bay Racing 94</div></div>
+<span class="mdiv ch">Championship Division</span><span class="motw">Matchup of the Week</span>
+<p style="margin-top:8px">The cruelest one. <strong>Joe Hanna</strong> (49 base) and <strong>Zack Girgis</strong> (46) put up 95 on base, beating <strong>George Fahmy</strong> (47) and <strong>Kerolos Nakhla</strong> (43) by five. Then the OVER +5 and UNDER -1 flipped it, and East Bay, who carry the highest scoring average in the entire league, lost by a single point. Juicero (60 pts, 5th in the Championship) steal one. East Bay (51 pts, 8th in the Championship) get robbed by my own rulebook.</p>
+</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/579bad3e-bbc9-42f2-9371-22abd9da04d4.png?t=1772469411331"> XLIX Racing Team 103, Stalloni 1851 102</div></div>
+<span class="mdiv ch">Championship Division</span><span class="bbdecided">BOX BOX Decided</span>
+<p style="margin-top:8px">Same heartbreak, second verse. <strong>Jack Civitts</strong> (60 total, 5th best of the week) and <strong>Scott Schertler</strong> (50 total, 11th best) gave Stalloni a 103-98 lead on base, two of the loudest performances of the round. Then the line did its thing. <strong>Krista Nabil</strong> and <strong>Moses Abdelshaid</strong> took the OVER, Stalloni took the -1, and XLIX (80 pts, 2nd in the Championship) win by one. Stalloni (47 pts, 10th in the Championship) deserved so much better.</p>
+</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/b4a23ce2-0b92-4db3-9ec8-20f7735d212f.png?t=1773678185674"> Cougar Autosport 87, Cascadia Motorsport 83</div></div>
+<span class="mdiv ch">Championship Division</span><span class="bbdecided">BOX BOX Decided</span>
+<p style="margin-top:8px">The OVER's third victim of the day, just for the road. <strong>Martin Nobar</strong> (48) and <strong>Ronnie Nobar</strong> (36) actually outscored <strong>Heather Ishak</strong> (38) and <strong>Lucia Thompson</strong> (44) on base, 84 to 82, and still lost. Cougar's +5 on the line did the rest. Cougar (63 pts, 4th in the Championship) bank a sneaky-important win. Cascadia (47 pts, 11th in the Championship) are the week's quietest casualty of a loud problem.</p>
+</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2343928e-bdf3-415a-9f0a-ef3b6af5793f.png?t=1772417222653"> Drivetex 107, El Camino Rapido 91</div></div>
+<span class="mdiv ch">Championship Division</span>
+<p style="margin-top:8px">The week's top score lived here. <strong>Joe McGlynn</strong>'s record 68 and <strong>Nick Brody</strong>'s 54 made up the highest-scoring team in the Championship and the engine behind Drivetex's leap into the title race. <strong>Harold Gutmann</strong> was magnificent in defeat, posting 66, the second-best score of the entire week, but <strong>Paul Kohli</strong>'s 29 left El Camino short. Drivetex (70 pts, 3rd in the Championship) surge. El Camino (36 pts, 12th in the Championship) waste a brilliant Gutmann.</p>
+</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/f3eab88a-5d25-4e3b-b7fc-2aa7a9ea4385.png?t=1772417213026"> Cal Aggie Racing 106, TJ Premium 75</div></div>
+<span class="mdiv se">Second Division</span>
+<p style="margin-top:8px">A statement. <strong>Andrew Ishak</strong> (62, 4th best of the week) and <strong>Kevin Coolidge</strong> (46) posted the highest team score in the entire Second Division, max championship points, and a promotion-push win. <strong>TJ Donato</strong> (40) and the <strong>Formula5 Bot</strong> (38) never threatened. Cal Aggie (59 pts, 8th in the Second Division) come storming back. TJ Premium (36 pts, 9th in the Second Division) drop another, the Bot included.</p>
+</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/0a09b0a7-8d2c-451a-9541-29b3046aaee3.png?t=1772417253012"> Van City Corsa 105, Garra Dynamics 73</div></div>
+<span class="mdiv ch">Championship Division</span>
+<p style="margin-top:8px"><strong>Rafik Zarifa</strong> (53) and <strong>Mena Yousef</strong> (49) cruised, the division leaders doing division-leader things. <strong>Francisco Soldavini</strong> (47) kept Garra respectable, but <strong>Ryan Kohli</strong>'s -1 Leclerc pick capped him at 31 and there was no second gear. Van City (91 pts, 1st in the Championship) stay top. Garra (58 pts, 6th in the Championship) save their real result for the German autobahn.</p>
+</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8743272f-21a4-443c-af8b-819ea11615a2.png?t=1772677485951"> Luxor Motorsport 96, HomeworkTubes.Com 80</div></div>
+<span class="mdiv se">Second Division</span>
+<p style="margin-top:8px">Win number seven, and for once not by a sliver. <strong>Pavly Attalah</strong> (42) and <strong>Chris Malek</strong> (49) finally had a comfortable evening against <strong>Sam Bottoms</strong> (44) and <strong>Grant Wong</strong> (37). Last week our sponsors. This week our victims. Luxor (72 pts, 5th in the Second Division) stay perfect. HomeworkTubes.Com (75 pts, 3rd in the Second Division) hold a promotion spot despite the loss, which is more than the homework deserves.</p>
+</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/9a1eeebb-53f4-4435-842a-835fcb9c416f.png?t=1772678148341"> TNT Roku F5 Team 102, Magic Kingdom Racing 60</div></div>
+<span class="mdiv se">Second Division</span>
+<p style="margin-top:8px">A father-son demolition. <strong>Andy Thompson</strong> (48) and <strong>Matteo Thompson</strong> (59, 6th best of the week) ran 102 over <strong>Chris Fondacaro</strong> (27) and <strong>Larry Noel</strong> (34). Matteo outscored his dad and the rest of the family table can sort that out at dinner. TNT (75 pts, 4th in the Second Division) hold a promotion spot. Magic Kingdom (64 pts, 6th in the Second Division) get nothing magical.</p>
+</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/4ce965b1-70bf-43db-a3b0-6585be8d8b5e.png?t=1772677776753"> Peloton Aubergine 101, Aggie Slipstream 55</div></div>
+<span class="mdiv se">Second Division</span>
+<p style="margin-top:8px"><strong>Stacy Michaelsen</strong> (65, 3rd best of the week) was sensational and <strong>Brett Dillon</strong> (39) did plenty alongside her for a tidy 101. <strong>Brian Dong</strong> (41) and <strong>Dan Patry</strong> (17) had no answer. Peloton (80 pts, 2nd in the Second Division) keep pace at the top. Aggie Slipstream (30 pts, 11th in the Second Division) keep doing what the acronym promises.</p>
+</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/27ccc53b-cca4-4b6b-a166-7ed81b11c86f.png?t=1772677683335"> Meatballs 100, Shoey Time! w/ Max and Danny 63</div></div>
+<span class="mdiv se">Second Division</span>
+<p style="margin-top:8px">The division leaders did not flinch. <strong>Anthony Carnesecca</strong> (49) and <strong>Maggie Ball</strong> (46) hit a clean 100 over <strong>Max Reisinger</strong> (43) and <strong>Danny Bowers</strong> (25). Meatballs (91 pts, 1st in the Second Division) sit top of the half, tied with Van City for the best points haul in the league. Shoey Time (64 pts, 7th in the Second Division) pour one out.</p>
+</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/5c4087ab-d297-43c8-a132-d212ed0e1190.png?t=1772417256621"> Wildcat Motors 97, Bronco SCUderia 72</div></div>
+<span class="mdiv ch">Championship Division</span>
+<p style="margin-top:8px"><strong>Theo Ishak</strong> (52, 10th best of the week) and <strong>Aditya Satish</strong> (41) cleared 97 with room to spare. <strong>Alicia Cho</strong> (46) kept the Broncos in it, but <strong>Maggie Mudge</strong>'s -1 Leclerc pick held her to 27 and the gap was too wide. Wildcat (50 pts, 9th in the Championship) climb out of the basement. Bronco (54 pts, 7th in the Championship) cool off after a hot stretch.</p>
+</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/f3e74436-4bb4-4be6-b3b5-3829e29e032a.png?t=1773678329574"> Scuderia Iskandaraya 73, Prestissimo Veloce 56</div></div>
+<span class="mdiv se">Second Division</span>
+<p style="margin-top:8px"><strong>Ramy Stephanos</strong> (45) and <strong>Anthony Zamary</strong> (31) handled <strong>Matilda Luton</strong> (35) and <strong>Evie Ishak</strong> (20) for a needed win. Scuderia (32 pts, 10th in the Second Division) get off the mat. Prestissimo (29 pts, 12th in the Second Division) sit last, though Evie can take the week off knowing her dad's other team is the one actually making headlines.</p>
+</div>
+<div class="card" style="border:1px dashed #c0392b80;background:#fff;margin-top:4px">
+<div class="grade" style="margin-top:0;padding-top:0;border-top:none"><div class="gl">F+</div><div class="gnote"><span class="gp">Prof. Ishak</span>You rely too much on recapping the points. That's boring. No one cares. If they want to know the point breakdown, they'll look it up.</div></div>
+</div>
+<div class="stitle">Top 10 of the Week</div>
+<div class="card" style="padding:12px">
+<table class="t10"><thead><tr><th></th><th>Player</th><th style="text-align:right">Pts</th></tr></thead><tbody>
+<tr><td class="rank">1</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/447a215c-371d-4212-95e1-dcef174e95f9.png?t=1772503336906"> Joe McGlynn</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2343928e-bdf3-415a-9f0a-ef3b6af5793f.png?t=1772417222653" style="width:20px;height:20px;border-radius:50%"> Drivetex</div><div class="desc">The highest single-round score of the entire season. Russell +18, a perfect 30 midfield, every bonus available, and now first place overall. A flawless sheet.</div></td><td class="pts">68</td></tr>
+<tr><td class="rank">2</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2a1d8e8a-bc94-4105-abc9-5445bc58befa.png?t=1772682503476"> Harold Gutmann</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/a602540b-92f4-48f0-bff2-67e74fba1e67.png?t=1772524618249" style="width:20px;height:20px;border-radius:50%"> El Camino Rapido</div><div class="desc">A 66 that matched McGlynn's perfect midfield and would have won almost any other week. Lost anyway, because his teammate posted 29.</div></td><td class="pts">66</td></tr>
+<tr><td class="rank">3</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/0f599d2b-a7e8-4407-8a48-7bb08e1bd446.png?t=1772503349191"> Stacy Michaelsen</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/4ce965b1-70bf-43db-a3b0-6585be8d8b5e.png?t=1772677776753" style="width:20px;height:20px;border-radius:50%"> Peloton Aubergine</div><div class="desc">65 and a perfect midfield of her own, powering Peloton to 101 and a hold on second in the division. Quietly one of the best players in the league.</div></td><td class="pts">65</td></tr>
+<tr><td class="rank">4</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/74e68847-70fe-4eaf-9075-f4cfaa642cdd.png?t=1772682494867"> Andrew Ishak</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/f3eab88a-5d25-4e3b-b7fc-2aa7a9ea4385.png?t=1772417213026" style="width:20px;height:20px;border-radius:50%"> Cal Aggie Racing</div><div class="desc">The relegated commissioner, second overall on the season, posted 62 to top the Second Division scoreboard and drag Cal Aggie back into the promotion fight.</div></td><td class="pts">62</td></tr>
+<tr><td class="rank">5</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ad3adcf9-af83-4139-aa13-120bdf0b6fae.png?t=1772680121672"> Jack Civitts</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/b9eb80e4-13ef-41d6-adff-1c8e64270c6a.png?t=1772469050248" style="width:20px;height:20px;border-radius:50%"> Stalloni 1851</div><div class="desc">A perfect 30 midfield and 60 total, half of the base-score win that the BOX BOX line then took away. Brilliant, and beaten by a pit stop.</div></td><td class="pts">60</td></tr>
+<tr><td class="rank">6</td><td><div class="name"><span style="display:inline-block;width:48px;height:48px;border-radius:50%;background:#d8d2c4;text-align:center;line-height:48px;font-family:'Geologica',sans-serif;font-weight:700;font-size:14px;color:#6b6b80">MT</span> Matteo Thompson</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/9a1eeebb-53f4-4435-842a-835fcb9c416f.png?t=1772678148341" style="width:20px;height:20px;border-radius:50%"> TNT Roku F5 Team</div><div class="desc">59, a perfect midfield, and the satisfaction of outscoring his own father en route to a 102-60 family rout.</div></td><td class="pts">59</td></tr>
+<tr><td class="rank">7</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/48b723a2-5ec3-417d-930c-178789a46e81.png?t=1775102938119"> Moses Abdelshaid</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/579bad3e-bbc9-42f2-9371-22abd9da04d4.png?t=1772469411331" style="width:20px;height:20px;border-radius:50%"> XLIX Racing Team</div><div class="desc">56 to anchor the XLIX side of the one-point win over Stalloni. On the right end of the line, for once.</div></td><td class="pts">56</td></tr>
+<tr><td class="rank">8</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ff73dde2-1a9a-40ce-993d-77d055846c18.png?t=1772503323321"> Nick Brody</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2343928e-bdf3-415a-9f0a-ef3b6af5793f.png?t=1772417222653" style="width:20px;height:20px;border-radius:50%"> Drivetex</div><div class="desc">54 and a perfect midfield, the other half of the highest-scoring team in the Championship and Drivetex's title push.</div></td><td class="pts">54</td></tr>
+<tr><td class="rank">9</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/34ed0f7d-81ed-4a72-b018-f25941106902.png?t=1772680006315"> Rafik Zarifa</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/0a09b0a7-8d2c-451a-9541-29b3046aaee3.png?t=1772417253012" style="width:20px;height:20px;border-radius:50%"> Van City Corsa</div><div class="desc">Last week's hero turns in a steady 53 to keep the division leaders on top. No drama required.</div></td><td class="pts">53</td></tr>
+<tr><td class="rank">10</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/5e8e105d-b2bb-4495-9f45-04bfce6e4587.png?t=1772682483157"> Theo Ishak</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/5c4087ab-d297-43c8-a132-d212ed0e1190.png?t=1772417256621" style="width:20px;height:20px;border-radius:50%"> Wildcat Motors</div><div class="desc">52 to lead Wildcat to a comfortable win over Bronco and out of the relegation zone. Rounds out a top 10 stacked with perfect midfields.</div></td><td class="pts">52</td></tr>
+</tbody></table>
+<div class="grade"><div class="gl" style="font-size:15px">F&minus;&minus;</div><div class="gnote"><span class="gp">Prof. Ishak</span>This was boring to read.</div></div>
+</div>
+<div class="stitle">Final Grade</div>
+<div class="report">
+<div class="big">F</div>
+<div class="fg">Final Grade &middot; Round 7 Recap</div>
+<div class="summary">Be more interesting next time, please. More HomeworkTubes, maybe. &mdash; Prof. I.</div>
+</div>
+<div class="footer">Formula 5 -- 2026 Season -- Round 7 -- Spanish Grand Prix<br>The Commissioner's Report (graded, reluctantly, in red)<br><br><a href="/" target="_top">&larr; Back to Formula 5</a></div>
+</body></html>
