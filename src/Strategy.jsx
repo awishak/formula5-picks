@@ -7,18 +7,19 @@ const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
 const FD = "'Geologica', sans-serif";
 const FB = "'DM Sans', sans-serif";
 
-// 2025 driver numbers → team
-const DRIVER_TEAM_2025 = {
-  1: "Red Bull", 11: "Red Bull",
-  4: "McLaren", 81: "McLaren",
-  16: "Ferrari", 55: "Ferrari",
-  44: "Mercedes", 63: "Mercedes",
+// 2026 driver numbers → team
+const DRIVER_TEAM_2026 = {
+  1: "McLaren", 81: "McLaren",
+  3: "Red Bull", 6: "Red Bull",
+  16: "Ferrari", 44: "Ferrari",
+  12: "Mercedes", 63: "Mercedes",
   14: "Aston Martin", 18: "Aston Martin",
-  23: "Williams", 2: "Williams",
-  10: "Alpine", 31: "Alpine",
-  22: "Racing Bulls", 30: "Racing Bulls",
-  27: "Haas", 20: "Haas",
-  77: "Sauber", 24: "Sauber",
+  23: "Williams", 55: "Williams",
+  10: "Alpine", 43: "Alpine",
+  30: "Racing Bulls", 41: "Racing Bulls",
+  31: "Haas", 87: "Haas",
+  5: "Audi", 27: "Audi",
+  11: "Cadillac", 77: "Cadillac",
 };
 
 // Team colors
@@ -26,7 +27,7 @@ const TEAM_COLORS = {
   "Red Bull": "#1E41FF", "McLaren": "#FF8700", "Ferrari": "#DC0000",
   "Mercedes": "#00D2BE", "Aston Martin": "#006F62", "Williams": "#005AFF",
   "Alpine": "#0090FF", "Racing Bulls": "#2B4562", "Haas": "#B6BABD",
-  "Sauber": "#52E252",
+  "Audi": "#BB0A30", "Cadillac": "#063A6E",
 };
 
 function percentile(arr, p) {
@@ -47,13 +48,13 @@ function PitStopReference() {
   async function fetchPitData() {
     setLoading(true);
     setError(null);
-    setStatusMsg("Finding 2025 race sessions...");
+    setStatusMsg("Finding 2026 race sessions...");
 
     try {
-      const sessResp = await fetch("https://api.openf1.org/v1/sessions?year=2025&session_name=Race");
+      const sessResp = await fetch("https://api.openf1.org/v1/sessions?year=2026&session_name=Race");
       const sessions = await sessResp.json();
       if (!Array.isArray(sessions) || sessions.length === 0) {
-        throw new Error("No 2025 race sessions found");
+        throw new Error("No 2026 race sessions found");
       }
 
       const teamStops = {};
@@ -68,7 +69,7 @@ function PitStopReference() {
 
         pits.forEach(p => {
           if (!p.stop_duration || p.stop_duration > 10) return;
-          const team = DRIVER_TEAM_2025[p.driver_number];
+          const team = DRIVER_TEAM_2026[p.driver_number];
           if (!team) return;
           if (!teamStops[team]) teamStops[team] = [];
           teamStops[team].push(p.stop_duration);
@@ -106,10 +107,10 @@ function PitStopReference() {
   return (
     <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: 16, marginBottom: 20 }}>
       <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: TEXT, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 4px" }}>
-        2025 Pit Stop Data
+        2026 Pit Stop Data
       </p>
       <p style={{ fontFamily: FB, fontSize: 11, color: TEXT2, margin: "0 0 12px" }}>
-        Pit stop times by team from last season — use this to calibrate your Needle guesses.
+        Pit stop times by team from this season — use this to calibrate your Needle guesses.
       </p>
 
       {!pitData && !loading && (
@@ -119,7 +120,7 @@ function PitStopReference() {
           fontWeight: 700, fontSize: 12, color: "#fff", cursor: "pointer",
           textTransform: "uppercase", letterSpacing: "0.06em"
         }}>
-          Load 2025 Pit Stop Data
+          Load 2026 Pit Stop Data
         </button>
       )}
 

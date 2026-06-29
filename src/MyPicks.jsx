@@ -627,18 +627,18 @@ function StepPitStop({ question, value, onChange, teamSide }) {
         )}
       </div>
 
-      {/* 2025 Pit Stop Data dropdown — starts closed */}
+      {/* 2026 Pit Stop Data dropdown — starts closed */}
       <div style={{ background: "#fff", border: `1px solid ${BORDER}`, borderRadius: 12, marginBottom: 20, overflow: "hidden" }}>
         <button onClick={() => setPitDataOpen(!pitDataOpen)} style={{
           width: "100%", padding: "12px 14px", background: "none", border: "none", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left"
         }}>
-          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em" }}>View 2025 Pit Stop Data</span>
+          <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em" }}>View 2026 Pit Stop Data</span>
           <span style={{ fontSize: 11, color: TEXT2, transform: pitDataOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
         </button>
         {pitDataOpen && (
           <div style={{ padding: "0 4px 4px" }}>
-            <img src="/pit-stop-data.png" alt="2025 Pit Stop Data by Team" style={{ width: "100%", display: "block", borderRadius: 8 }} />
+            <img src="/pit-stop-data.png" alt="2026 Pit Stop Data by Team" style={{ width: "100%", display: "block", borderRadius: 8 }} />
           </div>
         )}
       </div>
