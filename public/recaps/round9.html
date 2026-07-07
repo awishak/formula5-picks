@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Formula 5 — Round 9 Recap</title>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#f5f3ef;color:#1e1e2a;padding:20px;max-width:640px;margin:0 auto}
+.header{text-align:center;margin-bottom:28px;padding:24px 0;border-bottom:2px solid #d8d2c4}
+.header h1{font-family:'Geologica',sans-serif;font-weight:900;font-size:28px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.header .sub{font-family:'Geologica',sans-serif;font-weight:300;font-size:14px;color:#6b6b80;text-transform:uppercase;letter-spacing:.1em}
+.header .race{font-family:'Geologica',sans-serif;font-weight:700;font-size:18px;color:#2a6fa8;margin-top:8px}
+.byline{font-family:'Geologica',sans-serif;font-weight:600;font-size:11px;color:#6b6b80;text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
+.stitle{font-family:'Geologica',sans-serif;font-weight:800;font-size:14px;color:#2a6fa8;text-transform:uppercase;letter-spacing:.08em;margin:28px 0 12px}
+p{font-size:15px;line-height:1.75;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;border:1px solid #d8d2c4;padding:20px;margin-bottom:16px}
+.lede{border-left:4px solid #2a6fa8}
+.dateline{font-family:'Geologica',sans-serif;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#1e1e2a}
+.t10{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px}
+.t10 th{font-family:'Geologica',sans-serif;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#6b6b80;text-align:left;padding:6px 8px;border-bottom:1px solid #d8d2c4}
+.t10 td{padding:8px;border-bottom:1px solid #d8d2c420;vertical-align:top}
+.t10 .rank{font-family:'Geologica',sans-serif;font-weight:900;font-size:16px;color:#6b6b80;text-align:center;width:30px}
+.t10 .name{font-weight:600;display:flex;align-items:center;gap:8px}
+.t10 .pts{font-family:'Geologica',sans-serif;font-weight:900;font-size:16px;color:#2a6fa8;text-align:right;width:50px}
+.t10 .desc{font-size:12px;color:#6b6b80;line-height:1.5;margin-top:2px}
+.matchup{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px}
+.matchup.champ{border:2px solid #c9a820}.matchup.second{border:2px solid #a0a0a0}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px}
+.mt{font-family:'Geologica',sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px}
+.mdiv{font-family:'Geologica',sans-serif;font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:4px;display:inline-block}
+.mdiv.ch{background:#c9a82015;color:#c9a820}.mdiv.se{background:#a0a0a020;color:#6b6b80}
+.tag{display:inline-block;font-family:'Geologica',sans-serif;font-weight:800;font-size:9px;color:#e08a2e;background:#e08a2e12;border:1px solid #e08a2e30;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em;margin-left:6px}
+.matchup p{font-size:13px;line-height:1.65;margin-bottom:0}
+.wc{display:flex;align-items:center;gap:6px;margin-top:9px;padding-top:8px;border-top:1px dashed #d8d2c4;font-family:'Geologica',sans-serif;font-size:10px;font-weight:600;color:#6b6b80;text-transform:uppercase;letter-spacing:.04em}
+.wc b{color:#2a6fa8;font-weight:800}
+.wc .lens{font-weight:800;color:#8a4fbf}
+.shead{font-family:'Geologica',sans-serif;font-weight:800;font-size:12px;color:#2a6fa8;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.wcbox{margin-top:14px;padding:12px 14px;background:#8a4fbf0c;border:1px solid #8a4fbf25;border-radius:10px;font-size:13px;line-height:1.6}
+.wcbox .wl{font-family:'Geologica',sans-serif;font-weight:800;font-size:9px;color:#8a4fbf;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;display:block}
+.draw{width:100%;border-collapse:collapse;font-size:12px}
+.draw th{font-family:'Geologica',sans-serif;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#6b6b80;text-align:left;padding:6px 8px;border-bottom:1px solid #d8d2c4}
+.draw td{padding:7px 8px;border-bottom:1px solid #d8d2c420;vertical-align:top;line-height:1.4}
+.draw .tm{font-weight:700}
+.draw .nat{font-family:'Geologica',sans-serif;font-weight:700;color:#2a6fa8}
+.draw .rz{font-family:'Geologica',sans-serif;font-weight:800;font-size:8px;padding:1px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:.03em}
+.draw .r-res{background:#2a6fa815;color:#2a6fa8}.draw .r-id{background:#8a4fbf12;color:#8a4fbf}
+.footer{text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #d8d2c4;font-size:11px;color:#6b6b80}
+.backlink{display:inline-flex;align-items:center;gap:6px;font-family:'Geologica',sans-serif;font-weight:700;font-size:12px;color:#2a6fa8;text-decoration:none;text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px}
+a{color:#2a6fa8}
+</style></head><body>
+<a class="backlink" href="/" target="_top">&larr; Back to Formula 5</a>
+<div class="header"><div class="sub">The Commissioner's Report</div><h1>The Streak Dies at Silverstone</h1><div class="race">Round 9 &middot; British Grand Prix</div><div class="byline">Formula 5 Wire &middot; Silverstone Circuit</div></div>
+
+<div class="stitle">The Dispatch</div>
+<div class="card lede">
+<p><span class="dateline">SILVERSTONE, England &mdash;</span> The longest perfect run in Formula 5 ended the way the cruelest ones always do, on a margin nobody chose and nobody could see coming. <strong>Luxor Motorsport</strong> arrived at the British Grand Prix a spotless 8-0, walked off it 8-1, and did not lose a single point of the deciding math on the racetrack. They lost it on the pit line, the same six-point swing that reached into three matchups on Sunday and rearranged the standings while the drivers were still cooling down.</p>
+<p>This is the ninth round of a season the league has quietly started narrating against a bigger backdrop: with the 48-team World Cup running in North America, every one of Formula 5's 24 teams has been handed a national alter ego. Some of those pairings only rhyme by name or history. A handful, this week, rhymed by result, and those are flagged where they earned it. The rest of the field spent Round 9 sorting out a one-point championship, burying a former front-runner, and watching the division cellar throw the day's only true upset.</p>
+</div>
+<div class="stitle">The Streak Dies at Silverstone</div>
+<div class="card">
+<p class="shead"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8743272f-21a4-443c-af8b-819ea11615a2.png?t=1772677485951" style="width:48px;height:48px;border-radius:50%;object-fit:cover"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/4ce965b1-70bf-43db-a3b0-6585be8d8b5e.png?t=1772677776753" style="width:48px;height:48px;border-radius:50%;object-fit:cover"> The Streak Dies at Silverstone</p>
+<p>For eight rounds <strong>Luxor Motorsport</strong> had been the number that broke the spreadsheet: a perfect record propped up by one of the lowest scoring averages in the league, a team that kept finding exactly enough and never a point more. At Silverstone the ledger finally balanced. <strong>Pavly Attalah</strong> and <strong>Chris Malek</strong> tied <strong>Peloton Aubergine</strong> dead even on base, 62 to 62, and for the first time all year the coin came down on the other side. Peloton's pit line landed, Luxor's did not, and the perfect season was gone 67-61.</p>
+<p>It is a quietly enormous result for the winners. <strong>Brett Dillon</strong> and <strong>Stacy Michaelsen</strong> move Peloton to 96 points and 4th in the Second Division, and they did it by taking down the one team no one else could. Luxor slip to 6th on points at 85, still carrying the best record in the room and now, for the first time, a loss beside it. The haunting is over. The math won.</p>
+<div class="wcbox"><span class="wl">World Cup Lens</span>Luxor is our <b>Cape Verde</b>, the improbable unbeaten debutant whose perfect run everyone marveled at until it finally ended by the thinnest possible margin. Peloton plays the <b>Morocco</b> role, the giant-killer that keeps advancing. No real-world match is being claimed here, only the shape of the story.</div>
+</div>
+<div class="stitle">A One-Point Championship</div>
+<div class="card">
+<p class="shead"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/0a09b0a7-8d2c-451a-9541-29b3046aaee3.png?t=1772417253012" style="width:48px;height:48px;border-radius:50%;object-fit:cover"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/579bad3e-bbc9-42f2-9371-22abd9da04d4.png?t=1772469411331" style="width:48px;height:48px;border-radius:50%;object-fit:cover"> A One-Point Championship</p>
+<p>The Championship Division has boiled down to a single point. <strong>Van City Corsa</strong> still sit top at 115, the wire-to-wire leaders who have not surrendered first place all season. But <strong>XLIX Racing Team</strong> spent Round 9 making a statement, posting the division's top score of the week at 87 behind a monster 53 from <strong>Krista Nabil</strong>, banking the full 25 championship points, and closing to within one at 114.</p>
+<p>The margin is even thinner than the table admits. XLIX have won more matchups than Van City, 7 to 6, and hold the better weekly form heading into the back half of the first-half title race. Van City are still the standard. They are no longer the runaway.</p>
+<div class="wcbox"><span class="wl">World Cup Lens</span>The frontrunner is <b>France</b>, the tournament favorite that has led from the front and refuses to let go. XLIX is <b>Argentina</b>, the other titan closing fast, the reigning heavyweight that keeps posting statement results. Two powers, one point, everything still to play for.</div>
+</div>
+<div class="stitle">The Understudy Buries the Favorite</div>
+<div class="card">
+<p class="shead"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8ae6c08b-ce0e-4383-91c2-ceb17ba3db1a.png?t=1772417238558" style="width:48px;height:48px;border-radius:50%;object-fit:cover"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2343928e-bdf3-415a-9f0a-ef3b6af5793f.png?t=1772417222653" style="width:48px;height:48px;border-radius:50%;object-fit:cover"> The Understudy Buries the Favorite</p>
+<p>Two rounds ago <strong>Drivetex</strong> were the story of the season, the dark horse nobody penciled in, riding <strong>Joe McGlynn</strong>'s record 68 into the thick of the title race. At Silverstone the horse came back to the field. Locked level with <strong>Juicero Silicon Valley</strong> at 69 apiece on base, Drivetex lost the tiebreak on the pit line and fell 74-68, McGlynn held to 38 on a day when the whole grid seemed to hand in the same answer sheet.</p>
+<p>The collapse is real. Drivetex banked a single championship point on the week and slid to 5th in the division at 83, their title push stalled at the worst possible moment. <strong>George Fahmy</strong> and <strong>Kerolos Nakhla</strong>, meanwhile, dragged Juicero up to 3rd at 101 and firmly into the conversation behind the top two.</p>
+<div class="wcbox"><span class="wl">World Cup Lens</span>This one rhymes with a real result. Juicero is <b>Norway</b>, the surging outsider that just dumped the fallen giant out of the tournament. Drivetex is <b>Brazil</b>, the marquee name that topped the early running and then got knocked flat. On Sunday, as in the actual last 16, the upstart won.</div>
+</div>
+<div class="stitle">The OVER Runs the Table</div>
+<div class="card">
+<p>The pit line did not nudge Round 9. It steamrolled it. Every single home team in the league landed the OVER for a plus-five, every road team ate the minus-one, and the resulting six-point swing was the same in all twelve matchups. Most weeks that is background noise. This week it was the deciding vote three separate times.</p>
+<p>It flipped one result outright: <strong>Van City Corsa</strong> were outscored by <strong>El Camino Rapido</strong> on base, 81 to 78, and won anyway, 83-80. It broke two dead-even ties the only way it could, sending <strong>Juicero</strong> past Drivetex and, most consequentially, <strong>Peloton</strong> past Luxor to end the season's last perfect record. A mechanic the league has argued about for two months just decided the biggest story of the year. It did not care that it was famous.</p>
+</div>
+<div class="stitle">Matchup Recaps</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/4ce965b1-70bf-43db-a3b0-6585be8d8b5e.png?t=1772677776753" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> Peloton Aubergine 67, Luxor Motorsport 61</div></div>
+<span class="mdiv se">Second Division</span><span class="tag">Streak Ender</span><span class="tag">BOX BOX Decided</span>
+<p style="margin-top:8px">The one everyone will remember. <strong>Brett Dillon</strong> (28) and <strong>Stacy Michaelsen</strong> (34) matched <strong>Pavly Attalah</strong> (28) and <strong>Chris Malek</strong> (34) point for point on base, 62 all, and let the pit line settle a perfect season. It landed for Peloton (96 pts, 4th in the Second Division), who keep pace near the top. Luxor (85 pts, 6th in the Second Division) lose for the first time in 2026.</p>
+<div class="wc"><span class="lens">World Cup lens</span> <b>Morocco</b> ends <b>Cape Verde</b>&rsquo;s perfect run. Identity only, no real match implied.</div>
+</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/579bad3e-bbc9-42f2-9371-22abd9da04d4.png?t=1772469411331" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> XLIX Racing Team 87, Wildcat Motors 80</div></div>
+<span class="mdiv ch">Championship</span><span class="tag">Top Score</span>
+<p style="margin-top:8px">The division's loudest afternoon. <strong>Krista Nabil</strong> (53) and <strong>Moses Abdelshaid</strong> (38) posted the top team score of the week at 87. <strong>Theo Ishak</strong> (51) and <strong>Aditya Satish</strong> (39) were excellent in defeat, but 80 was never going to be enough. XLIX (114 pts, 2nd in the Championship) close to within a point of the summit. Wildcat (54 pts, 10th in the Championship) leave with nothing to show for a strong day.</p>
+<div class="wc"><span class="lens">World Cup lens</span> <b>Argentina</b> versus <b>South Korea</b>. The heavyweight flexes; the gritty outsider heads home empty-handed.</div>
+</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/0a09b0a7-8d2c-451a-9541-29b3046aaee3.png?t=1772417253012" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> Van City Corsa 83, El Camino Rapido 80</div></div>
+<span class="mdiv ch">Championship</span><span class="tag">BOX BOX Flip</span>
+<p style="margin-top:8px">The leaders were beaten and won anyway. <strong>Harold Gutmann</strong> (54, the week's top individual score) and <strong>Paul Kohli</strong> (37) outscored <strong>Rafik Zarifa</strong> (38) and <strong>Mena Yousef</strong> (45) on base, 81 to 78. The pit line erased it. Van City (115 pts, 1st in the Championship) survive on the swing and stay top. El Camino (50 pts, 11th in the Championship) waste a brilliant Gutmann for the second time in three rounds.</p>
+<div class="wc"><span class="lens">World Cup lens</span> <b>France</b> edges <b>T&uuml;rkiye</b>. Identity: the favorite grinds out a win the flashier, flawed side deserved a share of.</div>
+</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8ae6c08b-ce0e-4383-91c2-ceb17ba3db1a.png?t=1772417238558" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> Juicero Silicon Valley 74, Drivetex 68</div></div>
+<span class="mdiv ch">Championship</span><span class="tag">BOX BOX Decided</span>
+<p style="margin-top:8px">Level at 69 on base, decided by the line. <strong>George Fahmy</strong> (38) and <strong>Kerolos Nakhla</strong> (31) got the swing; <strong>Joe McGlynn</strong> (38) and <strong>Nick Brody</strong> (31) did not. Juicero (101 pts, 3rd in the Championship) climb into the top three. Drivetex (83 pts, 5th in the Championship) manage a single point and watch their title push stall.</p>
+<div class="wc"><span class="lens">World Cup lens</span> A real rhyme: <b>Norway</b> 2-0 <b>Brazil</b>. The dark horse buries the fallen favorite, on the pitch and on the pit line.</div>
+</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/fc7843e9-bf07-493f-a9bf-59c6ce2f3a21.png?t=1772436034485" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> HomeworkTubes.Com 73, Cal Aggie Racing 65</div></div>
+<span class="mdiv se">Second Division</span>
+<p style="margin-top:8px">A promotion six-pointer to the road team's liking. <strong>Sam Bottoms</strong> (42) and <strong>Grant Wong</strong> (35) held off <strong>Andrew Ishak</strong> (32) and <strong>Kevin Coolidge</strong> (28) on base, 74 to 60, comfortably enough to absorb the pit swing. HomeworkTubes (102 pts, 3rd in the Second Division) hold a promotion place. Cal Aggie (88 pts, 5th in the Second Division) see their spite-fueled climb hit a wall.</p>
+<div class="wc"><span class="lens">World Cup lens</span> A real rhyme: <b>USA</b> beat <b>Paraguay</b> in the group stage, and did it again here. The host holds; the comeback stalls.</div>
+</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/b4a23ce2-0b92-4db3-9ec8-20f7735d212f.png?t=1773678185674" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> Cougar Autosport 71, Bronco SCUderia 54</div></div>
+<span class="mdiv ch">Championship</span>
+<p style="margin-top:8px">No drama required. <strong>Heather Ishak</strong> (34) and <strong>Lucia Thompson</strong> (32) cleared <strong>Alicia Cho</strong> (25) and <strong>Maggie Mudge</strong> (30) by eleven on base and pulled away from there. Cougar (91 pts, 4th in the Championship) keep quiet, effective company in the top four. Bronco (54 pts, 9th in the Championship) cool off hard after a hot stretch.</p>
+<div class="wc"><span class="lens">World Cup lens</span> A real rhyme in spirit: <b>England</b> 3-2 <b>Mexico</b>. The grinder advances; the side that flew high early gets knocked out.</div>
+</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/16ff8643-cd10-4ad5-9118-e4e50fb4a0ba.png?t=1772678010120" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> TJ Premium 81, Magic Kingdom Racing 64</div></div>
+<span class="mdiv se">Second Division</span><span class="tag">Season Best</span>
+<p style="margin-top:8px">The Bot picked a good week to peak. <strong>TJ Donato</strong> (38) and the <strong>Formula5 Bot</strong> (38) posted TJ Premium's best team score of the year to bury <strong>Chris Fondacaro</strong> (48, a strong day wasted) and <strong>Larry Noel</strong> (24). TJ Premium (55 pts, 9th in the Second Division) get a breakthrough. Magic Kingdom (78 pts, 7th in the Second Division) find nothing magical.</p>
+<div class="wc"><span class="lens">World Cup lens</span> <b>Egypt</b> versus <b>Portugal</b>. The underdog's breakthrough day against a name whose shine has faded.</div>
+</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/d9e7da52-4a19-48e0-8c5d-4cfce49f5f43.png?t=1772677964018" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> Shoey Time! w/ Max and Danny 65, Aggie Slipstream 67</div></div>
+<span class="mdiv se">Second Division</span><span class="tag">Upset</span>
+<p style="margin-top:8px">The day's only real upset, and the closest call on the board. <strong>Brian Dong</strong> (37) and <strong>Dan Patry</strong> (31) put the league's designated cellar-dwellers ahead of <strong>Max Reisinger</strong> (38) and <strong>Danny Bowers</strong> (22) by eight on base, enough to survive the swing and win 67-65. Aggie Slipstream (38 pts, 10th in the Second Division) nick one. Shoey Time (76 pts, 8th in the Second Division) pour another out.</p>
+<div class="wc"><span class="lens">World Cup lens</span> <b>Panama</b> over <b>Australia</b>. Even the wooden-spoon side scores sometimes. Identity only.</div>
+</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/27ccc53b-cca4-4b6b-a166-7ed81b11c86f.png?t=1772677683335" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> Meatballs 81, Scuderia Iskandaraya 50</div></div>
+<span class="mdiv se">Second Division</span><span class="tag">Biggest Win</span>
+<p style="margin-top:8px">The division leaders did not flinch. <strong>Anthony Carnesecca</strong> (43) and <strong>Maggie Ball</strong> (37) ran 81 past <strong>Anthony Zamary</strong> (27) and <strong>Ramy Stephanos</strong> (24) for the round's widest margin. Meatballs (115 pts, 1st in the Second Division) match Van City for the best points haul in the league. Scuderia (36 pts, 11th in the Second Division) take the heaviest beating of the day.</p>
+<div class="wc"><span class="lens">World Cup lens</span> <b>Spain</b> puts <b>Tunisia</b> to the sword. The favorite blows the doors off; identity only.</div>
+</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/b9eb80e4-13ef-41d6-adff-1c8e64270c6a.png?t=1772469050248" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> Stalloni 1851 73, East Bay Racing 70</div></div>
+<span class="mdiv ch">Championship</span>
+<p style="margin-top:8px">For once the best-average team in the division did not need the line to break its heart, because it lost on base too. <strong>Jack Civitts</strong> (37) and <strong>Scott Schertler</strong> (37) edged <strong>Joe Hanna</strong> (34) and <strong>Zack Girgis</strong> (31) outright, 74 to 65. Stalloni (63 pts, 8th in the Championship) bank a clean win. East Bay (68 pts, 6th in the Championship) keep the league's cruelest gap between how they score and where they sit.</p>
+<div class="wc"><span class="lens">World Cup lens</span> <b>Senegal</b> against <b>Germany</b>. Quality on both sides; the team that lives and dies on the finest margins comes up short again.</div>
+</div>
+<div class="matchup champ">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2cfbbd19-61c8-4c6a-87c1-6367a3f5483a.png?t=1772676769760" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> Garra Dynamics 65, Cascadia Motorsport 58</div></div>
+<span class="mdiv ch">Championship</span>
+<p style="margin-top:8px"><strong>Francisco Soldavini</strong> (34) and <strong>Ryan Kohli</strong> (32) had enough in hand to shrug off the road-team penalty, beating <strong>Martin Nobar</strong> (25) and <strong>Ronnie Nobar</strong> (28) by thirteen on base. Garra (67 pts, 7th in the Championship) climb into the top half. Cascadia (49 pts, 12th in the Championship) settle to the division floor.</p>
+<div class="wc"><span class="lens">World Cup lens</span> <b>Uruguay</b> over <b>Canada</b>. Garra by name and by nature; identity only.</div>
+</div>
+<div class="matchup second">
+<div class="mh"><div class="mt"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/9a1eeebb-53f4-4435-842a-835fcb9c416f.png?t=1772678148341" style="width:28px;height:28px;border-radius:50%;object-fit:cover"> TNT Roku F5 Team 73, Prestissimo Veloce 61</div></div>
+<span class="mdiv se">Second Division</span>
+<p style="margin-top:8px">A comfortable night for the veterans. <strong>Matteo Thompson</strong> (46) and <strong>Andy Thompson</strong> (28) had too much for the league's youngest side, though <strong>Evie Ishak</strong> (34) top-scored for Prestissimo on a bright individual day. TNT (110 pts, 2nd in the Second Division) hold second and a promotion place. Prestissimo (30 pts, 12th in the Second Division) stay bottom, but not without a pulse.</p>
+<div class="wc"><span class="lens">World Cup lens</span> <b>Belgium</b> handles <b>Cura&ccedil;ao</b>. The seasoned contender against the smallest, youngest side in the field.</div>
+</div>
+<div class="stitle">Top 10 of the Week</div>
+<div class="card" style="padding:12px">
+<table class="t10"><thead><tr><th></th><th>Player</th><th style="text-align:right">Pts</th></tr></thead><tbody>
+<tr><td class="rank">1</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2a1d8e8a-bc94-4105-abc9-5445bc58befa.png?t=1772682503476" style="width:48px;height:48px;border-radius:50%;object-fit:cover"> Harold Gutmann</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin:2px 0"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/a602540b-92f4-48f0-bff2-67e74fba1e67.png?t=1772524618249" style="width:20px;height:20px;border-radius:50%;object-fit:cover"> El Camino Rapido</div><div class="desc">The top score of the week at 54, another perfect back half of the sheet wrapped around the +18 and the weekly bonus. Magnificent, and on the losing end again.</div></td><td class="pts">54</td></tr>
+<tr><td class="rank">2</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/1d177bf0-e5e9-4412-b220-b5d1e2e74b68.png?t=1772680182207" style="width:48px;height:48px;border-radius:50%;object-fit:cover"> Krista Nabil</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin:2px 0"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/579bad3e-bbc9-42f2-9371-22abd9da04d4.png?t=1772469411331" style="width:20px;height:20px;border-radius:50%;object-fit:cover"> XLIX Racing Team</div><div class="desc">53 to power the division's top team score and haul XLIX to within a point of first. The statement performance of the round.</div></td><td class="pts">53</td></tr>
+<tr><td class="rank">3</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/5e8e105d-b2bb-4495-9f45-04bfce6e4587.png?t=1772682483157" style="width:48px;height:48px;border-radius:50%;object-fit:cover"> Theo Ishak</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin:2px 0"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/5c4087ab-d297-43c8-a132-d212ed0e1190.png?t=1772417256621" style="width:20px;height:20px;border-radius:50%;object-fit:cover"> Wildcat Motors</div><div class="desc">51 in a losing effort, matching the week's template and then some. Wildcat's best had no answer to XLIX's best.</div></td><td class="pts">51</td></tr>
+<tr><td class="rank">4</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c55c6192-2f81-4188-8e00-705b8a5744e4.png?t=1772503743937" style="width:48px;height:48px;border-radius:50%;object-fit:cover"> Chris Fondacaro</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin:2px 0"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/4c3cda25-74f1-4884-9e85-d45fff114e71.png?t=1772677562032" style="width:20px;height:20px;border-radius:50%;object-fit:cover"> Magic Kingdom Racing</div><div class="desc">48 and completely wasted. Magic Kingdom's top man could not drag a teammate along, and the Bot's team ran them over.</div></td><td class="pts">48</td></tr>
+<tr><td class="rank">5</td><td><div class="name"><span style="display:inline-block;width:48px;height:48px;border-radius:50%;background:#d8d2c4;text-align:center;line-height:48px;font-family:'Geologica',sans-serif;font-weight:700;font-size:13px;color:#6b6b80">MT</span> Matteo Thompson</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin:2px 0"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/9a1eeebb-53f4-4435-842a-835fcb9c416f.png?t=1772678148341" style="width:20px;height:20px;border-radius:50%;object-fit:cover"> TNT Roku F5 Team</div><div class="desc">46 to lead the family firm past Prestissimo, once again outscoring his father in the process.</div></td><td class="pts">46</td></tr>
+<tr><td class="rank">6</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/8f01fd36-f1ec-4add-887e-c092a70c11a6.png?t=1773359475330" style="width:48px;height:48px;border-radius:50%;object-fit:cover"> Mena Yousef</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin:2px 0"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/0a09b0a7-8d2c-451a-9541-29b3046aaee3.png?t=1772417253012" style="width:20px;height:20px;border-radius:50%;object-fit:cover"> Van City Corsa</div><div class="desc">45 to anchor the leaders and, with a late assist from the pit line, keep Van City on top by a single point.</div></td><td class="pts">45</td></tr>
+<tr><td class="rank">7</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/da8b5649-9209-4d28-a31c-2aa8fc1eaa4b.png?t=1772686091799" style="width:48px;height:48px;border-radius:50%;object-fit:cover"> Anthony Carnesecca</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin:2px 0"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/27ccc53b-cca4-4b6b-a166-7ed81b11c86f.png?t=1772677683335" style="width:20px;height:20px;border-radius:50%;object-fit:cover"> Meatballs</div><div class="desc">43 at the front of the Second Division's biggest win, the Meatballs machine humming right on schedule.</div></td><td class="pts">43</td></tr>
+<tr><td class="rank">8</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" style="width:48px;height:48px;border-radius:50%;object-fit:cover"> Sam Bottoms</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin:2px 0"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/fc7843e9-bf07-493f-a9bf-59c6ce2f3a21.png?t=1772436034485" style="width:20px;height:20px;border-radius:50%;object-fit:cover"> HomeworkTubes.Com</div><div class="desc">42 to headline a promotion-defining win, holding off Cal Aggie's charge on base by a comfortable margin.</div></td><td class="pts">42</td></tr>
+<tr><td class="rank">9</td><td><div class="name"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/857170ed-6313-40de-9b7e-9d41b339e690.png?t=1773084768500" style="width:48px;height:48px;border-radius:50%;object-fit:cover"> Formula5 Bot</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin:2px 0"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/16ff8643-cd10-4ad5-9118-e4e50fb4a0ba.png?t=1772678010120" style="width:20px;height:20px;border-radius:50%;object-fit:cover"> TJ Premium</div><div class="desc">40 on the Bot's best day of the year, half of TJ Premium's season-high team score. The machine picked its moment.</div></td><td class="pts">40</td></tr>
+<tr><td class="rank">10</td><td><div class="name"><span style="display:inline-block;width:48px;height:48px;border-radius:50%;background:#d8d2c4;text-align:center;line-height:48px;font-family:'Geologica',sans-serif;font-weight:700;font-size:13px;color:#6b6b80">AS</span> Aditya Satish</div><div class="desc" style="display:flex;align-items:center;gap:4px;margin:2px 0"><img src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/5c4087ab-d297-43c8-a132-d212ed0e1190.png?t=1772417256621" style="width:20px;height:20px;border-radius:50%;object-fit:cover"> Wildcat Motors</div><div class="desc">39 alongside Theo Ishak in a losing cause, another perfect midfield swallowed by XLIX's 87.</div></td><td class="pts">39</td></tr>
+</tbody></table>
+<p style="font-size:11px;color:#6b6b80;line-height:1.5;margin:0">Half the grid landed the same core at Silverstone: George Russell for the +18, Isack Hadjar and Arvid Lindblad in the midfield. The separation came at the edges, and Harold Gutmann's weekly bonus put him on top.</p>
+</div>
+<div class="stitle">The Full Draw</div>
+<div class="card" style="padding:12px">
+<p style="font-size:12px;color:#6b6b80;margin-bottom:10px">All 24 teams, all 24 alter egos. <span style="color:#2a6fa8;font-weight:700">RES</span> means the Round 9 result actually rhymes with a real World Cup match. <span style="color:#8a4fbf;font-weight:700">ID</span> means the pairing is identity, history, or name only, with no real match implied.</p>
+<table class="draw"><thead><tr><th>Team</th><th>Nation</th><th></th></tr></thead><tbody>
+<tr><td class="tm">Van City Corsa</td><td class="nat">France</td><td>Wire-to-wire leader, still top by a point <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">XLIX Racing Team</td><td class="nat">Argentina</td><td>Surging titan, week's top score, one point back <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Juicero Silicon Valley</td><td class="nat">Norway</td><td>Buried the fallen favorite, real result <span class="rz r-res">Res</span></td></tr>
+<tr><td class="tm">Cougar Autosport</td><td class="nat">England</td><td>Grinds wins; beat its foe as England beat Mexico <span class="rz r-res">Res</span></td></tr>
+<tr><td class="tm">Drivetex</td><td class="nat">Brazil</td><td>Front-runner knocked flat, real result <span class="rz r-res">Res</span></td></tr>
+<tr><td class="tm">East Bay Racing</td><td class="nat">Germany</td><td>Best on paper, undone on the finest margins <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Garra Dynamics</td><td class="nat">Uruguay</td><td>Garra by name; both underwhelm their pedigree <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Stalloni 1851</td><td class="nat">Senegal</td><td>Real quality, cruel margins <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Bronco SCUderia</td><td class="nat">Mexico</td><td>Flew high early, then knocked out <span class="rz r-res">Res</span></td></tr>
+<tr><td class="tm">Wildcat Motors</td><td class="nat">South Korea</td><td>Gritty, clawed up, mid ceiling <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">El Camino Rapido</td><td class="nat">Türkiye</td><td>A dazzling talent wasted by a flat side <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Cascadia Motorsport</td><td class="nat">Canada</td><td>Pacific-Northwest cousin, quiet exit <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Meatballs</td><td class="nat">Spain</td><td>Dominant leader, blew the doors off <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">TNT Roku F5 Team</td><td class="nat">Belgium</td><td>Veteran core, still very much in it <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">HomeworkTubes.Com</td><td class="nat">USA</td><td>Beat Paraguay, then did it again, real result <span class="rz r-res">Res</span></td></tr>
+<tr><td class="tm">Peloton Aubergine</td><td class="nat">Morocco</td><td>Giant-killer that keeps advancing <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Cal Aggie Racing</td><td class="nat">Paraguay</td><td>Spite run that hit a wall, real result <span class="rz r-res">Res</span></td></tr>
+<tr><td class="tm">Luxor Motorsport</td><td class="nat">Cape Verde</td><td>Unbeaten Cinderella whose run finally ended <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Magic Kingdom Racing</td><td class="nat">Portugal</td><td>Faded glamour, knocked out <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Shoey Time! w/ Max and Danny</td><td class="nat">Australia</td><td>The shoey is peak Australiana; a moment, then flat <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">TJ Premium</td><td class="nat">Egypt</td><td>The underdog's breakthrough day <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Aggie Slipstream</td><td class="nat">Panama</td><td>Wooden spoon by design <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Scuderia Iskandaraya</td><td class="nat">Tunisia</td><td>Arab North African, rough patch <span class="rz r-id">Id</span></td></tr>
+<tr><td class="tm">Prestissimo Veloce</td><td class="nat">Curaçao</td><td>The smallest and youngest, brave, bottom <span class="rz r-id">Id</span></td></tr>
+</tbody></table></div>
+<div class="footer">Formula 5 &middot; 2026 Season &middot; Round 9 &middot; British Grand Prix<br>The Commissioner's Report, filed from the Formula 5 Wire<br><br><a href="/" target="_top">&larr; Back to Formula 5</a></div>
+</body></html>
