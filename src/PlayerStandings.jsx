@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -56,6 +56,18 @@ function countTrophies2025(name) {
   return [...str].length;
 }
 
+// Standard competition ranking: tied players (equal key) share a rank, the next rank skips.
+// Returns an array of { rank, tied } aligned with the input order.
+function competitionRanks(sorted, keyFn) {
+  const ranks = sorted.map((p, i) =>
+    (i > 0 && keyFn(sorted[i]) === keyFn(sorted[i - 1])) ? null : i + 1
+  );
+  for (let i = 1; i < ranks.length; i++) if (ranks[i] === null) ranks[i] = ranks[i - 1];
+  const counts = {};
+  ranks.forEach(r => { counts[r] = (counts[r] || 0) + 1; });
+  return ranks.map(r => ({ rank: r, tied: counts[r] > 1 }));
+}
+
 function PlayerAvatar({ name, size = 30, photoUrl }) {
   let hash = 0;
   for (let i = 0; i < (name || "").length; i++) hash = (name || "").charCodeAt(i) + ((hash << 5) - hash);
@@ -85,6 +97,136 @@ function TeamLogo({ name, size = 28, division, logoUrl }) {
     <div style={{ width: size, height: size, borderRadius: size * 0.3, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: FD, fontWeight: 900, fontSize: size * 0.36, color: "#fff", border: `2px solid ${outlineColor}`, boxSizing: "border-box" }}>{initials}</div>
   );
 }
+function niceCeil(v) {
+  if (v <= 0) return 10;
+  const mag = Math.pow(10, Math.floor(Math.log10(v)));
+  const n = v / mag;
+  const step = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
+  return step * mag;
+}
+
+function ScatterView({ standings, getTeamInfo, currentUser, myPlayerId }) {
+  const BRONZE = "#CD7F32";
+  const scrollRef = useRef(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const N = standings.length;
+
+  // Tie-aware rank per player (standings arrives sorted by total points desc)
+  const rankInfo = competitionRanks(standings, p => p.totalPts);
+
+  // Layout
+  const COL = 46, AV = 32, H = 340, PAD_TOP = 20, PAD_BOTTOM = 40, PAD_SIDE = COL / 2;
+  const plotW = Math.max(N * COL, 300);
+  const plotH = H - PAD_TOP - PAD_BOTTOM;
+  const maxPts = Math.max(...standings.map(p => p.totalPts), 0);
+  const yMax = niceCeil(maxPts);
+  // Leader (rank 1) at far right → idx 0 rightmost
+  const xOf = (idx) => plotW - PAD_SIDE - idx * COL;
+  const yOf = (pts) => PAD_TOP + (1 - pts / yMax) * plotH;
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map(f => Math.round(yMax * f));
+
+  // Auto-scroll to the right so the leaders are visible first
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+  }, [N]);
+
+  if (maxPts <= 0) {
+    return <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, padding: "30px 0", textAlign: "center" }}>No scores yet — the chart appears once races are scored.</p>;
+  }
+
+  const pts = standings.map((p, idx) => ({ x: xOf(idx), y: yOf(p.totalPts) }));
+  const linePoints = [...pts].sort((a, b) => a.x - b.x).map(pt => `${pt.x},${pt.y}`).join(" ");
+
+  const selected = standings.find(p => p.id === selectedId);
+  const selIdx = selected ? standings.indexOf(selected) : -1;
+  const selInfo = selIdx >= 0 ? rankInfo[selIdx] : null;
+  const selTeam = selected ? getTeamInfo(selected.id) : null;
+
+  return (
+    <div>
+      <div style={{ display: "flex" }}>
+        {/* Y axis */}
+        <div style={{ width: 32, height: H, position: "relative", flexShrink: 0 }}>
+          {ticks.map(t => (
+            <div key={t} style={{ position: "absolute", right: 4, top: yOf(t) - 6, fontFamily: FD, fontWeight: 700, fontSize: 9, color: TEXT2 }}>{t}</div>
+          ))}
+        </div>
+        {/* Scrollable plot */}
+        <div ref={scrollRef} style={{ overflowX: "auto", flex: 1, WebkitOverflowScrolling: "touch" }}>
+          <div style={{ position: "relative", width: plotW, height: H }}>
+            {/* Gridlines */}
+            {ticks.map(t => (
+              <div key={t} style={{ position: "absolute", left: 0, right: 0, top: yOf(t), height: 1, background: t === 0 ? BORDER : `${BORDER}55` }} />
+            ))}
+            {/* Connecting curve */}
+            <svg width={plotW} height={H} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}>
+              <polyline points={linePoints} fill="none" stroke={BLUE} strokeWidth={2} strokeOpacity={0.45} strokeLinejoin="round" />
+            </svg>
+            {/* Points — all players, each clickable */}
+            {standings.map((p, idx) => {
+              const { rank, tied } = rankInfo[idx];
+              const isMe = p.name === currentUser;
+              const isSel = p.id === selectedId;
+              const ring = isSel ? BLUEDARK : rank === 1 ? GOLD : rank === 2 ? SILVER : rank === 3 ? BRONZE : isMe ? BLUE : "#fff";
+              const cx = xOf(idx), cy = yOf(p.totalPts);
+              return (
+                <button key={p.id} onClick={() => setSelectedId(isSel ? null : p.id)}
+                  title={`${tied ? "T" : ""}#${rank} ${p.name} — ${p.totalPts} pts`}
+                  style={{ position: "absolute", left: cx - AV / 2, top: cy - AV / 2, width: AV, textAlign: "center", border: "none", background: "transparent", padding: 0, cursor: "pointer", zIndex: isSel ? 3 : 2 }}>
+                  <div style={{ width: AV, height: AV, borderRadius: "50%", border: `${isSel ? 3 : 2.5}px solid ${ring}`, boxShadow: isSel ? `0 0 0 3px ${BLUE}44` : `0 1px 3px rgba(0,0,0,0.15)`, boxSizing: "border-box", overflow: "hidden" }}>
+                    <PlayerAvatar name={p.name} size={AV - 5} photoUrl={p.photo_url} />
+                  </div>
+                  <div style={{ fontFamily: FD, fontWeight: 800, fontSize: 9, color: isMe ? BLUEDARK : TEXT2, marginTop: 2, whiteSpace: "nowrap" }}>
+                    {p.name.split(" ")[0]}
+                  </div>
+                  <div style={{ fontFamily: FD, fontWeight: 900, fontSize: 9, color: TEXT2 }}>{tied ? `T${rank}` : `#${rank}`}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, paddingLeft: 32 }}>
+        <span style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>← lower ranked</span>
+        <span style={{ fontFamily: FB, fontSize: 10, color: TEXT2 }}>higher ranked →</span>
+      </div>
+
+      {/* Tap-to-inspect detail card */}
+      {selected ? (
+        <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 12, border: `2px solid ${BLUE}`, background: "rgba(108,184,224,0.08)" }}>
+          <PlayerAvatar name={selected.name} size={44} photoUrl={selected.photo_url} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: FB, fontWeight: 700, fontSize: 16, color: TEXT, margin: 0 }}>
+              {selected.name}{selected.name === currentUser ? " (you)" : ""}
+              {myPlayerId && selTeam?.teammateId === myPlayerId ? " (teammate)" : ""}
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+              {selTeam?.logoUrl && <img src={selTeam.logoUrl} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover" }} />}
+              <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0 }}>{selTeam?.name || ""}</p>
+              {selected.trophies.filter(t => t !== "●").length > 0 && (
+                <span style={{ fontSize: 13 }}>{selected.trophies.filter(t => t !== "●").join("")}</span>
+              )}
+            </div>
+          </div>
+          <div style={{ textAlign: "right", flexShrink: 0 }}>
+            <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: BLUEDARK }}>{selected.totalPts}</span>
+            <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              {selInfo?.tied ? `Tied ${selInfo.rank}` : `Rank ${selInfo?.rank}`}
+            </p>
+            <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, margin: "2px 0 0" }}>
+              Last race {selected.lastRacePts != null ? `${selected.lastRacePts} pts` : "—"} · T10: {selected.topTens || 0}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, textAlign: "center", marginTop: 8 }}>
+          Total points (vertical) by rank (horizontal). Leader at far right. Tap any avatar for details.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function PlayerStandings({ currentUser }) {
   const [standings, setStandings] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -99,6 +241,7 @@ export default function PlayerStandings({ currentUser }) {
   const [allScores, setAllScores] = useState([]);
   const [sortBy, setSortBy] = useState("points");
   const [lastRaceId, setLastRaceId] = useState(null);
+  const [viewMode, setViewMode] = useState("list");
 
   useEffect(() => {
     async function load() {
@@ -222,10 +365,14 @@ export default function PlayerStandings({ currentUser }) {
   const hasScores = standings.some(s => s.raceCount > 0);
   const myPlayerId = standings.find(s => s.name === currentUser)?.id;
 
-  // Points-based rank (always, regardless of sort)
+  // Points-based rank (always, regardless of sort). Tie-aware: equal totals share a rank.
   const pointsRanked = [...standings].sort((a, b) => b.totalPts - a.totalPts);
   const pointsRank = {};
-  pointsRanked.forEach((p, i) => { pointsRank[p.id] = i + 1; });
+  const pointsTied = {};
+  competitionRanks(pointsRanked, p => p.totalPts).forEach((r, i) => {
+    pointsRank[pointsRanked[i].id] = r.rank;
+    pointsTied[pointsRanked[i].id] = r.tied;
+  });
 
   // Last-race rank (place each player earned in the most recent scored race)
   const lastRaceRank = lastRaceId ? (raceRankings[lastRaceId] || {}) : {};
@@ -242,6 +389,16 @@ export default function PlayerStandings({ currentUser }) {
     }
   });
 
+  // Tie-aware rank for the displayed order. Name sorts have no meaningful ties.
+  const rankKeyFn = {
+    points: p => p.totalPts,
+    lastrace: p => (p.lastRacePts ?? -Infinity),
+    trophies: p => p.trophies.length,
+    first: (_p, i) => i,
+    last: (_p, i) => i,
+  }[sortBy] || (p => p.totalPts);
+  const listRanks = competitionRanks(sortedStandings, (p) => rankKeyFn(p, sortedStandings.indexOf(p)));
+
   return (
     <div style={{ padding: "20px 20px 100px" }}>
       <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: DARK, textTransform: "uppercase", letterSpacing: "0.03em", margin: "0 0 4px" }}>Player Standings</p>
@@ -249,6 +406,26 @@ export default function PlayerStandings({ currentUser }) {
         {hasScores ? `${standings[0]?.raceCount || 0} race${(standings[0]?.raceCount || 0) !== 1 ? "s" : ""} completed` : "No race results yet"}
       </p>
 
+      {/* View toggle */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+        {[
+          { id: "list", label: "List" },
+          { id: "chart", label: "Chart" },
+        ].map(v => (
+          <button key={v.id} onClick={() => setViewMode(v.id)} style={{
+            padding: "6px 16px", borderRadius: 100, cursor: "pointer",
+            border: `1px solid ${viewMode === v.id ? DARK : BORDER}`,
+            background: viewMode === v.id ? DARK : "transparent",
+            color: viewMode === v.id ? "#fff" : TEXT2,
+            fontFamily: FD, fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.04em"
+          }}>{v.label}</button>
+        ))}
+      </div>
+
+      {viewMode === "chart" ? (
+        <ScatterView standings={pointsRanked} getTeamInfo={getTeamInfo} currentUser={currentUser} myPlayerId={myPlayerId} />
+      ) : (
+      <>
       {/* Keys */}
       <div style={{ display: "flex", gap: 14, marginBottom: 8, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
@@ -311,7 +488,8 @@ export default function PlayerStandings({ currentUser }) {
           <div style={{ width: 16 }} />
         </div>
         {sortedStandings.map((p, idx) => {
-          const rank = idx + 1;
+          const rank = listRanks[idx].rank;
+          const isTied = listRanks[idx].tied;
           const isMe = p.name === currentUser;
           const isExpanded = expanded === p.id;
           const { name: teamName, division, teammateId, logoUrl } = getTeamInfo(p.id);
@@ -335,7 +513,7 @@ export default function PlayerStandings({ currentUser }) {
                 background: isMe ? "rgba(108,184,224,0.08)" : "#fff",
                 display: "flex", alignItems: "center", gap: 0, cursor: "pointer", textAlign: "left"
               }}>
-                <div style={{ minWidth: 28, textAlign: "center", fontFamily: FD, fontWeight: 900, fontSize: 16, color: TEXT2 }}>{rank}</div>
+                <div style={{ minWidth: 28, textAlign: "center", fontFamily: FD, fontWeight: 900, fontSize: isTied ? 13 : 16, color: TEXT2 }}>{isTied ? `T${rank}` : rank}</div>
                 <div style={{ marginLeft: 8 }}><PlayerAvatar name={p.name} size={36} photoUrl={p.photo_url} /></div>
                 <div style={{ flex: 1, minWidth: 0, marginLeft: 6 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -486,6 +664,8 @@ export default function PlayerStandings({ currentUser }) {
           );
         })}
       </div>
+      </>
+      )}
 
       {lastUpdated && (
         <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, textAlign: "center", marginTop: 20 }}>
