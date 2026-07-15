@@ -348,10 +348,39 @@ function StepMidPicks({ drivers, selected, onToggle, driverMap }) {
 // ── Step 3: Finishing Order ─────────────────────────────
 function StepFinishingOrder({ order, onReorder, driverMap }) {
   const [dragging, setDragging] = useState(null);
-  const ds = (i) => setDragging(i);
-  const dov = (e, i) => { e.preventDefault(); if (dragging === null || dragging === i) return; const n = [...order]; const it = n.splice(dragging, 1)[0]; n.splice(i, 0, it); onReorder(n); setDragging(i); };
-  const de = () => setDragging(null);
+  const containerRef = useRef(null);
   const mv = (i, dir) => { const n = [...order]; const t = i + dir; if (t < 0 || t >= n.length) return; [n[i], n[t]] = [n[t], n[i]]; onReorder(n); };
+
+  // Pointer-based reorder — fires for both mouse and touch (HTML5 drag does not
+  // work on touchscreens). The grip handle captures the pointer on press.
+  const indexAtY = (clientY) => {
+    const kids = containerRef.current ? Array.from(containerRef.current.children) : [];
+    if (kids.length === 0) return null;
+    for (let i = 0; i < kids.length; i++) {
+      const r = kids[i].getBoundingClientRect();
+      if (clientY >= r.top && clientY <= r.bottom) return i;
+    }
+    return clientY < kids[0].getBoundingClientRect().top ? 0 : kids.length - 1;
+  };
+  const onGripDown = (e, idx) => {
+    setDragging(idx);
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+  };
+  const onGripMove = (e) => {
+    if (dragging === null) return;
+    e.preventDefault();
+    const target = indexAtY(e.clientY);
+    if (target === null || target === dragging) return;
+    const n = [...order];
+    const it = n.splice(dragging, 1)[0];
+    n.splice(target, 0, it);
+    onReorder(n);
+    setDragging(target);
+  };
+  const onGripUp = (e) => {
+    if (dragging !== null) { try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {} }
+    setDragging(null);
+  };
   return (
     <div>
       <StepHeading title="Finishing Order" subtitle="Arrange your 5 drivers in predicted finishing order" />
@@ -359,7 +388,7 @@ function StepFinishingOrder({ order, onReorder, driverMap }) {
         <p style={{ margin: 0 }}>Now arrange all 5 of your drivers in the order you think they'll finish. This doesn't change the points they earn — you keep those no matter what. But if you nail the exact order of all 5? That's a <Pts>+6</Pts> bonus.</p>
         <p style={{ margin: "6px 0 0", fontSize: 11.5, color: TEXT2 }}>DNFs at the back of your order are interchangeable, so don't stress about that.</p>
       </RuleCard>
-      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      <div ref={containerRef} style={{ display: "flex", flexDirection: "column", gap: 0 }}>
         {order.map((d, idx) => {
           const parts = d.split(" ");
           const firstName = parts[0];
@@ -371,12 +400,12 @@ function StepFinishingOrder({ order, onReorder, driverMap }) {
           const isDragging = dragging === idx;
           return (
             <div key={d}>
-              <div draggable onDragStart={() => ds(idx)} onDragOver={(e) => dov(e, idx)} onDragEnd={de}
+              <div
                 style={{
                   display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12,
                   border: `2px solid ${isDragging ? teamColor : BORDER}`,
                   background: isDragging ? `${teamColor}0a` : "#fff",
-                  cursor: "grab", transition: "all 0.15s", userSelect: "none",
+                  transition: "border 0.15s, background 0.15s", userSelect: "none",
                   borderLeft: `4px solid ${teamColor}`,
                 }}>
                 {/* Position number */}
@@ -408,11 +437,26 @@ function StepFinishingOrder({ order, onReorder, driverMap }) {
                   )}
                 </div>
 
-                {/* Up/down arrows */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <button onClick={() => mv(idx, -1)} disabled={idx === 0} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? BORDER : TEXT2, fontSize: 14, padding: "2px 6px", lineHeight: 1 }}>▲</button>
-                  <button onClick={() => mv(idx, 1)} disabled={idx === order.length - 1} style={{ background: "none", border: "none", cursor: idx === order.length - 1 ? "default" : "pointer", color: idx === order.length - 1 ? BORDER : TEXT2, fontSize: 14, padding: "2px 6px", lineHeight: 1 }}>▼</button>
+                {/* Up/down arrows — 44px tap targets */}
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <button aria-label="Move up" onClick={() => mv(idx, -1)} disabled={idx === 0} style={{ background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer", color: idx === 0 ? BORDER : TEXT2, fontSize: 16, width: 44, height: 26, lineHeight: 1, padding: 0 }}>▲</button>
+                  <button aria-label="Move down" onClick={() => mv(idx, 1)} disabled={idx === order.length - 1} style={{ background: "none", border: "none", cursor: idx === order.length - 1 ? "default" : "pointer", color: idx === order.length - 1 ? BORDER : TEXT2, fontSize: 16, width: 44, height: 26, lineHeight: 1, padding: 0 }}>▼</button>
                 </div>
+
+                {/* Drag handle — pointer-based reorder (works on touch) */}
+                <button
+                  aria-label={`Drag ${d} to reorder`}
+                  onPointerDown={(e) => onGripDown(e, idx)}
+                  onPointerMove={onGripMove}
+                  onPointerUp={onGripUp}
+                  onPointerCancel={onGripUp}
+                  style={{
+                    background: "none", border: "none", padding: 0,
+                    width: 40, height: 44, flexShrink: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: isDragging ? "grabbing" : "grab", color: isDragging ? teamColor : TEXT2,
+                    touchAction: "none", fontSize: 18, lineHeight: 1
+                  }}>⠿</button>
               </div>
               {idx < order.length - 1 && <div style={{ textAlign: "center", padding: "6px 0", fontFamily: FB, fontSize: 11, color: TEXT2, fontStyle: "italic" }}>will finish ahead of</div>}
             </div>
@@ -1356,6 +1400,8 @@ function MyPicksInner({ currentUser, onNavigate }) {
   const [submitted, setSubmitted] = useState(false);
   const [existingPick, setExistingPick] = useState(null);
   const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   // Pick state
   const [topPick, setTopPick] = useState(null);
@@ -1490,14 +1536,18 @@ function MyPicksInner({ currentUser, onNavigate }) {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return; // guard against double-tap creating duplicate rows
+    setSubmitError(null);
+    // Check deadline hasn't passed
+    if (race.pick_deadline && new Date() >= new Date(race.pick_deadline)) {
+      setSubmitError("The pick deadline has passed — this race is locked.");
+      return;
+    }
+    setSubmitting(true);
     try {
-      // Check deadline hasn't passed
-      if (race.pick_deadline && new Date() >= new Date(race.pick_deadline)) {
-        setError("Pick deadline has passed!");
-        return;
-      }
-      setLoading(true);
-      const { error: insertErr } = await supabase
+      // .select() so an RLS/permission failure surfaces instead of silently
+      // returning zero rows (see CLAUDE.md: Supabase silent writes).
+      const { data, error: insertErr } = await supabase
         .from("picks")
         .insert({
           player_id: playerId,
@@ -1507,13 +1557,18 @@ function MyPicksInner({ currentUser, onNavigate }) {
           best_finish: bestFinish,
           pit_guess: pitGuess,
           submitted_at: new Date().toISOString()
-        });
+        })
+        .select();
       if (insertErr) throw insertErr;
+      if (!data || data.length === 0) {
+        throw new Error("Your picks didn't save — this may be a permissions or deadline issue. Please try again.");
+      }
       setSubmitted(true);
     } catch (err) {
-      setError(err.message);
+      // Non-destructive: keep the user's picks on screen so they can retry.
+      setSubmitError(err.message || "Something went wrong. Your picks are still here — tap Submit to try again.");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -1699,6 +1754,17 @@ function MyPicksInner({ currentUser, onNavigate }) {
         {step === 4 && <StepPitStop question={race.pit_stop_question} value={pitGuess} onChange={setPitGuess} teamSide={teamSide} />}
         {step === 5 && <StepReview topPick={topPick} order={order} bestFinish={bestFinish} pitGuess={pitGuess} />}
 
+        {/* Submit error — inline, non-destructive: picks stay on screen */}
+        {submitError && (
+          <div role="alert" style={{
+            marginTop: 20, padding: "12px 14px", borderRadius: 12,
+            background: `${RED}10`, border: `1.5px solid ${RED}40`
+          }}>
+            <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: RED, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.04em" }}>Couldn't submit</p>
+            <p style={{ fontFamily: FB, fontSize: 13, color: TEXT, margin: 0 }}>{submitError}</p>
+          </div>
+        )}
+
         {/* Navigation */}
         <div style={{ display: "flex", gap: 12, paddingTop: 24, justifyContent: "space-between" }}>
           {step > 0 ? (
@@ -1719,12 +1785,13 @@ function MyPicksInner({ currentUser, onNavigate }) {
               transition: "all 0.2s"
             }}>Next</button>
           ) : (
-            <button onClick={handleSubmit} style={{
+            <button onClick={handleSubmit} disabled={submitting} style={{
               padding: "12px 32px", borderRadius: 12, border: "none",
-              background: GREEN,
+              background: submitting ? BORDER : GREEN,
               fontFamily: FB, fontWeight: 600, fontSize: 14,
-              color: "#fff", cursor: "pointer", transition: "all 0.2s"
-            }}>Submit Picks 🏁</button>
+              color: submitting ? TEXT2 : "#fff",
+              cursor: submitting ? "default" : "pointer", transition: "all 0.2s"
+            }}>{submitting ? "Submitting…" : "Submit Picks 🏁"}</button>
           )}
         </div>
       </div>
