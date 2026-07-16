@@ -1,17 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "./supabaseClient";
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
-const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
-  GREEN = "#22cc66", RED = "#e04a4a", ORANGE = "#e08a2e",
-  TEXT = "#1e1e2a", TEXT2 = "#6b6b80", BORDER = "#d8d2c4",
-  GOLD = "#c9a820", SILVER = "#a0a0a0";
-const FD = "'Geologica', sans-serif";
-const FB = "'DM Sans', sans-serif";
+import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB, avatarColor } from "./theme";
 const TEAM_PTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1, 0, 0];
 
 // 2025 individual points — used as preseason tiebreaker when all teams have 0 pts
@@ -323,10 +314,7 @@ export default function TeamStandings({ currentUser }) {
                     <div style={{ display: "flex", gap: 8, marginTop: 3 }}>
                       {[{ name: t.p1Name }, { name: t.p2Name }].map((p, i) => {
                         const initials = (p.name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-                        let hash = 0;
-                        for (let c = 0; c < (p.name || "").length; c++) hash = (p.name || "").charCodeAt(c) + ((hash << 5) - hash);
-                        const hue = (Math.abs(hash) * 137) % 360;
-                        const bg = `hsl(${hue}, 50%, 60%)`;
+                        const bg = avatarColor(p.name);
                         return (
                           <div key={i} style={{ display: "flex", alignItems: "center", gap: 3 }}>
                             <div style={{ width: 18, height: 18, borderRadius: "50%", background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: FD, fontWeight: 900, fontSize: 7, color: "#fff" }}>{initials}</div>

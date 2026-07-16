@@ -1,11 +1,6 @@
 import { useState, useEffect } from "react";
 
-const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
-  GREEN = "#22cc66", RED = "#e04a4a", ORANGE = "#e08a2e",
-  TEXT = "#1e1e2a", TEXT2 = "#6b6b80", BORDER = "#d8d2c4",
-  GOLD = "#c9a820";
-const FD = "'Geologica', sans-serif";
-const FB = "'DM Sans', sans-serif";
+import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, FD, FB } from "./theme";
 
 // 2026 driver numbers → team
 const DRIVER_TEAM_2026 = {
@@ -23,12 +18,7 @@ const DRIVER_TEAM_2026 = {
 };
 
 // Team colors
-const TEAM_COLORS = {
-  "Red Bull": "#1E41FF", "McLaren": "#FF8700", "Ferrari": "#DC0000",
-  "Mercedes": "#00D2BE", "Aston Martin": "#006F62", "Williams": "#005AFF",
-  "Alpine": "#0090FF", "Racing Bulls": "#2B4562", "Haas": "#B6BABD",
-  "Audi": "#BB0A30", "Cadillac": "#063A6E",
-};
+import { F1_TEAM_COLORS as TEAM_COLORS } from "./theme";
 
 function percentile(arr, p) {
   const sorted = [...arr].sort((a, b) => a - b);

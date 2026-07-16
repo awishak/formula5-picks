@@ -1,17 +1,8 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "./supabaseClient";
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
-const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
-  GREEN = "#22cc66", RED = "#e04a4a", ORANGE = "#e08a2e",
-  TEXT = "#1e1e2a", TEXT2 = "#6b6b80", BORDER = "#d8d2c4",
-  GOLD = "#c9a820", PURPLE = "#7c5cbf", SILVER = "#a0a0a0";
-const FD = "'Geologica', sans-serif";
-const FB = "'DM Sans', sans-serif";
+import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, PURPLE, SILVER, FD, FB } from "./theme";
 
 function TeamLogo({ name, size = 22, division, logoUrl }) {
   let hash = 0;
@@ -42,12 +33,7 @@ const F1_TEAMS_FALLBACK = {
   "Oliver Bearman": "Haas", "Esteban Ocon": "Haas",
 };
 
-const F1_TEAM_COLORS = {
-  "Red Bull": "#3671C6", "McLaren": "#FF8000", "Ferrari": "#E8002D",
-  "Mercedes": "#27F4D2", "Williams": "#64C4FF", "Aston Martin": "#229971",
-  "Alpine": "#0093CC", "Racing Bulls": "#6692FF", "Sauber": "#52E252",
-  "Haas": "#B6BABD",
-};
+import { F1_TEAM_COLORS } from "./theme";
 
 function useOpenF1Drivers() {
   const [driverMap, setDriverMap] = useState(new Map());

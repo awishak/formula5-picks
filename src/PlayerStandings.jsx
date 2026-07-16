@@ -1,17 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "./supabaseClient";
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
-const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
-  GREEN = "#22cc66", RED = "#e04a4a", ORANGE = "#e08a2e",
-  TEXT = "#1e1e2a", TEXT2 = "#6b6b80", BORDER = "#d8d2c4",
-  GOLD = "#c9a820", SILVER = "#a0a0a0";
-const FD = "'Geologica', sans-serif";
-const FB = "'DM Sans', sans-serif";
+import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB, avatarColor } from "./theme";
 
 // Players who played in prior F5 seasons but not 2025
 const DID_NOT_PLAY_2025 = new Set(["Stacy Michaelsen"]);
@@ -69,10 +60,7 @@ function competitionRanks(sorted, keyFn) {
 }
 
 function PlayerAvatar({ name, size = 30, photoUrl }) {
-  let hash = 0;
-  for (let i = 0; i < (name || "").length; i++) hash = (name || "").charCodeAt(i) + ((hash << 5) - hash);
-  const hue = (Math.abs(hash) * 137) % 360;
-  const bg = `hsl(${hue}, 50%, 60%)`;
+  const bg = avatarColor(name);
   const parts = (name || "?").split(" ");
   const initials = parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0][0].toUpperCase();
   if (photoUrl) return (

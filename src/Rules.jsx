@@ -1,9 +1,4 @@
-const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
-  ORANGE = "#e08a2e", GREEN = "#22cc66", RED = "#e04a4a",
-  TEXT = "#1e1e2a", TEXT2 = "#6b6b80", BORDER = "#d8d2c4",
-  GOLD = "#c9a820", PURPLE = "#7c5cbf";
-const FD = "'Geologica', sans-serif";
-const FB = "'DM Sans', sans-serif";
+import { DARK, BLUE, BLUEDARK, ORANGE, GREEN, RED, TEXT, TEXT2, BORDER, GOLD, PURPLE, FD, FB } from "./theme";
 
 // Section header — always open, no dropdown
 function Section({ title, children }) {

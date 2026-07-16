@@ -1,11 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
-  GREEN = "#22cc66", RED = "#e04a4a", ORANGE = "#e08a2e",
-  TEXT = "#1e1e2a", TEXT2 = "#6b6b80", BORDER = "#d8d2c4",
-  BG2 = "#ededef";
-const FD = "'Geologica', sans-serif";
-const FB = "'DM Sans', sans-serif";
+import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, BG2, FD, FB } from "./theme";
 
 // Sample drivers
 const SAMPLE_TOP = ["Max Verstappen", "Lando Norris", "George Russell"];

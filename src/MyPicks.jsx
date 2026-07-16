@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef, Component } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "./supabaseClient";
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 class MyPicksErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null, info: null }; }
@@ -23,19 +19,7 @@ class MyPicksErrorBoundary extends Component {
 }
 
 // ── Colors ──────────────────────────────────────────────
-const BG2      = "#ededef";
-const DARK     = "#1e1e2a";
-const BLUE     = "#6cb8e0";
-const BLUEDARK = "#2a6fa8";
-const GREEN    = "#22cc66";
-const RED      = "#e04a4a";
-const ORANGE   = "#e08a2e";
-const TEXT     = "#1e1e2a";
-const TEXT2    = "#6b6b80";
-const BORDER   = "#d8d2c4";
-const GOLD     = "#c9a820";
-const FD       = "'Geologica', sans-serif";
-const FB       = "'DM Sans', sans-serif";
+import { BG2, DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, FD, FB } from "./theme";
 
 // ── Shared UI ───────────────────────────────────────────
 // ── F1 Driver → Team fallback map ───────────────────────
@@ -53,12 +37,7 @@ const F1_TEAMS_FALLBACK = {
   "Sergio Perez": "Cadillac", "Valtteri Bottas": "Cadillac",
 };
 
-const F1_TEAM_COLORS = {
-  "Red Bull": "#3671C6", "McLaren": "#FF8000", "Ferrari": "#E8002D",
-  "Mercedes": "#27F4D2", "Williams": "#64C4FF", "Aston Martin": "#229971",
-  "Alpine": "#0093CC", "Racing Bulls": "#6692FF", "Audi": "#52E252",
-  "Haas": "#B6BABD", "Cadillac": "#C0C0C0",
-};
+import { F1_TEAM_COLORS } from "./theme";
 
 // ── OpenF1 API: fetch driver data (name, team, headshot) ─
 // Returns a Map keyed by full name → { team, headshot, teamColor, acronym, number }
