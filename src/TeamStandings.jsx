@@ -40,7 +40,7 @@ function shortName(fullName) {
   return parts.length < 2 ? fullName : `${parts[0][0]}. ${parts.slice(1).join(" ")}`;
 }
 
-export default function TeamStandings({ currentUser }) {
+export default function TeamStandings({ currentUser, onNavigate }) {
   const [standings, setStandings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
@@ -470,6 +470,18 @@ export default function TeamStandings({ currentUser }) {
       <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 16 }}>
         {hasData ? `${racesCompleted} race${racesCompleted !== 1 ? "s" : ""} completed` : "No race results yet"}
       </p>
+
+      {onNavigate && hasData && (
+        <button onClick={() => onNavigate("division-trends")} style={{
+          display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "11px 14px", borderRadius: 10,
+          border: `1px solid ${BLUEDARK}`, background: "rgba(42,111,168,0.08)", cursor: "pointer", marginBottom: 12, textAlign: "left"
+        }}>
+          <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 12, color: BLUEDARK, textTransform: "uppercase", letterSpacing: "0.04em", flex: 1 }}>
+            📈 Division Trends
+          </span>
+          <span style={{ fontFamily: FB, fontSize: 11, color: TEXT2 }}>Promotion &amp; relegation over time →</span>
+        </button>
+      )}
 
       <button onClick={() => secondDivRef.current?.scrollIntoView({ behavior: "smooth" })} style={{
         display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8,

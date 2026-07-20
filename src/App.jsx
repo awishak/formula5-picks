@@ -7,6 +7,7 @@ import RaceResults from "./RaceResults.jsx";
 import MyPicks, { PickHistory } from "./MyPicks.jsx";
 import PlayerStandings from "./PlayerStandings.jsx";
 import TeamStandings from "./TeamStandings.jsx";
+import DivisionTrends from "./DivisionTrends.jsx";
 import Strategy from "./Strategy.jsx";
 import F1Calendar from "./F1Calendar.jsx";
 import Players from "./Players.jsx";
@@ -646,7 +647,8 @@ export default function App() {
         {activePage === "home" && <HomePage currentUser={currentUser} onNavigate={navigateTo} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
         {activePage === "player-standings" && <PlayerStandings currentUser={currentUser} />}
         {activePage === "picks" && <MyPicksPage currentUser={currentUser} onNavigate={navigateTo} />}
-        {activePage === "team-standings" && <TeamStandings currentUser={currentUser} />}
+        {activePage === "team-standings" && <TeamStandings currentUser={currentUser} onNavigate={navigateTo} />}
+        {activePage === "division-trends" && <DivisionTrends currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "schedule" && <Schedule currentUser={currentUser} onNavigate={navigateTo} initialView={scheduleInitialView} />}
         {activePage === "rules" && <Rules />}
         {activePage === "admin" && (adminUnlocked ? <Admin /> : (
