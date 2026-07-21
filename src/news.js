@@ -37,6 +37,18 @@ export const NEWS = [
         { pos: 12, name: "Bronco SCUderia",       pts: 54,  zone: "drop" , chip: "WIN + HELP", ctone: "bad" },
       ]},
 
+      { t: "p", text: "I asked Claude to simulate the Hungary race 50,000 times. Here are the odds of each team in the Championship Division staying up for the second half." },
+      { t: "odds", title: "Championship", sub: "Chance of staying up", rows: [
+        { name: "Van City Corsa", p: 100 }, { name: "Juicero Silicon Valley", p: 100 },
+        { name: "XLIX Racing Team", p: 100 }, { name: "Cougar Autosport", p: 100 },
+        { name: "Drivetex", p: 99.8 }, { name: "East Bay Racing", p: 99.3 },
+        { name: "Garra Dynamics", p: 78.6 }, { name: "El Camino Rapido", p: 35.5 },
+        { name: "Stalloni 1851", p: 27.8 }, { name: "Cascadia Motorsport", p: 21.2 },
+        { name: "Wildcat Motors", p: 3.2 }, { name: "Bronco SCUderia", p: 0.1 },
+      ]},
+      { t: "p", text: "Garra are the story at 78.6%. Everyone else in that drop zone is closer to a coin flip than a plan, and Bronco's 0.1% is not quite zero, which is the nicest thing that can be said about it." },
+      { t: "note", title: "How the odds were made", text: "Each team's Hungary score is drawn at random from their own ten scores this season, so form and consistency both carry through. BOX BOX is assigned at random, one team plus five and the other minus one, at the rate it has actually been scored. What it does not model: teams playing BOX BOX strategically, and the fact that everyone's scores move together on a chaotic race weekend. A good guide, not gospel." },
+
       M("Garra Dynamics vs Bronco SCUderia",
         { name: "Garra Dynamics", playing: "trying to stay in the Championship Division.", meta: "7th, 77 pts", tag: "WIN AND SAFE", tone: "warn", can: "4th to 11th",
           players: ["Ryan Kohli", "Francisco Soldavini"],
@@ -110,7 +122,7 @@ export const NEWS = [
 
       { t: "h", text: "Second Division" },
       { t: "sub", text: "Top four promoted" },
-      { t: "note", title: "Five teams, one place", text: "Meatballs, TNT Roku and HomeworkTubes are already up. That leaves Peloton, Cal Aggie, Luxor, Shoey and Magic Kingdom fighting over the last promotion spot, and two of them are playing each other." },
+      { t: "note", title: "Five teams, one or two places", text: "Meatballs, TNT Roku and HomeworkTubes are already up. That leaves Peloton, Cal Aggie, Luxor, Shoey and Magic Kingdom fighting over the last automatic promotion place, and possibly a second one through the Matchup Position. Here is the good part: four of those five are playing each other. Peloton against Cal Aggie, Luxor against Shoey. It turns the first two matchups below into playoff ties." },
 
       { t: "standings", lineAfter: 4, lineLabel: "Promotion line", rows: [
         { pos: 1,  name: "Meatballs",             pts: 143, zone: "ok" , chip: "UP", ctone: "good" },
@@ -126,6 +138,17 @@ export const NEWS = [
         { pos: 11, name: "Aggie Slipstream",      pts: 46,  zone: "none" , chip: "DOWN", ctone: "dead" },
         { pos: 12, name: "Scuderia Iskandaraya",  pts: 36,  zone: "none" , chip: "DOWN", ctone: "dead" },
       ]},
+
+      { t: "p", text: "I asked Claude to simulate the Hungary race 50,000 times. Here are the odds of each team in the Second Division being promoted for the second half." },
+      { t: "odds", title: "Second Division", sub: "Chance of going up", rows: [
+        { name: "Meatballs", p: 100 }, { name: "TNT Roku F5 Team", p: 100 },
+        { name: "HomeworkTubes.Com", p: 100 }, { name: "Cal Aggie Racing", p: 66.5 },
+        { name: "Peloton Aubergine", p: 63.5 }, { name: "Luxor Motorsport", p: 3.1 },
+        { name: "Shoey Time!", p: 0.9 }, { name: "Magic Kingdom Racing", p: 0.5 },
+        { name: "TJ Premium", p: 0 }, { name: "Prestissimo Veloce", p: 0 },
+        { name: "Aggie Slipstream", p: 0 }, { name: "Scuderia Iskandaraya", p: 0 },
+      ]},
+      { t: "p", text: "Cal Aggie and Peloton add up to more than one promotion place between them, and that is not a rounding error. The Matchup Position swap fires in 34.5% of simulations, so five teams go up and five come down more often than one round in three. Both of them can be promoted in the same scenario." },
 
       M("Peloton Aubergine vs Cal Aggie Racing",
         { name: "Peloton Aubergine", playing: "trying to earn promotion to the Championship Division.", meta: "4th, 97 pts", tag: "IN THE HUNT", tone: "warn", can: "2nd to 8th",
@@ -190,28 +213,6 @@ export const NEWS = [
           notes: ["Maximum reach is 61. Lose and they finish last.",
                   "Playing for pride, and to avoid the wooden spoon."] },
         { text: "No surprise where these two are. For Aggie Slipstream, finishing 9th or 10th would be something to build on." }),
-
-      { t: "h", text: "The Odds" },
-      { t: "p", text: "Those are the scenarios. Here is how often each of them actually happens. I simulated Hungary 50,000 times, drawing each team's score from their own ten results so far, flipping BOX BOX the way it has fallen all season, then running the full points and tie-break rules to see who ends up in the Championship Division for the second half." },
-      { t: "odds", title: "Championship", sub: "Chance of staying up", rows: [
-        { name: "Van City Corsa", p: 100 }, { name: "Juicero Silicon Valley", p: 100 },
-        { name: "XLIX Racing Team", p: 100 }, { name: "Cougar Autosport", p: 100 },
-        { name: "Drivetex", p: 99.8 }, { name: "East Bay Racing", p: 99.3 },
-        { name: "Garra Dynamics", p: 78.6 }, { name: "El Camino Rapido", p: 35.5 },
-        { name: "Stalloni 1851", p: 27.8 }, { name: "Cascadia Motorsport", p: 21.2 },
-        { name: "Wildcat Motors", p: 3.2 }, { name: "Bronco SCUderia", p: 0.1 },
-      ]},
-      { t: "odds", title: "Second Division", sub: "Chance of going up", rows: [
-        { name: "Meatballs", p: 100 }, { name: "TNT Roku F5 Team", p: 100 },
-        { name: "HomeworkTubes.Com", p: 100 }, { name: "Cal Aggie Racing", p: 66.5 },
-        { name: "Peloton Aubergine", p: 63.5 }, { name: "Luxor Motorsport", p: 3.1 },
-        { name: "Shoey Time!", p: 0.9 }, { name: "Magic Kingdom Racing", p: 0.5 },
-        { name: "TJ Premium", p: 0 }, { name: "Prestissimo Veloce", p: 0 },
-        { name: "Aggie Slipstream", p: 0 }, { name: "Scuderia Iskandaraya", p: 0 },
-      ]},
-      { t: "p", text: "Cal Aggie and Peloton add up to more than one promotion place between them, and that is not a rounding error. The Matchup Position swap fires in 34.5% of simulations, which means five teams go up and five come down more often than one round in three. Both of them can be promoted in the same scenario." },
-      { t: "p", text: "Garra are the story in the Championship at 78.6%. Everyone else in that drop zone is closer to a coin flip than a plan, and Bronco's 0.1% is not quite zero, which is the nicest thing that can be said about it." },
-      { t: "note", title: "How the odds were made", text: "Each team's Hungary score is drawn at random from their own ten scores this season, so a team's form and consistency both carry through. BOX BOX is assigned at random, as one team plus five and the other minus one, at the rate it has actually been scored. What it does not model: teams playing BOX BOX strategically, and the fact that everyone's scores move together on a chaotic race weekend. Treat these as a good guide, not gospel." },
 
       { t: "h", text: "The Matchup Position" },
       { t: "p", text: "One more swap sits on top of the automatic places. If the team that finishes 5th in the Second Division ends the half with a better scoring average than the team that finishes 8th in the Championship, those two trade places as well." },
