@@ -70,3 +70,14 @@ The top 12 individual scorers from the prior season retain their team brands and
 
 needleScore thresholds: decide between fixing the bucket thresholds (0.0/0.1/0.2 etc.) or enforcing tenths-only entry in the input.
 Matchup leading player stat: the higher scorer on the winning team in a head-to-head matchup. Compute at render time like trophies. Add to player stats and the glossary.
+
+Automated driver pools (deferred to August 2026). Goal: generate pools automatically the Monday before each race. Rule: 3 random drivers from driver standings positions 1-5, 7 random from positions 6-15, weighted to avoid drivers who appeared in recent rounds' pools. Prior pools are already in races.top_drivers / races.mid_drivers, so repeat-avoidance needs no new storage.
+Blockers found 2026-07-20, all unresolved:
+- No standings source. OpenF1 has no standings endpoint, and results.finishing_order stores only the top 5 (Admin.jsx:668 slices to 5), so positions 6-15 are not derivable from our own data. API-Sports was floated but no account or key is wired up.
+- No server-side code exists. Pure client-side Vite SPA, no api/, no vercel.json, no cron. Unattended Monday runs need a Vercel Cron plus an api/ function, plus a Supabase service-role key in env, since supabaseClient.js is anon-only and all writes go through RLS.
+- An emailed digest on generation day was wanted. No mail provider is set up, so that is a third new service.
+- DRIVER_NAMES is module-local to Admin.jsx (lines 25-34, not exported). Anything running outside that component needs it extracted to a shared module first.
+- Name matching needs an explicit mapping layer, not string equality. Any standings provider returns its own spellings, and MyPicks.jsx:65 / PickIntel.jsx:60 already rebuild names from OpenF1 first_name + last_name instead of the canonical map. Antonelli and Hulkenberg are the likely break points.
+Decision still open: full cron automation vs an Admin "auto-generate pool" button that needs no new service and keeps a human veto.
+
+Doc/code mismatch to resolve: this file says results.finishing_order is a 22-driver array, but Admin.jsx:668 writes finishOrder.slice(0, 5). Confirm the intended shape for both results.finishing_order and picks.finishing_order, then correct whichever is wrong.

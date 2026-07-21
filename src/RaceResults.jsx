@@ -43,6 +43,7 @@ export default function RaceResults({ currentUser }) {
   // Load data when round changes
   useEffect(() => {
     if (!selectedRound) return;
+    let cancelled = false; // ignore a stale fetch if the round changed mid-flight
     async function loadRound() {
       const race = races.find(r => r.round === selectedRound);
       if (!race) return;
@@ -158,12 +159,14 @@ export default function RaceResults({ currentUser }) {
         };
       }).filter(Boolean);
 
+      if (cancelled) return;
       setData({
         race, playerScores, teamScores, sortedDrivers,
         topDriver, pitTime, finishOrder
       });
     }
     loadRound();
+    return () => { cancelled = true; };
   }, [selectedRound, races]);
 
   if (loading) return (

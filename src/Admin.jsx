@@ -1,16 +1,8 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "./supabaseClient";
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
-const DARK = "#1e1e2a", BLUE = "#6cb8e0", BLUEDARK = "#2a6fa8",
-  GREEN = "#22cc66", RED = "#e04a4a", ORANGE = "#e08a2e",
-  TEXT = "#1e1e2a", TEXT2 = "#6b6b80", BORDER = "#d8d2c4";
-const FD = "'Geologica', sans-serif";
-const FB = "'DM Sans', sans-serif";
+import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, FD, FB, F1_TEAM_COLORS } from "./theme";
 
 // F1 points by finishing position
 const F1_PTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
@@ -73,6 +65,8 @@ export default function Admin() {
   const [photoMsg, setPhotoMsg] = useState(null);
   const [allPicks, setAllPicks] = useState([]);
   const [missingRound, setMissingRound] = useState(null);
+  const [randomStatus, setRandomStatus] = useState("");
+  const [randomGenerating, setRandomGenerating] = useState(false);
   const [allPitStops, setAllPitStops] = useState([]);
   const [selectedPitIdx, setSelectedPitIdx] = useState(null);
   const [rawApiDump, setRawApiDump] = useState(null);
@@ -270,73 +264,39 @@ export default function Admin() {
 
       let targetPitTime = null;
 
-      // Try to find a matching pit stop based on the question
-      if (question.includes("ferrari")) {
-        const ferrariDrivers = [16, 44]; // Leclerc, Hamilton
-        const ferrariStops = pitStops
-          .filter(p => ferrariDrivers.includes(p.driver_number))
+      // Match the question to a team, then use that team's drivers from the
+      // canonical DRIVER_TEAMS map (single source of truth — no stale numbers).
+      const TEAM_TO_DRIVERS = {};
+      Object.entries(DRIVER_TEAMS).forEach(([num, team]) => {
+        (TEAM_TO_DRIVERS[team] = TEAM_TO_DRIVERS[team] || []).push(Number(num));
+      });
+      // Free-text aliases → canonical team label. Order matters (Red Bull before
+      // Racing Bulls). "audi" maps to the Sauber entry that holds its car numbers.
+      const TEAM_ALIASES = [
+        ["Red Bull", ["red bull"]],
+        ["Racing Bulls", ["racing bulls", "vcarb"]],
+        ["McLaren", ["mclaren"]],
+        ["Ferrari", ["ferrari"]],
+        ["Mercedes", ["mercedes"]],
+        ["Williams", ["williams"]],
+        ["Aston Martin", ["aston"]],
+        ["Alpine", ["alpine"]],
+        ["Haas", ["haas"]],
+        ["Sauber", ["audi", "sauber", "kick", "stake"]],
+        ["Cadillac", ["cadillac"]],
+      ];
+      const matchedName = (TEAM_ALIASES.find(([, aliases]) => aliases.some(a => question.includes(a))) || [])[0];
+
+      if (matchedName) {
+        const nums = TEAM_TO_DRIVERS[matchedName] || [];
+        const stops = pitStops
+          .filter(p => nums.includes(p.driver_number))
           .sort((a, b) => a.lap_number - b.lap_number);
-        if (question.includes("1st") || question.includes("first")) {
-          targetPitTime = ferrariStops[0]?.stop_duration;
-        } else if (question.includes("fastest")) {
-          targetPitTime = Math.min(...ferrariStops.map(p => p.stop_duration));
-        } else {
-          targetPitTime = ferrariStops[0]?.stop_duration;
+        if (stops.length > 0) {
+          targetPitTime = question.includes("fastest")
+            ? Math.min(...stops.map(p => p.stop_duration))
+            : stops[0].stop_duration;
         }
-      } else if (question.includes("red bull")) {
-        const rbDrivers = [1, 30]; // Verstappen, Lawson
-        const rbStops = pitStops
-          .filter(p => rbDrivers.includes(p.driver_number))
-          .sort((a, b) => a.lap_number - b.lap_number);
-        targetPitTime = rbStops[0]?.stop_duration;
-      } else if (question.includes("mclaren")) {
-        const mcDrivers = [4, 81]; // Norris, Piastri
-        const mcStops = pitStops
-          .filter(p => mcDrivers.includes(p.driver_number))
-          .sort((a, b) => a.lap_number - b.lap_number);
-        targetPitTime = mcStops[0]?.stop_duration;
-      } else if (question.includes("mercedes")) {
-        const merDrivers = [63, 12]; // Russell, Antonelli
-        const merStops = pitStops
-          .filter(p => merDrivers.includes(p.driver_number))
-          .sort((a, b) => a.lap_number - b.lap_number);
-        targetPitTime = merStops[0]?.stop_duration;
-      } else if (question.includes("williams")) {
-        const wilDrivers = [55, 23]; // Sainz, Albon
-        const wilStops = pitStops
-          .filter(p => wilDrivers.includes(p.driver_number))
-          .sort((a, b) => a.lap_number - b.lap_number);
-        targetPitTime = wilStops[0]?.stop_duration;
-      } else if (question.includes("aston")) {
-        const amDrivers = [14, 18]; // Alonso, Stroll
-        const amStops = pitStops
-          .filter(p => amDrivers.includes(p.driver_number))
-          .sort((a, b) => a.lap_number - b.lap_number);
-        targetPitTime = amStops[0]?.stop_duration;
-      } else if (question.includes("alpine")) {
-        const alpDrivers = [10, 7]; // Gasly, Doohan
-        const alpStops = pitStops
-          .filter(p => alpDrivers.includes(p.driver_number))
-          .sort((a, b) => a.lap_number - b.lap_number);
-        targetPitTime = alpStops[0]?.stop_duration;
-      } else if (question.includes("racing bulls") || question.includes("rb") || question.includes("vcarb")) {
-        const rbullsDrivers = [22, 6]; // Tsunoda, Hadjar
-        const rbullsStops = pitStops
-          .filter(p => rbullsDrivers.includes(p.driver_number))
-          .sort((a, b) => a.lap_number - b.lap_number);
-        targetPitTime = rbullsStops[0]?.stop_duration;
-      } else if (question.includes("haas")) {
-        const haasDrivers = [87, 31]; // Bearman, Ocon
-        const haasStops = pitStops
-          .filter(p => haasDrivers.includes(p.driver_number))
-          .sort((a, b) => a.lap_number - b.lap_number);
-        targetPitTime = haasStops[0]?.stop_duration;
-      } else if (question.includes("sauber") || question.includes("kick") || question.includes("stake")) {
-        const sauDrivers = [27, 5]; // Hulkenberg, Bortoleto
-        const sauStops = pitStops
-          .filter(p => sauDrivers.includes(p.driver_number))
-          .sort((a, b) => a.lap_number - b.lap_number);
-        targetPitTime = sauStops[0]?.stop_duration;
       } else if (question.includes("fastest")) {
         // Overall fastest pit stop
         const fastest = pitStops.reduce((best, p) =>
@@ -921,6 +881,55 @@ export default function Admin() {
           navigator.clipboard.writeText(missingEmails.join(", "));
         };
 
+        // Fill in random-but-valid picks for anyone who missed the deadline.
+        const shuffle = (arr) => {
+          const a = [...arr];
+          for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+          }
+          return a;
+        };
+
+        async function generateRandomPicks() {
+          if (!missingRace || missingPlayers.length === 0) return;
+          const top = (missingRace.top_drivers || []).filter(Boolean);
+          const mid = (missingRace.mid_drivers || []).filter(Boolean);
+          if (top.length < 1 || mid.length < 4) {
+            setRandomStatus("Set the driver pools for this round first (need 3 top + 7 midfield drivers).");
+            return;
+          }
+          if (!window.confirm(`Assign random picks to ${missingPlayers.length} player${missingPlayers.length !== 1 ? "s" : ""} who missed the deadline for Round ${missingRound}? This writes real picks to the database.`)) return;
+
+          setRandomGenerating(true);
+          setRandomStatus("");
+          const rows = missingPlayers.map(p => {
+            const topPick = top[Math.floor(Math.random() * top.length)];
+            const mids = shuffle(mid).slice(0, 4);
+            const order = shuffle([topPick, ...mids]); // 5-driver finishing order
+            return {
+              player_id: p.id,
+              race_id: missingRace.id,
+              top_pick: topPick,
+              finishing_order: order,
+              best_finish: `P${Math.floor(Math.random() * 10) + 1}`,
+              pit_guess: Math.round((1.5 + Math.random() * 2.5) * 10) / 10,
+              submitted_at: new Date().toISOString()
+            };
+          });
+
+          const { data: inserted, error } = await supabase.from("picks").insert(rows).select();
+          if (error) {
+            setRandomStatus("Error: " + error.message);
+          } else if (!inserted || inserted.length === 0) {
+            setRandomStatus("Error: insert returned no rows — check RLS policies on the picks table.");
+          } else {
+            setAllPicks(prev => [...prev, ...inserted.map(pk => ({ player_id: pk.player_id, race_id: pk.race_id }))]);
+            setRandomStatus(`Assigned random picks to ${inserted.length} player${inserted.length !== 1 ? "s" : ""}.`);
+          }
+          setRandomGenerating(false);
+        }
+
         return (
           <div>
             <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 12 }}>
@@ -934,7 +943,7 @@ export default function Admin() {
               </label>
               <select
                 value={missingRound || ""}
-                onChange={e => setMissingRound(parseInt(e.target.value))}
+                onChange={e => { setMissingRound(parseInt(e.target.value)); setRandomStatus(""); }}
                 style={{
                   width: "100%", padding: "10px 12px", borderRadius: 10,
                   border: `1px solid ${BORDER}`, fontFamily: FB, fontSize: 13, color: TEXT,
@@ -1015,12 +1024,42 @@ export default function Admin() {
                     No emails on file for missing players — add emails to the players table in Supabase.
                   </p>
                 )}
+
+                {/* Assign random picks to anyone who missed the deadline */}
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
+                  <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: DARK, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 4px" }}>
+                    Auto-Fill Picks
+                  </p>
+                  <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: "0 0 10px" }}>
+                    Give each missing player a random-but-valid pick from this round's driver pools, so no one is left without an entry. Pit guesses are random and ignore team OVER/UNDER strategy.
+                  </p>
+                  <button
+                    onClick={generateRandomPicks}
+                    disabled={randomGenerating}
+                    style={{
+                      width: "100%", padding: "12px", borderRadius: 12,
+                      background: randomGenerating ? BORDER : ORANGE,
+                      border: "none", color: "#fff",
+                      fontFamily: FD, fontWeight: 800, fontSize: 13,
+                      textTransform: "uppercase", letterSpacing: "0.06em",
+                      cursor: randomGenerating ? "default" : "pointer"
+                    }}
+                  >
+                    {randomGenerating ? "Assigning…" : `Assign Random Picks to ${missingPlayers.length} Player${missingPlayers.length !== 1 ? "s" : ""}`}
+                  </button>
+                </div>
               </>
             ) : (
               <div style={{ padding: "30px 0", textAlign: "center" }}>
                 <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 16, color: GREEN, margin: "0 0 4px" }}>All Submitted!</p>
                 <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: 0 }}>Everyone has submitted picks for this round.</p>
               </div>
+            )}
+
+            {randomStatus && (
+              <p style={{ fontFamily: FB, fontSize: 12, textAlign: "center", margin: "12px 0 0", color: randomStatus.startsWith("Error") ? RED : GREEN }}>
+                {randomStatus}
+              </p>
             )}
           </div>
         );
@@ -1162,12 +1201,7 @@ export default function Admin() {
         const ALL_DRIVERS = Object.values(DRIVER_NAMES).sort((a, b) => a.localeCompare(b));
 
         // Team color map for chips
-        const TEAM_COLORS = {
-          "Red Bull": "#3671C6", "McLaren": "#FF8000", "Ferrari": "#E8002D",
-          "Mercedes": "#27F4D2", "Williams": "#64C4FF", "Aston Martin": "#229971",
-          "Alpine": "#FF87BC", "Racing Bulls": "#6692FF", "Sauber": "#52E252",
-          "Haas": "#B6BABD", "Cadillac": "#C0C0C0"
-        };
+        const TEAM_COLORS = F1_TEAM_COLORS;
 
         function driverTeam(name) {
           const entry = Object.entries(DRIVER_NAMES).find(([, n]) => n === name);
