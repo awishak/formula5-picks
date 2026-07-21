@@ -336,10 +336,11 @@ function NewsBlock({ b, teamsByName, playersByName }) {
             <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 13, color: DARK, margin: 0, lineHeight: 1.35 }}>
               {x.label || x.name}: {x.playing}
             </p>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, margin: "3px 0 0" }}>Can finish {x.can}.</p>
-            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 9.5, color: c, textTransform: "uppercase", letterSpacing: "0.08em", margin: "9px 0 0" }}>How they can do it</p>
+            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 11.5, color: c, textTransform: "uppercase", letterSpacing: "0.08em", margin: "10px 0 0" }}>
+              {x.tone === "dead" ? "What's left to play for" : "How they can do it"}
+            </p>
             {x.notes.map((n, i) => (
-              <p key={i} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12.5, color: TEXT, lineHeight: 1.6, margin: "5px 0 0" }}>{n}</p>
+              <p key={i} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13.5, color: TEXT, lineHeight: 1.6, margin: "6px 0 0" }}>{n}</p>
             ))}
           </div>
         );
