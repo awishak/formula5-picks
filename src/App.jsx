@@ -210,18 +210,18 @@ function AvgChart({ b }) {
         {["C", "2"].map(d => (
           <span key={d} style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <span style={{ width: 9, height: 9, borderRadius: "50%", background: DIV_COLOR[d] }} />
-            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2 }}>{DIV_LABEL[d]}</span>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: TEXT2 }}>{DIV_LABEL[d]}</span>
           </span>
         ))}
       </div>
       {b.rows.map(r => (
         <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-          <span style={{ flex: "0 0 40%", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT, lineHeight: 1.2 }}>{r.name}</span>
+          <span style={{ flex: "0 0 42%", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: TEXT, lineHeight: 1.2 }}>{r.name}</span>
           <div style={{ flex: 1, position: "relative", height: 14 }}>
             <div style={{ position: "absolute", top: 6, left: 0, right: 0, height: 2, background: BORDER, borderRadius: 1 }} />
             <div style={{ position: "absolute", top: 1, left: `${pct(r.avg)}%`, transform: "translateX(-50%)", width: 12, height: 12, borderRadius: "50%", background: DIV_COLOR[r.div], border: "2px solid #fff" }} />
           </div>
-          <span style={{ flex: "0 0 30px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 11, color: TEXT }}>{r.avg.toFixed(1)}</span>
+          <span style={{ flex: "0 0 32px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 12, color: TEXT }}>{r.avg.toFixed(1)}</span>
         </div>
       ))}
       {b.note && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, lineHeight: 1.5, margin: "10px 0 0" }}>{b.note}</p>}
@@ -243,24 +243,24 @@ function StandingsChart({ b }) {
       {b.rows.map(r => (
         <div key={r.name}>
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <span style={{ flex: "0 0 14px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 9.5, color: TEXT2 }}>{r.pos}</span>
-            <span style={{ flex: "0 0 31%", fontFamily: "'DM Sans', sans-serif", fontSize: 10.5, color: TEXT, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
-            <span style={{ flex: "0 0 auto", fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 7, letterSpacing: "0.05em", textTransform: "uppercase", color: TONE[r.ctone], background: `${TONE[r.ctone]}1e`, padding: "2px 4px", borderRadius: 3, whiteSpace: "nowrap" }}>{r.chip}</span>
-            <div style={{ flex: 1, minWidth: 40, position: "relative", height: 14 }}>
+            <span style={{ flex: "0 0 15px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 11, color: TEXT2 }}>{r.pos}</span>
+            <span style={{ flex: "0 0 33%", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: TEXT, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
+            <span style={{ flex: "0 0 auto", fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 8.5, letterSpacing: "0.04em", textTransform: "uppercase", color: TONE[r.ctone], background: `${TONE[r.ctone]}1e`, padding: "2px 5px", borderRadius: 3, whiteSpace: "nowrap" }}>{r.chip}</span>
+            <div style={{ flex: 1, minWidth: 28, position: "relative", height: 16 }}>
               <div style={{ position: "absolute", top: 6, left: 0, right: 0, height: 2, background: BORDER, borderRadius: 1 }} />
               <div style={{ position: "absolute", top: 1, left: `${pct(r.pts)}%`, transform: "translateX(-50%)", width: 12, height: 12, borderRadius: "50%", background: ZONE[r.zone], border: "2px solid #fff" }} />
             </div>
-            <span style={{ flex: "0 0 26px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 10.5, color: TEXT }}>{r.pts}</span>
+            <span style={{ flex: "0 0 28px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 12, color: TEXT }}>{r.pts}</span>
           </div>
           {r.badge && (
             <div style={{ display: "flex", justifyContent: "flex-end", margin: "1px 30px 2px 0" }}>
-              <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 7.5, letterSpacing: "0.07em", textTransform: "uppercase", color: ZONE.mp, background: `${ZONE.mp}22`, padding: "2px 5px", borderRadius: 4 }}>{r.badge}</span>
+              <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 8.5, letterSpacing: "0.07em", textTransform: "uppercase", color: ZONE.mp, background: `${ZONE.mp}22`, padding: "2px 5px", borderRadius: 4 }}>{r.badge}</span>
             </div>
           )}
           {r.pos === b.lineAfter && (
             <div style={{ display: "flex", alignItems: "center", gap: 6, margin: "5px 0 6px" }}>
               <span style={{ flex: 1, height: 2, background: ZONE.drop, opacity: 0.5, borderRadius: 1 }} />
-              <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: "0.09em", textTransform: "uppercase", color: ZONE.drop }}>{b.lineLabel}</span>
+              <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 9.5, letterSpacing: "0.09em", textTransform: "uppercase", color: ZONE.drop }}>{b.lineLabel}</span>
               <span style={{ flex: 1, height: 2, background: ZONE.drop, opacity: 0.5, borderRadius: 1 }} />
             </div>
           )}
@@ -275,18 +275,18 @@ function StandingsChart({ b }) {
 function OddsChart({ b }) {
   return (
     <div style={{ marginTop: 16 }}>
-      <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 11, color: DARK, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 1px" }}>{b.title}</p>
-      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, margin: "0 0 9px" }}>{b.sub}</p>
+      <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 12.5, color: DARK, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 1px" }}>{b.title}</p>
+      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: TEXT2, margin: "0 0 9px" }}>{b.sub}</p>
       {b.rows.map(r => {
         const c = r.p >= 95 ? ZONE.ok : r.p >= 20 ? ZONE.mp : ZONE.drop;
         const label = r.p === 100 ? ">99.9%" : r.p === 0 ? "0%" : `${r.p}%`;
         return (
-          <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
-            <span style={{ flex: "0 0 38%", fontFamily: "'DM Sans', sans-serif", fontSize: 10.5, color: TEXT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
-            <div style={{ flex: 1, height: 10, background: BG2, borderRadius: 3, overflow: "hidden" }}>
+          <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <span style={{ flex: "0 0 40%", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: TEXT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
+            <div style={{ flex: 1, height: 12, background: BG2, borderRadius: 3, overflow: "hidden" }}>
               <div style={{ width: `${Math.max(r.p, 0.6)}%`, height: "100%", background: c, borderRadius: 3 }} />
             </div>
-            <span style={{ flex: "0 0 40px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 10.5, color: TEXT }}>{label}</span>
+            <span style={{ flex: "0 0 44px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 12, color: TEXT }}>{label}</span>
           </div>
         );
       })}
