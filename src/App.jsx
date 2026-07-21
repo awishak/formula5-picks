@@ -352,9 +352,11 @@ function NewsBlock({ b, teamsByName, playersByName }) {
   return <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT, lineHeight: 1.65, margin: "12px 0 0" }}>{b.text}</p>;
 }
 
-function NewsFeed({ playersByName, teamsByName }) {
-  const [openId, setOpenId] = useState(NEWS[0]?.id ?? null);
-  if (NEWS.length === 0) return null;
+function NewsFeed({ playersByName, teamsByName, stories }) {
+  const list = stories && stories.length ? stories : NEWS;
+  const [openId, setOpenId] = useState(null);
+  const activeId = openId ?? list[0]?.id ?? null;
+  if (list.length === 0) return null;
 
   return (
     <div style={{ marginBottom: 24 }}>
@@ -364,14 +366,14 @@ function NewsFeed({ playersByName, teamsByName }) {
         <span style={{ flex: 1, height: 1, background: BORDER }} />
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {NEWS.map(story => {
-          const isOpen = openId === story.id;
+        {list.map(story => {
+          const isOpen = activeId === story.id;
           const byline = story.authorType === "auto" ? "Formula 5" : story.author;
           const photo = story.authorType !== "auto" ? playersByName[story.author]?.photo_url : null;
           const dateLabel = new Date(story.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
           return (
             <div key={story.id} style={{ background: "#fff", borderRadius: isOpen ? 0 : 14, border: `1px solid ${BORDER}`, borderLeft: isOpen ? "none" : `1px solid ${BORDER}`, borderRight: isOpen ? "none" : `1px solid ${BORDER}`, overflow: "hidden", margin: isOpen ? "0 -20px" : 0 }}>
-              <button onClick={() => setOpenId(isOpen ? null : story.id)} style={{
+              <button onClick={() => setOpenId(isOpen ? "" : story.id)} style={{
                 width: "100%", padding: isOpen ? "14px 12px" : "14px 16px", border: "none", background: "transparent",
                 cursor: "pointer", textAlign: "left", display: "block"
               }}>
@@ -408,6 +410,7 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
   const [showChooser, setShowChooser] = useState(false);
   const [allPlayers, setAllPlayers] = useState([]);
   const [allTeams, setAllTeams] = useState([]);
+  const [stories, setStories] = useState([]);
   const [chooserSearch, setChooserSearch] = useState("");
 
   useEffect(() => {
@@ -428,6 +431,16 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
         if (playerData?.photo_url) setPlayerPhoto(playerData.photo_url);
         if (playersAll) setAllPlayers(playersAll);
         if (teamsAll) setAllTeams(teamsAll);
+        // News lives in Supabase; if the table is missing or the fetch fails we
+        // keep serving the story compiled into news.js rather than an empty feed.
+        const { data: newsRows } = await supabase.from("news").select("*")
+          .eq("is_published", true).order("published_date", { ascending: false });
+        if (newsRows && newsRows.length) {
+          setStories(newsRows.map(n => ({
+            id: n.slug, headline: n.headline, dek: n.dek, author: n.author,
+            authorType: n.author_type, date: n.published_date, body: n.body || []
+          })));
+        }
         if (raceData && playerData) {
           const { data: existing } = await supabase.from("picks").select("id").eq("player_id", playerData.id).eq("race_id", raceData.id).maybeSingle();
           setHasSubmitted(!!existing);
@@ -551,7 +564,7 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
         {pickDeadline && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, marginTop: 8 }}>Due by <span style={{ fontWeight: 700, color: DARK }}>{pickDeadline}</span></p>}
       </div>
 
-      <NewsFeed playersByName={playersByName} teamsByName={teamsByName} />
+      <NewsFeed playersByName={playersByName} teamsByName={teamsByName} stories={stories} />
 
       {/* All navigation — unified 3-across grid */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>

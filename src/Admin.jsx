@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
+import NewsAdmin from "./NewsAdmin.jsx";
 
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, FD, FB, F1_TEAM_COLORS } from "./theme";
@@ -856,7 +857,7 @@ export default function Admin() {
 
       {/* Tab switcher */}
       <div style={{ display: "flex", gap: 0, marginBottom: 20, borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
-        {[{ id: "scoring", label: "Score Race" }, { id: "missing", label: "Missing Picks" }, { id: "drivers", label: "Driver Pools" }, { id: "export", label: "Export" }, { id: "logos", label: "Logos" }, { id: "photos", label: "Photos" }].map(tab => (
+        {[{ id: "scoring", label: "Score Race" }, { id: "missing", label: "Missing Picks" }, { id: "drivers", label: "Driver Pools" }, { id: "news", label: "News" }, { id: "export", label: "Export" }, { id: "logos", label: "Logos" }, { id: "photos", label: "Photos" }].map(tab => (
           <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{
             flex: 1, padding: "10px 0", border: "none",
             background: adminTab === tab.id ? BLUEDARK : "#fff",
@@ -866,6 +867,8 @@ export default function Admin() {
           }}>{tab.label}</button>
         ))}
       </div>
+
+      {adminTab === "news" && <NewsAdmin />}
 
       {/* MISSING PICKS TAB */}
       {adminTab === "missing" && (() => {
