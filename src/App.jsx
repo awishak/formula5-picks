@@ -14,9 +14,10 @@ import Players from "./Players.jsx";
 import PracticePicks from "./PracticePicks.jsx";
 import PickIntel from "./PickIntel.jsx";
 import Recaps from "./Recaps.jsx";
+import { NEWS } from "./news";
 
 
-import { BG, BG2, DARK, BLUE, BLUEDARK, GREEN, RED, TEXT, TEXT2, BORDER, avatarColor } from "./theme";
+import { BG, BG2, DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, avatarColor } from "./theme";
 const LOGO_B64 = "data:image/png;base64,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";
 
 // ── Circuit data (same as F1Calendar) ────────────────────
@@ -127,15 +128,255 @@ function SeasonPreview() {
   );
 }
 
+// ── News Feed ────────────────────────────────────────────
+const TONE = { good: GREEN, warn: ORANGE, bad: RED, dead: TEXT2 };
+
+function NewsAvatar({ story, playerPhoto }) {
+  const size = 32;
+  const base = { width: size, height: size, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" };
+  if (story.authorType === "auto") {
+    return (
+      <div style={{ ...base, background: DARK }}>
+        <img src={LOGO_B64} alt="Formula 5" style={{ width: "80%", objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+      </div>
+    );
+  }
+  if (playerPhoto) return <img src={playerPhoto} alt={story.author} style={{ ...base, objectFit: "cover" }} />;
+  const color = avatarColor(story.author);
+  return (
+    <div style={{ ...base, background: `${color}20`, border: `2px solid ${color}50`, fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 11, color }}>
+      {getInitials(story.author)}
+    </div>
+  );
+}
+
+// One player: avatar over name, sized for a half-width column.
+function PlayerChip({ name, playersByName }) {
+  const photo = playersByName[name]?.photo_url;
+  const color = avatarColor(name);
+  return (
+    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+      {photo ? (
+        <img src={photo} alt={name} style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", border: `1.5px solid ${color}40` }} />
+      ) : (
+        <div style={{ width: 30, height: 30, borderRadius: "50%", background: `${color}20`, border: `1.5px solid ${color}50`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 10, color }}>
+          {getInitials(name)}
+        </div>
+      )}
+      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 9.5, color: TEXT, textAlign: "center", lineHeight: 1.15, wordBreak: "break-word" }}>{name}</span>
+    </div>
+  );
+}
+
+// Hero box: team name, logo, place + points, status chip. Border carries the tone.
+// Grid stretches both columns; the box flexes so paired boxes match height.
+function TeamHero({ x, teamsByName, playersByName }) {
+  const c = TONE[x.tone] || TEXT2;
+  const logo = teamsByName[x.name]?.logo_url;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", minWidth: 0, height: "100%" }}>
+      <div style={{ flex: 1, border: `2px solid ${c}`, background: `${c}0c`, borderRadius: 12, padding: "10px 5px 12px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", gap: 6, textAlign: "center" }}>
+        <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 12, color: DARK, margin: 0, lineHeight: 1.2 }}>{x.label || x.name}</p>
+        {logo ? (
+          <img src={logo} alt={x.label || x.name} style={{ width: 52, height: 52, objectFit: "contain" }} />
+        ) : (
+          <div style={{ width: 52, height: 52, borderRadius: "50%", background: `${c}20`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 16, color: c }}>
+            {getInitials(x.label || x.name)}
+          </div>
+        )}
+        <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 11, color: TEXT2, margin: 0 }}>{x.meta}</p>
+        <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 8.5, letterSpacing: "0.06em", textTransform: "uppercase", color: c, background: `${c}22`, padding: "3px 7px", borderRadius: 5, lineHeight: 1.3 }}>{x.tag}</span>
+      </div>
+      <div style={{ display: "flex", gap: 3, marginTop: 8 }}>
+        {x.players.map(n => <PlayerChip key={n} name={n} playersByName={playersByName} />)}
+      </div>
+    </div>
+  );
+}
+
+// Ranked dot plot. Averages cluster in a narrow band, so a zero-baseline bar
+// would flatten every difference — dots on a zoomed scale carry position
+// without implying length. Blue/orange validated for CVD separation.
+const DIV_COLOR = { C: "#2a6fa8", "2": "#e08a2e" };
+const DIV_LABEL = { C: "Championship", "2": "Second Division" };
+
+function AvgChart({ b }) {
+  const vals = b.rows.map(r => r.avg);
+  const lo = Math.floor(Math.min(...vals)) - 2, hi = Math.ceil(Math.max(...vals)) + 2;
+  const pct = v => ((v - lo) / (hi - lo)) * 100;
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ display: "flex", gap: 14, marginBottom: 10 }}>
+        {["C", "2"].map(d => (
+          <span key={d} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 9, height: 9, borderRadius: "50%", background: DIV_COLOR[d] }} />
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2 }}>{DIV_LABEL[d]}</span>
+          </span>
+        ))}
+      </div>
+      {b.rows.map(r => (
+        <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+          <span style={{ flex: "0 0 40%", fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT, lineHeight: 1.2 }}>{r.name}</span>
+          <div style={{ flex: 1, position: "relative", height: 14 }}>
+            <div style={{ position: "absolute", top: 6, left: 0, right: 0, height: 2, background: BORDER, borderRadius: 1 }} />
+            <div style={{ position: "absolute", top: 1, left: `${pct(r.avg)}%`, transform: "translateX(-50%)", width: 12, height: 12, borderRadius: "50%", background: DIV_COLOR[r.div], border: "2px solid #fff" }} />
+          </div>
+          <span style={{ flex: "0 0 30px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 11, color: TEXT }}>{r.avg.toFixed(1)}</span>
+        </div>
+      ))}
+      {b.note && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, lineHeight: 1.5, margin: "10px 0 0" }}>{b.note}</p>}
+    </div>
+  );
+}
+
+// Standings dot plot with the cut line drawn in. Zone colors validated for
+// CVD separation (blue/orange/red, worst normal-vision pair dE 23.7); every row
+// also carries its position, name and value as text, so color is never alone.
+const ZONE = { ok: "#2a6fa8", mp: "#e08a2e", drop: "#b02525", none: "#8a8a9a" };
+
+function StandingsChart({ b }) {
+  const vals = b.rows.map(r => r.pts);
+  const lo = Math.min(...vals) - 12, hi = Math.max(...vals) + 8;
+  const pct = v => ((v - lo) / (hi - lo)) * 100;
+  return (
+    <div style={{ marginTop: 14 }}>
+      {b.rows.map(r => (
+        <div key={r.name}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ flex: "0 0 14px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 9.5, color: TEXT2 }}>{r.pos}</span>
+            <span style={{ flex: "0 0 33%", fontFamily: "'DM Sans', sans-serif", fontSize: 10.5, color: TEXT, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
+            <div style={{ flex: 1, position: "relative", height: 14 }}>
+              <div style={{ position: "absolute", top: 6, left: 0, right: 0, height: 2, background: BORDER, borderRadius: 1 }} />
+              <div style={{ position: "absolute", top: 1, left: `${pct(r.pts)}%`, transform: "translateX(-50%)", width: 12, height: 12, borderRadius: "50%", background: ZONE[r.zone], border: "2px solid #fff" }} />
+            </div>
+            <span style={{ flex: "0 0 26px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 10.5, color: TEXT }}>{r.pts}</span>
+          </div>
+          {r.badge && (
+            <div style={{ display: "flex", justifyContent: "flex-end", margin: "1px 30px 2px 0" }}>
+              <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 7.5, letterSpacing: "0.07em", textTransform: "uppercase", color: ZONE.mp, background: `${ZONE.mp}22`, padding: "2px 5px", borderRadius: 4 }}>{r.badge}</span>
+            </div>
+          )}
+          {r.pos === b.lineAfter && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, margin: "5px 0 6px" }}>
+              <span style={{ flex: 1, height: 2, background: ZONE.drop, opacity: 0.5, borderRadius: 1 }} />
+              <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 8, letterSpacing: "0.09em", textTransform: "uppercase", color: ZONE.drop }}>{b.lineLabel}</span>
+              <span style={{ flex: 1, height: 2, background: ZONE.drop, opacity: 0.5, borderRadius: 1 }} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function NewsBlock({ b, teamsByName, playersByName }) {
+  if (b.t === "h") return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "26px 0 0" }}>
+      <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 15, color: DARK, textTransform: "uppercase", letterSpacing: "0.04em" }}>{b.text}</span>
+      <span style={{ flex: 1, height: 2, background: BLUE }} />
+    </div>
+  );
+  if (b.t === "sub") return (
+    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.08em", margin: "3px 0 0" }}>{b.text}</p>
+  );
+  if (b.t === "note") return (
+    <div style={{ background: `${BLUE}0e`, border: `1px solid ${BLUE}35`, borderRadius: 10, padding: "10px 12px", margin: "12px 0 0" }}>
+      {b.title && <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 10, color: BLUEDARK, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px" }}>{b.title}</p>}
+      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12.5, color: TEXT, lineHeight: 1.6, margin: 0 }}>{b.text}</p>
+    </div>
+  );
+  if (b.t === "chart") return <AvgChart b={b} />;
+  if (b.t === "standings") return <StandingsChart b={b} />;
+  if (b.t === "m") return (
+    <div style={{ marginTop: 22 }}>
+      <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 11, color: BLUEDARK, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>{b.title}</p>
+      {b.story && (
+        <div style={{ background: `${BLUE}12`, borderRadius: 10, padding: "9px 11px", marginBottom: 12 }}>
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12.5, color: TEXT, lineHeight: 1.55, margin: 0, fontStyle: "italic" }}>
+            {b.story.text}
+            {b.story.href && (
+              <> <a href={b.story.href} target="_blank" rel="noopener noreferrer" style={{ color: BLUEDARK, fontWeight: 600 }}>{b.story.hrefLabel}</a></>
+            )}
+          </p>
+        </div>
+      )}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, alignItems: "stretch" }}>
+        {b.teams.map(x => <TeamHero key={x.name} x={x} teamsByName={teamsByName} playersByName={playersByName} />)}
+      </div>
+      {b.teams.map(x => {
+        const c = TONE[x.tone] || TEXT2;
+        return (
+          <div key={x.name} style={{ marginTop: 14, borderLeft: `3px solid ${c}`, paddingLeft: 9 }}>
+            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 12, color: DARK, margin: 0 }}>
+              {x.label || x.name} <span style={{ fontWeight: 500, color: TEXT2 }}>— can finish {x.can}</span>
+            </p>
+            {x.notes.map((n, i) => (
+              <p key={i} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12.5, color: TEXT, lineHeight: 1.6, margin: "6px 0 0" }}>{n}</p>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+  return <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT, lineHeight: 1.65, margin: "12px 0 0" }}>{b.text}</p>;
+}
+
+function NewsFeed({ playersByName, teamsByName }) {
+  const [openId, setOpenId] = useState(NEWS[0]?.id ?? null);
+  if (NEWS.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <span style={{ flex: 1, height: 1, background: BORDER }} />
+        <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.12em" }}>News</span>
+        <span style={{ flex: 1, height: 1, background: BORDER }} />
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {NEWS.map(story => {
+          const isOpen = openId === story.id;
+          const byline = story.authorType === "auto" ? "Formula 5" : story.author;
+          const photo = story.authorType !== "auto" ? playersByName[story.author]?.photo_url : null;
+          const dateLabel = new Date(story.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          return (
+            <div key={story.id} style={{ background: "#fff", borderRadius: isOpen ? 0 : 14, border: `1px solid ${BORDER}`, borderLeft: isOpen ? "none" : `1px solid ${BORDER}`, borderRight: isOpen ? "none" : `1px solid ${BORDER}`, overflow: "hidden", margin: isOpen ? "0 -20px" : 0 }}>
+              <button onClick={() => setOpenId(isOpen ? null : story.id)} style={{
+                width: "100%", padding: isOpen ? "14px 12px" : "14px 16px", border: "none", background: "transparent",
+                cursor: "pointer", textAlign: "left", display: "block"
+              }}>
+                <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 16, color: DARK, lineHeight: 1.25, margin: "0 0 6px" }}>{story.headline}</p>
+                {story.dek && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT2, lineHeight: 1.5, margin: "0 0 10px" }}>{story.dek}</p>}
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <NewsAvatar story={story} playerPhoto={photo} />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 12, color: TEXT, margin: 0 }}>{byline}</p>
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, margin: 0 }}>{dateLabel}</p>
+                  </div>
+                  <span style={{ fontSize: 11, color: TEXT2, transform: isOpen ? "rotate(180deg)" : "none" }}>▼</span>
+                </div>
+              </button>
+              {isOpen && (
+                <div style={{ padding: "12px 8px 18px", borderTop: `1px solid ${BORDER}` }}>
+                  {story.body.map((b, i) => <NewsBlock key={i} b={b} teamsByName={teamsByName} playersByName={playersByName} />)}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Home Page ────────────────────────────────────────────
 function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
   const [nextRace, setNextRace] = useState(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [latestScoredRound, setLatestScoredRound] = useState(null);
   const [playerPhoto, setPlayerPhoto] = useState(null);
   const [showChooser, setShowChooser] = useState(false);
   const [allPlayers, setAllPlayers] = useState([]);
+  const [allTeams, setAllTeams] = useState([]);
   const [chooserSearch, setChooserSearch] = useState("");
 
   useEffect(() => {
@@ -144,24 +385,18 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
     async function load() {
       try {
         const today = new Date().toISOString().split("T")[0];
-        const [{ data: raceData }, { data: latestScore }, { data: playerData }, { data: playersAll }, { data: scoredRaces }] = await Promise.all([
+        const [{ data: raceData }, { data: latestScore }, { data: playerData }, { data: playersAll }, { data: teamsAll }] = await Promise.all([
           supabase.from("races").select("*").gte("race_date", today).order("race_date", { ascending: true }).limit(1).maybeSingle(),
           supabase.from("scores").select("calculated_at").order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
           supabase.from("players").select("id, name, photo_url").eq("name", currentUser).maybeSingle(),
           supabase.from("players").select("name, photo_url").order("name"),
-          supabase.from("races").select("id, round, race_name, season").eq("season", 2026).order("round", { ascending: false })
+          supabase.from("teams").select("name, logo_url")
         ]);
         if (raceData) setNextRace(raceData);
         if (latestScore?.calculated_at) setLastUpdated(latestScore.calculated_at);
         if (playerData?.photo_url) setPlayerPhoto(playerData.photo_url);
         if (playersAll) setAllPlayers(playersAll);
-        // Find latest round that has scores
-        if (scoredRaces) {
-          const { data: allScores } = await supabase.from("scores").select("race_id").limit(1000);
-          const scoredIds = new Set((allScores || []).map(s => s.race_id));
-          const latest = scoredRaces.find(r => scoredIds.has(r.id));
-          if (latest) setLatestScoredRound(latest.round);
-        }
+        if (teamsAll) setAllTeams(teamsAll);
         if (raceData && playerData) {
           const { data: existing } = await supabase.from("picks").select("id").eq("player_id", playerData.id).eq("race_id", raceData.id).maybeSingle();
           setHasSubmitted(!!existing);
@@ -191,29 +426,31 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
   // Avatar helpers
   const initials = currentUser ? currentUser.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : "?";
   const avatarBg = avatarColor(currentUser);
+  const playersByName = {};
+  allPlayers.forEach(p => { playersByName[p.name] = p; });
+  const teamsByName = {};
+  allTeams.forEach(t => { teamsByName[t.name] = t; });
 
   return (
     <div style={{ padding: "20px 20px 100px" }}>
-      {lastUpdated && (
-        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: TEXT2, textAlign: "center", marginBottom: 16 }}>
-          Last updated {new Date(lastUpdated).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
-        </p>
-      )}
-      <div style={{ marginBottom: 20 }}>
-        <button onClick={() => { setShowChooser(!showChooser); setChooserSearch(""); }} style={{ width: "100%", padding: "14px 16px", borderRadius: showChooser ? "14px 14px 0 0" : 14, border: `2px solid ${BLUE}`, borderBottom: showChooser ? `1px solid ${BORDER}` : `2px solid ${BLUE}`, background: `${BLUE}08`, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-          {playerPhoto ? (
-            <img src={playerPhoto} alt={currentUser} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-          ) : (
-            <div style={{ width: 44, height: 44, borderRadius: "50%", background: avatarBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 16, color: "#fff" }}>{initials}</div>
-          )}
-          <div style={{ flex: 1, textAlign: "left" }}>
-            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 300, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: TEXT2, margin: "0 0 2px" }}>Viewing as</p>
-            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 20, color: DARK, margin: 0 }}>{currentUser}</p>
-          </div>
-          <span style={{ fontSize: 12, color: TEXT2, transition: "transform 0.2s", transform: showChooser ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
-        </button>
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <img src={LOGO_B64} alt="Formula 5" style={{ height: 42, objectFit: "contain", flexShrink: 0 }} />
+          <button onClick={() => { setShowChooser(!showChooser); setChooserSearch(""); }} style={{ flex: 1, minWidth: 0, padding: "8px 12px", borderRadius: 14, border: `2px solid ${BLUE}`, background: `${BLUE}08`, display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+            {playerPhoto ? (
+              <img src={playerPhoto} alt={currentUser} style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+            ) : (
+              <div style={{ width: 34, height: 34, borderRadius: "50%", background: avatarBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 13, color: "#fff" }}>{initials}</div>
+            )}
+            <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+              <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 300, fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", color: TEXT2, margin: "0 0 1px" }}>Viewing as</p>
+              <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 14, color: DARK, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser}</p>
+            </div>
+            <span style={{ fontSize: 11, color: TEXT2, flexShrink: 0, transition: "transform 0.2s", transform: showChooser ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+          </button>
+        </div>
         {showChooser && (
-          <div style={{ border: `2px solid ${BLUE}`, borderTop: "none", borderRadius: "0 0 14px 14px", background: "#fff", padding: "12px 14px 16px" }}>
+          <div style={{ border: `2px solid ${BLUE}`, borderRadius: 14, background: "#fff", padding: "12px 14px 16px", marginTop: 8 }}>
             <input
               placeholder="Search..."
               value={chooserSearch}
@@ -259,42 +496,31 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
           </div>
         )}
       </div>
-      <div style={{ background: "#fff", borderRadius: 16, border: `1px solid ${BORDER}`, padding: 20, marginBottom: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-          <div>
-            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 4px" }}>Next Race</p>
-            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 18, color: DARK, margin: 0 }}>{raceName}</p>
+      {lastUpdated && (
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: TEXT2, textAlign: "center", marginBottom: 10 }}>
+          Last updated {new Date(lastUpdated).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+        </p>
+      )}
+
+      <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: "12px 14px", marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 9, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 2px" }}>Next Race · {raceRound}</p>
+            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 14, color: DARK, margin: 0, lineHeight: 1.2 }}>{raceName}</p>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, margin: "2px 0 0" }}>
+              {circuitInfo ? `${circuitInfo.country} ${circuitInfo.city} · ` : ""}<span style={{ color: BLUE, fontWeight: 600 }}>{raceDate}</span>
+            </p>
           </div>
-          <div style={{ textAlign: "right" }}>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, margin: "0 0 2px" }}>{raceRound}</p>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: BLUE, fontWeight: 600, margin: 0 }}>{raceDate}</p>
-          </div>
+          {hasSubmitted ? (
+            <div style={{ flexShrink: 0, padding: "10px 14px", borderRadius: 10, background: `${GREEN}15`, textAlign: "center", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 12, color: GREEN }}>Picks In</div>
+          ) : (
+            <button onClick={() => onNavigate("picks")} style={{ flexShrink: 0, padding: "10px 16px", borderRadius: 10, border: "none", background: BLUE, fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 12, color: "#fff", cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.03em" }}>Make Picks</button>
+          )}
         </div>
-        {circuitInfo && (
-          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: TEXT2, margin: "0 0 14px" }}>
-            {circuitInfo.country} {circuitInfo.circuit} — {circuitInfo.city}
-          </p>
-        )}
-        {!circuitInfo && <div style={{ height: 14 }} />}
-        {hasSubmitted ? (
-          <div style={{ width: "100%", padding: "14px 0", borderRadius: 12, background: `${GREEN}15`, textAlign: "center", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 16, color: GREEN }}>Picks Submitted</div>
-        ) : (
-          <button onClick={() => onNavigate("picks")} style={{ width: "100%", padding: "14px 0", borderRadius: 12, border: "none", background: BLUE, fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 16, color: "#fff", cursor: "pointer" }}>Make Your Picks</button>
-        )}
-        {pickDeadline && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT, textAlign: "center", marginTop: 12, fontWeight: 500 }}>Picks due by <span style={{ fontWeight: 700, color: DARK }}>{pickDeadline}</span></p>}
+        {pickDeadline && <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, marginTop: 8 }}>Due by <span style={{ fontWeight: 700, color: DARK }}>{pickDeadline}</span></p>}
       </div>
 
-      {/* Recap button */}
-      {latestScoredRound && (
-        <button onClick={() => onNavigate("recaps")} style={{
-          width: "100%", padding: "14px", borderRadius: 12, marginBottom: 24,
-          border: `1.5px solid ${BORDER}`, background: "#fff",
-          fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 13, color: BLUEDARK,
-          cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.04em"
-        }}>
-          Read the Round {latestScoredRound} Recap
-        </button>
-      )}
+      <NewsFeed playersByName={playersByName} teamsByName={teamsByName} />
 
       {/* All navigation — unified 3-across grid */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -303,12 +529,7 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
         <span style={{ flex: 1, height: 1, background: BORDER }} />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-        {[
-          { id: "player-standings", label: "Player\nStandings" },
-          { id: "team-standings", label: "Team\nStandings" },
-          { id: "schedule", label: "Schedule" },
-          ...links,
-        ].map(item => (
+        {links.map(item => (
           <button key={item.id} onClick={() => onNavigate(item.id)} style={{
             padding: "16px 6px", borderRadius: 12,
             border: `1px solid ${BORDER}`, background: "#fff",
@@ -641,9 +862,11 @@ export default function App() {
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: ${BG}; } .app-wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; background: ${BG}; padding-bottom: 80px; }`}</style>
       <div className="app-wrap">
-        <div style={{ padding: "14px 20px 10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <img src={LOGO_B64} alt="Formula 5" style={{ height: 85, objectFit: "contain" }} />
-        </div>
+        {activePage !== "home" && (
+          <div style={{ padding: "14px 20px 10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src={LOGO_B64} alt="Formula 5" style={{ height: 85, objectFit: "contain" }} />
+          </div>
+        )}
         {activePage === "home" && <HomePage currentUser={currentUser} onNavigate={navigateTo} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
         {activePage === "player-standings" && <PlayerStandings currentUser={currentUser} />}
         {activePage === "picks" && <MyPicksPage currentUser={currentUser} onNavigate={navigateTo} />}
