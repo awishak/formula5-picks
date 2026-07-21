@@ -244,8 +244,9 @@ function StandingsChart({ b }) {
         <div key={r.name}>
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <span style={{ flex: "0 0 14px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 9.5, color: TEXT2 }}>{r.pos}</span>
-            <span style={{ flex: "0 0 33%", fontFamily: "'DM Sans', sans-serif", fontSize: 10.5, color: TEXT, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
-            <div style={{ flex: 1, position: "relative", height: 14 }}>
+            <span style={{ flex: "0 0 31%", fontFamily: "'DM Sans', sans-serif", fontSize: 10.5, color: TEXT, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
+            <span style={{ flex: "0 0 auto", fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 7, letterSpacing: "0.05em", textTransform: "uppercase", color: TONE[r.ctone], background: `${TONE[r.ctone]}1e`, padding: "2px 4px", borderRadius: 3, whiteSpace: "nowrap" }}>{r.chip}</span>
+            <div style={{ flex: 1, minWidth: 40, position: "relative", height: 14 }}>
               <div style={{ position: "absolute", top: 6, left: 0, right: 0, height: 2, background: BORDER, borderRadius: 1 }} />
               <div style={{ position: "absolute", top: 1, left: `${pct(r.pts)}%`, transform: "translateX(-50%)", width: 12, height: 12, borderRadius: "50%", background: ZONE[r.zone], border: "2px solid #fff" }} />
             </div>
@@ -332,11 +333,13 @@ function NewsBlock({ b, teamsByName, playersByName }) {
         const c = TONE[x.tone] || TEXT2;
         return (
           <div key={x.name} style={{ marginTop: 14, borderLeft: `3px solid ${c}`, paddingLeft: 9 }}>
-            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 12, color: DARK, margin: 0 }}>
-              {x.label || x.name} <span style={{ fontWeight: 500, color: TEXT2 }}>— can finish {x.can}</span>
+            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 13, color: DARK, margin: 0, lineHeight: 1.35 }}>
+              {x.label || x.name}: {x.playing}
             </p>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, margin: "3px 0 0" }}>Can finish {x.can}.</p>
+            <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 9.5, color: c, textTransform: "uppercase", letterSpacing: "0.08em", margin: "9px 0 0" }}>How they can do it</p>
             {x.notes.map((n, i) => (
-              <p key={i} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12.5, color: TEXT, lineHeight: 1.6, margin: "6px 0 0" }}>{n}</p>
+              <p key={i} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12.5, color: TEXT, lineHeight: 1.6, margin: "5px 0 0" }}>{n}</p>
             ))}
           </div>
         );
