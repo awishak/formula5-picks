@@ -269,6 +269,30 @@ function StandingsChart({ b }) {
   );
 }
 
+// Odds bars. Probability has a true zero and length is the whole point, so a
+// bar from a zero baseline is correct here (unlike the points/average dot plots).
+function OddsChart({ b }) {
+  return (
+    <div style={{ marginTop: 16 }}>
+      <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 11, color: DARK, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 1px" }}>{b.title}</p>
+      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: TEXT2, margin: "0 0 9px" }}>{b.sub}</p>
+      {b.rows.map(r => {
+        const c = r.p >= 95 ? ZONE.ok : r.p >= 20 ? ZONE.mp : ZONE.drop;
+        const label = r.p === 100 ? ">99.9%" : r.p === 0 ? "0%" : `${r.p}%`;
+        return (
+          <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+            <span style={{ flex: "0 0 38%", fontFamily: "'DM Sans', sans-serif", fontSize: 10.5, color: TEXT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
+            <div style={{ flex: 1, height: 10, background: BG2, borderRadius: 3, overflow: "hidden" }}>
+              <div style={{ width: `${Math.max(r.p, 0.6)}%`, height: "100%", background: c, borderRadius: 3 }} />
+            </div>
+            <span style={{ flex: "0 0 40px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 10.5, color: TEXT }}>{label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function NewsBlock({ b, teamsByName, playersByName }) {
   if (b.t === "h") return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "26px 0 0" }}>
@@ -287,6 +311,7 @@ function NewsBlock({ b, teamsByName, playersByName }) {
   );
   if (b.t === "chart") return <AvgChart b={b} />;
   if (b.t === "standings") return <StandingsChart b={b} />;
+  if (b.t === "odds") return <OddsChart b={b} />;
   if (b.t === "m") return (
     <div style={{ marginTop: 22 }}>
       <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 11, color: BLUEDARK, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>{b.title}</p>
