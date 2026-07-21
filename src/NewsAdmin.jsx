@@ -16,6 +16,16 @@ function Textarea({ value, onChange, rows = 3 }) {
   return <textarea value={value} onChange={e => onChange(e.target.value)} rows={rows} style={{ ...inp, resize: "vertical", lineHeight: 1.5 }} />;
 }
 
+// Bullet points edited as one blank-line-separated string. The raw text is held
+// here and split without trimming or filtering, so typing a space or opening a
+// new line is never undone mid-keystroke. Cleanup happens once, on save.
+function NotesEditor({ initial, onChange }) {
+  const [text, setText] = useState((initial || []).join("\n\n"));
+  return (
+    <Textarea rows={6} value={text} onChange={v => { setText(v); onChange(v.split(/\n\s*\n/)); }} />
+  );
+}
+
 function BlockEditor({ block, onChange, onDelete, onMove, index, total }) {
   const [rawErr, setRawErr] = useState("");
   const isProse = !!PROSE[block.t];
@@ -77,9 +87,8 @@ function BlockEditor({ block, onChange, onDelete, onMove, index, total }) {
                   </select>
                 </div>
               </div>
-              <label style={lbl}>Points below the box, one per line</label>
-              <Textarea rows={5} value={(tm.notes || []).join("\n\n")}
-                onChange={v => setTeam(i, "notes", v.split(/\n\s*\n/).map(x => x.trim()).filter(Boolean))} />
+              <label style={lbl}>Points below the box — leave a blank line between each</label>
+              <NotesEditor initial={tm.notes} onChange={arr => setTeam(i, "notes", arr)} />
             </div>
           ))}
         </>
@@ -124,7 +133,8 @@ export default function NewsAdmin() {
 
   function edit(s) {
     setSel(s.id);
-    setDraft({ ...s, body: JSON.parse(JSON.stringify(s.body || [])) });
+    let k = 0;
+    setDraft({ ...s, body: (JSON.parse(JSON.stringify(s.body || []))).map(b => ({ ...b, __k: ++k })) });
     setStatus("");
   }
 
@@ -147,7 +157,11 @@ export default function NewsAdmin() {
   async function save() {
     if (!draft) return;
     setBusy(true);
-    const body = (draft.body || []).map(b => { const { __raw, ...rest } = b; return rest; });
+    const body = (draft.body || []).map(b => {
+      const { __raw, __k, ...rest } = b;
+      if (rest.teams) rest.teams = rest.teams.map(t => ({ ...t, notes: (t.notes || []).map(x => x.trim()).filter(Boolean) }));
+      return rest;
+    });
     const { data, error } = await supabase.from("news").update({
       headline: draft.headline, dek: draft.dek, author: draft.author,
       author_type: draft.author_type, published_date: draft.published_date,
@@ -168,7 +182,7 @@ export default function NewsAdmin() {
     [b[i], b[j]] = [b[j], b[i]];
     setDraft({ ...draft, body: b });
   };
-  const addB = (t) => setDraft({ ...draft, body: [...draft.body, t === "note" ? { t, title: "", text: "" } : { t, text: "" }] });
+  const addB = (t) => setDraft({ ...draft, body: [...draft.body, { ...(t === "note" ? { t, title: "", text: "" } : { t, text: "" }), __k: Date.now() }] });
 
   if (missingTable) return (
     <div style={{ border: `1px solid ${ORANGE}`, background: `${ORANGE}12`, borderRadius: 10, padding: "14px 16px" }}>
@@ -232,7 +246,7 @@ export default function NewsAdmin() {
 
               <label style={lbl}>Body — {draft.body.length} blocks</label>
               {draft.body.map((b, i) => (
-                <BlockEditor key={i} block={b} index={i} total={draft.body.length}
+                <BlockEditor key={b.__k ?? i} block={b} index={i} total={draft.body.length}
                   onChange={nb => setB(i, nb)} onDelete={delB} onMove={moveB} />
               ))}
 
