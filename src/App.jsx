@@ -372,7 +372,7 @@ function NewsFeed({ playersByName, teamsByName, stories }) {
           const photo = story.authorType !== "auto" ? playersByName[story.author]?.photo_url : null;
           const dateLabel = new Date(story.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
           return (
-            <div key={story.id} style={{ background: "#fff", borderRadius: isOpen ? 0 : 14, border: `1px solid ${BORDER}`, borderLeft: isOpen ? "none" : `1px solid ${BORDER}`, borderRight: isOpen ? "none" : `1px solid ${BORDER}`, overflow: "hidden", margin: isOpen ? "0 -20px" : 0 }}>
+            <div key={story.id} style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, overflow: "hidden", margin: isOpen ? "0 -12px" : 0 }}>
               <button onClick={() => setOpenId(isOpen ? "" : story.id)} style={{
                 width: "100%", padding: isOpen ? "14px 12px" : "14px 16px", border: "none", background: "transparent",
                 cursor: "pointer", textAlign: "left", display: "block"
