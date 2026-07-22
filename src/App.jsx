@@ -245,7 +245,7 @@ function StandingsChart({ b }) {
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <span style={{ flex: "0 0 15px", textAlign: "right", fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 11, color: TEXT2 }}>{r.pos}</span>
             <span style={{ flex: "0 0 28%", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: TEXT, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
-            <span style={{ flex: "0 0 76px", textAlign: "right" }}>
+            <span style={{ flex: "0 0 88px", textAlign: "right" }}>
               <span style={{ display: "inline-block", fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 8.5, letterSpacing: "0.04em", textTransform: "uppercase", color: TONE[r.ctone], background: `${TONE[r.ctone]}1e`, padding: "2px 5px", borderRadius: 3, whiteSpace: "nowrap" }}>{r.chip}</span>
             </span>
             <div style={{ flex: 1, minWidth: 28, position: "relative", height: 16 }}>
