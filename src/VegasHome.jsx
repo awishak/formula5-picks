@@ -182,7 +182,7 @@ function Chip({ children, color = V.blue, solid = false }) {
   );
 }
 
-function Face({ name, size = 40, ring }) {
+function Face({ name, size = 40, ring, glow = 1, drained = false }) {
   const [bad, setBad] = useState(false);
   const c = ring || dColor(name);
   const url = DRIVER_HEADSHOTS[name];
@@ -191,6 +191,7 @@ function Face({ name, size = 40, ring }) {
       <div style={{
         width: size, height: size, borderRadius: "50%", flexShrink: 0,
         background: `${c}22`, border: `2px solid ${c}`,
+        boxShadow: glow ? `0 0 ${12 * glow}px ${c}66` : "none",
         display: "flex", alignItems: "center", justifyContent: "center",
         ...display("chip"), color: c,
       }}>{lastName(name).slice(0, 3).toUpperCase()}</div>
@@ -199,8 +200,35 @@ function Face({ name, size = 40, ring }) {
   return (
     <img src={url} alt={name} onError={() => setBad(true)} style={{
       width: size, height: size, borderRadius: "50%", objectFit: "cover", objectPosition: "top",
-      flexShrink: 0, background: V.bg3, border: `2px solid ${c}`, boxShadow: `0 0 12px ${c}55`,
+      flexShrink: 0, background: V.bg3, border: `2px solid ${c}`,
+      boxShadow: glow ? `0 0 ${12 * glow}px ${c}${glow > 1 ? "aa" : "55"}` : "none",
+      // Draining the color is what makes a driver you are rooting against read as
+      // bad rather than merely as theirs. Faces are the loudest thing in the row.
+      filter: drained ? "grayscale(0.85) brightness(0.8)" : "none",
     }} />
+  );
+}
+
+// The verdict, in words. Color and glow tell you fast, but a filled chip that
+// says ROOT FOR removes any chance of getting it backwards.
+function Verdict({ kind }) {
+  const map = {
+    mine: { text: "Root for", c: V.green },
+    theirs: { text: "Root against", c: V.pink },
+    both: { text: "Cancels out", c: V.text3 },
+  };
+  const v = map[kind];
+  if (!v) return null;
+  const flat = kind === "both";
+  return (
+    <span style={{
+      ...display("chip"), fontSize: 14, textTransform: "uppercase",
+      padding: "2px 9px", borderRadius: 7, whiteSpace: "nowrap", flexShrink: 0,
+      color: flat ? V.text3 : V.bg,
+      background: flat ? "transparent" : v.c,
+      border: `1px solid ${flat ? V.border2 : v.c}`,
+      boxShadow: flat ? "none" : `0 0 12px ${v.c}88`,
+    }}>{v.text}</span>
   );
 }
 
@@ -507,7 +535,7 @@ function RootingBoard({ order, live, lapInfo }) {
   };
 
   const COL = 58;
-  const ROW_IN = 56;   // one of this week's ten
+  const ROW_IN = 60;   // one of this week's ten, with a verdict chip
   const ROW_OUT = 30;  // not in a pool this week, context only
   const accentOf = (side) => (side === "mine" ? V.blue : side === "theirs" ? V.pink : null);
 
@@ -552,6 +580,22 @@ function RootingBoard({ order, live, lapInfo }) {
         </p>
       </div>
 
+      {/* The answer in one sentence each, before anyone reads a table */}
+      <div style={{ padding: "14px 16px", borderBottom: `1px solid ${V.border}`, display: "flex", flexDirection: "column", gap: 10 }}>
+        {[
+          { kind: "mine", c: V.green, names: rows.filter(r => r.side === "mine").map(r => lastName(r.name)) },
+          { kind: "theirs", c: V.pink, names: rows.filter(r => r.side === "theirs").map(r => lastName(r.name)) },
+        ].filter(g => g.names.length > 0).map(g => (
+          <div key={g.kind} style={{ display: "flex", alignItems: "center", gap: 11 }}>
+            <Verdict kind={g.kind} />
+            <p style={{
+              ...body("bodyMd"), fontSize: 17, margin: 0, minWidth: 0,
+              ...(g.kind === "mine" ? textGlow(V.green, 0.5) : { color: V.pink }),
+            }}>{g.names.join(", ")}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Column header */}
       <div style={{ display: "flex", alignItems: "center", padding: "9px 12px", borderBottom: `1px solid ${V.border}`, background: V.bg3 }}>
         <span style={{ width: 26, flexShrink: 0 }} />
@@ -586,27 +630,43 @@ function RootingBoard({ order, live, lapInfo }) {
           </div>
         );
 
+        // Good is green and lit, bad is pink with the color drained out of the
+        // face. The verdict chip says which in words, so none of it has to be
+        // decoded. Neutral rows stay plain: nothing to decide.
+        const good = r.side === "mine";
+        const bad = r.side === "theirs";
+        const vColor = good ? V.green : bad ? V.pink : null;
         return (
           <div key={r.name} style={{
             display: "flex", alignItems: "center", height: ROW_IN, boxSizing: "border-box",
             padding: "0 12px 0 9px",
             borderBottom: last ? "none" : `1px solid ${V.border}`,
-            background: lit ? `${accent}0f` : "transparent",
-            borderLeft: `3px solid ${lit ? accent : "transparent"}`,
+            background: vColor ? `${vColor}12` : "transparent",
+            borderLeft: `4px solid ${vColor || "transparent"}`,
+            boxShadow: good ? `inset 0 0 26px ${V.green}1a` : bad ? `inset 0 0 26px ${V.pink}14` : "none",
           }}>
             <span style={{ width: 23, flexShrink: 0 }}>
-              <p style={{ ...display("h3"), color: lit ? V.text : V.text2, margin: 0, fontVariantNumeric: "tabular-nums" }}>{r.pos}</p>
+              <p style={{
+                ...display("h3"), margin: 0, fontVariantNumeric: "tabular-nums",
+                ...(good ? textGlow(V.green, 0.6) : { color: bad ? V.pink : V.text2 }),
+              }}>{r.pos}</p>
             </span>
             <span style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 9 }}>
-              <Face name={r.name} size={32} />
+              <Face name={r.name} size={32}
+                ring={vColor || undefined}
+                glow={good ? 1.6 : bad ? 1 : 1}
+                drained={bad} />
               <span style={{ minWidth: 0 }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
+                  <p style={{
+                    ...body("bodyMd"), lineHeight: 1.15,
+                    color: lit ? V.text : V.text2, margin: 0,
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>{r.name}</p>
+                  <Verdict kind={r.side} />
+                </span>
                 <p style={{
-                  ...body("bodyMd"), lineHeight: 1.15,
-                  color: lit ? V.text : V.text2, margin: 0,
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>{r.name}</p>
-                <p style={{
-                  ...body("bodySm"), fontSize: 13, lineHeight: 1.2, margin: 0,
+                  ...body("bodySm"), fontSize: 13, lineHeight: 1.2, margin: "2px 0 0",
                   color: dColor(r.name), opacity: lit ? 0.95 : 0.7,
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>{dTeam(r.name)}</p>
@@ -626,8 +686,8 @@ function RootingBoard({ order, live, lapInfo }) {
       <div style={{ padding: "13px 16px", background: V.bg3, borderTop: `1px solid ${V.border}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
           {[
-            [V.blue, false, `Only ${myTeam.name} has him. Root for him.`],
-            [V.pink, false, `Only ${opp.name} has him. Root against him.`],
+            [V.blue, false, `Blue number is what he is worth to ${myTeam.name}.`],
+            [V.pink, false, `Pink number is what he is worth to ${opp.name}.`],
             [V.text3, true, "Both teams, same count. Cancels out either way."],
           ].map(([c, muted, text], i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 11 }}>
