@@ -59,7 +59,6 @@ export const TYPE = {
   h2:     { fontSize: 30, lineHeight: 1.0,  letterSpacing: "0.02em" },
   h3:     { fontSize: 23, lineHeight: 1.05, letterSpacing: "0.02em" },
   stat:   { fontSize: 36, lineHeight: 0.95, letterSpacing: "0.01em" },
-  label:  { fontSize: 15, letterSpacing: "0.16em", textTransform: "uppercase" },
   chip:   { fontSize: 15, letterSpacing: "0.08em" },
   // Body steps stay in DM Sans and keep real weights.
   body:   { fontSize: 15, fontWeight: 400, lineHeight: 1.5 },
@@ -71,6 +70,14 @@ export const TYPE = {
 // cannot trigger synthetic bold, which on a condensed face looks like a smudge.
 export const display = (step, extra = {}) => ({ fontFamily: FD, fontWeight: 400, ...TYPE[step], ...extra });
 export const body = (step, extra = {}) => ({ fontFamily: FB, ...TYPE[step], ...extra });
+
+// Labels stay off the condensed face. Bebas at label size reads cramped, and
+// these are the smallest text on screen, so they get the widest letterforms.
+// Chips keep Bebas: they are short, boxed, and read as signage rather than text.
+export const label = (extra = {}) => ({
+  fontFamily: FB, fontSize: 13, fontWeight: 700,
+  letterSpacing: "0.10em", textTransform: "uppercase", ...extra,
+});
 
 // The marquee. Monoton has no lowercase worth using and gets wide fast, so the
 // size steps down as the race name gets longer rather than wrapping mid-word.

@@ -8,7 +8,7 @@
 // Nothing here touches Supabase. It is a design surface, reachable at #vegas.
 
 import { useState } from "react";
-import { V, display, body, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
+import { V, display, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
 
@@ -49,22 +49,25 @@ const SNAP = {
     "Oliver Bearman": 17, "Carlos Sainz": 18, "Alex Albon": 19, "Lance Stroll": 20,
     "Valtteri Bottas": 21, "Sergio Perez": 22,
   },
-  // Which side each driver moves. Derived from the real round-11 picks:
-  //   mine   my team has more of him than theirs  → root for
-  //   theirs their team has more than mine        → root against
-  //   both   equal count, cannot move the matchup → cancels out
-  // Every other driver is on nobody's card and gets no mark.
-  sides: {
-    "Lewis Hamilton": "mine", "Liam Lawson": "mine", "Arvid Lindblad": "mine",
-    "George Russell": "theirs", "Franco Colapinto": "theirs", "Oliver Bearman": "theirs",
-    "Max Verstappen": "both", "Isack Hadjar": "both",
+  // How many of the team's two cards each driver appears on. Straight from the
+  // real round-11 picks: Andrew and Kevin submitted identical fives, Stacy
+  // matched them exactly, and Brett is the only one off-script, which is why the
+  // edges land where they do. Everything the board shows is derived from this.
+  counts: {
+    mine: {
+      "Lewis Hamilton": 2, "Max Verstappen": 2, "Isack Hadjar": 2,
+      "Liam Lawson": 2, "Arvid Lindblad": 2,
+    },
+    theirs: {
+      "George Russell": 1, "Lewis Hamilton": 1, "Max Verstappen": 2, "Isack Hadjar": 2,
+      "Franco Colapinto": 1, "Oliver Bearman": 1, "Liam Lawson": 1, "Arvid Lindblad": 1,
+    },
   },
-  // INVENTED. The race has not run. Both snapshots are marked MOCK in the UI.
-  // Two laps so the table can be seen changing, and so the projection flips:
-  // at lap 30 the edge drivers are ahead, by lap 52 theirs have come through.
+  // INVENTED running orders. The race has not run, so both are marked MOCK.
+  // Two laps so the board can be seen changing and the projection seen flipping.
   laps: [
     {
-      lap: 30, projMine: 34, projTheirs: 27, alpineStopped: false, updatedAgo: 40,
+      lap: 30, alpineStopped: false, updatedAgo: 40,
       order: ["Lando Norris", "Lewis Hamilton", "Charles Leclerc", "Max Verstappen", "Oscar Piastri",
         "Andrea Kimi Antonelli", "Isack Hadjar", "George Russell", "Arvid Lindblad", "Liam Lawson",
         "Nico Hulkenberg", "Pierre Gasly", "Franco Colapinto", "Gabriel Bortoleto", "Esteban Ocon",
@@ -72,7 +75,7 @@ const SNAP = {
         "Valtteri Bottas", "Sergio Perez"],
     },
     {
-      lap: 52, projMine: 24, projTheirs: 31, alpineStopped: true, updatedAgo: 75,
+      lap: 52, alpineStopped: true, updatedAgo: 75,
       order: ["Lando Norris", "Charles Leclerc", "Max Verstappen", "Oscar Piastri", "George Russell",
         "Andrea Kimi Antonelli", "Lewis Hamilton", "Isack Hadjar", "Oliver Bearman", "Franco Colapinto",
         "Arvid Lindblad", "Liam Lawson", "Nico Hulkenberg", "Pierre Gasly", "Gabriel Bortoleto",
@@ -84,7 +87,35 @@ const SNAP = {
   standings: { myRank: 6, myPts: 446, of: 48, leader: "Joe McGlynn", leaderPts: 478 },
 };
 
+// F5 driver scoring, same table as Admin.jsx:9. P11 and back score nothing, and
+// a DNF is −1. The top pick is NOT doubled: Admin.jsx adds top_pick_pts once and
+// Rules.jsx:98 says straight F1 points.
+const F1_PTS = { 1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1 };
+const ptsForPos = (pos) => (pos === -1 ? -1 : F1_PTS[pos] || 0);
+
+// One pass over the running order produces everything the board needs: each
+// driver's side, what he is worth to each team, and both team totals. Deriving
+// it means the column numbers and the total can never disagree.
+function readBoard(order) {
+  const { counts } = SNAP;
+  let totalMine = 0, totalTheirs = 0;
+  const rows = order.map((name, i) => {
+    const pos = i + 1;
+    const pts = ptsForPos(pos);
+    const cMine = counts.mine[name] || 0;
+    const cTheirs = counts.theirs[name] || 0;
+    const valMine = cMine * pts;
+    const valTheirs = cTheirs * pts;
+    totalMine += valMine;
+    totalTheirs += valTheirs;
+    const side = cMine > cTheirs ? "mine" : cTheirs > cMine ? "theirs" : cMine > 0 ? "both" : null;
+    return { name, pos, pts, cMine, cTheirs, valMine, valTheirs, side };
+  });
+  return { rows, totalMine, totalTheirs };
+}
+
 const dColor = (name) => F1_TEAM_COLORS[TEAM_BY_NAME[name]] || V.text3;
+const dTeam = (name) => TEAM_BY_NAME[name] || "";
 const lastName = (n) => (n || "").split(" ").slice(-1)[0];
 // The marquee says the place, not the words "Grand Prix", which sit under it.
 const shortRace = (n) => (n || "").replace(/\s*Grand Prix\s*/i, "").trim();
@@ -92,7 +123,7 @@ const shortRace = (n) => (n || "").replace(/\s*Grand Prix\s*/i, "").trim();
 // ── Primitives ───────────────────────────────────────────
 
 function Label({ children, color = V.text3, style }) {
-  return <p style={{ ...display("label"), color, margin: 0, ...style }}>{children}</p>;
+  return <p style={{ ...labelType(), color, margin: 0, ...style }}>{children}</p>;
 }
 
 function SectionHead({ children, accent = V.blue, sub }) {
@@ -100,14 +131,16 @@ function SectionHead({ children, accent = V.blue, sub }) {
     <div style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ width: 4, height: 18, borderRadius: 2, background: accent, boxShadow: `0 0 10px ${accent}` }} />
-        <p style={{ ...display("label"), color: V.text, margin: 0 }}>{children}</p>
+        <p style={{ ...labelType(), color: V.text, margin: 0 }}>{children}</p>
       </div>
       {sub && <p style={{ ...body("bodySm"), color: V.text3, margin: "6px 0 0 14px" }}>{sub}</p>}
     </div>
   );
 }
 
-function NeonBtn({ children, color = V.pink, onClick, flicker = false, full = true, sub }) {
+// Color carries meaning, so it defaults rather than being passed every time:
+// blue is normal, green is good to go, pink is needs attention or a problem.
+function NeonBtn({ children, color = V.blue, onClick, flicker = false, full = true, sub }) {
   const [hot, setHot] = useState(false);
   return (
     <button
@@ -226,18 +259,18 @@ function Marquee({ race }) {
   return (
     <div style={{
       ...card({ padding: "22px 20px 20px", marginBottom: 18, position: "relative", overflow: "hidden" }),
-      background: `radial-gradient(120% 100% at 50% 0%, ${V.pink}14 0%, ${V.bg2} 60%)`,
-      borderColor: `${V.pink}33`,
+      background: `radial-gradient(120% 100% at 50% 0%, ${V.blue}14 0%, ${V.bg2} 60%)`,
+      borderColor: `${V.blue}33`,
     }}>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
         <Chip color={V.blue}>Round {race.round} of 22</Chip>
       </div>
       <p style={{
-        ...marquee(shortRace(race.name)), ...textGlow(V.pink), textAlign: "center",
+        ...marquee(shortRace(race.name)), ...textGlow(V.blue), textAlign: "center",
         textTransform: "uppercase", margin: 0,
       }}>{shortRace(race.name)}</p>
-      <p style={{ ...display("label"), color: V.blue, textAlign: "center", margin: "10px 0 0" }}>Grand Prix</p>
-      <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${V.pink}55, transparent)`, margin: "16px 0 12px" }} />
+      <p style={{ ...labelType(), color: V.text2, textAlign: "center", margin: "10px 0 0" }}>Grand Prix</p>
+      <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${V.blue}55, transparent)`, margin: "16px 0 12px" }} />
       <p style={{ ...body("body"), color: V.text2, textAlign: "center", margin: 0 }}>
         {race.circuit} · {race.location}
       </p>
@@ -261,7 +294,7 @@ function HomeOpen({ onNav }) {
       </div>
 
       <div style={{ marginBottom: 22 }}>
-        <NeonBtn color={V.pink} flicker onClick={() => onNav("picks")} sub="22 drivers, 3 from the top pool, 7 from the mid">
+        <NeonBtn flicker onClick={() => onNav("picks")} sub="22 drivers, 3 from the top pool, 7 from the mid">
           Make your picks
         </NeonBtn>
       </div>
@@ -324,7 +357,7 @@ function MatchupCard({ compact = false }) {
       <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
         <Side name={myTeam.name} rank={myTeam.rank} pts={myTeam.champPts} record={myTeam.record} p1={me} p2={teammate} mine />
         <div style={{ flexShrink: 0, alignSelf: "center", padding: "0 4px" }}>
-          <p style={{ ...display("label"), ...textGlow(V.pink, 0.8), margin: 0 }}>vs</p>
+          <p style={{ ...labelType(), color: V.text3, margin: 0 }}>vs</p>
         </div>
         <Side name={opp.name} rank={opp.rank} pts={opp.champPts} record={opp.record} p1={opp.p1} p2={opp.p2} />
       </div>
@@ -398,9 +431,9 @@ function HomeLocked({ live = false, lapIdx = 0 }) {
         Your own card
       </SectionHead>
       <div style={{ ...card({ padding: "16px 18px", marginBottom: 22 }) }}>
-        <Label color={V.gold} style={{ marginBottom: 12 }}>Top pick · double points</Label>
-        <DriverRow name={myPick.topPick} accent={V.gold} badge="2x" grid={grid[myPick.topPick]}
-          why={`Starting P${grid[myPick.topPick]}. Best possible start for you.`} />
+        <Label color={V.gold} style={{ marginBottom: 12 }}>Top pick · from the top pool</Label>
+        <DriverRow name={myPick.topPick} accent={V.gold} grid={grid[myPick.topPick]}
+          why={`Starting P${grid[myPick.topPick]}, worth ${F1_PTS[grid[myPick.topPick]]} there.`} />
         <Label color={V.text3} style={{ margin: "18px 0 12px" }}>Then, in your order</Label>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {myPick.order.slice(1).map((d, i) => (
@@ -417,7 +450,7 @@ function HomeLocked({ live = false, lapIdx = 0 }) {
       <SectionHead accent={V.gold}>Box Box</SectionHead>
       <BoxBoxCard />
 
-      <SectionHead accent={V.pink}>The matchup</SectionHead>
+      <SectionHead accent={V.blue}>The matchup</SectionHead>
       <MatchupCard />
     </>
   );
@@ -426,144 +459,151 @@ function HomeLocked({ live = false, lapIdx = 0 }) {
 // ── The rooting board ────────────────────────────────────
 //
 // The whole race on one screen. Every driver in running order, two narrow
-// columns for the two teams, a dot where that driver moves the matchup. Dots
-// bunched near the top means you are winning, and you read that without
-// counting anything. Replaces three separate lists that made you hold the
-// grid in your head to compare them.
+// columns for the two teams, and in each column what that driver is currently
+// worth to that team. Values bunched near the top of the US column means you
+// are winning, and you read that without counting. The number matters as much
+// as the mark: a driver you are rooting against in P13 is worth zero, which a
+// plain dot cannot tell you.
 function RootingBoard({ order, live, lapInfo }) {
-  const { sides, myTeam, opp } = SNAP;
-  const counts = order.reduce((a, n, i) => {
-    const s = sides[n];
-    if (s === "mine" || s === "theirs") a[s].push(i + 1);
-    return a;
-  }, { mine: [], theirs: [] });
-  const winning = lapInfo ? lapInfo.projMine > lapInfo.projTheirs : null;
+  const { myTeam, opp } = SNAP;
+  const { rows, totalMine, totalTheirs } = readBoard(order);
+  const winning = totalMine > totalTheirs;
+  const margin = Math.abs(totalMine - totalTheirs);
 
-  const Dot = ({ kind, color }) => {
-    if (kind === "solid") return (
-      <span style={{
-        width: 13, height: 13, borderRadius: "50%", background: color,
-        boxShadow: `0 0 10px ${color}, 0 0 20px ${color}77`, display: "block", margin: "0 auto",
-      }} />
-    );
+  // A value cell reads as a lit dot at a glance and as a number on inspection.
+  // "both" keeps the number but drops the glow, since it moves nothing.
+  const Val = ({ v, count, color, muted }) => {
+    if (v == null) return null;
     return (
-      <span style={{
-        width: 11, height: 11, borderRadius: "50%", border: `1.5px solid ${V.text3}`,
-        display: "block", margin: "0 auto", opacity: 0.55,
-      }} />
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+        <span style={{
+          minWidth: 30, height: 30, borderRadius: "50%", padding: "0 5px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: muted ? "transparent" : `${color}1f`,
+          border: `1.5px solid ${muted ? V.border2 : color}`,
+          boxShadow: muted ? "none" : `0 0 9px ${color}88`,
+          ...display("chip"),
+          color: muted ? V.text3 : color,
+        }}>{v}</span>
+        {count > 1 && (
+          <span style={{ ...body("bodySm"), fontSize: 13, color: muted ? V.text3 : color, opacity: 0.8 }}>×{count}</span>
+        )}
+      </div>
     );
   };
 
-  const COL = 52;
-  return (
-    <div style={{ ...card({ marginBottom: 24, overflow: "hidden" }), borderColor: live ? `${V.red}44` : V.border }}>
+  const COL = 58;
+  const accentOf = (side) => (side === "mine" ? V.blue : side === "theirs" ? V.pink : null);
 
-      {/* Status + the answer */}
+  return (
+    <div style={{ ...card({ marginBottom: 24, overflow: "hidden" }), borderColor: live ? `${V.pink}3a` : V.border }}>
+
+      {/* Status and the answer */}
       <div style={{
         padding: "16px 18px",
-        background: live
-          ? `radial-gradient(120% 100% at 50% 0%, ${V.red}14 0%, ${V.bg2} 60%)`
-          : `radial-gradient(120% 100% at 50% 0%, ${V.blue}10 0%, ${V.bg2} 60%)`,
+        background: `radial-gradient(130% 100% at 50% 0%, ${(live ? V.pink : V.blue)}12 0%, ${V.bg2} 62%)`,
         borderBottom: `1px solid ${V.border}`,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12 }}>
-          {live && <span className="v-pulse" style={{ width: 10, height: 10, borderRadius: "50%", background: V.red, boxShadow: `0 0 12px ${V.red}` }} />}
-          <Label color={live ? V.red : V.blue}>
+          {live && <span className="v-pulse" style={{ width: 10, height: 10, borderRadius: "50%", background: V.pink, boxShadow: `0 0 12px ${V.pink}` }} />}
+          <Label color={live ? V.pink : V.blue}>
             {live ? `Live · lap ${lapInfo.lap} of ${SNAP.totalLaps}` : "Starting grid"}
           </Label>
-          <span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
-            {live && <Chip color={V.amber}>Mock</Chip>}
-          </span>
+          {live && <span style={{ marginLeft: "auto" }}><Chip color={V.amber}>Mock</Chip></span>}
         </div>
 
-        {live ? (
-          <>
-            <Label color={V.text3}>If this holds</Label>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 14, margin: "8px 0 6px" }}>
-              <div>
-                <p style={{ ...display("hero"), ...(winning ? textGlow(V.green) : { color: V.text2 }), margin: 0 }}>{lapInfo.projMine}</p>
-                <Label color={V.text3}>Us</Label>
-              </div>
-              <p style={{ ...display("h2"), color: V.text3, margin: "0 0 14px" }}>–</p>
-              <div>
-                <p style={{ ...display("hero"), ...(!winning ? textGlow(V.pink) : { color: V.text2 }), margin: 0 }}>{lapInfo.projTheirs}</p>
-                <Label color={V.text3}>Them</Label>
-              </div>
-              <p style={{
-                ...display("h3"), margin: "0 0 16px auto", textAlign: "right",
-                color: winning ? V.green : V.pink,
-              }}>
-                {winning ? `You win by ${lapInfo.projMine - lapInfo.projTheirs}` : `You lose by ${lapInfo.projTheirs - lapInfo.projMine}`}
-              </p>
-            </div>
-            <p style={{ ...body("bodySm"), color: V.text3, margin: "8px 0 0" }}>
-              Updated {lapInfo.updatedAgo}s ago · refreshes every 2 minutes ·{" "}
-              {lapInfo.alpineStopped ? "Alpine has stopped, Box Box is settled" : "Alpine has not stopped, Box Box still live"}
-            </p>
-          </>
-        ) : (
-          <p style={{ ...body("body"), color: V.text2, margin: 0 }}>
-            Your three start P{counts.mine.join(", P")}. Theirs start P{counts.theirs.join(", P")}.
+        <Label color={V.text3}>{live ? "If this holds" : "On the grid as it stands"}</Label>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 16, margin: "10px 0 0" }}>
+          <div>
+            <p style={{ ...display("hero"), ...(winning ? textGlow(V.blue) : { color: V.text2 }), margin: 0 }}>{totalMine}</p>
+            <Label color={V.text3}>Us</Label>
+          </div>
+          <p style={{ ...display("h2"), color: V.text3, margin: "0 0 16px" }}>–</p>
+          <div>
+            <p style={{ ...display("hero"), ...(!winning ? textGlow(V.pink) : { color: V.text2 }), margin: 0 }}>{totalTheirs}</p>
+            <Label color={V.text3}>Them</Label>
+          </div>
+          <p style={{
+            ...display("h3"), margin: "0 0 18px auto", textAlign: "right",
+            color: winning ? V.green : V.pink,
+          }}>
+            {margin === 0 ? "Dead level" : winning ? `You win by ${margin}` : `You lose by ${margin}`}
           </p>
-        )}
+        </div>
+        <p style={{ ...body("bodySm"), color: V.text3, margin: "12px 0 0" }}>
+          Driver points only, before order and Box Box bonuses.
+          {live && ` Updated ${lapInfo.updatedAgo}s ago, refreshes every 2 minutes. ${lapInfo.alpineStopped ? "Alpine has stopped, Box Box is settled." : "Alpine has not stopped, Box Box still live."}`}
+        </p>
       </div>
 
       {/* Column header */}
-      <div style={{ display: "flex", alignItems: "center", padding: "10px 14px 8px", borderBottom: `1px solid ${V.border}`, background: V.bg3 }}>
-        <span style={{ width: 30, flexShrink: 0 }} />
+      <div style={{ display: "flex", alignItems: "center", padding: "9px 12px", borderBottom: `1px solid ${V.border}`, background: V.bg3 }}>
+        <span style={{ width: 26, flexShrink: 0 }} />
         <span style={{ flex: 1, minWidth: 0 }}><Label color={V.text3}>Driver</Label></span>
-        <span style={{ width: COL, flexShrink: 0, textAlign: "center" }}><Label color={V.green}>Us</Label></span>
+        <span style={{ width: COL, flexShrink: 0, textAlign: "center" }}><Label color={V.blue}>Us</Label></span>
         <span style={{ width: COL, flexShrink: 0, textAlign: "center" }}><Label color={V.pink}>Them</Label></span>
       </div>
 
-      {/* 22 rows */}
-      {order.map((name, i) => {
-        const side = sides[name];
-        const lit = side === "mine" || side === "theirs";
-        const accent = side === "mine" ? V.green : side === "theirs" ? V.pink : null;
+      {/* 22 rows, tight */}
+      {rows.map((r, i) => {
+        const accent = accentOf(r.side);
+        const lit = !!accent;
         return (
-          <div key={name} style={{
-            display: "flex", alignItems: "center", padding: "9px 14px",
-            borderBottom: i === order.length - 1 ? "none" : `1px solid ${V.border}`,
+          <div key={r.name} style={{
+            display: "flex", alignItems: "center", padding: "5px 12px 5px 9px",
+            borderBottom: i === rows.length - 1 ? "none" : `1px solid ${V.border}`,
             background: lit ? `${accent}0f` : "transparent",
             borderLeft: `3px solid ${lit ? accent : "transparent"}`,
           }}>
-            <span style={{ width: 30, flexShrink: 0 }}>
-              <p style={{ ...display("h3"), color: lit ? V.text : V.text3, margin: 0, fontVariantNumeric: "tabular-nums" }}>{i + 1}</p>
+            <span style={{ width: 23, flexShrink: 0 }}>
+              <p style={{ ...display("h3"), color: lit ? V.text : V.text3, margin: 0, fontVariantNumeric: "tabular-nums" }}>{r.pos}</p>
             </span>
-            <span style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ width: 3, height: 22, borderRadius: 2, background: dColor(name), flexShrink: 0, opacity: lit ? 1 : 0.5 }} />
-              <p style={{
-                ...body(lit ? "bodyMd" : "bodySm"),
-                color: lit ? V.text : V.text3, margin: 0,
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }}>{name}</p>
+            <span style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 9 }}>
+              <Face name={r.name} size={30} />
+              <span style={{ minWidth: 0 }}>
+                <p style={{
+                  ...body("bodyMd"), lineHeight: 1.15,
+                  color: lit ? V.text : V.text2, margin: 0,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>{r.name}</p>
+                <p style={{
+                  ...body("bodySm"), fontSize: 13, lineHeight: 1.2, margin: 0,
+                  color: dColor(r.name), opacity: lit ? 0.95 : 0.6,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>{dTeam(r.name)}</p>
+              </span>
             </span>
-            <span style={{ width: COL, flexShrink: 0 }}>
-              {side === "mine" && <Dot kind="solid" color={V.green} />}
-              {side === "both" && <Dot kind="ring" />}
+            <span style={{ width: COL, flexShrink: 0, display: "flex", justifyContent: "center" }}>
+              {r.cMine > 0 && <Val v={r.valMine} count={r.cMine} color={V.blue} muted={r.side === "both"} />}
             </span>
-            <span style={{ width: COL, flexShrink: 0 }}>
-              {side === "theirs" && <Dot kind="solid" color={V.pink} />}
-              {side === "both" && <Dot kind="ring" />}
+            <span style={{ width: COL, flexShrink: 0, display: "flex", justifyContent: "center" }}>
+              {r.cTheirs > 0 && <Val v={r.valTheirs} count={r.cTheirs} color={V.pink} muted={r.side === "both"} />}
             </span>
           </div>
         );
       })}
 
       {/* Legend */}
-      <div style={{ padding: "14px 16px", background: V.bg3, borderTop: `1px solid ${V.border}` }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ padding: "13px 16px", background: V.bg3, borderTop: `1px solid ${V.border}` }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
           {[
-            [<Dot key="a" kind="solid" color={V.green} />, `Only ${myTeam.name} gains. Root for him.`],
-            [<Dot key="b" kind="solid" color={V.pink} />, `Only ${opp.name} gains. Root against him.`],
-            [<Dot key="c" kind="ring" />, "Both teams picked him. Cancels out either way."],
-          ].map(([dot, text], i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 20, flexShrink: 0 }}>{dot}</span>
+            [V.blue, false, `Only ${myTeam.name} has him. Root for him.`],
+            [V.pink, false, `Only ${opp.name} has him. Root against him.`],
+            [V.text3, true, "Both teams, same count. Cancels out either way."],
+          ].map(([c, muted, text], i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 11 }}>
+              <span style={{
+                width: 15, height: 15, borderRadius: "50%", flexShrink: 0,
+                background: muted ? "transparent" : `${c}1f`,
+                border: `1.5px solid ${muted ? V.border2 : c}`,
+                boxShadow: muted ? "none" : `0 0 8px ${c}88`,
+              }} />
               <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>{text}</p>
             </div>
           ))}
+          <p style={{ ...body("bodySm"), color: V.text3, margin: "4px 0 0" }}>
+            The number is what he is worth to that team right now. ×2 means both teammates picked him, so he counts twice.
+          </p>
         </div>
       </div>
     </div>
@@ -578,10 +618,10 @@ function NeonKit() {
       <div style={{ ...card({ padding: "20px", marginBottom: 24 }) }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 14, padding: "6px 0 14px", borderBottom: `1px solid ${V.border}` }}>
           <div style={{ width: 92, flexShrink: 0 }}>
-            <p style={{ ...display("chip"), color: V.pink, margin: 0 }}>marquee</p>
+            <p style={{ ...display("chip"), color: V.blue, margin: 0 }}>marquee</p>
             <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>Monoton</p>
           </div>
-          <p style={{ ...marquee("Hungarian"), ...textGlow(V.pink, 0.8), color: V.text, margin: 0 }}>HUNGARIAN</p>
+          <p style={{ ...marquee("Hungarian"), ...textGlow(V.blue, 0.8), color: V.text, margin: 0 }}>HUNGARIAN</p>
         </div>
         {[
           ["hero", "62", "18h 42m"],
@@ -608,11 +648,11 @@ function NeonKit() {
         })}
       </div>
 
-      <SectionHead accent={V.pink} sub="Flicker is on one element per screen, and dies under prefers-reduced-motion.">Buttons</SectionHead>
+      <SectionHead accent={V.blue} sub="Blue is normal and can flicker. Green means good to go. Pink means needs attention, a problem, or the other team.">Buttons</SectionHead>
       <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 24 }}>
-        <NeonBtn color={V.pink} flicker sub="The primary. This one flickers.">Make your picks</NeonBtn>
-        <NeonBtn color={V.blue}>See the standings</NeonBtn>
-        <NeonBtn color={V.green}>Confirm</NeonBtn>
+        <NeonBtn flicker sub="Normal. The primary action, and the one that flickers.">Make your picks</NeonBtn>
+        <NeonBtn color={V.green} sub="Good to go.">Picks submitted</NeonBtn>
+        <NeonBtn color={V.pink} sub="Needs attention.">Deadline in 20 minutes</NeonBtn>
       </div>
 
       <SectionHead accent={V.purple}>Palette</SectionHead>
@@ -649,7 +689,7 @@ function NeonKit() {
         <StatTile label="The line" value={2.48} color={V.gold} />
       </div>
 
-      <SectionHead accent={V.pink}>A cleaner standings row</SectionHead>
+      <SectionHead accent={V.blue}>A cleaner standings row</SectionHead>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
         {[[1, "Joe McGlynn", 478, false], [5, "Sam Bottoms", 451, false], [6, "Andrew Ishak", 446, true], [7, "Stacy Michaelsen", 438, false]].map(([r, n, p, mine]) => (
           <div key={n} style={{
