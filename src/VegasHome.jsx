@@ -637,8 +637,12 @@ function RootingBoard({ order, live, lapInfo }) {
 
       {/* 22 rows on two fixed heights: this week's ten, and everyone else */}
       {rows.map((r, i) => {
-        const accent = accentOf(r.side);
-        const lit = !!accent;
+        // Good is green, bad is pink with the color drained out of the face, and
+        // the thumb says which. Neutral rows stay plain: nothing to decide.
+        const good = r.side === "mine";
+        const bad = r.side === "theirs";
+        const vColor = good ? V.green : bad ? V.pink : null;
+        const lit = !!vColor;
         const last = i === rows.length - 1;
 
         if (!r.inPool) return (
@@ -661,12 +665,6 @@ function RootingBoard({ order, live, lapInfo }) {
           </div>
         );
 
-        // Good is green and lit, bad is pink with the color drained out of the
-        // face. The verdict chip says which in words, so none of it has to be
-        // decoded. Neutral rows stay plain: nothing to decide.
-        const good = r.side === "mine";
-        const bad = r.side === "theirs";
-        const vColor = good ? V.green : bad ? V.pink : null;
         return (
           <div key={r.name} style={{
             display: "flex", alignItems: "center", height: ROW_IN, boxSizing: "border-box",
@@ -860,10 +858,12 @@ function NeonKit() {
 }
 
 // ── Shell ────────────────────────────────────────────────
-export default function VegasHome({ onNavigate }) {
-  const [tab, setTab] = useState("home");
-  const [state, setState] = useState("live");
-  const [lapIdx, setLapIdx] = useState(0);
+// initialTab/State/Lap exist so scripts/smoke.jsx can render every branch. The
+// app never passes them.
+export default function VegasHome({ onNavigate, initialTab = "home", initialState = "live", initialLap = 0 }) {
+  const [tab, setTab] = useState(initialTab);
+  const [state, setState] = useState(initialState);
+  const [lapIdx, setLapIdx] = useState(initialLap);
   const nav = onNavigate || (() => {});
 
   const Toggle = ({ opts, val, set }) => (
