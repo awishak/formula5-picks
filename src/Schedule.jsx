@@ -274,11 +274,16 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
   const matchupsForRound = schedule.filter(s => s.race_id === currentRace?.id);
   const champMatchups = matchupsForRound.filter(m => getDiv(m.home_team?.name) === "championship");
   const secondMatchups = matchupsForRound.filter(m => getDiv(m.home_team?.name) !== "championship");
+  const myMatchup = myTeamId
+    ? matchupsForRound.find(m => m.home_team?.id === myTeamId || m.away_team?.id === myTeamId)
+    : null;
 
-  function renderMatchup(m) {
+  function renderMatchup(m, prefix = "") {
     const homeTeam = m.home_team, awayTeam = m.away_team;
     const raceId = currentRace?.id;
     const homeDiv = getDiv(homeTeam?.name);
+    // The hero copy renders the same matchup a second time, so expand state needs its own id
+    const uid = `${prefix}${m.id}`;
 
     const homeP1 = playerMatchupScore(homeTeam?.player1_id, raceId);
     const homeP2 = playerMatchupScore(homeTeam?.player2_id, raceId);
@@ -582,7 +587,7 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
     const actualPitPct = (showBoxLine && actualPitTime != null) ? Math.max(2, Math.min(98, ((barMax - actualPitTime) / (barMax - barMin)) * 100)) : null;
 
     return (
-      <div key={m.id} style={{
+      <div key={uid} style={{
         background: "#fff", borderRadius: 14, overflow: "hidden",
         border: `${outlineWidth}px solid ${outlineColor}`,
         boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
@@ -649,7 +654,7 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
 
           {/* Rooting Guide — only after deadline, not when scored */}
           {picksLocked && !isState3 && homeTeam && awayTeam && (() => {
-            const isOpen = expandedRooting === m.id;
+            const isOpen = expandedRooting === uid;
             const homeP1Pick = pickMap[`${homeTeam.player1_id}_${raceId}`];
             const homeP2Pick = pickMap[`${homeTeam.player2_id}_${raceId}`];
             const awayP1Pick = pickMap[`${awayTeam.player1_id}_${raceId}`];
@@ -681,7 +686,7 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
 
             return (
               <div>
-                <button onClick={() => setExpandedRooting(isOpen ? null : m.id)} style={{
+                <button onClick={() => setExpandedRooting(isOpen ? null : uid)} style={{
                   width: "100%", padding: "8px 12px", border: "none", borderTop: `1px solid ${BORDER}30`,
                   background: isOpen ? `${BLUE}06` : "transparent",
                   cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6
@@ -743,7 +748,7 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
 
           {/* Box Score — only for scored matches */}
           {isState3 && homeTeam && awayTeam && (() => {
-            const isOpen = expandedBoxScore === m.id;
+            const isOpen = expandedBoxScore === uid;
             const sn = (name) => { if (!name) return "?"; const p = name.split(" "); return p.length < 2 ? name : `${p[0][0]}. ${p.slice(1).join(" ")}`; };
             const code = (name) => name ? name.split(" ").pop().slice(0, 3).toUpperCase() : "?";
 
@@ -784,7 +789,7 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
 
             return (
               <div>
-                <button onClick={() => setExpandedBoxScore(isOpen ? null : m.id)} style={{
+                <button onClick={() => setExpandedBoxScore(isOpen ? null : uid)} style={{
                   width: "100%", padding: "7px 12px", border: "none", borderTop: `1px solid ${BORDER}30`,
                   background: isOpen ? `${DARK}04` : "transparent",
                   cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6
@@ -955,6 +960,23 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
         </div>
       ) : (
         <>
+          {/* Your matchup — hero above the division lists, still listed in its division below */}
+          {myMatchup && (
+            <div style={{
+              background: `${BLUE}0d`, border: `2px solid ${BLUE}`, borderRadius: 18,
+              padding: 10, marginBottom: 24, boxShadow: `0 4px 16px ${BLUE}25`
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 4px 8px" }}>
+                <span style={{ width: 10, height: 10, borderRadius: "50%", background: BLUE, flexShrink: 0 }} />
+                <span style={{ fontFamily: FD, fontWeight: 900, fontSize: 13, color: BLUEDARK, textTransform: "uppercase", letterSpacing: "0.04em" }}>Your Matchup</span>
+                <span style={{ fontFamily: FB, fontSize: 10, color: TEXT2, marginLeft: "auto", whiteSpace: "nowrap" }}>
+                  {getDiv(myMatchup.home_team?.name) === "championship" ? "Championship" : "Second Division"}
+                </span>
+              </div>
+              {renderMatchup(myMatchup, "hero-")}
+            </div>
+          )}
+
           {/* Championship matchups */}
           {champMatchups.length > 0 && (
             <>
