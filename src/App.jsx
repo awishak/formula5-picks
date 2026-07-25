@@ -14,6 +14,7 @@ import Players from "./Players.jsx";
 import PracticePicks from "./PracticePicks.jsx";
 import PickIntel from "./PickIntel.jsx";
 import Recaps from "./Recaps.jsx";
+import VegasHome from "./VegasHome.jsx";
 import { NEWS } from "./news";
 
 
@@ -864,7 +865,8 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 // ── Main App ─────────────────────────────────────────────
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("f1_user") || null);
-  const [activePage, setActivePage] = useState("home");
+  // #vegas opens the second-half mockup. Temporary entry point while we design it.
+  const [activePage, setActivePage] = useState(() => window.location.hash === "#vegas" ? "vegas" : "home");
   const [scheduleInitialView, setScheduleInitialView] = useState(null);
 
   function navigateTo(page) {
@@ -901,6 +903,15 @@ export default function App() {
   }, [currentUser, activePage]);
 
   if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
+
+  // The Vegas mockup renders outside .app-wrap so the light theme's background,
+  // width cap and bottom nav don't fight it. Reachable at #vegas.
+  if (activePage === "vegas") return (
+    <>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: #07070c; }`}</style>
+      <VegasHome onNavigate={(p) => { window.location.hash = ""; navigateTo(p); }} />
+    </>
+  );
 
   return (
     <>
