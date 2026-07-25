@@ -209,26 +209,21 @@ function Face({ name, size = 40, ring, glow = 1, drained = false }) {
   );
 }
 
-// The verdict, in words. Color and glow tell you fast, but a filled chip that
-// says ROOT FOR removes any chance of getting it backwards.
-function Verdict({ kind }) {
-  const map = {
-    mine: { text: "Root for", c: V.green },
-    theirs: { text: "Root against", c: V.pink },
-    both: { text: "Cancels out", c: V.text3 },
-  };
-  const v = map[kind];
-  if (!v) return null;
-  const flat = kind === "both";
+// The verdict as a thumb. Drawn rather than an emoji so it takes the accent
+// color and glows with the rest of the board, and so it costs 20px of row
+// instead of the 85px a worded chip was eating out of the name column.
+function Thumb({ down = false, color, size = 21 }) {
   return (
-    <span style={{
-      ...display("chip"), fontSize: 14, textTransform: "uppercase",
-      padding: "2px 9px", borderRadius: 7, whiteSpace: "nowrap", flexShrink: 0,
-      color: flat ? V.text3 : V.bg,
-      background: flat ? "transparent" : v.c,
-      border: `1px solid ${flat ? V.border2 : v.c}`,
-      boxShadow: flat ? "none" : `0 0 12px ${v.c}88`,
-    }}>{v.text}</span>
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true"
+      style={{
+        flexShrink: 0, transform: down ? "rotate(180deg)" : "none",
+        filter: `drop-shadow(0 0 5px ${color}) drop-shadow(0 0 12px ${color}88)`,
+      }}>
+      <path d="M8 21.2V9.9l4.9-6.6a1.7 1.7 0 0 1 2.9 1.5L14.8 9.6h4.3a2 2 0 0 1 1.95 2.5l-1.7 7.05a2.3 2.3 0 0 1-2.25 1.75H8Z"
+        fill={`${color}30`} stroke={color} strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M8 9.9H5.2A1.6 1.6 0 0 0 3.6 11.5v8.1a1.6 1.6 0 0 0 1.6 1.6H8"
+        fill={`${color}30`} stroke={color} strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
   );
 }
 
@@ -535,7 +530,7 @@ function RootingBoard({ order, live, lapInfo }) {
   };
 
   const COL = 58;
-  const ROW_IN = 60;   // one of this week's ten, with a verdict chip
+  const ROW_IN = 56;   // one of this week's ten
   const ROW_OUT = 30;  // not in a pool this week, context only
   const accentOf = (side) => (side === "mine" ? V.blue : side === "theirs" ? V.pink : null);
 
@@ -580,18 +575,38 @@ function RootingBoard({ order, live, lapInfo }) {
         </p>
       </div>
 
-      {/* The answer in one sentence each, before anyone reads a table */}
-      <div style={{ padding: "14px 16px", borderBottom: `1px solid ${V.border}`, display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* The answer, side by side, before anyone reads a table. Faces and current
+          positions only: names live in the table right below, and three names per
+          side does not fit half a phone without truncating one of them. */}
+      <div style={{ display: "flex", borderBottom: `1px solid ${V.border}` }}>
         {[
-          { kind: "mine", c: V.green, names: rows.filter(r => r.side === "mine").map(r => lastName(r.name)) },
-          { kind: "theirs", c: V.pink, names: rows.filter(r => r.side === "theirs").map(r => lastName(r.name)) },
-        ].filter(g => g.names.length > 0).map(g => (
-          <div key={g.kind} style={{ display: "flex", alignItems: "center", gap: 11 }}>
-            <Verdict kind={g.kind} />
-            <p style={{
-              ...body("bodyMd"), fontSize: 17, margin: 0, minWidth: 0,
-              ...(g.kind === "mine" ? textGlow(V.green, 0.5) : { color: V.pink }),
-            }}>{g.names.join(", ")}</p>
+          { kind: "mine", good: true, c: V.green, text: "Root for", list: rows.filter(r => r.side === "mine") },
+          { kind: "theirs", good: false, c: V.pink, text: "Root against", list: rows.filter(r => r.side === "theirs") },
+        ].map((g, gi) => (
+          <div key={g.kind} style={{
+            flex: 1, minWidth: 0, padding: "14px 8px 15px",
+            background: `${g.c}0d`,
+            borderLeft: gi === 1 ? `1px solid ${V.border}` : "none",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, marginBottom: 13 }}>
+              <Thumb down={!g.good} color={g.c} size={19} />
+              <Label color={g.c}>{g.text}</Label>
+            </div>
+            {g.list.length === 0 ? (
+              <p style={{ ...body("bodySm"), color: V.text3, textAlign: "center", margin: 0 }}>Nobody</p>
+            ) : (
+              <div style={{ display: "flex", justifyContent: "center", gap: 9 }}>
+                {g.list.map(r => (
+                  <div key={r.name} style={{ textAlign: "center" }}>
+                    <Face name={r.name} size={46} ring={g.c} glow={g.good ? 1.7 : 1} drained={!g.good} />
+                    <p style={{
+                      ...display("h3"), margin: "6px 0 0", fontVariantNumeric: "tabular-nums",
+                      ...(g.good ? textGlow(g.c, 0.7) : { color: g.c }),
+                    }}>P{r.pos}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -663,7 +678,7 @@ function RootingBoard({ order, live, lapInfo }) {
                     color: lit ? V.text : V.text2, margin: 0,
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                   }}>{r.name}</p>
-                  <Verdict kind={r.side} />
+                  {vColor && <Thumb down={bad} color={vColor} size={19} />}
                 </span>
                 <p style={{
                   ...body("bodySm"), fontSize: 13, lineHeight: 1.2, margin: "2px 0 0",
@@ -685,27 +700,40 @@ function RootingBoard({ order, live, lapInfo }) {
       {/* Legend */}
       <div style={{ padding: "13px 16px", background: V.bg3, borderTop: `1px solid ${V.border}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+          {[[false, V.green, "Thumb up, green, lit: root for him."],
+            [true, V.pink, "Thumb down, pink, face greyed: root against him."]].map(([down, c, text], i) => (
+            <div key={`t${i}`} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 18, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+                <Thumb down={down} color={c} size={16} />
+              </span>
+              <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>{text}</p>
+            </div>
+          ))}
           {[
             [V.blue, false, `Blue number is what he is worth to ${myTeam.name}.`],
             [V.pink, false, `Pink number is what he is worth to ${opp.name}.`],
             [V.text3, true, "Both teams, same count. Cancels out either way."],
           ].map(([c, muted, text], i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 11 }}>
-              <span style={{
-                width: 15, height: 15, borderRadius: "50%", flexShrink: 0,
-                background: muted ? "transparent" : `${c}1f`,
-                border: `1.5px solid ${muted ? V.border2 : c}`,
-                boxShadow: muted ? "none" : `0 0 8px ${c}88`,
-              }} />
+            <div key={`c${i}`} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 18, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{
+                  width: 15, height: 15, borderRadius: "50%",
+                  background: muted ? "transparent" : `${c}1f`,
+                  border: `1.5px solid ${muted ? V.border2 : c}`,
+                  boxShadow: muted ? "none" : `0 0 8px ${c}88`,
+                }} />
+              </span>
               <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>{text}</p>
             </div>
           ))}
-          <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-            <span style={{
-              width: 15, height: 15, borderRadius: "50%", flexShrink: 0, boxSizing: "content-box",
-              border: `1.5px solid ${V.blue}`, padding: 2,
-              boxShadow: `0 0 0 1.5px ${V.blue}, 0 0 8px ${V.blue}66`,
-            }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 18, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{
+                width: 11, height: 11, borderRadius: "50%", boxSizing: "content-box",
+                border: `1.5px solid ${V.blue}`, padding: 2,
+                boxShadow: `0 0 0 1.5px ${V.blue}, 0 0 8px ${V.blue}66`,
+              }} />
+            </span>
             <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>
               Two rings means both teammates picked him, so he counts twice.
             </p>
