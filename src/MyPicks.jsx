@@ -22,110 +22,8 @@ class MyPicksErrorBoundary extends Component {
 import { BG2, DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, FD, FB } from "./theme";
 
 // ── Shared UI ───────────────────────────────────────────
-// ── F1 Driver → Team fallback map ───────────────────────
-const F1_TEAMS_FALLBACK = {
-  "Max Verstappen": "Red Bull", "Isack Hadjar": "Red Bull",
-  "Lando Norris": "McLaren", "Oscar Piastri": "McLaren",
-  "Charles Leclerc": "Ferrari", "Lewis Hamilton": "Ferrari",
-  "George Russell": "Mercedes", "Kimi Antonelli": "Mercedes",
-  "Carlos Sainz": "Williams", "Alexander Albon": "Williams",
-  "Fernando Alonso": "Aston Martin", "Lance Stroll": "Aston Martin",
-  "Pierre Gasly": "Alpine", "Franco Colapinto": "Alpine",
-  "Liam Lawson": "Racing Bulls", "Arvid Lindblad": "Racing Bulls",
-  "Nico Hulkenberg": "Audi", "Gabriel Bortoleto": "Audi",
-  "Oliver Bearman": "Haas", "Esteban Ocon": "Haas",
-  "Sergio Perez": "Cadillac", "Valtteri Bottas": "Cadillac",
-};
-
 import { F1_TEAM_COLORS } from "./theme";
-
-// ── OpenF1 API: fetch driver data (name, team, headshot) ─
-// Returns a Map keyed by full name → { team, headshot, teamColor, acronym, number }
-function useOpenF1Drivers() {
-  const [driverMap, setDriverMap] = useState(new Map());
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchDrivers() {
-      try {
-        // Fetch the latest session's drivers for current-season headshots
-        const res = await fetch("https://api.openf1.org/v1/drivers?session_key=latest");
-        if (!res.ok) throw new Error(`OpenF1 request failed: ${res.status}`);
-        const data = await res.json();
-
-        if (cancelled || !Array.isArray(data)) return;
-
-        console.log("[OpenF1] Fetched", data.length, "driver entries");
-
-        const map = new Map();
-        // OpenF1 can return duplicate driver entries (one per session); dedupe by driver_number
-        const seen = new Set();
-        for (const d of data) {
-          if (seen.has(d.driver_number)) continue;
-          seen.add(d.driver_number);
-
-          // Build a normalized full name to match Supabase driver names
-          const first = d.first_name || "";
-          const last = d.last_name || "";
-          const fullName = `${first} ${last}`.trim();
-
-          map.set(fullName, {
-            team: d.team_name || "",
-            headshot: d.headshot_url || null,
-            teamColor: d.team_colour ? `#${d.team_colour}` : null,
-            acronym: d.name_acronym || "",
-            number: d.driver_number || null,
-          });
-        }
-        console.log("[OpenF1] Driver map keys:", [...map.keys()]);
-        setDriverMap(map);
-      } catch (err) {
-        console.warn("OpenF1 fetch failed, using fallback data:", err);
-        // Populate with fallback data (no headshots)
-        const map = new Map();
-        Object.entries(F1_TEAMS_FALLBACK).forEach(([name, team]) => {
-          map.set(name, { team, headshot: null, teamColor: F1_TEAM_COLORS[team] || null, acronym: "", number: null });
-        });
-        setDriverMap(map);
-      }
-    }
-    fetchDrivers();
-    return () => { cancelled = true; };
-  }, []);
-
-  return driverMap;
-}
-
-// Helper: find a driver in the OpenF1 map using fuzzy matching
-// (handles cases where Supabase names might differ slightly from OpenF1 names)
-function findDriver(driverMap, name) {
-  if (!name || driverMap.size === 0) {
-    const team = F1_TEAMS_FALLBACK[name] || "";
-    return { team, headshot: null, teamColor: F1_TEAM_COLORS[team] || null, acronym: "", number: null };
-  }
-  // Exact match first
-  if (driverMap.has(name)) return driverMap.get(name);
-  // Try matching by last name
-  const nameParts = name.split(" ");
-  const lastName = nameParts[nameParts.length - 1].toLowerCase();
-  for (const [key, val] of driverMap) {
-    if (key.split(" ").pop().toLowerCase() === lastName) return val;
-  }
-  // Try matching by first name (for edge cases like "Andrea Kimi Antonelli" vs "Kimi Antonelli")
-  for (const [key, val] of driverMap) {
-    const keyFirst = key.split(" ")[0].toLowerCase();
-    if (nameParts.some(p => p.toLowerCase() === keyFirst)) return val;
-  }
-  // Try partial / contains match
-  const nameLower = name.toLowerCase();
-  for (const [key, val] of driverMap) {
-    if (nameLower.includes(key.toLowerCase()) || key.toLowerCase().includes(nameLower)) return val;
-  }
-  console.log("[OpenF1] No match for:", name, "| Available:", [...driverMap.keys()]);
-  // Fallback
-  const fallbackTeam = F1_TEAMS_FALLBACK[name] || "";
-  return { team: fallbackTeam, headshot: null, teamColor: F1_TEAM_COLORS[fallbackTeam] || null, acronym: "", number: null };
-}
+import { useOpenF1Drivers, findDriver, canonicalName, TEAM_BY_NAME } from "./drivers";
 
 function Pts({ children, negative, team }) {
   const c = negative ? RED : team ? GREEN : ORANGE;
@@ -1195,7 +1093,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
               const pctData = h.pickPct || { total: 0, drivers: {} };
 
               // Build all drivers from multiple sources: fallback list + results + allDriverPts
-              const driverSet = new Set(Object.keys(F1_TEAMS_FALLBACK));
+              const driverSet = new Set(Object.keys(TEAM_BY_NAME));
               finishOrder.forEach(d => driverSet.add(d));
               Object.keys(allDP).forEach(d => driverSet.add(d));
               Object.keys(h.driverPts || {}).forEach(d => driverSet.add(d));
@@ -1216,7 +1114,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                 const finIdx = finishIndex[lc];
                 const pos = finIdx !== undefined ? (finIdx < 15 ? `P${finIdx + 1}` : (pts === -1 ? "DNF" : `P${finIdx + 1}`)) : (pts === -1 ? "DNF" : null);
                 const sortOrder = finIdx !== undefined ? finIdx : 9999;
-                const team = F1_TEAMS_FALLBACK[name] || "";
+                const team = TEAM_BY_NAME[canonicalName(name)] || "";
                 const tc = F1_TEAM_COLORS[team] || BORDER;
                 const info = findDriver(driverMap, name);
                 return { name, pts, pos, sortOrder, team, tc, isPicked, isAvailable, isTopPool, isTopPick, info };
@@ -1316,7 +1214,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                 return drivers.map((d, i) => {
                 const isTop = d === h.pick.top_pick;
                 const info = findDriver(driverMap, d);
-                const teamName = info.team || F1_TEAMS_FALLBACK[d] || "";
+                const teamName = info.team || TEAM_BY_NAME[canonicalName(d)] || "";
                 const tc = info.teamColor || F1_TEAM_COLORS[teamName] || BLUE;
                 const parts = d.split(" ");
                 const first = parts[0], last = parts.slice(1).join(" ");

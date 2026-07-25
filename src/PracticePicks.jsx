@@ -7,18 +7,7 @@ const SAMPLE_TOP = ["Max Verstappen", "Lando Norris", "George Russell"];
 const SAMPLE_MID = ["Carlos Sainz", "Andrea Kimi Antonelli", "Alex Albon", "Fernando Alonso", "Pierre Gasly", "Yuki Tsunoda", "Nico Hülkenberg"];
 
 // ── Shared UI (copied from MyPicks) ─────────────────────
-const F1_TEAMS = {
-  "Max Verstappen": "Red Bull", "Liam Lawson": "Red Bull",
-  "Lando Norris": "McLaren", "Oscar Piastri": "McLaren",
-  "Charles Leclerc": "Ferrari", "Lewis Hamilton": "Ferrari",
-  "George Russell": "Mercedes", "Andrea Kimi Antonelli": "Mercedes",
-  "Carlos Sainz": "Williams", "Alex Albon": "Williams",
-  "Fernando Alonso": "Aston Martin", "Lance Stroll": "Aston Martin",
-  "Pierre Gasly": "Alpine", "Jack Doohan": "Alpine",
-  "Yuki Tsunoda": "Racing Bulls", "Isack Hadjar": "Racing Bulls",
-  "Nico Hulkenberg": "Sauber", "Gabriel Bortoleto": "Sauber",
-  "Oliver Bearman": "Haas", "Esteban Ocon": "Haas",
-};
+import { TEAM_BY_NAME, canonicalName } from "./drivers";
 
 function Pts({ children, negative, team }) {
   const c = negative ? RED : team ? GREEN : ORANGE;
@@ -77,7 +66,7 @@ function StepTopPick({ drivers, selected, onSelect }) {
           const parts = d.split(" ");
           const firstName = parts[0];
           const lastName = parts.slice(1).join(" ");
-          const team = F1_TEAMS[d] || "";
+          const team = TEAM_BY_NAME[canonicalName(d)] || "";
           return (
             <button key={d} onClick={() => onSelect(d)} style={{
               flex: 1, padding: "14px 8px", borderRadius: 12,
@@ -118,7 +107,7 @@ function StepMidPicks({ drivers, selected, onToggle }) {
           const parts = d.split(" ");
           const firstName = parts[0];
           const lastName = parts.slice(1).join(" ");
-          const team = F1_TEAMS[d] || "";
+          const team = TEAM_BY_NAME[canonicalName(d)] || "";
           return (
             <button key={d} onClick={() => !dis && onToggle(d)} style={{
               width: "calc(33.33% - 6px)", padding: "14px 6px", borderRadius: 12,

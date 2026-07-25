@@ -22,26 +22,9 @@ function needleScore(guess, actual) {
 // Weekly top-10 bonus
 const WEEKLY_BONUS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
-// OpenF1 driver number → name mapping (matches your picks database)
-const DRIVER_NAMES = {
-  3: "Max Verstappen", 1: "Lando Norris", 16: "Charles Leclerc",
-  44: "Lewis Hamilton", 63: "George Russell", 81: "Oscar Piastri",
-  55: "Carlos Sainz", 14: "Fernando Alonso", 12: "Andrea Kimi Antonelli",
-  23: "Alex Albon", 18: "Lance Stroll", 10: "Pierre Gasly",
-  43: "Franco Colapinto", 27: "Nico Hulkenberg",
-  5: "Gabriel Bortoleto", 87: "Oliver Bearman", 31: "Esteban Ocon",
-  30: "Liam Lawson", 6: "Isack Hadjar", 41: "Arvid Lindblad",
-  11: "Sergio Perez", 77: "Valtteri Bottas"
-};
-
-const DRIVER_TEAMS = {
-  3: "Red Bull", 6: "Red Bull", 1: "McLaren", 81: "McLaren",
-  16: "Ferrari", 44: "Ferrari", 63: "Mercedes", 12: "Mercedes",
-  55: "Williams", 23: "Williams", 14: "Aston Martin", 18: "Aston Martin",
-  10: "Alpine", 43: "Alpine", 41: "Racing Bulls", 30: "Racing Bulls",
-  27: "Sauber", 5: "Sauber", 87: "Haas", 31: "Haas",
-  11: "Cadillac", 77: "Cadillac"
-};
+// Canonical driver identity lives in drivers.js so that scoring, headshots,
+// and pick intel all resolve names the same way.
+import { DRIVER_NAMES, DRIVER_TEAMS } from "./drivers";
 
 export default function Admin() {
   const [races, setRaces] = useState([]);
@@ -272,7 +255,8 @@ export default function Admin() {
         (TEAM_TO_DRIVERS[team] = TEAM_TO_DRIVERS[team] || []).push(Number(num));
       });
       // Free-text aliases → canonical team label. Order matters (Red Bull before
-      // Racing Bulls). "audi" maps to the Sauber entry that holds its car numbers.
+      // Racing Bulls). The old Sauber/Kick/Stake names map to the Audi entry that
+      // now holds those car numbers.
       const TEAM_ALIASES = [
         ["Red Bull", ["red bull"]],
         ["Racing Bulls", ["racing bulls", "vcarb"]],
@@ -283,7 +267,7 @@ export default function Admin() {
         ["Aston Martin", ["aston"]],
         ["Alpine", ["alpine"]],
         ["Haas", ["haas"]],
-        ["Sauber", ["audi", "sauber", "kick", "stake"]],
+        ["Audi", ["audi", "sauber", "kick", "stake"]],
         ["Cadillac", ["cadillac"]],
       ];
       const matchedName = (TEAM_ALIASES.find(([, aliases]) => aliases.some(a => question.includes(a))) || [])[0];

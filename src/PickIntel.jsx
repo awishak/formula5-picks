@@ -19,97 +19,8 @@ function TeamLogo({ name, size = 22, division, logoUrl }) {
   );
 }
 
-// ── EXACT COPY from MyPicks.jsx ─────────────────────────
-const F1_TEAMS_FALLBACK = {
-  "Max Verstappen": "Red Bull", "Liam Lawson": "Red Bull",
-  "Lando Norris": "McLaren", "Oscar Piastri": "McLaren",
-  "Charles Leclerc": "Ferrari", "Lewis Hamilton": "Ferrari",
-  "George Russell": "Mercedes", "Andrea Kimi Antonelli": "Mercedes",
-  "Carlos Sainz": "Williams", "Alex Albon": "Williams",
-  "Fernando Alonso": "Aston Martin", "Lance Stroll": "Aston Martin",
-  "Pierre Gasly": "Alpine", "Jack Doohan": "Alpine",
-  "Yuki Tsunoda": "Racing Bulls", "Isack Hadjar": "Racing Bulls",
-  "Nico Hulkenberg": "Sauber", "Gabriel Bortoleto": "Sauber",
-  "Oliver Bearman": "Haas", "Esteban Ocon": "Haas",
-};
-
 import { F1_TEAM_COLORS } from "./theme";
-
-function useOpenF1Drivers() {
-  const [driverMap, setDriverMap] = useState(new Map());
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchDrivers() {
-      try {
-        const res = await fetch("https://api.openf1.org/v1/drivers?session_key=latest");
-        if (!res.ok) throw new Error(`OpenF1 request failed: ${res.status}`);
-        const data = await res.json();
-
-        if (cancelled || !Array.isArray(data)) return;
-
-        console.log("[OpenF1] Fetched", data.length, "driver entries");
-
-        const map = new Map();
-        const seen = new Set();
-        for (const d of data) {
-          if (seen.has(d.driver_number)) continue;
-          seen.add(d.driver_number);
-
-          const first = d.first_name || "";
-          const last = d.last_name || "";
-          const fullName = `${first} ${last}`.trim();
-
-          map.set(fullName, {
-            team: d.team_name || "",
-            headshot: d.headshot_url || null,
-            teamColor: d.team_colour ? `#${d.team_colour}` : null,
-            acronym: d.name_acronym || "",
-            number: d.driver_number || null,
-          });
-        }
-        console.log("[OpenF1] Driver map keys:", [...map.keys()]);
-        setDriverMap(map);
-      } catch (err) {
-        console.warn("OpenF1 fetch failed, using fallback data:", err);
-        const map = new Map();
-        Object.entries(F1_TEAMS_FALLBACK).forEach(([name, team]) => {
-          map.set(name, { team, headshot: null, teamColor: F1_TEAM_COLORS[team] || null, acronym: "", number: null });
-        });
-        setDriverMap(map);
-      }
-    }
-    fetchDrivers();
-    return () => { cancelled = true; };
-  }, []);
-
-  return driverMap;
-}
-
-function findDriver(driverMap, name) {
-  if (!name || driverMap.size === 0) {
-    const team = F1_TEAMS_FALLBACK[name] || "";
-    return { team, headshot: null, teamColor: F1_TEAM_COLORS[team] || null, acronym: "", number: null };
-  }
-  if (driverMap.has(name)) return driverMap.get(name);
-  const nameParts = name.split(" ");
-  const nameLast = nameParts[nameParts.length - 1].toLowerCase();
-  for (const [key, val] of driverMap) {
-    if (key.split(" ").pop().toLowerCase() === nameLast) return val;
-  }
-  for (const [key, val] of driverMap) {
-    const keyFirst = key.split(" ")[0].toLowerCase();
-    if (nameParts.some(p => p.toLowerCase() === keyFirst)) return val;
-  }
-  const nameLower = name.toLowerCase();
-  for (const [key, val] of driverMap) {
-    if (nameLower.includes(key.toLowerCase()) || key.toLowerCase().includes(nameLower)) return val;
-  }
-  console.log("[OpenF1] No match for:", name, "| Available:", [...driverMap.keys()]);
-  const team = F1_TEAMS_FALLBACK[name] || "";
-  return { team, headshot: null, teamColor: F1_TEAM_COLORS[team] || null, acronym: "", number: null };
-}
-// ── END COPY from MyPicks.jsx ───────────────────────────
+import { useOpenF1Drivers, findDriver, canonicalName, TEAM_BY_NAME } from "./drivers";
 
 function shortName(name) {
   if (!name) return "?";
@@ -251,7 +162,7 @@ export default function PickIntel({ currentUser }) {
 
     function Card({ name, count, isMine }) {
       const info = findDriver(driverMap, name);
-      const tc = info.teamColor || F1_TEAM_COLORS[info.team] || F1_TEAM_COLORS[F1_TEAMS_FALLBACK[name]] || BLUE;
+      const tc = info.teamColor || F1_TEAM_COLORS[info.team] || F1_TEAM_COLORS[TEAM_BY_NAME[canonicalName(name)]] || BLUE;
       const parts = name.split(" ");
       const first = parts[0], last = parts.slice(1).join(" ");
       return (

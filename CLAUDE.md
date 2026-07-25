@@ -13,6 +13,7 @@ MyPicks.jsx: 22-driver finishing order grid.
 PracticePicks.jsx: practice/preview picks UI.
 Schedule.jsx: dynamic recap button, reads pick_deadline.
 PickIntel.jsx: pick intel display, depends on canonical driver names for headshots and color chips.
+drivers.js: canonical driver identity. Names, teams, cached headshot URLs, name aliases, the useOpenF1Drivers hook and findDriver. Single source of truth for anything driver-shaped.
 Rules.jsx: rules and glossary.
 PlayerStandings.jsx: individual standings and player stats.
 TeamStandings.jsx: team standings by championship points and division.
@@ -29,7 +30,7 @@ All components live in src/. Recaps are static HTML in public/recaps/, surfaced 
 races.pick_deadline: controls when picks open and close.
 results.finishing_order: 22-driver array stored with Postgres {} array literal syntax.
 driver_pts in score records: stored as a JSON string, must json.loads() before use.
-DRIVER_NAMES: canonical driver name strings. Every driver reference (scoring, headshots, team color chips, pick intel) must use these exact strings or it breaks silently.
+DRIVER_NAMES: canonical driver name strings, defined in src/drivers.js. Every driver reference (scoring, headshots, team color chips, pick intel) must use these exact strings or it breaks silently. Resolve external or legacy spellings with canonicalName() rather than comparing strings directly.
 
 ## Known bugs and gotchas
 
@@ -76,8 +77,8 @@ Blockers found 2026-07-20, all unresolved:
 - No standings source. OpenF1 has no standings endpoint, and results.finishing_order stores only the top 5 (Admin.jsx:668 slices to 5), so positions 6-15 are not derivable from our own data. API-Sports was floated but no account or key is wired up.
 - No server-side code exists. Pure client-side Vite SPA, no api/, no vercel.json, no cron. Unattended Monday runs need a Vercel Cron plus an api/ function, plus a Supabase service-role key in env, since supabaseClient.js is anon-only and all writes go through RLS.
 - An emailed digest on generation day was wanted. No mail provider is set up, so that is a third new service.
-- DRIVER_NAMES is module-local to Admin.jsx (lines 25-34, not exported). Anything running outside that component needs it extracted to a shared module first.
-- Name matching needs an explicit mapping layer, not string equality. Any standings provider returns its own spellings, and MyPicks.jsx:65 / PickIntel.jsx:60 already rebuild names from OpenF1 first_name + last_name instead of the canonical map. Antonelli and Hulkenberg are the likely break points.
+- RESOLVED 2026-07-24: DRIVER_NAMES was module-local to Admin.jsx. It now lives in src/drivers.js and is exported. Admin.jsx imports it.
+- RESOLVED 2026-07-24: name matching now goes through canonicalName() in src/drivers.js, backed by a NAME_ALIASES map, instead of string equality. Antonelli, Albon, Hulkenberg and Perez variants are covered.
 Decision still open: full cron automation vs an Admin "auto-generate pool" button that needs no new service and keeps a human veto.
 
 Doc/code mismatch to resolve: this file says results.finishing_order is a 22-driver array, but Admin.jsx:668 writes finishOrder.slice(0, 5). Confirm the intended shape for both results.finishing_order and picks.finishing_order, then correct whichever is wrong.
