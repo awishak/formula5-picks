@@ -93,6 +93,12 @@ const SNAP = {
 const F1_PTS = { 1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1 };
 const ptsForPos = (pos) => (pos === -1 ? -1 : F1_PTS[pos] || 0);
 
+// This week's ten. Three from the top pool, seven from the mid, and nobody else
+// on the grid can score for anyone in F5 this round. That split drives row
+// height: the ten get a full row, the other twelve stay as thin context so you
+// can still find a driver by position without them competing for attention.
+const POOL = new Set([...SNAP.pools.top, ...SNAP.pools.mid]);
+
 // One pass over the running order produces everything the board needs: each
 // driver's side, what he is worth to each team, and both team totals. Deriving
 // it means the column numbers and the total can never disagree.
@@ -109,7 +115,7 @@ function readBoard(order) {
     totalMine += valMine;
     totalTheirs += valTheirs;
     const side = cMine > cTheirs ? "mine" : cTheirs > cMine ? "theirs" : cMine > 0 ? "both" : null;
-    return { name, pos, pts, cMine, cTheirs, valMine, valTheirs, side };
+    return { name, pos, pts, cMine, cTheirs, valMine, valTheirs, side, inPool: POOL.has(name) };
   });
   return { rows, totalMine, totalTheirs };
 }
@@ -471,28 +477,38 @@ function RootingBoard({ order, live, lapInfo }) {
   const margin = Math.abs(totalMine - totalTheirs);
 
   // A value cell reads as a lit dot at a glance and as a number on inspection.
-  // "both" keeps the number but drops the glow, since it moves nothing.
+  // The ring count is the pick count: one ring means one teammate has him, two
+  // concentric rings mean both do and he scores twice. Two real nested elements
+  // rather than stacked box-shadows, so the gap shows the row's own background
+  // instead of an approximation of it. "both" keeps the number but drops the
+  // glow, since a driver on both cards moves nothing.
   const Val = ({ v, count, color, muted }) => {
     if (v == null) return null;
+    const ring = muted ? V.border2 : color;
+    const inner = (
+      <span style={{
+        minWidth: 30, height: 30, borderRadius: "50%", padding: "0 5px",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: muted ? "transparent" : `${color}1f`,
+        border: `1.5px solid ${ring}`,
+        boxShadow: muted ? "none" : `0 0 9px ${color}88`,
+        ...display("chip"),
+        color: muted ? V.text3 : color,
+      }}>{v}</span>
+    );
+    if (count < 2) return inner;
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-        <span style={{
-          minWidth: 30, height: 30, borderRadius: "50%", padding: "0 5px",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: muted ? "transparent" : `${color}1f`,
-          border: `1.5px solid ${muted ? V.border2 : color}`,
-          boxShadow: muted ? "none" : `0 0 9px ${color}88`,
-          ...display("chip"),
-          color: muted ? V.text3 : color,
-        }}>{v}</span>
-        {count > 1 && (
-          <span style={{ ...body("bodySm"), fontSize: 13, color: muted ? V.text3 : color, opacity: 0.8 }}>×{count}</span>
-        )}
-      </div>
+      <span style={{
+        display: "inline-flex", borderRadius: "50%", padding: 2.5,
+        border: `1.5px solid ${ring}`,
+        boxShadow: muted ? "none" : `0 0 13px ${color}55`,
+      }}>{inner}</span>
     );
   };
 
   const COL = 58;
+  const ROW_IN = 56;   // one of this week's ten
+  const ROW_OUT = 30;  // not in a pool this week, context only
   const accentOf = (side) => (side === "mine" ? V.blue : side === "theirs" ? V.pink : null);
 
   return (
@@ -544,22 +560,45 @@ function RootingBoard({ order, live, lapInfo }) {
         <span style={{ width: COL, flexShrink: 0, textAlign: "center" }}><Label color={V.pink}>Them</Label></span>
       </div>
 
-      {/* 22 rows, tight */}
+      {/* 22 rows on two fixed heights: this week's ten, and everyone else */}
       {rows.map((r, i) => {
         const accent = accentOf(r.side);
         const lit = !!accent;
+        const last = i === rows.length - 1;
+
+        if (!r.inPool) return (
+          <div key={r.name} style={{
+            display: "flex", alignItems: "center", height: ROW_OUT, boxSizing: "border-box",
+            padding: "0 12px 0 9px",
+            borderBottom: last ? "none" : `1px solid ${V.border}`,
+            borderLeft: "3px solid transparent",
+          }}>
+            <span style={{ width: 23, flexShrink: 0 }}>
+              <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, margin: 0, fontVariantNumeric: "tabular-nums" }}>{r.pos}</p>
+            </span>
+            <span style={{ width: 3, height: 12, borderRadius: 2, background: dColor(r.name), opacity: 0.5, flexShrink: 0, marginRight: 9 }} />
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <p style={{
+                ...body("bodySm"), fontSize: 13, color: V.text3, margin: 0,
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>{r.name}</p>
+            </span>
+          </div>
+        );
+
         return (
           <div key={r.name} style={{
-            display: "flex", alignItems: "center", padding: "5px 12px 5px 9px",
-            borderBottom: i === rows.length - 1 ? "none" : `1px solid ${V.border}`,
+            display: "flex", alignItems: "center", height: ROW_IN, boxSizing: "border-box",
+            padding: "0 12px 0 9px",
+            borderBottom: last ? "none" : `1px solid ${V.border}`,
             background: lit ? `${accent}0f` : "transparent",
             borderLeft: `3px solid ${lit ? accent : "transparent"}`,
           }}>
             <span style={{ width: 23, flexShrink: 0 }}>
-              <p style={{ ...display("h3"), color: lit ? V.text : V.text3, margin: 0, fontVariantNumeric: "tabular-nums" }}>{r.pos}</p>
+              <p style={{ ...display("h3"), color: lit ? V.text : V.text2, margin: 0, fontVariantNumeric: "tabular-nums" }}>{r.pos}</p>
             </span>
             <span style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 9 }}>
-              <Face name={r.name} size={30} />
+              <Face name={r.name} size={32} />
               <span style={{ minWidth: 0 }}>
                 <p style={{
                   ...body("bodyMd"), lineHeight: 1.15,
@@ -568,7 +607,7 @@ function RootingBoard({ order, live, lapInfo }) {
                 }}>{r.name}</p>
                 <p style={{
                   ...body("bodySm"), fontSize: 13, lineHeight: 1.2, margin: 0,
-                  color: dColor(r.name), opacity: lit ? 0.95 : 0.6,
+                  color: dColor(r.name), opacity: lit ? 0.95 : 0.7,
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>{dTeam(r.name)}</p>
               </span>
@@ -601,8 +640,19 @@ function RootingBoard({ order, live, lapInfo }) {
               <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>{text}</p>
             </div>
           ))}
+          <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+            <span style={{
+              width: 15, height: 15, borderRadius: "50%", flexShrink: 0, boxSizing: "content-box",
+              border: `1.5px solid ${V.blue}`, padding: 2,
+              boxShadow: `0 0 0 1.5px ${V.blue}, 0 0 8px ${V.blue}66`,
+            }} />
+            <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>
+              Two rings means both teammates picked him, so he counts twice.
+            </p>
+          </div>
           <p style={{ ...body("bodySm"), color: V.text3, margin: "4px 0 0" }}>
-            The number is what he is worth to that team right now. ×2 means both teammates picked him, so he counts twice.
+            The number is what he is worth to that team right now. Only the ten drivers in
+            this week's pools can score, so the other twelve sit small.
           </p>
         </div>
       </div>
