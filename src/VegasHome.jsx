@@ -39,7 +39,9 @@ const SNAP = {
     order: ["Lewis Hamilton", "Max Verstappen", "Isack Hadjar", "Liam Lawson", "Arvid Lindblad"],
     pitGuess: 1.5,
   },
-  boxBox: { side: "OVER", line: 2.48, guesses: { "Andrew Ishak": 1.5, "Kevin Coolidge": 1.5, "Brett Dillon": 3.5, "Stacy Michaelsen": 3.4 } },
+  // team is the F1 constructor whose stop settles it, from race.pitQuestion.
+  boxBox: { side: "OVER", line: 2.48, team: "Alpine", guesses: { "Andrew Ishak": 1.5, "Kevin Coolidge": 1.5, "Brett Dillon": 3.5, "Stacy Michaelsen": 3.4 } },
+  picksIn: { me: true, teammate: true },
   // Real qualifying result, session_key 11338.
   grid: {
     "Lando Norris": 1, "Lewis Hamilton": 2, "Charles Leclerc": 3, "Andrea Kimi Antonelli": 4,
@@ -286,28 +288,109 @@ function Countdown({ to, label }) {
   );
 }
 
-// ── Race marquee. The one piece of pure Vegas on every state. ──
-function Marquee({ race }) {
+// F5 team mark. Same hashed-hue initials the light app uses in Schedule.jsx, so
+// a team looks like itself here without needing logo_url in the snapshot.
+function TeamBadge({ name, size = 28, ring }) {
+  let h = 0;
+  for (let i = 0; i < (name || "").length; i++) h = (name || "").charCodeAt(i) + ((h << 5) - h);
+  const hue = Math.abs(h) % 360;
+  const initials = (name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   return (
     <div style={{
-      ...card({ padding: "22px 20px 20px", marginBottom: 18, position: "relative", overflow: "hidden" }),
+      width: size, height: size, borderRadius: size * 0.3, margin: "0 auto",
+      background: `hsl(${hue}, 45%, 42%)`,
+      border: `1.5px solid ${ring || V.border2}`,
+      boxShadow: ring ? `0 0 9px ${ring}66` : "none",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      ...display("chip"), fontSize: 13, color: "#fff",
+    }}>{initials}</div>
+  );
+}
+
+// A player, ringed green with a check once their picks are in. Sits in the
+// marquee so "am I done" is answered by the same box that names the race.
+function PlayerBadge({ name, picked, size = 38 }) {
+  const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const c = picked ? V.green : V.text3;
+  return (
+    <div style={{ position: "relative", flexShrink: 0 }}>
+      <div style={{
+        width: size, height: size, borderRadius: "50%",
+        background: picked ? `${V.green}1a` : V.bg3,
+        border: `2px solid ${c}`,
+        boxShadow: picked ? `0 0 12px ${V.green}77` : "none",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        ...display("chip"), color: c,
+      }}>{initials}</div>
+      {picked && (
+        <span style={{
+          position: "absolute", right: -3, bottom: -3,
+          width: 17, height: 17, borderRadius: "50%",
+          background: V.green, border: `2px solid ${V.bg2}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 11, fontWeight: 900, color: V.bg, lineHeight: 1,
+        }}>✓</span>
+      )}
+    </div>
+  );
+}
+
+// ── Race marquee. The one piece of pure Vegas on every state. ──
+// Carries the round, the race, who has picked, and what the event is doing right
+// now. The circuit name used to sit at the bottom; event status is what people
+// actually open the app for.
+function Marquee({ race, status, players = [] }) {
+  const inCount = players.filter(p => p.picked).length;
+  const allIn = players.length > 0 && inCount === players.length;
+  return (
+    <div style={{
+      ...card({ padding: "18px 20px 20px", marginBottom: 18, position: "relative", overflow: "hidden" }),
       background: `radial-gradient(120% 100% at 50% 0%, ${V.blue}14 0%, ${V.bg2} 60%)`,
       borderColor: `${V.blue}33`,
     }}>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
-        <Chip color={V.blue}>Round {race.round} of 22</Chip>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
+        <div style={{ paddingTop: 4 }}>
+          <Chip color={V.blue}>Round {race.round} of 22</Chip>
+        </div>
+        {players.length > 0 && (
+          <div style={{ marginLeft: "auto", textAlign: "right", flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              {players.map(p => (
+                <div key={p.name} style={{ textAlign: "center" }}>
+                  <PlayerBadge name={p.name} picked={p.picked} />
+                  <p style={{ ...display("chip"), fontSize: 13, color: p.picked ? V.green : V.text3, margin: "5px 0 0" }}>
+                    {p.name.split(" ")[0]}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p style={{ ...labelType(), color: allIn ? V.green : V.pink, margin: "6px 0 0" }}>
+              {allIn ? "Picks in" : inCount === 0 ? "No picks" : `${inCount} of ${players.length} in`}
+            </p>
+          </div>
+        )}
       </div>
+
       <p style={{
         ...marquee(shortRace(race.name)), ...textGlow(V.blue), textAlign: "center",
-        textTransform: "uppercase", margin: 0,
+        textTransform: "uppercase", margin: "6px 0 0",
       }}>{shortRace(race.name)}</p>
       <p style={{ ...labelType(), color: V.text2, textAlign: "center", margin: "10px 0 0" }}>Grand Prix</p>
       <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${V.blue}55, transparent)`, margin: "16px 0 12px" }} />
-      <p style={{ ...body("body"), color: V.text2, textAlign: "center", margin: 0 }}>
-        {race.circuit} · {race.location}
+      <p style={{ ...display("h3"), color: status.color, textAlign: "center", margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        {status.text}
       </p>
     </div>
   );
+}
+
+// One place to decide what the event is doing, so a red flag or a delay only has
+// to be added here.
+function eventStatus({ settled, live, lapInfo, race }) {
+  if (settled) return { text: "Race over", color: V.text2 };
+  if (live) return { text: `Live · Lap ${lapInfo.lap} of ${SNAP.totalLaps}`, color: V.pink };
+  const t = new Date(race.lightsOut).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return { text: `Lights out ${t}`, color: V.blue };
 }
 
 // ── State A: picks not in ────────────────────────────────
@@ -319,7 +402,14 @@ function HomeOpen({ onNav }) {
   const demoDeadline = new Date(Date.now() + 18.7 * 3600e3).toISOString();
   return (
     <>
-      <Marquee race={race} />
+      <Marquee
+        race={race}
+        status={eventStatus({ settled: false, live: false, lapInfo: null, race })}
+        players={[
+          { name: SNAP.me, picked: false },
+          { name: SNAP.teammate, picked: false },
+        ]}
+      />
 
       <div style={{ ...card({ padding: "20px", marginBottom: 18 }), borderColor: `${V.blue}33` }}>
         <Countdown to={demoDeadline} label="Picks close in" />
@@ -432,30 +522,15 @@ function HomeLocked({ live = false, settled = false, lapIdx = 0 }) {
   const order = live || settled ? laps[lapIdx].order : gridOrder;
   return (
     <>
-      <Marquee race={race} />
+      <Marquee
+        race={race}
+        status={eventStatus({ settled, live, lapInfo, race })}
+        players={[
+          { name: SNAP.me, picked: SNAP.picksIn.me },
+          { name: SNAP.teammate, picked: SNAP.picksIn.teammate },
+        ]}
+      />
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-        <div style={{ ...card({ padding: "14px 16px", flex: 1 }), borderColor: `${V.green}33`, background: `${V.green}0d` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ ...display("h3"), ...textGlow(V.green, 0.8) }}>✓</span>
-            <div>
-              <p style={{ ...body("bodyMd"), color: V.text, margin: 0 }}>Picks in</p>
-              <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>48 of 48</p>
-            </div>
-          </div>
-        </div>
-        <div style={{ ...card({ padding: "14px 16px", flex: 1 }) }}>
-          <Label color={V.text3}>{settled ? "Race" : "Lights out"}</Label>
-          <p style={{ ...display("h3"), color: V.text, margin: "5px 0 0" }}>
-            {settled ? "Finished" : new Date(race.lightsOut).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-          </p>
-        </div>
-      </div>
-
-      <SectionHead accent={settled ? V.blue : live ? V.pink : V.green}
-        sub={settled ? "Finishing order" : live ? "Running order" : "Grid order"}>
-        {settled ? "How it finished" : "Who you're rooting for"}
-      </SectionHead>
       <RootingBoard order={order} live={live} lapInfo={lapInfo} settled={settled} />
 
       <SectionHead accent={V.blue} sub={`Your points, not the matchup · P${standings.myRank} of ${standings.of}`}>
@@ -500,7 +575,10 @@ function HomeLocked({ live = false, settled = false, lapIdx = 0 }) {
 // decided, so both sides keep their neutral ownership colors and the language
 // stays provisional: ahead and behind, not won and lost.
 function RootingBoard({ order, live, lapInfo, settled = false }) {
-  const { myTeam, opp } = SNAP;
+  const { myTeam, opp, boxBox } = SNAP;
+  const boxSide = boxBox.side;
+  // Before lights out nothing has pitted; during the race the snapshot says.
+  const pitted = settled ? true : live ? lapInfo.alpineStopped : false;
   const { rows, totalMine, totalTheirs } = readBoard(order);
   const winning = totalMine > totalTheirs;
   const margin = Math.abs(totalMine - totalTheirs);
@@ -535,7 +613,10 @@ function RootingBoard({ order, live, lapInfo, settled = false }) {
     );
   };
 
-  const COL = 58;
+  // Wide enough for a team name to sit over each column in the header without
+  // truncating. The header blocks and the table columns share this width so the
+  // totals line up over the values that produce them.
+  const COL = 76;
   const ROW_IN = 56;   // one of this week's ten
   const ROW_OUT = 30;  // not in a pool this week, context only
 
@@ -574,31 +655,44 @@ function RootingBoard({ order, live, lapInfo, settled = false }) {
         </div>
 
         <Label color={V.text3}>{settled ? "Result" : live ? "If this holds" : "On the grid"}</Label>
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 16, margin: "10px 0 0" }}>
-          <div>
-            <p style={{ ...display("hero"), ...(level ? { color: V.text2 } : winning ? textGlow(usColor) : { color: usColor }), margin: 0 }}>{totalMine}</p>
-            <Label color={usColor}>Us</Label>
+
+        {/* Box Box on the left, team totals on the right, sitting over the same
+            two columns the driver values run down. */}
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 12, margin: "12px 0 0" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Label color={V.gold}>Box Box</Label>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 9, margin: "5px 0 0" }}>
+              <p style={{ ...display("h1"), color: V.text, margin: 0, fontVariantNumeric: "tabular-nums" }}>{boxBox.line}</p>
+              <Chip color={boxSide === "OVER" ? V.gold : V.purple}>{boxSide}</Chip>
+            </div>
+            <p style={{ ...body("bodySm"), color: pitted ? V.text2 : V.text3, margin: "5px 0 0" }}>
+              {boxBox.team} · {pitted ? "pitted" : "not pitted yet"}
+            </p>
           </div>
-          <p style={{ ...display("h2"), color: V.text3, margin: "0 0 16px" }}>–</p>
-          <div>
-            <p style={{ ...display("hero"), ...(themLit ? textGlow(V.pink) : { color: themColor }), margin: 0 }}>{totalTheirs}</p>
-            <Label color={themColor}>Them</Label>
-          </div>
-          <p style={{
-            ...display("h3"), margin: "0 0 18px auto", textAlign: "right",
-            color: level ? V.text2 : settled ? (winning ? V.green : V.pink) : V.text2,
-          }}>
-            {level ? "Level" : settled
-              ? (winning ? `Won by ${margin}` : `Lost by ${margin}`)
-              : (winning ? `Ahead by ${margin}` : `Behind by ${margin}`)}
-          </p>
+
+          {[
+            { team: myTeam.name, total: totalMine, c: usColor, glow: settled && winning },
+            { team: opp.name, total: totalTheirs, c: themColor, glow: themLit },
+          ].map((s, i) => (
+            <div key={i} style={{ width: COL, flexShrink: 0, textAlign: "center" }}>
+              <TeamBadge name={s.team} size={26} ring={s.c} />
+              <p style={{
+                ...display("chip"), fontSize: 13, color: V.text2, margin: "4px 0 0", lineHeight: 1.1,
+              }}>{s.team}</p>
+              <p style={{
+                ...display("stat"), margin: "3px 0 0", fontVariantNumeric: "tabular-nums",
+                ...(s.glow ? textGlow(s.c) : { color: s.c }),
+              }}>{s.total}</p>
+            </div>
+          ))}
         </div>
+
         <p style={{ ...body("bodySm"), color: V.text3, margin: "12px 0 0" }}>
           These are driver points only and does not account for the box box line.
         </p>
         {live && (
           <p style={{ ...body("bodySm"), color: V.text3, margin: "5px 0 0" }}>
-            Updated {lapInfo.updatedAgo}s ago · Every 2 min · Alpine {lapInfo.alpineStopped ? "stopped" : "not stopped"}
+            Updated {lapInfo.updatedAgo}s ago · Every 2 min
           </p>
         )}
       </div>
