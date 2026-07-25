@@ -865,8 +865,14 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 // ── Main App ─────────────────────────────────────────────
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("f1_user") || null);
-  // #vegas opens the second-half mockup. Temporary entry point while we design it.
-  const [activePage, setActivePage] = useState(() => window.location.hash === "#vegas" ? "vegas" : "home");
+  // ?vegas opens the second-half mockup. Query param rather than #vegas because
+  // Vercel's SSO redirect on protected previews drops the fragment, which lands
+  // you back on the normal app. Hash still works when there's no auth in the way.
+  const [activePage, setActivePage] = useState(() => {
+    const byHash = window.location.hash === "#vegas";
+    const byQuery = new URLSearchParams(window.location.search).has("vegas");
+    return byHash || byQuery ? "vegas" : "home";
+  });
   const [scheduleInitialView, setScheduleInitialView] = useState(null);
 
   function navigateTo(page) {
@@ -909,7 +915,7 @@ export default function App() {
   if (activePage === "vegas") return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: #07070c; }`}</style>
-      <VegasHome onNavigate={(p) => { window.location.hash = ""; navigateTo(p); }} />
+      <VegasHome onNavigate={(p) => { window.history.replaceState(null, "", window.location.pathname); navigateTo(p); }} />
     </>
   );
 

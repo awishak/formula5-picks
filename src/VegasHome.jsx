@@ -49,30 +49,38 @@ const SNAP = {
     "Oliver Bearman": 17, "Carlos Sainz": 18, "Alex Albon": 19, "Lance Stroll": 20,
     "Valtteri Bottas": 21, "Sergio Perez": 22,
   },
-  // Derived from the real picks: my team has 2 of each, theirs has what it has.
-  rooting: {
-    for: [
-      { name: "Lewis Hamilton", edge: "+1", why: "Your top pick. They only have one of him." },
-      { name: "Liam Lawson", edge: "+1", why: "You have two, they have one." },
-      { name: "Arvid Lindblad", edge: "+1", why: "You have two, they have one." },
-    ],
-    neutral: [
-      { name: "Max Verstappen", why: "Both teams have two. Cancels out." },
-      { name: "Isack Hadjar", why: "Both teams have two. Cancels out." },
-    ],
-    against: [
-      { name: "George Russell", why: "Brett's top pick. Pure downside for you." },
-      { name: "Franco Colapinto", why: "Brett only. Every point helps them." },
-      { name: "Oliver Bearman", why: "Brett only. Every point helps them." },
-    ],
+  // Which side each driver moves. Derived from the real round-11 picks:
+  //   mine   my team has more of him than theirs  → root for
+  //   theirs their team has more than mine        → root against
+  //   both   equal count, cannot move the matchup → cancels out
+  // Every other driver is on nobody's card and gets no mark.
+  sides: {
+    "Lewis Hamilton": "mine", "Liam Lawson": "mine", "Arvid Lindblad": "mine",
+    "George Russell": "theirs", "Franco Colapinto": "theirs", "Oliver Bearman": "theirs",
+    "Max Verstappen": "both", "Isack Hadjar": "both",
   },
-  // INVENTED. The race has not happened. Marked MOCK in the UI.
-  live: {
-    lap: 30, totalLaps: 70,
-    order: ["Lando Norris", "Lewis Hamilton", "Charles Leclerc", "Max Verstappen", "Oscar Piastri",
-      "Andrea Kimi Antonelli", "Isack Hadjar", "George Russell", "Arvid Lindblad", "Liam Lawson"],
-    projMine: 34, projTheirs: 27, alpineStopped: false,
-  },
+  // INVENTED. The race has not run. Both snapshots are marked MOCK in the UI.
+  // Two laps so the table can be seen changing, and so the projection flips:
+  // at lap 30 the edge drivers are ahead, by lap 52 theirs have come through.
+  laps: [
+    {
+      lap: 30, projMine: 34, projTheirs: 27, alpineStopped: false, updatedAgo: 40,
+      order: ["Lando Norris", "Lewis Hamilton", "Charles Leclerc", "Max Verstappen", "Oscar Piastri",
+        "Andrea Kimi Antonelli", "Isack Hadjar", "George Russell", "Arvid Lindblad", "Liam Lawson",
+        "Nico Hulkenberg", "Pierre Gasly", "Franco Colapinto", "Gabriel Bortoleto", "Esteban Ocon",
+        "Fernando Alonso", "Oliver Bearman", "Carlos Sainz", "Alex Albon", "Lance Stroll",
+        "Valtteri Bottas", "Sergio Perez"],
+    },
+    {
+      lap: 52, projMine: 24, projTheirs: 31, alpineStopped: true, updatedAgo: 75,
+      order: ["Lando Norris", "Charles Leclerc", "Max Verstappen", "Oscar Piastri", "George Russell",
+        "Andrea Kimi Antonelli", "Lewis Hamilton", "Isack Hadjar", "Oliver Bearman", "Franco Colapinto",
+        "Arvid Lindblad", "Liam Lawson", "Nico Hulkenberg", "Pierre Gasly", "Gabriel Bortoleto",
+        "Esteban Ocon", "Fernando Alonso", "Carlos Sainz", "Alex Albon", "Lance Stroll",
+        "Valtteri Bottas", "Sergio Perez"],
+    },
+  ],
+  totalLaps: 70,
   standings: { myRank: 6, myPts: 446, of: 48, leader: "Joe McGlynn", leaderPts: 478 },
 };
 
@@ -350,8 +358,12 @@ function BoxBoxCard() {
 }
 
 // ── State B: locked, pre-race ────────────────────────────
-function HomeLocked({ live = false }) {
-  const { race, rooting, myPick, grid, standings } = SNAP;
+function HomeLocked({ live = false, lapIdx = 0 }) {
+  const { race, myPick, grid, standings, laps } = SNAP;
+  const lapInfo = live ? laps[lapIdx] : null;
+  // Before the race the board runs in grid order; during it, running order.
+  const gridOrder = Object.entries(grid).sort((a, b) => a[1] - b[1]).map(([n]) => n);
+  const order = live ? lapInfo.order : gridOrder;
   return (
     <>
       <Marquee race={race} />
@@ -374,34 +386,13 @@ function HomeLocked({ live = false }) {
         </div>
       </div>
 
-      {live && <LiveProjection />}
-
-      <SectionHead accent={V.green} sub="Your team has two of each of these. Theirs does not. This is where the matchup is won.">
-        Root for these three
+      <SectionHead accent={live ? V.red : V.green}
+        sub={live
+          ? "Every driver in running order. Dots near the top mean you are winning."
+          : "Every driver in grid order. Dots near the top mean you start ahead."}>
+        Who you're rooting for
       </SectionHead>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
-        {rooting.for.map(d => (
-          <DriverRow key={d.name} name={d.name} accent={V.green} badge={d.edge} why={d.why} grid={grid[d.name]} />
-        ))}
-      </div>
-
-      <SectionHead accent={V.pink} sub="Only the other team has these. Every point they score is a point against you.">
-        Root against these three
-      </SectionHead>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
-        {rooting.against.map(d => (
-          <DriverRow key={d.name} name={d.name} accent={V.pink} why={d.why} grid={grid[d.name]} />
-        ))}
-      </div>
-
-      <SectionHead accent={V.text3} sub="Both teams picked these twice, so they cannot move the matchup either way.">
-        Doesn't matter
-      </SectionHead>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
-        {rooting.neutral.map(d => (
-          <DriverRow key={d.name} name={d.name} accent={V.text3} why={d.why} grid={grid[d.name]} dim />
-        ))}
-      </div>
+      <RootingBoard order={order} live={live} lapInfo={lapInfo} />
 
       <SectionHead accent={V.blue} sub={`For your own points, separate from the matchup. You are P${standings.myRank} of ${standings.of}.`}>
         Your own card
@@ -432,73 +423,149 @@ function HomeLocked({ live = false }) {
   );
 }
 
-// ── The live projection panel ────────────────────────────
-function LiveProjection() {
-  const { live: L, rooting } = SNAP;
-  const pos = Object.fromEntries(L.order.map((n, i) => [n, i + 1]));
-  const winning = L.projMine > L.projTheirs;
+// ── The rooting board ────────────────────────────────────
+//
+// The whole race on one screen. Every driver in running order, two narrow
+// columns for the two teams, a dot where that driver moves the matchup. Dots
+// bunched near the top means you are winning, and you read that without
+// counting anything. Replaces three separate lists that made you hold the
+// grid in your head to compare them.
+function RootingBoard({ order, live, lapInfo }) {
+  const { sides, myTeam, opp } = SNAP;
+  const counts = order.reduce((a, n, i) => {
+    const s = sides[n];
+    if (s === "mine" || s === "theirs") a[s].push(i + 1);
+    return a;
+  }, { mine: [], theirs: [] });
+  const winning = lapInfo ? lapInfo.projMine > lapInfo.projTheirs : null;
+
+  const Dot = ({ kind, color }) => {
+    if (kind === "solid") return (
+      <span style={{
+        width: 13, height: 13, borderRadius: "50%", background: color,
+        boxShadow: `0 0 10px ${color}, 0 0 20px ${color}77`, display: "block", margin: "0 auto",
+      }} />
+    );
+    return (
+      <span style={{
+        width: 11, height: 11, borderRadius: "50%", border: `1.5px solid ${V.text3}`,
+        display: "block", margin: "0 auto", opacity: 0.55,
+      }} />
+    );
+  };
+
+  const COL = 52;
   return (
-    <div style={{
-      ...card({ padding: "18px 20px", marginBottom: 24 }),
-      borderColor: `${V.red}44`,
-      background: `radial-gradient(120% 100% at 50% 0%, ${V.red}12 0%, ${V.bg2} 55%)`,
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-        <span className="v-pulse" style={{ width: 10, height: 10, borderRadius: "50%", background: V.red, boxShadow: `0 0 12px ${V.red}` }} />
-        <Label color={V.red}>Live · lap {L.lap} of {L.totalLaps}</Label>
-        <span style={{ marginLeft: "auto" }}><Chip color={V.amber}>Mock data</Chip></span>
-      </div>
-      <p style={{ ...display("h2"), color: V.text, margin: "10px 0 16px" }}>
-        If lap {L.lap} results hold
-      </p>
+    <div style={{ ...card({ marginBottom: 24, overflow: "hidden" }), borderColor: live ? `${V.red}44` : V.border }}>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-        <div style={{ ...card({ padding: "14px 16px", flex: 1 }), borderColor: winning ? `${V.green}44` : V.border, background: winning ? `${V.green}0d` : V.bg3 }}>
-          <Label color={V.text3}>You</Label>
-          <p style={{ ...display("stat"), ...(winning ? textGlow(V.green, 0.8) : { color: V.text }), margin: "6px 0 0" }}>{L.projMine}</p>
+      {/* Status + the answer */}
+      <div style={{
+        padding: "16px 18px",
+        background: live
+          ? `radial-gradient(120% 100% at 50% 0%, ${V.red}14 0%, ${V.bg2} 60%)`
+          : `radial-gradient(120% 100% at 50% 0%, ${V.blue}10 0%, ${V.bg2} 60%)`,
+        borderBottom: `1px solid ${V.border}`,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12 }}>
+          {live && <span className="v-pulse" style={{ width: 10, height: 10, borderRadius: "50%", background: V.red, boxShadow: `0 0 12px ${V.red}` }} />}
+          <Label color={live ? V.red : V.blue}>
+            {live ? `Live · lap ${lapInfo.lap} of ${SNAP.totalLaps}` : "Starting grid"}
+          </Label>
+          <span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+            {live && <Chip color={V.amber}>Mock</Chip>}
+          </span>
         </div>
-        <div style={{ ...card({ padding: "14px 16px", flex: 1 }), borderColor: !winning ? `${V.red}44` : V.border, background: V.bg3 }}>
-          <Label color={V.text3}>Them</Label>
-          <p style={{ ...display("stat"), color: V.text2, margin: "6px 0 0" }}>{L.projTheirs}</p>
+
+        {live ? (
+          <>
+            <Label color={V.text3}>If this holds</Label>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 14, margin: "8px 0 6px" }}>
+              <div>
+                <p style={{ ...display("hero"), ...(winning ? textGlow(V.green) : { color: V.text2 }), margin: 0 }}>{lapInfo.projMine}</p>
+                <Label color={V.text3}>Us</Label>
+              </div>
+              <p style={{ ...display("h2"), color: V.text3, margin: "0 0 14px" }}>–</p>
+              <div>
+                <p style={{ ...display("hero"), ...(!winning ? textGlow(V.pink) : { color: V.text2 }), margin: 0 }}>{lapInfo.projTheirs}</p>
+                <Label color={V.text3}>Them</Label>
+              </div>
+              <p style={{
+                ...display("h3"), margin: "0 0 16px auto", textAlign: "right",
+                color: winning ? V.green : V.pink,
+              }}>
+                {winning ? `You win by ${lapInfo.projMine - lapInfo.projTheirs}` : `You lose by ${lapInfo.projTheirs - lapInfo.projMine}`}
+              </p>
+            </div>
+            <p style={{ ...body("bodySm"), color: V.text3, margin: "8px 0 0" }}>
+              Updated {lapInfo.updatedAgo}s ago · refreshes every 2 minutes ·{" "}
+              {lapInfo.alpineStopped ? "Alpine has stopped, Box Box is settled" : "Alpine has not stopped, Box Box still live"}
+            </p>
+          </>
+        ) : (
+          <p style={{ ...body("body"), color: V.text2, margin: 0 }}>
+            Your three start P{counts.mine.join(", P")}. Theirs start P{counts.theirs.join(", P")}.
+          </p>
+        )}
+      </div>
+
+      {/* Column header */}
+      <div style={{ display: "flex", alignItems: "center", padding: "10px 14px 8px", borderBottom: `1px solid ${V.border}`, background: V.bg3 }}>
+        <span style={{ width: 30, flexShrink: 0 }} />
+        <span style={{ flex: 1, minWidth: 0 }}><Label color={V.text3}>Driver</Label></span>
+        <span style={{ width: COL, flexShrink: 0, textAlign: "center" }}><Label color={V.green}>Us</Label></span>
+        <span style={{ width: COL, flexShrink: 0, textAlign: "center" }}><Label color={V.pink}>Them</Label></span>
+      </div>
+
+      {/* 22 rows */}
+      {order.map((name, i) => {
+        const side = sides[name];
+        const lit = side === "mine" || side === "theirs";
+        const accent = side === "mine" ? V.green : side === "theirs" ? V.pink : null;
+        return (
+          <div key={name} style={{
+            display: "flex", alignItems: "center", padding: "9px 14px",
+            borderBottom: i === order.length - 1 ? "none" : `1px solid ${V.border}`,
+            background: lit ? `${accent}0f` : "transparent",
+            borderLeft: `3px solid ${lit ? accent : "transparent"}`,
+          }}>
+            <span style={{ width: 30, flexShrink: 0 }}>
+              <p style={{ ...display("h3"), color: lit ? V.text : V.text3, margin: 0, fontVariantNumeric: "tabular-nums" }}>{i + 1}</p>
+            </span>
+            <span style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ width: 3, height: 22, borderRadius: 2, background: dColor(name), flexShrink: 0, opacity: lit ? 1 : 0.5 }} />
+              <p style={{
+                ...body(lit ? "bodyMd" : "bodySm"),
+                color: lit ? V.text : V.text3, margin: 0,
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>{name}</p>
+            </span>
+            <span style={{ width: COL, flexShrink: 0 }}>
+              {side === "mine" && <Dot kind="solid" color={V.green} />}
+              {side === "both" && <Dot kind="ring" />}
+            </span>
+            <span style={{ width: COL, flexShrink: 0 }}>
+              {side === "theirs" && <Dot kind="solid" color={V.pink} />}
+              {side === "both" && <Dot kind="ring" />}
+            </span>
+          </div>
+        );
+      })}
+
+      {/* Legend */}
+      <div style={{ padding: "14px 16px", background: V.bg3, borderTop: `1px solid ${V.border}` }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[
+            [<Dot key="a" kind="solid" color={V.green} />, `Only ${myTeam.name} gains. Root for him.`],
+            [<Dot key="b" kind="solid" color={V.pink} />, `Only ${opp.name} gains. Root against him.`],
+            [<Dot key="c" kind="ring" />, "Both teams picked him. Cancels out either way."],
+          ].map(([dot, text], i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 20, flexShrink: 0 }}>{dot}</span>
+              <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>{text}</p>
+            </div>
+          ))}
         </div>
       </div>
-
-      <p style={{ ...body("body"), color: winning ? V.green : V.red, margin: "0 0 14px", fontWeight: 600 }}>
-        {winning ? `You win by ${L.projMine - L.projTheirs}.` : `You lose by ${L.projTheirs - L.projMine}.`}
-      </p>
-
-      <div style={{ height: 1, background: V.border, margin: "0 0 14px" }} />
-
-      <Label color={V.text3} style={{ marginBottom: 10 }}>Your three, right now</Label>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
-        {rooting.for.map(d => {
-          const p = pos[d.name];
-          return (
-            <div key={d.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <p style={{ ...display("h3"), color: p ? V.green : V.text3, margin: 0, width: 34 }}>{p ? `P${p}` : "—"}</p>
-              <Face name={d.name} size={30} />
-              <p style={{ ...body("bodyMd"), color: V.text, margin: 0, flex: 1 }}>{d.name}</p>
-            </div>
-          );
-        })}
-      </div>
-      <Label color={V.text3} style={{ marginBottom: 10 }}>Theirs</Label>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {rooting.against.map(d => {
-          const p = pos[d.name];
-          return (
-            <div key={d.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <p style={{ ...display("h3"), color: p ? V.pink : V.text3, margin: 0, width: 34 }}>{p ? `P${p}` : "—"}</p>
-              <Face name={d.name} size={30} />
-              <p style={{ ...body("bodyMd"), color: V.text2, margin: 0, flex: 1 }}>{d.name}</p>
-              {!p && <Chip color={V.text3}>Outside top 10</Chip>}
-            </div>
-          );
-        })}
-      </div>
-      <p style={{ ...body("bodySm"), color: V.text3, margin: "16px 0 0" }}>
-        {L.alpineStopped ? "Alpine has stopped. Box Box is settled." : "Alpine has not stopped yet. Box Box still live."}
-      </p>
     </div>
   );
 }
@@ -607,7 +674,8 @@ function NeonKit() {
 // ── Shell ────────────────────────────────────────────────
 export default function VegasHome({ onNavigate }) {
   const [tab, setTab] = useState("home");
-  const [state, setState] = useState("locked");
+  const [state, setState] = useState("live");
+  const [lapIdx, setLapIdx] = useState(0);
   const nav = onNavigate || (() => {});
 
   const Toggle = ({ opts, val, set }) => (
@@ -641,6 +709,12 @@ export default function VegasHome({ onNavigate }) {
                 { id: "live", label: "Race live" },
               ]} />
             )}
+            {tab === "home" && state === "live" && (
+              <Toggle val={lapIdx} set={setLapIdx} opts={[
+                { id: 0, label: "Lap 30 · winning" },
+                { id: 1, label: "Lap 52 · losing" },
+              ]} />
+            )}
           </div>
           <button onClick={() => nav("home")} style={{
             marginTop: 10, width: "100%", padding: "9px", borderRadius: 9, cursor: "pointer",
@@ -649,7 +723,7 @@ export default function VegasHome({ onNavigate }) {
         </div>
 
         {tab === "kit" ? <NeonKit /> : (
-          state === "open" ? <HomeOpen onNav={nav} /> : <HomeLocked live={state === "live"} />
+          state === "open" ? <HomeOpen onNav={nav} /> : <HomeLocked live={state === "live"} lapIdx={lapIdx} />
         )}
       </div>
     </div>
