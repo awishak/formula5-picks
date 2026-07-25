@@ -421,13 +421,15 @@ function BoxBoxCard() {
   );
 }
 
-// ── State B: locked, pre-race ────────────────────────────
-function HomeLocked({ live = false, lapIdx = 0 }) {
+// ── States B, C and D: locked pre-race, race live, race final ────
+function HomeLocked({ live = false, settled = false, lapIdx = 0 }) {
   const { race, myPick, grid, standings, laps } = SNAP;
   const lapInfo = live ? laps[lapIdx] : null;
-  // Before the race the board runs in grid order; during it, running order.
+  // Grid order before the race, running order during it, finishing order after.
+  // The two lap snapshots double as the two possible results, so the settled
+  // state needs no separate invented order.
   const gridOrder = Object.entries(grid).sort((a, b) => a[1] - b[1]).map(([n]) => n);
-  const order = live ? lapInfo.order : gridOrder;
+  const order = live || settled ? laps[lapIdx].order : gridOrder;
   return (
     <>
       <Marquee race={race} />
@@ -443,18 +445,18 @@ function HomeLocked({ live = false, lapIdx = 0 }) {
           </div>
         </div>
         <div style={{ ...card({ padding: "14px 16px", flex: 1 }) }}>
-          <Label color={V.text3}>Lights out</Label>
+          <Label color={V.text3}>{settled ? "Race" : "Lights out"}</Label>
           <p style={{ ...display("h3"), color: V.text, margin: "5px 0 0" }}>
-            {new Date(race.lightsOut).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+            {settled ? "Finished" : new Date(race.lightsOut).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
           </p>
         </div>
       </div>
 
-      <SectionHead accent={live ? V.red : V.green}
-        sub={live ? "Running order" : "Grid order"}>
-        Who you're rooting for
+      <SectionHead accent={settled ? V.blue : live ? V.pink : V.green}
+        sub={settled ? "Finishing order" : live ? "Running order" : "Grid order"}>
+        {settled ? "How it finished" : "Who you're rooting for"}
       </SectionHead>
-      <RootingBoard order={order} live={live} lapInfo={lapInfo} />
+      <RootingBoard order={order} live={live} lapInfo={lapInfo} settled={settled} />
 
       <SectionHead accent={V.blue} sub={`Your points, not the matchup · P${standings.myRank} of ${standings.of}`}>
         Your own card
@@ -493,7 +495,11 @@ function HomeLocked({ live = false, lapIdx = 0 }) {
 // are winning, and you read that without counting. The number matters as much
 // as the mark: a driver you are rooting against in P13 is worth zero, which a
 // plain dot cannot tell you.
-function RootingBoard({ order, live, lapInfo }) {
+// `settled` means the race is over and the real numbers are in. Only then does
+// the board commit to a verdict in color. While a race is running nothing is
+// decided, so both sides keep their neutral ownership colors and the language
+// stays provisional: ahead and behind, not won and lost.
+function RootingBoard({ order, live, lapInfo, settled = false }) {
   const { myTeam, opp } = SNAP;
   const { rows, totalMine, totalTheirs } = readBoard(order);
   const winning = totalMine > totalTheirs;
@@ -533,34 +539,41 @@ function RootingBoard({ order, live, lapInfo }) {
   const ROW_IN = 56;   // one of this week's ten
   const ROW_OUT = 30;  // not in a pool this week, context only
 
-  // Our side answers "are we winning" by color alone: green ahead, grey behind,
-  // blue level. Theirs only lights up when they are actually beating us. That is
-  // separate from the row-level thumbs, which say who to root for and never
-  // change. So a losing board shows green thumbs on grey numbers: still your
-  // drivers, still not working.
+  // Once settled, our side answers won or lost by color alone: green up, grey
+  // down. Theirs lights up only if they actually beat us. Before that, blue and
+  // pink just mean us and them.
+  //
+  // Kept separate from the row-level thumbs, which say who to root for and never
+  // change. So a lost board shows green thumbs on grey numbers: still your
+  // drivers, still did not work.
   const level = margin === 0;
-  const usColor = level ? V.blue : winning ? V.green : V.text3;
-  const themColor = level ? V.pink : winning ? V.pinkDim : V.pink;
-  const themLit = !winning && !level;
+  const usColor = !settled ? V.blue : level ? V.blue : winning ? V.green : V.text3;
+  const themColor = !settled ? V.pink : level ? V.pink : winning ? V.pinkDim : V.pink;
+  const themLit = settled && !winning && !level;
 
   return (
-    <div style={{ ...card({ marginBottom: 24, overflow: "hidden" }), borderColor: live ? `${V.pink}3a` : V.border }}>
+    <div style={{
+      ...card({ marginBottom: 24, overflow: "hidden" }),
+      borderColor: settled
+        ? (level ? V.border : winning ? `${V.green}44` : `${V.pink}44`)
+        : live ? `${V.pink}3a` : V.border,
+    }}>
 
       {/* Status and the answer */}
       <div style={{
         padding: "16px 18px",
-        background: `radial-gradient(130% 100% at 50% 0%, ${(live ? V.pink : V.blue)}12 0%, ${V.bg2} 62%)`,
+        background: `radial-gradient(130% 100% at 50% 0%, ${(settled ? usColor : live ? V.pink : V.blue)}12 0%, ${V.bg2} 62%)`,
         borderBottom: `1px solid ${V.border}`,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12 }}>
           {live && <span className="v-pulse" style={{ width: 10, height: 10, borderRadius: "50%", background: V.pink, boxShadow: `0 0 12px ${V.pink}` }} />}
-          <Label color={live ? V.pink : V.blue}>
-            {live ? `Live · lap ${lapInfo.lap} of ${SNAP.totalLaps}` : "Starting grid"}
+          <Label color={settled ? usColor : live ? V.pink : V.blue}>
+            {settled ? "Final" : live ? `Live · lap ${lapInfo.lap} of ${SNAP.totalLaps}` : "Starting grid"}
           </Label>
-          {live && <span style={{ marginLeft: "auto" }}><Chip color={V.amber}>Mock</Chip></span>}
+          {(live || settled) && <span style={{ marginLeft: "auto" }}><Chip color={V.amber}>Mock</Chip></span>}
         </div>
 
-        <Label color={V.text3}>{live ? "If this holds" : "On the grid"}</Label>
+        <Label color={V.text3}>{settled ? "Result" : live ? "If this holds" : "On the grid"}</Label>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 16, margin: "10px 0 0" }}>
           <div>
             <p style={{ ...display("hero"), ...(level ? { color: V.text2 } : winning ? textGlow(usColor) : { color: usColor }), margin: 0 }}>{totalMine}</p>
@@ -573,9 +586,11 @@ function RootingBoard({ order, live, lapInfo }) {
           </div>
           <p style={{
             ...display("h3"), margin: "0 0 18px auto", textAlign: "right",
-            color: level ? V.text2 : winning ? V.green : V.pink,
+            color: level ? V.text2 : settled ? (winning ? V.green : V.pink) : V.text2,
           }}>
-            {level ? "Level" : winning ? `Winning by ${margin}` : `Losing by ${margin}`}
+            {level ? "Level" : settled
+              ? (winning ? `Won by ${margin}` : `Lost by ${margin}`)
+              : (winning ? `Ahead by ${margin}` : `Behind by ${margin}`)}
           </p>
         </div>
         <p style={{ ...body("bodySm"), color: V.text3, margin: "12px 0 0" }}>
@@ -591,7 +606,7 @@ function RootingBoard({ order, live, lapInfo }) {
       {/* The answer, side by side, before anyone reads a table. Three-letter codes
           rather than surnames: Colapinto truncates at a third of a phone width. */}
       <p style={{ ...body("bodySm"), color: V.text3, margin: 0, padding: "12px 16px 0" }}>
-        Below are your driver's most recent positions.
+        {settled ? "Below are your driver's finishing positions." : "Below are your driver's most recent positions."}
       </p>
       <div style={{ display: "flex", borderBottom: `1px solid ${V.border}` }}>
         {[
@@ -894,13 +909,20 @@ export default function VegasHome({ onNavigate, initialTab = "home", initialStat
               <Toggle val={state} set={setState} opts={[
                 { id: "open", label: "No picks" },
                 { id: "locked", label: "Locked" },
-                { id: "live", label: "Race live" },
+                { id: "live", label: "Live" },
+                { id: "final", label: "Final" },
               ]} />
             )}
             {tab === "home" && state === "live" && (
               <Toggle val={lapIdx} set={setLapIdx} opts={[
-                { id: 0, label: "Lap 30 · winning" },
-                { id: 1, label: "Lap 52 · losing" },
+                { id: 0, label: "Lap 30 · ahead" },
+                { id: 1, label: "Lap 52 · behind" },
+              ]} />
+            )}
+            {tab === "home" && state === "final" && (
+              <Toggle val={lapIdx} set={setLapIdx} opts={[
+                { id: 0, label: "Won by 17" },
+                { id: 1, label: "Lost by 7" },
               ]} />
             )}
           </div>
@@ -911,7 +933,9 @@ export default function VegasHome({ onNavigate, initialTab = "home", initialStat
         </div>
 
         {tab === "kit" ? <NeonKit /> : (
-          state === "open" ? <HomeOpen onNav={nav} /> : <HomeLocked live={state === "live"} lapIdx={lapIdx} />
+          state === "open"
+            ? <HomeOpen onNav={nav} />
+            : <HomeLocked live={state === "live"} settled={state === "final"} lapIdx={lapIdx} />
         )}
       </div>
     </div>
