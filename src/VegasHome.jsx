@@ -123,6 +123,9 @@ function readBoard(order) {
 const dColor = (name) => F1_TEAM_COLORS[TEAM_BY_NAME[name]] || V.text3;
 const dTeam = (name) => TEAM_BY_NAME[name] || "";
 const lastName = (n) => (n || "").split(" ").slice(-1)[0];
+// First three of the surname matches the real F1 acronym for every driver on the
+// 2026 grid, so no lookup table is needed here.
+const code3 = (n) => lastName(n).slice(0, 3).toUpperCase();
 // The marquee says the place, not the words "Grand Prix", which sit under it.
 const shortRace = (n) => (n || "").replace(/\s*Grand Prix\s*/i, "").trim();
 
@@ -412,8 +415,7 @@ function BoxBoxCard() {
         </div>
       </div>
       <p style={{ ...body("body"), color: V.text2, margin: 0 }}>
-        You need <span style={{ color: V.text, fontWeight: 600 }}>{race.pitQuestion}</span> to come in{" "}
-        <span style={{ color: c, fontWeight: 600 }}>above {boxBox.line}s</span>. Worth +5 to the matchup, or −1 if it goes the other way.
+        {race.pitQuestion} · <span style={{ color: c, fontWeight: 600 }}>{over ? "above" : "below"} {boxBox.line}s</span> · +5 or −1
       </p>
     </div>
   );
@@ -436,7 +438,7 @@ function HomeLocked({ live = false, lapIdx = 0 }) {
             <span style={{ ...display("h3"), ...textGlow(V.green, 0.8) }}>✓</span>
             <div>
               <p style={{ ...body("bodyMd"), color: V.text, margin: 0 }}>Picks in</p>
-              <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>All 48 submitted</p>
+              <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>48 of 48</p>
             </div>
           </div>
         </div>
@@ -449,20 +451,18 @@ function HomeLocked({ live = false, lapIdx = 0 }) {
       </div>
 
       <SectionHead accent={live ? V.red : V.green}
-        sub={live
-          ? "Every driver in running order. Dots near the top mean you are winning."
-          : "Every driver in grid order. Dots near the top mean you start ahead."}>
+        sub={live ? "Running order" : "Grid order"}>
         Who you're rooting for
       </SectionHead>
       <RootingBoard order={order} live={live} lapInfo={lapInfo} />
 
-      <SectionHead accent={V.blue} sub={`For your own points, separate from the matchup. You are P${standings.myRank} of ${standings.of}.`}>
+      <SectionHead accent={V.blue} sub={`Your points, not the matchup · P${standings.myRank} of ${standings.of}`}>
         Your own card
       </SectionHead>
       <div style={{ ...card({ padding: "16px 18px", marginBottom: 22 }) }}>
         <Label color={V.gold} style={{ marginBottom: 12 }}>Top pick · from the top pool</Label>
         <DriverRow name={myPick.topPick} accent={V.gold} grid={grid[myPick.topPick]}
-          why={`Starting P${grid[myPick.topPick]}, worth ${F1_PTS[grid[myPick.topPick]]} there.`} />
+          why={`Grid ${grid[myPick.topPick]} · ${F1_PTS[grid[myPick.topPick]]} pts`} />
         <Label color={V.text3} style={{ margin: "18px 0 12px" }}>Then, in your order</Label>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {myPick.order.slice(1).map((d, i) => (
@@ -532,7 +532,16 @@ function RootingBoard({ order, live, lapInfo }) {
   const COL = 58;
   const ROW_IN = 56;   // one of this week's ten
   const ROW_OUT = 30;  // not in a pool this week, context only
-  const accentOf = (side) => (side === "mine" ? V.blue : side === "theirs" ? V.pink : null);
+
+  // Our side answers "are we winning" by color alone: green ahead, grey behind,
+  // blue level. Theirs only lights up when they are actually beating us. That is
+  // separate from the row-level thumbs, which say who to root for and never
+  // change. So a losing board shows green thumbs on grey numbers: still your
+  // drivers, still not working.
+  const level = margin === 0;
+  const usColor = level ? V.blue : winning ? V.green : V.text3;
+  const themColor = level ? V.pink : winning ? V.pinkDim : V.pink;
+  const themLit = !winning && !level;
 
   return (
     <div style={{ ...card({ marginBottom: 24, overflow: "hidden" }), borderColor: live ? `${V.pink}3a` : V.border }}>
@@ -551,33 +560,39 @@ function RootingBoard({ order, live, lapInfo }) {
           {live && <span style={{ marginLeft: "auto" }}><Chip color={V.amber}>Mock</Chip></span>}
         </div>
 
-        <Label color={V.text3}>{live ? "If this holds" : "On the grid as it stands"}</Label>
+        <Label color={V.text3}>{live ? "If this holds" : "On the grid"}</Label>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 16, margin: "10px 0 0" }}>
           <div>
-            <p style={{ ...display("hero"), ...(winning ? textGlow(V.blue) : { color: V.text2 }), margin: 0 }}>{totalMine}</p>
-            <Label color={V.text3}>Us</Label>
+            <p style={{ ...display("hero"), ...(level ? { color: V.text2 } : winning ? textGlow(usColor) : { color: usColor }), margin: 0 }}>{totalMine}</p>
+            <Label color={usColor}>Us</Label>
           </div>
           <p style={{ ...display("h2"), color: V.text3, margin: "0 0 16px" }}>–</p>
           <div>
-            <p style={{ ...display("hero"), ...(!winning ? textGlow(V.pink) : { color: V.text2 }), margin: 0 }}>{totalTheirs}</p>
-            <Label color={V.text3}>Them</Label>
+            <p style={{ ...display("hero"), ...(themLit ? textGlow(V.pink) : { color: themColor }), margin: 0 }}>{totalTheirs}</p>
+            <Label color={themColor}>Them</Label>
           </div>
           <p style={{
             ...display("h3"), margin: "0 0 18px auto", textAlign: "right",
-            color: winning ? V.green : V.pink,
+            color: level ? V.text2 : winning ? V.green : V.pink,
           }}>
-            {margin === 0 ? "Dead level" : winning ? `You win by ${margin}` : `You lose by ${margin}`}
+            {level ? "Level" : winning ? `Winning by ${margin}` : `Losing by ${margin}`}
           </p>
         </div>
         <p style={{ ...body("bodySm"), color: V.text3, margin: "12px 0 0" }}>
-          Driver points only, before order and Box Box bonuses.
-          {live && ` Updated ${lapInfo.updatedAgo}s ago, refreshes every 2 minutes. ${lapInfo.alpineStopped ? "Alpine has stopped, Box Box is settled." : "Alpine has not stopped, Box Box still live."}`}
+          These are driver points only and does not account for the box box line.
         </p>
+        {live && (
+          <p style={{ ...body("bodySm"), color: V.text3, margin: "5px 0 0" }}>
+            Updated {lapInfo.updatedAgo}s ago · Every 2 min · Alpine {lapInfo.alpineStopped ? "stopped" : "not stopped"}
+          </p>
+        )}
       </div>
 
-      {/* The answer, side by side, before anyone reads a table. Faces and current
-          positions only: names live in the table right below, and three names per
-          side does not fit half a phone without truncating one of them. */}
+      {/* The answer, side by side, before anyone reads a table. Three-letter codes
+          rather than surnames: Colapinto truncates at a third of a phone width. */}
+      <p style={{ ...body("bodySm"), color: V.text3, margin: 0, padding: "12px 16px 0" }}>
+        Below are your driver's most recent positions.
+      </p>
       <div style={{ display: "flex", borderBottom: `1px solid ${V.border}` }}>
         {[
           { kind: "mine", good: true, c: V.green, text: "Root for", list: rows.filter(r => r.side === "mine") },
@@ -599,8 +614,9 @@ function RootingBoard({ order, live, lapInfo }) {
                 {g.list.map(r => (
                   <div key={r.name} style={{ textAlign: "center" }}>
                     <Face name={r.name} size={46} ring={g.c} glow={g.good ? 1.7 : 1} drained={!g.good} />
+                    <p style={{ ...display("chip"), color: V.text2, margin: "5px 0 0" }}>{code3(r.name)}</p>
                     <p style={{
-                      ...display("h3"), margin: "6px 0 0", fontVariantNumeric: "tabular-nums",
+                      ...display("h3"), margin: "1px 0 0", fontVariantNumeric: "tabular-nums",
                       ...(g.good ? textGlow(g.c, 0.7) : { color: g.c }),
                     }}>P{r.pos}</p>
                   </div>
@@ -615,8 +631,8 @@ function RootingBoard({ order, live, lapInfo }) {
       <div style={{ display: "flex", alignItems: "center", padding: "9px 12px", borderBottom: `1px solid ${V.border}`, background: V.bg3 }}>
         <span style={{ width: 26, flexShrink: 0 }} />
         <span style={{ flex: 1, minWidth: 0 }}><Label color={V.text3}>Driver</Label></span>
-        <span style={{ width: COL, flexShrink: 0, textAlign: "center" }}><Label color={V.blue}>Us</Label></span>
-        <span style={{ width: COL, flexShrink: 0, textAlign: "center" }}><Label color={V.pink}>Them</Label></span>
+        <span style={{ width: COL, flexShrink: 0, textAlign: "center" }}><Label color={usColor}>Us</Label></span>
+        <span style={{ width: COL, flexShrink: 0, textAlign: "center" }}><Label color={themColor}>Them</Label></span>
       </div>
 
       {/* 22 rows on two fixed heights: this week's ten, and everyone else */}
@@ -688,10 +704,10 @@ function RootingBoard({ order, live, lapInfo }) {
               </span>
             </span>
             <span style={{ width: COL, flexShrink: 0, display: "flex", justifyContent: "center" }}>
-              {r.cMine > 0 && <Val v={r.valMine} count={r.cMine} color={V.blue} muted={r.side === "both"} />}
+              {r.cMine > 0 && <Val v={r.valMine} count={r.cMine} color={usColor} muted={r.side === "both"} />}
             </span>
             <span style={{ width: COL, flexShrink: 0, display: "flex", justifyContent: "center" }}>
-              {r.cTheirs > 0 && <Val v={r.valTheirs} count={r.cTheirs} color={V.pink} muted={r.side === "both"} />}
+              {r.cTheirs > 0 && <Val v={r.valTheirs} count={r.cTheirs} color={themColor} muted={r.side === "both"} />}
             </span>
           </div>
         );
@@ -700,8 +716,8 @@ function RootingBoard({ order, live, lapInfo }) {
       {/* Legend */}
       <div style={{ padding: "13px 16px", background: V.bg3, borderTop: `1px solid ${V.border}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-          {[[false, V.green, "Thumb up, green, lit: root for him."],
-            [true, V.pink, "Thumb down, pink, face greyed: root against him."]].map(([down, c, text], i) => (
+          {[[false, V.green, "Root for"],
+            [true, V.pink, "Root against"]].map(([down, c, text], i) => (
             <div key={`t${i}`} style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ width: 18, display: "flex", justifyContent: "center", flexShrink: 0 }}>
                 <Thumb down={down} color={c} size={16} />
@@ -710,9 +726,9 @@ function RootingBoard({ order, live, lapInfo }) {
             </div>
           ))}
           {[
-            [V.blue, false, `Blue number is what he is worth to ${myTeam.name}.`],
-            [V.pink, false, `Pink number is what he is worth to ${opp.name}.`],
-            [V.text3, true, "Both teams, same count. Cancels out either way."],
+            [usColor, false, `Worth to ${myTeam.name}`],
+            [themColor, false, `Worth to ${opp.name}`],
+            [V.text3, true, "Cancels out"],
           ].map(([c, muted, text], i) => (
             <div key={`c${i}`} style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ width: 18, display: "flex", justifyContent: "center", flexShrink: 0 }}>
@@ -734,14 +750,8 @@ function RootingBoard({ order, live, lapInfo }) {
                 boxShadow: `0 0 0 1.5px ${V.blue}, 0 0 8px ${V.blue}66`,
               }} />
             </span>
-            <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>
-              Two rings means both teammates picked him, so he counts twice.
-            </p>
+            <p style={{ ...body("bodySm"), color: V.text3, margin: 0 }}>Both teammates picked him</p>
           </div>
-          <p style={{ ...body("bodySm"), color: V.text3, margin: "4px 0 0" }}>
-            The number is what he is worth to that team right now. Only the ten drivers in
-            this week's pools can score, so the other twelve sit small.
-          </p>
         </div>
       </div>
     </div>
