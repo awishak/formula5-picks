@@ -908,16 +908,33 @@ export default function App() {
     checkPicks();
   }, [currentUser, activePage]);
 
-  if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
-
   // The Vegas mockup renders outside .app-wrap so the light theme's background,
-  // width cap and bottom nav don't fight it. Reachable at #vegas.
+  // width cap and bottom nav don't fight it. Reachable at ?vegas.
+  //
+  // Ahead of the WelcomeScreen check on purpose: it runs on a hardcoded snapshot
+  // and needs no signed-in player, so ?vegas opens the mockup on a fresh browser
+  // instead of a name picker.
   if (activePage === "vegas") return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: #07070c; }`}</style>
-      <VegasHome onNavigate={(p) => { window.history.replaceState(null, "", window.location.pathname); navigateTo(p); }} />
+      <VegasHome
+        onNavigate={(p) => { window.history.replaceState(null, "", window.location.pathname); navigateTo(p); }}
+        {...(() => {
+          // ?vegas&state=final&lap=1&tab=kit deep-links a state, so a screenshot
+          // or a shared link can land on one without clicking the mock controls.
+          const q = new URLSearchParams(window.location.search);
+          const state = q.get("state"), tab = q.get("tab"), lap = q.get("lap");
+          return {
+            ...(["open", "locked", "live", "final"].includes(state) ? { initialState: state } : {}),
+            ...(["home", "kit"].includes(tab) ? { initialTab: tab } : {}),
+            ...(lap === "0" || lap === "1" ? { initialLap: Number(lap) } : {}),
+          };
+        })()}
+      />
     </>
   );
+
+  if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
 
   return (
     <>
