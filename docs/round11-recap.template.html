@@ -88,8 +88,13 @@ body.vegas .tile .pt{font-weight:400;font-size:17px}
 .tile.down{border-color:var(--bad)}
 body.vegas .tile.up{box-shadow:0 0 14px rgba(57,135,229,.55)}
 body.vegas .tile.down{box-shadow:0 0 14px rgba(213,81,129,.55)}
-.tile.lift{z-index:9;transform-origin:center}
+.tile.lift{z-index:9;box-shadow:0 10px 26px rgba(0,0,0,.28)}
+body.vegas .tile.lift{box-shadow:0 0 26px rgba(0,217,255,.5)}
 .tile.dim{opacity:.42}
+.halflogo{font-family:var(--fm);font-size:40px;text-align:center;color:var(--hi);margin:20px 0 2px;line-height:1.25;
+  opacity:0;transform:scale(.82);transition:opacity 1s ease,transform 1s cubic-bezier(.2,1.4,.4,1);pointer-events:none}
+.halflogo.on{opacity:1;transform:none;text-shadow:0 0 8px currentColor,0 0 30px rgba(0,217,255,.6),0 0 60px rgba(0,217,255,.35)}
+@media(max-width:540px){.halflogo{font-size:27px}}
 /* promoted logo row */
 .logorow{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin:6px 0 4px}
 .logorow figure{margin:0}
@@ -139,6 +144,7 @@ body.vegas .cal .rd{font-weight:400;font-size:20px}
   <div class="btns"><button class="act" id="b1">Move the teams</button></div>
   <div class="legend"><span><i style="background:var(--good)"></i>Promoted</span><span><i style="background:var(--bad)"></i>Relegated</span><span><i style="background:var(--stay)"></i>Stayed</span></div>
   <div class="board" id="board"></div>
+  <div class="halflogo" id="halflogo">Second Half</div>
   <figcaption id="cap1">Where every team finished the first half. Press the button and watch the ten that moved.</figcaption>
 </figure>
 
@@ -213,9 +219,9 @@ body.vegas .cal .rd{font-weight:400;font-size:20px}
 
 <p class="q">Is it better to streamline your picks with your partner, or to spread them?</p>
 
-<figure id="f8"><div class="fignum">Chart 7</div><div class="figtitle">Agreement against scoring average</div>
-  <svg id="s8" viewBox="0 0 640 470"></svg>
-  <figcaption>Each team's partner agreement against its scoring average. The relationship is real and positive, r = 0.59. TNT Roku agreed on 89 percent of drivers. Shoey Time agreed on 49 percent and never filed a matching card.</figcaption></figure>
+<figure id="f8"><div class="fignum">Chart 7</div><div class="figtitle">Agreement, by how well the team scored</div>
+  <svg id="s8" viewBox="0 0 640 420"></svg>
+  <figcaption>The twenty-four teams split into four groups of six by scoring average, showing how much each group's partners agreed on. The bottom six are the outlier at 59.7 percent. The top eighteen sit between 72.7 and 76.7 and cannot be separated by agreement at all. Hover a bar for the six teams in it.</figcaption></figure>
 
 <p class="q">Is it better to pick early or late?</p>
 
@@ -309,11 +315,22 @@ function makeBoard(host,left,right,opts={}){
   });
   const rows=Math.max(left.length,right.length);
   b.style.height=(TOP+rows*(H+GAP)+4)+"px";
+  // Both axes live in the transform so a team physically travels across the
+  // board and slots in, rather than teleporting sideways and sliding down.
+  let cur={L:left,R:right};
+  const colX=()=>b.clientWidth*0.53;
   function place(L,R){
-    L.forEach((t,i)=>{const d=tiles[t.name];d.style.left="0";d.style.transform=`translateY(${TOP+i*(H+GAP)}px)`;});
-    R.forEach((t,i)=>{const d=tiles[t.name];d.style.left="53%";d.style.transform=`translateY(${TOP+i*(H+GAP)}px)`;});
+    cur={L,R};
+    L.forEach((t,i)=>{tiles[t.name].style.transform=`translate(0px,${TOP+i*(H+GAP)}px)`;});
+    R.forEach((t,i)=>{tiles[t.name].style.transform=`translate(${colX()}px,${TOP+i*(H+GAP)}px)`;});
   }
   place(left,right);
+  addEventListener("resize",()=>{
+    const prev=[...b.querySelectorAll(".tile")].map(t=>t.style.transition);
+    b.querySelectorAll(".tile").forEach(t=>t.style.transition="none");
+    place(cur.L,cur.R);
+    requestAnimationFrame(()=>b.querySelectorAll(".tile").forEach((t,i)=>t.style.transition=prev[i]||""));
+  });
   return {tiles,place,hL,hR,
     setValue:(t,v)=>{tiles[t].querySelector(".pt").textContent=v;},
     setArrow:(t,a)=>{const e=tiles[t].querySelector(".ar");
@@ -332,8 +349,7 @@ function makeBoard(host,left,right,opts={}){
     const movers=[...champ,...second].filter(t=>t.role!=="stay");
     // 1. the ten that move lift off the page and the rest recede
     movers.forEach((t,i)=>setTimeout(()=>{
-      const d=B.tiles[t.name]; d.classList.add("lift");
-      d.style.transform=d.style.transform+" scale(1.05)";
+      B.tiles[t.name].classList.add("lift");
     },i*55));
     [...champ,...second].filter(t=>t.role==="stay").forEach(t=>B.tiles[t.name].classList.add("dim"));
     // 2. the lights change
@@ -347,11 +363,11 @@ function makeBoard(host,left,right,opts={}){
     },900);
     // 4. settle
     setTimeout(()=>{
-      movers.forEach(t=>{const d=B.tiles[t.name];d.classList.remove("lift");
-        d.style.transform=d.style.transform.replace(" scale(1.05)","");});
+      movers.forEach(t=>B.tiles[t.name].classList.remove("lift"));
       [...champ,...second].forEach(t=>B.tiles[t.name].classList.remove("dim"));
       B.hL.textContent="Championship Division · second half";
       B.hR.textContent="Second Division · second half";
+      $("#halflogo").classList.add("on");
       $("#cap1").innerHTML="Five up, five down. The promoted arrive at the bottom of the top flight and the relegated at the top of the second, which is where next season starts from. Peloton Aubergine went up despite losing and Garra Dynamics went down despite finishing eighth, because the fifth-placed Second Division team takes the eighth-placed Championship seat when its scoring average is higher.";
     },2100);
   });
@@ -527,10 +543,13 @@ play.fPIT=barChart("#sPIT",D.cPit,{rowH:21,val:r=>r.dev,max:Math.max(...D.cPit.m
   color:r=>r.name==="XLIX Racing Team"?"var(--best)":r.inNextChamp?"var(--good)":"var(--stay)",
   valLabel:r=>r.dev+"s",
   tip:r=>`<b>${r.name}</b><div class="t2">${r.dev}s from the league consensus on average<br>guesses ranged ${r.lo} to ${r.hi}<br>called the line right ${r.bbPct}% of the time</div>`});
-play.f8=scatter("#s8",D.c8,{x:p=>p.overlap,y:p=>p.avg,xTitle:"PARTNER AGREEMENT %",yTitle:"SCORING AVERAGE",
-  H:470,r:7,trend:true,color:p=>rc(p.role),
-  label:p=>["TNT Roku F5 Team","Shoey Time! w/ Max and Danny","Scuderia Iskandaraya","XLIX Racing Team"].includes(p.name)?short(p.name,12):null,
-  tip:p=>`<b>${p.name}</b><br>${p.p1} &amp; ${p.p2}<div class="t2">agreed on ${p.overlap}% of drivers<br>${p.identical} identical cards<br>average ${p.avg}, ${p.wins} wins</div>`});
+play.f8=barChart("#s8",D.cQuart,{rowH:74,l:196,t:26,r:70,val:q=>q.meanOverlap,max:100,
+  head:"AVERAGE PARTNER AGREEMENT WITHIN EACH GROUP",
+  label:q=>q.label, bold:()=>true,
+  color:q=>q.rank===1?"var(--best)":q.rank===4?"var(--bad)":"var(--good)",
+  valLabel:q=>q.meanOverlap+"%",
+  tip:q=>`<b>${q.label}</b><div class="t2">group scoring average ${q.meanAvg}<br>partners agreed on ${q.meanOverlap}% of drivers<br>${q.identical} identical cards between them<br><br>`
+    +q.teams.map(t=>`${t.name} — ${t.overlap}%`).join("<br>")+`</div>`});
 play.fT=barChart("#sT",D.cTime.buckets,{rowH:34,l:190,t:20,val:r=>r.avg,max:Math.max(...D.cTime.buckets.map(b=>b.avg))*1.12,
   label:r=>r.label,color:r=>r.label.startsWith("After")?"var(--bad)":"var(--good)",
   valLabel:r=>r.avg+"   (n="+r.n+")",
