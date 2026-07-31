@@ -257,7 +257,7 @@ body.vegas .divhead{font-weight:400;font-size:16px}
 
 <figure id="fY" class="in">
   <div class="fignum">Chart 1</div>
-  <div class="figtitle">Where you stood, and what you did about it</div>
+  <div class="figtitle">Your round 11</div>
   <div class="ycard" id="yCard"></div>
   <div class="ysit" id="ySit"></div>
   <div class="ywin" id="yWin"></div>
@@ -268,12 +268,12 @@ body.vegas .divhead{font-weight:400;font-size:16px}
     <div class="btns" style="margin:15px 0 0"><button class="act" id="yb2">So did it work?</button></div></div></div>
   <div class="reveal" id="yR2"><div class="revpad">
     <div class="yout" id="yOut"></div><div class="youtsub" id="yOutSub"></div></div></div>
-  <figcaption id="capY">Every team was chasing something different going into Hungary. Change who you are reading as at the top of the page.</figcaption>
+  <figcaption id="capY">Every team went to Hungary chasing something different.</figcaption>
 </figure>
 
 <figure id="fS">
   <div class="fignum">Chart 2</div>
-  <div class="figtitle" id="sTitle">The division, before and after</div>
+  <div class="figtitle" id="sTitle">Round 11 moved five of these teams</div>
   <div class="btns"><button class="act" id="sb1">Play round 11</button><button class="act alt" id="sb2">Show the other division</button></div>
   <div class="divhead" id="sHead"></div>
   <div class="col" id="sCol"></div>
@@ -285,7 +285,7 @@ body.vegas .divhead{font-weight:400;font-size:16px}
     <div class="btns" style="margin:14px 0 0"><button class="act" id="sb3">Show who moved</button></div>
     <div class="reveal" id="sR2"><div class="revpad"><div class="logorow" id="sUp"></div>
       <div class="logorow" id="sDown"></div></div></div></div></div>
-  <figcaption id="capS">Championship points from round 11 are added on the left of each total.</figcaption>
+  <figcaption id="capS">The green figure is what round 11 paid.</figcaption>
 </figure>
 
 <p class="dek">Budapest is two towns that eventually stopped arguing, Buda up on its hills and Pest laid flat across the water, the Danube between them doing what rivers always do, which is to look like a border while quietly functioning as a road.</p>
@@ -500,21 +500,24 @@ const img=(u,cls)=>u?`<img class="${cls||""}" src="${u}" alt="">`
   function drawOutcome(t){
     const s=t.stake.state, champ=t.div==="champ", o=$("#yOut"), sub=$("#yOutSub");
     let line, good=t.got, note;
-    if(s==="titlewon"){ line=t.got?"And you saw it home.":"And you somehow let it go."; }
-    else if(s==="title"){ line=t.got?"And you won the division.":"And you didn't."; }
-    else if(s==="locked"){ line="Nothing you did on the day changed it."; good=true; }
+    if(s==="titlewon"){ line="And you'd already won it before you got there."; }
+    else if(s==="title"){ line=t.got?"And you won the division."
+      :t.moved==="up"?"The division went elsewhere. You went up anyway.":"And you didn't.";
+      if(!t.got&&t.moved==="up") good=true; }
+    else if(s==="locked"){ line=champ?"You were safe before the race and safe after it."
+      :"You were up before the race and up after it."; good=true; }
     else if(s==="gone"){ line="It was over before the lights went out."; good=false; }
     // Peloton lost the match that decided it and went up on average anyway, so
     // "you got it" on the back of a defeat needs saying differently.
     else if(t.viaSwap&&t.moved==="up"){ line="You lost, and went up anyway."; good=true; }
-    else if(t.viaSwap&&t.moved==="down"){ line="You lost, and that was the one that sent you down."; good=false; }
+    else if(t.viaSwap&&t.moved==="down"){ line="You lost, and that's what sent you down."; good=false; }
     else { line=t.got?"And you got it.":"But it didn't work out."; }
 
     if(t.moved==="up") note=t.viaSwap
-      ? `Promoted anyway, through the swap seat: ${ord(t.posAfter)} in the Second Division, but a better scoring average than the team you replaced.`
+      ? `Through the swap seat: ${ord(t.posAfter)} in the Second Division, and a better scoring average than the team you replaced.`
       : `Promoted. ${ord(t.posAfter)} in the Second Division.`;
     else if(t.moved==="down") note=t.viaSwap
-      ? `Relegated through the swap seat. ${ord(t.posAfter)} was survivable on points and not on average.`
+      ? `Relegated through the swap seat. ${ord(t.posAfter)} survived on points and lost on average.`
       : `Relegated. ${ord(t.posAfter)} in the Championship Division.`;
     else note=`${ord(t.posAfter)} in the ${DIVN[t.div]}, and staying there.`;
 
@@ -556,7 +559,8 @@ const img=(u,cls)=>u?`<img class="${cls||""}" src="${u}" alt="">`
     const other=t.div==="champ"?"second":"champ";
     $("#sHead").textContent=DIVN[t.div];
     $("#sHead2").textContent=DIVN[other];
-    $("#sTitle").textContent=`The ${t.div==="champ"?"Championship":"Second"} Division, before and after`;
+    $("#sTitle").textContent=t.div==="champ"?"Round 11 sent five of these teams down"
+      :"Round 11 sent five of these teams up";
     colA=makeCol("#sCol",Y.standings[t.div].before,{meId:t.id,...cutFor(t.div)});
     colB=makeCol("#sCol2",Y.standings[other].after,{...cutFor(other)});
     Y.standings[other].after.forEach(r=>{

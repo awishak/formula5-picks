@@ -135,7 +135,10 @@ function stakeFor(divKey, t) {
   } else {
     state = "winandhelp";
     need = "needed a win, and needed help elsewhere";
-    sub = `losing to ${opp} could still have been survivable`;
+    // A Second Division team in this state is chasing promotion, not survival,
+    // so the two divisions cannot share the sentence.
+    sub = champ ? `even losing to ${opp}, they could have stayed up`
+                : `even losing to ${opp}, they could have gone up`;
   }
   return { ...r, best, worst, state, need, sub, goalPos, edgePos };
 }
