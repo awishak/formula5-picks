@@ -136,11 +136,157 @@ body.vegas .cal .rd{font-weight:400;font-size:20px}
 @media(max-width:540px){body{font-size:16px;padding:14px}.header h1{font-size:29px}h2{font-size:23px}.dek{font-size:18px}
   .tile{height:33px}.tile .nm{font-size:11.5px}.tile img{width:19px;height:19px}.lgo{width:92px}.lgo img{width:46px;height:46px}}
 @media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}figure{opacity:1;transform:none}}
+
+/* ============ view-as bar ============ */
+.viewas{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:11px;
+  background:var(--surface);border:1px solid var(--rule);border-radius:11px;padding:9px 12px;margin:0 0 18px;
+  transition:background 1.4s,border-color 1.4s}
+body.vegas .viewas{box-shadow:var(--glow)}
+.viewas label{font-family:var(--fd);font-weight:800;font-size:12px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink3);white-space:nowrap}
+body.vegas .viewas label{font-weight:400;font-size:15px}
+.viewas select{flex:1;min-width:0;font-family:var(--fb);font-size:15px;font-weight:600;color:var(--ink);
+  background:transparent;border:0;padding:4px 2px;cursor:pointer}
+.viewas select:focus{outline:2px solid var(--good);outline-offset:3px;border-radius:5px}
+.viewas img{width:30px;height:30px;border-radius:50%;object-fit:cover;background:var(--grid);flex-shrink:0}
+
+/* ============ your round 11 ============ */
+.ycard{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.ycard img.lg{width:52px;height:52px;border-radius:12px;object-fit:cover;background:var(--grid);flex-shrink:0}
+.ycard .yn{font-family:var(--fd);font-weight:900;font-size:21px;line-height:1.12}
+body.vegas .ycard .yn{font-weight:400;font-size:26px}
+.ycard .yp{font-size:14px;color:var(--ink3);margin-top:2px}
+.ysit{font-size:15px;color:var(--ink2);margin-bottom:12px}
+.ysit b{color:var(--ink);font-weight:700}
+/* the window of finishes still available, against the line they were chasing */
+.ywin{margin:0 0 15px}
+.ywin .cells{display:flex;gap:3px}
+.ywin .c{flex:1;height:26px;border-radius:4px;background:var(--grid);position:relative;
+  transition:background .5s,box-shadow .5s;font-size:11px;font-weight:700;color:var(--ink3);
+  display:flex;align-items:center;justify-content:center}
+.ywin .c.rng{background:var(--good);color:#fff}
+.ywin .c.me{box-shadow:inset 0 0 0 2.5px var(--ink)}
+body.vegas .ywin .c.rng{box-shadow:0 0 11px rgba(57,135,229,.5)}
+.ywin .c.bad{background:var(--bad);color:#fff}
+body.vegas .ywin .c.bad{box-shadow:0 0 11px rgba(213,81,129,.5)}
+.ywin .lbl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink3);margin-top:6px;font-weight:600}
+.yneed{font-family:var(--fd);font-weight:900;font-size:22px;line-height:1.22;margin:0 0 4px}
+body.vegas .yneed{font-weight:400;font-size:27px;color:var(--hi)}
+.ysub{font-size:14.5px;color:var(--ink3);margin-bottom:4px}
+/* click-to-reveal */
+.reveal{overflow:hidden;max-height:0;opacity:0;transition:max-height .75s cubic-bezier(.4,0,.2,1),opacity .55s .1s}
+.reveal.on{max-height:900px;opacity:1}
+.revpad{padding-top:16px;margin-top:16px;border-top:1px solid var(--rule)}
+/* matchup */
+.mu{display:flex;align-items:stretch;gap:10px}
+.mu .side{flex:1;min-width:0;border:1.5px solid var(--rule);border-radius:11px;padding:11px;transition:border-color .6s,box-shadow .6s}
+.mu .side.w{border-color:var(--best)}
+body.vegas .mu .side.w{box-shadow:0 0 15px rgba(25,158,112,.45)}
+.mu .side.l{opacity:.72}
+.mu .tn{font-size:13px;font-weight:700;line-height:1.25;margin-bottom:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mu .tot{font-family:var(--fd);font-weight:900;font-size:34px;line-height:1.05;margin:2px 0 8px}
+body.vegas .mu .tot{font-weight:400;font-size:40px}
+.mu .row{display:flex;align-items:center;gap:7px;font-size:13.5px;padding:3px 0}
+.mu .row img{width:24px;height:24px;border-radius:50%;object-fit:cover;background:var(--grid);flex-shrink:0}
+.mu .row .rn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mu .row .rv{font-family:var(--fd);font-weight:800;font-size:15px}
+body.vegas .mu .row .rv{font-weight:400;font-size:18px}
+.mu .row.bb .rn{color:var(--ink3)}
+.mu .row.you .rn{font-weight:700;color:var(--ink)}
+.mu .row.you em{font-style:normal;font-family:var(--fd);font-weight:800;font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--good);margin-left:5px}
+body.vegas .mu .row.you em{font-weight:400;font-size:13px;color:var(--hi)}
+.mu .row.you img{box-shadow:0 0 0 2px var(--good)}
+body.vegas .mu .row.you img{box-shadow:0 0 0 2px var(--hi)}
+.mu .vs{display:flex;align-items:center;font-family:var(--fd);font-weight:800;font-size:13px;color:var(--ink3)}
+body.vegas .mu .vs{font-weight:400;font-size:16px}
+/* outcome */
+.yout{font-family:var(--fd);font-weight:900;font-size:27px;line-height:1.18}
+body.vegas .yout{font-weight:400;font-size:33px}
+.yout.good{color:var(--best)}
+.yout.bad{color:var(--bad)}
+body.vegas .yout.good{text-shadow:0 0 16px rgba(25,158,112,.55)}
+body.vegas .yout.bad{text-shadow:0 0 16px rgba(213,81,129,.55)}
+.youtsub{font-size:15px;color:var(--ink2);margin-top:7px}
+@media(max-width:540px){
+  .mu{gap:6px}.mu .side{padding:8px}.mu .tot{font-size:27px}.mu .row{font-size:12px;gap:5px}
+  .mu .row img{width:20px;height:20px}.yneed{font-size:19px}.yout{font-size:22px}
+  .ywin .c{font-size:9.5px}.ycard img.lg{width:44px;height:44px}.ycard .yn{font-size:18px}
+}
+/* ============ standings column ============ */
+.col{position:relative;margin-top:4px}
+.col .row{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:9px;height:34px;padding:0 10px;
+  border:1.5px solid var(--rule);border-radius:9px;background:var(--surface);
+  transition:transform 1s cubic-bezier(.55,.06,.25,1),border-color .6s,opacity .5s,background 1.4s;
+  will-change:transform}
+.col .row img{width:21px;height:21px;border-radius:5px;object-fit:cover;flex-shrink:0;background:var(--grid)}
+.col .row .p{font-family:var(--fd);font-weight:800;font-size:13px;color:var(--ink3);width:19px;flex-shrink:0}
+body.vegas .col .row .p{font-weight:400;font-size:16px}
+.col .row .n{font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.col .row .e{font-size:12.5px;font-weight:700;color:var(--best);width:30px;text-align:right;opacity:0;transition:opacity .5s}
+.col .row .e.on{opacity:1}
+.col .row .v{font-family:var(--fd);font-weight:800;font-size:14px;width:34px;text-align:right}
+body.vegas .col .row .v{font-weight:400;font-size:17px}
+.col .row.me{border-color:var(--ink);background:var(--surface)}
+body.vegas .col .row.me{border-color:var(--hi);box-shadow:0 0 14px rgba(0,217,255,.35)}
+.col .row.up{border-color:var(--good)}
+.col .row.down{border-color:var(--bad)}
+body.vegas .col .row.up{box-shadow:0 0 12px rgba(57,135,229,.45)}
+body.vegas .col .row.down{box-shadow:0 0 12px rgba(213,81,129,.45)}
+.col .cut{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--ink3);opacity:0;
+  transition:transform 1s cubic-bezier(.55,.06,.25,1),opacity .5s}
+.col .cut.on{opacity:.75}
+.col .cut span{position:absolute;right:2px;top:-17px;font-family:var(--fd);font-weight:800;font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);background:var(--surface);padding:0 5px}
+body.vegas .col .cut span{font-weight:400;font-size:14px}
+.divhead{font-family:var(--fd);font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);margin:16px 0 7px}
+body.vegas .divhead{font-weight:400;font-size:16px}
 </style></head><body>
 <div id="tip"></div>
 
+<div class="viewas">
+  <img id="whoPic" alt="">
+  <label for="who">Viewing as</label>
+  <select id="who"></select>
+</div>
+
 <div class="header"><h1>Moving Day</h1>
 <div class="sub">Round 11 &middot; Hungaroring &middot; The first half ends</div></div>
+
+<figure id="fY" class="in">
+  <div class="fignum">Chart 1</div>
+  <div class="figtitle">Where you stood, and what you did about it</div>
+  <div class="ycard" id="yCard"></div>
+  <div class="ysit" id="ySit"></div>
+  <div class="ywin" id="yWin"></div>
+  <div class="yneed" id="yNeed"></div>
+  <div class="ysub" id="ySub"></div>
+  <div class="btns" style="margin-top:14px"><button class="act" id="yb1">Show the matchup</button></div>
+  <div class="reveal" id="yR1"><div class="revpad"><div class="mu" id="yMu"></div>
+    <div class="btns" style="margin:15px 0 0"><button class="act" id="yb2">So did it work?</button></div></div></div>
+  <div class="reveal" id="yR2"><div class="revpad">
+    <div class="yout" id="yOut"></div><div class="youtsub" id="yOutSub"></div></div></div>
+  <figcaption id="capY">Every team was chasing something different going into Hungary. Change who you are reading as at the top of the page.</figcaption>
+</figure>
+
+<figure id="fS">
+  <div class="fignum">Chart 2</div>
+  <div class="figtitle" id="sTitle">The division, before and after</div>
+  <div class="btns"><button class="act" id="sb1">Play round 11</button><button class="act alt" id="sb2">Show the other division</button></div>
+  <div class="divhead" id="sHead"></div>
+  <div class="col" id="sCol"></div>
+  <div class="reveal" id="sOther"><div class="revpad">
+    <div class="divhead" id="sHead2" style="margin-top:0"></div>
+    <div class="col" id="sCol2"></div></div></div>
+  <div class="reveal" id="sR"><div class="revpad">
+    <div class="yneed" id="sPR"></div>
+    <div class="btns" style="margin:14px 0 0"><button class="act" id="sb3">Show who moved</button></div>
+    <div class="reveal" id="sR2"><div class="revpad"><div class="logorow" id="sUp"></div>
+      <div class="logorow" id="sDown"></div></div></div></div></div>
+  <figcaption id="capS">Championship points from round 11 are added on the left of each total.</figcaption>
+</figure>
 
 <p class="dek">Budapest is two towns that eventually stopped arguing, Buda up on its hills and Pest laid flat across the water, the Danube between them doing what rivers always do, which is to look like a border while quietly functioning as a road.</p>
 
@@ -149,7 +295,7 @@ body.vegas .cal .rd{font-weight:400;font-size:20px}
 <p><strong>The top four in the Second Division go up. The bottom four in the Championship Division go down.</strong> And one more seat changes hands on top, where whoever finishes fifth in the Second Division takes the eighth-placed Championship Division team's place if they scored better on average across the half.</p>
 
 <figure id="f1" class="in">
-  <div class="fignum">Chart 1</div>
+  <div class="fignum">Chart 3</div>
   <div class="figtitle t1"><span class="oldf">First half</span><span class="toSecond" id="toSecond"><span class="arw">&rarr;</span><span class="newf">Second half</span></span></div>
   <div class="btns"><button class="act" id="b0">What happened in round 11</button><button class="act alt" id="b1">Second half</button></div>
   <div class="legend"><span><i style="background:var(--good)"></i>Promoted</span><span><i style="background:var(--bad)"></i>Relegated</span><span><i style="background:var(--stay)"></i>Stayed</span></div>
@@ -163,7 +309,7 @@ body.vegas .cal .rd{font-weight:400;font-size:20px}
 <p>The table pays for winning your matchup and for how big that win looked next to everyone else's. It does not pay for scoring. So the two need not agree, and they do not.</p>
 
 <figure id="fA">
-  <div class="fignum">Chart 2</div><div class="figtitle">The second half, sorted two ways</div>
+  <div class="fignum">Chart 4</div><div class="figtitle">The second half, sorted two ways</div>
   <div class="btns"><button class="act" id="bA1">Sort by scoring average</button><button class="act alt" id="bA2">Remove the BOX BOX line</button></div>
   <div class="legend"><span><i style="background:var(--good)"></i>&uarr; would be in the top division</span><span><i style="background:var(--bad)"></i>&darr; would be in the second</span></div>
   <div class="board" id="boardA"></div>
@@ -184,7 +330,7 @@ body.vegas .cal .rd{font-weight:400;font-size:20px}
   <figcaption>Peloton Aubergine came up through the swap seat, having lost the match that decided it.</figcaption>
 </figure>
 
-<figure id="f4"><div class="fignum">Chart 3</div><div class="figtitle">Cal Aggie climbed out of a hole</div>
+<figure id="f4"><div class="fignum">Chart 5</div><div class="figtitle">Cal Aggie climbed out of a hole</div>
   <svg id="s4" viewBox="0 0 640 400"></svg>
   <figcaption>Position in the Second Division after every round. Hover any line to identify a team.</figcaption></figure>
 
@@ -198,7 +344,7 @@ body.vegas .cal .rd{font-weight:400;font-size:20px}
 
 <p>Because championship points pay by rank among that week's winners, the biggest win took the maximum twenty-five. Cascadia went from tenth to seventh, out of the zone entirely, and the team they had broken away from lost the division on the same afternoon.</p>
 
-<figure id="f3"><div class="fignum">Chart 4</div><div class="figtitle">Cascadia's escape, and Van City's collapse</div>
+<figure id="f3"><div class="fignum">Chart 6</div><div class="figtitle">Cascadia's escape, and Van City's collapse</div>
   <svg id="s3" viewBox="0 0 640 400"></svg>
   <figcaption>Cumulative points across eleven rounds. Van City led after round ten. Cascadia spent the half in the relegation zone and left it on the last day.</figcaption></figure>
 
@@ -207,7 +353,7 @@ body.vegas .cal .rd{font-weight:400;font-size:20px}
 <p>Harold Gutmann and Paul Kohli went to second-placed Juicero Silicon Valley on the final day and beat them. They finished ninth, one point behind Garra, and were relegated by that single point. Their 86 was the fifth best win of the round and paid 10. Ninety would have paid 12.</p>
 
 <figure id="fEC">
-  <div class="fignum">Chart 5</div><div class="figtitle">Four points, and three teams change fate</div>
+  <div class="fignum">Chart 7</div><div class="figtitle">Four points, and three teams change fate</div>
   <div class="btns"><button class="act" id="bEC">Give El Camino four more points</button></div>
   <div class="board" id="boardEC"></div>
   <figcaption id="capEC">The Championship Division as it finished. Press the button to replay round 11 with El Camino scoring four more.</figcaption>
@@ -221,7 +367,7 @@ body.vegas .cal .rd{font-weight:400;font-size:20px}
 
 <p>They also gambled harder on the pit stop than almost anybody.</p>
 
-<figure id="fPIT"><div class="fignum">Chart 6</div><div class="figtitle">Who gambled on the pit stop, and who followed the crowd</div>
+<figure id="fPIT"><div class="fignum">Chart 8</div><div class="figtitle">Who gambled on the pit stop, and who followed the crowd</div>
   <svg id="sPIT" viewBox="0 0 640 560"></svg>
   <figcaption>Average distance between a team's pit guesses and the whole league's consensus that round. XLIX sat third most extreme of twenty-four and won the division. Cascadia sat dead last on extremity and escaped relegation, so it is a style rather than a strategy.</figcaption></figure>
 
@@ -229,35 +375,35 @@ body.vegas .cal .rd{font-weight:400;font-size:20px}
 
 <p class="q">Is it better to streamline your picks with your partner, or to spread them?</p>
 
-<figure id="f8"><div class="fignum">Chart 7</div><div class="figtitle">Agreement, by how well the team scored</div>
+<figure id="f8"><div class="fignum">Chart 9</div><div class="figtitle">Agreement, by how well the team scored</div>
   <svg id="s8" viewBox="0 0 640 420"></svg>
   <figcaption>The twenty-four teams split into four groups of six by scoring average, showing how much each group's partners agreed on. The bottom six are the outlier at 59.7 percent. The top eighteen sit between 72.7 and 76.7 and cannot be separated by agreement at all. Hover a bar for the six teams in it.</figcaption></figure>
 
 <p class="q">Is it better to pick early or late?</p>
 
-<figure id="fT"><div class="fignum">Chart 8</div><div class="figtitle">When cards were filed, and what they scored</div>
+<figure id="fT"><div class="fignum">Chart 10</div><div class="figtitle">When cards were filed, and what they scored</div>
   <svg id="sT" viewBox="0 0 640 380"></svg>
   <figcaption>Average score by how long before the deadline a card arrived, earliest on the left. The spread across every bucket is under three points and the correlation is r = &minus;0.05. Filing early does not help. Filing late does not hurt, and forty-six cards arrived after the deadline anyway.</figcaption></figure>
 
 <p class="q">Is it better to be the OVER or the UNDER?</p>
 
-<figure id="fOU"><div class="fignum">Chart 9</div><div class="figtitle">The OVER is winning far too often</div>
+<figure id="fOU"><div class="fignum">Chart 11</div><div class="figtitle">The OVER is winning far too often</div>
   <svg id="sOU" viewBox="0 0 640 250"></svg>
   <figcaption id="capOU">The home team takes the OVER and the away team takes the UNDER. Across 132 matchups the OVER landed on the right side of the line two thirds of the time and took five times as many points from it. This looks less like a strategy question and more like something to fix.</figcaption></figure>
 
 <p class="q">Which drivers actually paid?</p>
 
-<figure id="fD"><div class="fignum">Chart 10</div><div class="figtitle">Points per race for every driver who appeared in a pool</div>
+<figure id="fD"><div class="fignum">Chart 12</div><div class="figtitle">Points per race for every driver who appeared in a pool</div>
   <svg id="sD" viewBox="0 0 640 560"></svg>
   <figcaption>Average points across the races each driver was actually available in. Bubble size is how many cards picked him. Isack Hadjar was the most-picked driver in the league at 338 cards and returned 5.3 a race. Oliver Bearman took 219 cards for 1.7. Carlos Sainz, Alex Albon and Fernando Alonso all returned less than nothing.</figcaption></figure>
 
-<figure id="fBF"><div class="fignum">Chart 11</div><div class="figtitle">Guess P2, not P1</div>
+<figure id="fBF"><div class="fignum">Chart 13</div><div class="figtitle">Guess P2, not P1</div>
   <svg id="sBF" viewBox="0 0 640 260"></svg>
   <figcaption>How often each best-finish guess paid its three points. P2 hit 42 percent of the time and P1 only 28, and P1 was guessed almost as often. The order bonus, worth six, landed on 8.7 percent of cards across the half.</figcaption></figure>
 
 <p class="q">Do the best players sit on the best teams?</p>
 
-<figure id="f10"><div class="fignum">Chart 12</div><div class="figtitle">Four quadrants of the first half</div>
+<figure id="f10"><div class="fignum">Chart 14</div><div class="figtitle">Four quadrants of the first half</div>
   <svg id="s10" viewBox="0 0 640 500"></svg>
   <div class="faces" id="faces10"></div>
   <figcaption>Every player's individual points against their team's points, split at the median of each. Strong players on weak teams sit top left. Weak players on strong teams sit bottom right. The names below are the ones whose division changed in spite of themselves.</figcaption></figure>
@@ -306,6 +452,180 @@ const hover=(n,h)=>{n.addEventListener("mousemove",e=>showTip(e,h));n.addEventLi
 const rc=r=>({up:"var(--good)",down:"var(--bad)",stay:"var(--stay)"})[r]||"var(--stay)";
 const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
 const logo=n=>D.logos[n];
+const ord=n=>n+({1:"st",2:"nd",3:"rd"}[n%100>10&&n%100<20?0:n%10]||"th");
+const img=(u,cls)=>u?`<img class="${cls||""}" src="${u}" alt="">`
+  :`<span class="${cls||""}" style="display:inline-block;background:var(--grid);border-radius:5px"></span>`;
+
+/* ============ CHART 1 & 2 : the round from one team's seat ============
+   Both charts read the same viewer. Everything is click-to-reveal, so nothing
+   below the fold gives away the answer to the question above it. */
+(function(){
+  const Y=D.cYou, teamOf=id=>Y.teams.find(t=>t.id===id);
+  const DIVN={champ:"Championship Division",second:"Second Division"};
+  let me=null, played=false;
+
+  /* --- who am I reading as --- */
+  const sel=$("#who");
+  Y.players.forEach(p=>{const o=document.createElement("option");
+    o.value=p.name;o.textContent=`${p.name} — ${teamOf(p.teamId).name}`;sel.appendChild(o);});
+
+  /* --- the window of finishes still available --- */
+  function drawWindow(t){
+    const s=t.stake, champ=t.div==="champ", cut=s.goalPos;   // last seat on the right side of the line
+    const cells=[...Array(12)].map((_,i)=>{
+      const p=i+1, inRange=p>=s.best&&p<=s.worst, ok=p<=cut;
+      return `<div class="c${inRange?(ok?" rng":" bad"):""}${p===t.posBefore?" me":""}">${p}</div>`;
+    }).join("");
+    $("#yWin").innerHTML=`<div class="cells">${cells}</div>
+      <div class="lbl"><span>Best case ${ord(s.best)}</span>
+      <span>${champ?"Relegation":"Promotion"} line after ${ord(cut)}</span>
+      <span>Worst case ${ord(s.worst)}</span></div>`;
+  }
+
+  /* --- the matchup, both cards. The reader's own row is marked, so a team's
+         two players get the same numbers but not the same card. --- */
+  function drawMatchup(t,viewer){
+    const won=t.won===true;
+    const side=(nm,tot,rows,bb,win)=>`<div class="side ${win?"w":"l"}">
+      <div class="tn">${nm}</div><div class="tot">${tot}</div>
+      ${rows.map(r=>`<div class="row${r.n===viewer?" you":""}">${img(r.ph)}<span class="rn">${r.n}${r.n===viewer?" <em>you</em>":""}</span><span class="rv">${r.v}</span></div>`).join("")}
+      <div class="row bb"><span class="rn">BOX BOX</span><span class="rv">${bb>0?"+"+bb:bb}</span></div></div>`;
+    $("#yMu").innerHTML=
+      side(t.name,t.score,[{n:t.p1,v:t.s1,ph:t.photo1},{n:t.p2,v:t.s2,ph:t.photo2}],t.bb,won)
+      +`<div class="vs">v</div>`
+      +side(t.opp,t.oppScore,[{n:t.oppP1,v:t.o1},{n:t.oppP2,v:t.o2}],t.oppBb,!won);
+  }
+
+  /* --- did it work --- */
+  function drawOutcome(t){
+    const s=t.stake.state, champ=t.div==="champ", o=$("#yOut"), sub=$("#yOutSub");
+    let line, good=t.got, note;
+    if(s==="titlewon"){ line=t.got?"And you saw it home.":"And you somehow let it go."; }
+    else if(s==="title"){ line=t.got?"And you won the division.":"And you didn't."; }
+    else if(s==="locked"){ line="Nothing you did on the day changed it."; good=true; }
+    else if(s==="gone"){ line="It was over before the lights went out."; good=false; }
+    // Peloton lost the match that decided it and went up on average anyway, so
+    // "you got it" on the back of a defeat needs saying differently.
+    else if(t.viaSwap&&t.moved==="up"){ line="You lost, and went up anyway."; good=true; }
+    else if(t.viaSwap&&t.moved==="down"){ line="You lost, and that was the one that sent you down."; good=false; }
+    else { line=t.got?"And you got it.":"But it didn't work out."; }
+
+    if(t.moved==="up") note=t.viaSwap
+      ? `Promoted anyway, through the swap seat: ${ord(t.posAfter)} in the Second Division, but a better scoring average than the team you replaced.`
+      : `Promoted. ${ord(t.posAfter)} in the Second Division.`;
+    else if(t.moved==="down") note=t.viaSwap
+      ? `Relegated through the swap seat. ${ord(t.posAfter)} was survivable on points and not on average.`
+      : `Relegated. ${ord(t.posAfter)} in the Championship Division.`;
+    else note=`${ord(t.posAfter)} in the ${DIVN[t.div]}, and staying there.`;
+
+    o.className="yout "+(good?"good":"bad");
+    o.textContent=line;
+    sub.innerHTML=`${note} <b>${t.ptsBefore} &rarr; ${t.ptsAfter} points</b>, ${t.earned>0?`+${t.earned} from round 11`:"nothing from round 11"}.`;
+  }
+
+  /* --- a standings column that can re-sort --- */
+  function makeCol(host,rows,opts={}){
+    const H=34,GAP=5;
+    const c=$(host); c.innerHTML="";
+    const nodes={};
+    rows.forEach(r=>{
+      const d=document.createElement("div");
+      d.className="row"+(r.id===opts.meId?" me":"");
+      d.innerHTML=`<span class="p">${r.pos}</span>${img(logo(r.name))}<span class="n">${r.name}</span>`
+        +`<span class="e"></span><span class="v">${r.pts}</span>`;
+      c.appendChild(d); nodes[r.id]=d;
+    });
+    const cut=document.createElement("div");
+    cut.className="cut";cut.innerHTML=`<span>${opts.cutLabel||""}</span>`;c.appendChild(cut);
+    c.style.height=(rows.length*(H+GAP))+"px";
+    const place=list=>list.forEach((r,i)=>{
+      nodes[r.id].style.transform=`translateY(${i*(H+GAP)}px)`;
+      nodes[r.id].querySelector(".p").textContent=i+1;});
+    place(rows);
+    if(opts.cutAfter){cut.style.transform=`translateY(${opts.cutAfter*(H+GAP)-GAP/2}px)`;cut.classList.add("on");}
+    return {nodes,place,
+      setPts:(id,v)=>nodes[id].querySelector(".v").textContent=v,
+      setEarned:(id,v)=>{const e=nodes[id].querySelector(".e");e.textContent="+"+v;e.classList.add("on");},
+      mark:(id,cls)=>nodes[id].classList.add(cls)};
+  }
+
+  let colA=null,colB=null;
+  const cutFor=div=>div==="champ"?{cutAfter:7,cutLabel:"the drop"}:{cutAfter:4,cutLabel:"promotion"};
+
+  function buildCols(t){
+    const other=t.div==="champ"?"second":"champ";
+    $("#sHead").textContent=DIVN[t.div];
+    $("#sHead2").textContent=DIVN[other];
+    $("#sTitle").textContent=`The ${t.div==="champ"?"Championship":"Second"} Division, before and after`;
+    colA=makeCol("#sCol",Y.standings[t.div].before,{meId:t.id,...cutFor(t.div)});
+    colB=makeCol("#sCol2",Y.standings[other].after,{...cutFor(other)});
+    Y.standings[other].after.forEach(r=>{
+      const tt=teamOf(r.id); if(tt.moved!=="stay") colB.mark(r.id,tt.moved);
+    });
+  }
+
+  /* --- promotion and relegation --- */
+  function drawPR(t){
+    const up=Y.teams.filter(x=>x.moved==="up"), down=Y.teams.filter(x=>x.moved==="down");
+    $("#sPR").textContent=t.moved==="up"?"You were one of the five who went up."
+      :t.moved==="down"?"You were one of the five who went down."
+      :"Ten teams changed divisions. You were not one of them.";
+    const card=(x,cls)=>`<div class="lgo"><img src="${logo(x.name)}" alt="" style="border-color:var(--${cls})">
+      <div class="n">${x.name}</div><div class="m">${ord(x.posAfter)}${x.viaSwap?" · swap seat":""}</div></div>`;
+    $("#sUp").innerHTML=up.map(x=>card(x,"good")).join("");
+    $("#sDown").innerHTML=down.map(x=>card(x,"bad")).join("");
+  }
+
+  /* --- render everything for one viewer --- */
+  function render(playerName){
+    const p=Y.players.find(x=>x.name===playerName);
+    me=teamOf(p.teamId);
+    $("#whoPic").src=p.photo||"";
+    $("#whoPic").style.visibility=p.photo?"visible":"hidden";
+
+    $("#yCard").innerHTML=`${img(me.logo,"lg")}<div><div class="yn">${me.name}</div>
+      <div class="yp">${me.p1} &amp; ${me.p2}</div></div>`;
+    $("#ySit").innerHTML=`Going into round 11: <b>${ord(me.posBefore)} in the ${DIVN[me.div]}</b> on <b>${me.ptsBefore} points</b>.`;
+    drawWindow(me);
+    $("#yNeed").textContent=`${me.name} ${me.stake.need}.`;
+    $("#ySub").textContent=me.stake.sub?me.stake.sub.charAt(0).toUpperCase()+me.stake.sub.slice(1)+".":"";
+    drawMatchup(me,playerName); drawOutcome(me); drawPR(me);
+
+    // every reveal snaps shut, so a new viewer starts at the question again
+    ["#yR1","#yR2","#sOther","#sR","#sR2"].forEach(s=>$(s).classList.remove("on"));
+    $("#yb1").disabled=false; $("#yb1").textContent="Show the matchup";
+    $("#yb2").disabled=false;
+    $("#sb1").disabled=false; $("#sb1").textContent="Play round 11";
+    $("#sb2").classList.add("alt");
+    played=false;
+    buildCols(me);
+  }
+
+  const open=(s,btn)=>{$(s).classList.add("on"); if(btn){$(btn).disabled=true;}};
+  $("#yb1").addEventListener("click",()=>{open("#yR1","#yb1");$("#yb1").textContent="Round 11 scored";});
+  $("#yb2").addEventListener("click",()=>open("#yR2","#yb2"));
+  $("#sb2").addEventListener("click",()=>{open("#sOther");$("#sb2").classList.remove("alt");
+    setTimeout(()=>open("#sR"),500);});
+  $("#sb3").addEventListener("click",()=>open("#sR2","#sb3"));
+
+  $("#sb1").addEventListener("click",()=>{
+    if(played)return; played=true;
+    $("#sb1").disabled=true; $("#sb1").textContent="Round 11 scored";
+    const before=Y.standings[me.div].before, after=Y.standings[me.div].after;
+    // points tick up one row at a time, then the table re-sorts underneath them
+    after.forEach((r,i)=>setTimeout(()=>{
+      colA.setEarned(r.id,r.earned); colA.setPts(r.id,r.pts);
+    },i*70));
+    setTimeout(()=>{
+      colA.place(after);
+      after.forEach(r=>{const t=teamOf(r.id); if(t.moved!=="stay") colA.mark(r.id,t.moved);});
+    },1000);
+  });
+
+  sel.addEventListener("change",()=>render(sel.value));
+  const start=Y.players.find(p=>p.name==="Andrew Ishak")||Y.players[0];
+  sel.value=start.name; render(start.name);
+})();
 
 /* ============ a generic two-column board of tiles ============ */
 function makeBoard(host,left,right,opts={}){
