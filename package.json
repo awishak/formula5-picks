@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "smoke": "esbuild scripts/smoke.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke.cjs --loader:.jsx=jsx --jsx=automatic --log-level=error && node node_modules/.cache/smoke.cjs",
-    "smoke:recap": "esbuild scripts/smoke-recap.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke-recap.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error && node node_modules/.cache/smoke-recap.cjs"
+    "smoke:recap": "esbuild scripts/smoke-recap.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke-recap.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error && node node_modules/.cache/smoke-recap.cjs",
+    "smoke:drivers": "esbuild scripts/smoke-drivers.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke-drivers.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error --define:import.meta.env='{\"VITE_SUPABASE_URL\":\"http://localhost:54321\",\"VITE_SUPABASE_ANON_KEY\":\"smoke-test-key\"}' && node node_modules/.cache/smoke-drivers.cjs",
+    "smoke:all": "npm run smoke && npm run smoke:recap && npm run smoke:drivers"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
