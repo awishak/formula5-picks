@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Formula 5 — Round 11: Moving Day</title>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;600;700;800;900&family=DM+Sans:wght@400;500;600;700&family=Bebas+Neue&family=Monoton&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f5f3ef;--surface:#fff;--ink:#1e1e2a;--ink2:#5c5c70;--ink3:#84849a;
+  --rule:#ddd7c9;--grid:#e8e3d7;
+  --good:#2a78d6;--best:#1baf7a;--bad:#e87ba4;--stay:#9a9aad;--s4:#eda100;--s5:#4a3aa7;
+  --hi:#2a78d6;--glow:none;
+  --fd:'Geologica',sans-serif;--fb:'DM Sans',sans-serif;--fm:'Geologica',sans-serif;
+}
+body.vegas{
+  --bg:#07070c;--surface:#0e0e17;--ink:#f2f2f7;--ink2:#a8a8c0;--ink3:#7a7a94;
+  --rule:rgba(255,255,255,.15);--grid:rgba(255,255,255,.10);
+  --good:#3987e5;--best:#199e70;--bad:#d55181;--stay:#6b6b85;--s4:#c98500;--s5:#9085e9;
+  --hi:#00d9ff;--glow:0 0 20px rgba(0,217,255,.14);
+  --fd:'Bebas Neue',sans-serif;--fm:'Monoton',cursive;
+}
+body{font-family:var(--fb);background:var(--bg);color:var(--ink);padding:20px;max-width:700px;margin:0 auto;
+  transition:background 1.4s ease,color 1.4s ease;line-height:1.6;font-size:17px}
+h1,h2{font-family:var(--fd)}
+.header{text-align:center;margin-bottom:26px;padding:20px 0;border-bottom:2px solid var(--rule);transition:border-color 1.4s}
+.header h1{font-weight:900;font-size:36px;text-transform:uppercase;letter-spacing:.03em;transition:color 1.4s}
+body.vegas .header h1{font-weight:400;font-size:52px;color:var(--hi);text-shadow:0 0 8px currentColor,0 0 28px rgba(0,217,255,.5)}
+.header .sub{font-family:var(--fd);font-weight:300;font-size:15px;color:var(--ink2);text-transform:uppercase;letter-spacing:.12em;margin-top:8px}
+body.vegas .header .sub{font-weight:400;font-size:17px}
+.dek{font-size:20px;color:var(--ink2);margin:0 0 24px;line-height:1.55}
+h2{font-size:28px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;margin:48px 0 6px;line-height:1.08}
+body.vegas h2{font-weight:400;font-size:36px}
+h2 .kicker{display:block;font-family:var(--fb);font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--good);text-transform:uppercase;margin-bottom:6px}
+h3{font-family:var(--fd);font-weight:800;font-size:20px;margin:28px 0 8px}
+body.vegas h3{font-weight:400;font-size:24px}
+p{margin:0 0 18px}
+.stake{background:var(--surface);border-left:4px solid var(--good);padding:12px 16px;margin:0 0 20px;font-weight:600;border-radius:0 8px 8px 0;transition:background 1.4s,border-color 1.4s}
+.q{font-family:var(--fd);font-weight:900;font-size:23px;line-height:1.25;margin:0 0 14px;color:var(--ink)}
+body.vegas .q{font-weight:400;font-size:28px;color:var(--hi)}
+ul.bullets{margin:0 0 24px;list-style:none}
+ul.bullets li{padding:12px 0;border-bottom:1px solid var(--rule);font-size:16px}
+ul.bullets li b{font-family:var(--fd);font-weight:800}
+body.vegas ul.bullets li b{font-weight:400;font-size:19px;color:var(--ink)}
+figure{margin:28px 0 32px;background:var(--surface);border:1px solid var(--rule);border-radius:14px;padding:18px 16px 14px;
+  transition:background 1.4s,border-color 1.4s,opacity .7s,transform .7s,box-shadow 1.4s;opacity:0;transform:translateY(20px)}
+figure.in{opacity:1;transform:none}
+body.vegas figure{box-shadow:var(--glow)}
+figcaption{font-size:15px;color:var(--ink2);margin-top:12px;line-height:1.5}
+.fignum{font-family:var(--fd);font-weight:800;font-size:13px;letter-spacing:.14em;color:var(--good);text-transform:uppercase}
+body.vegas .fignum{font-weight:400;font-size:16px}
+.figtitle{font-family:var(--fd);font-weight:900;font-size:21px;line-height:1.2;margin:3px 0 14px}
+body.vegas .figtitle{font-weight:400;font-size:26px}
+svg{display:block;width:100%;overflow:visible}
+svg text{font-family:var(--fb);fill:var(--ink2)}
+.gridline{stroke:var(--grid);stroke-width:1}
+.axlab{font-size:13px;font-weight:600;fill:var(--ink3)}
+.axtitle{font-size:13px;font-weight:700;fill:var(--ink3);letter-spacing:.06em;text-transform:uppercase}
+.mark{cursor:pointer}
+.btns{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:14px}
+button.act{font-family:var(--fd);font-weight:800;font-size:15px;letter-spacing:.09em;text-transform:uppercase;
+  background:var(--good);color:#fff;border:0;border-radius:9px;padding:12px 18px;cursor:pointer;transition:all .5s}
+body.vegas button.act{font-weight:400;font-size:19px;background:transparent;color:var(--hi);border:1.5px solid var(--hi);
+  box-shadow:0 0 12px rgba(0,217,255,.45),inset 0 0 12px rgba(0,217,255,.12)}
+button.act:hover{filter:brightness(1.12)}
+button.act:disabled{opacity:.45;cursor:default}
+button.act.alt{background:var(--surface);color:var(--ink2);border:1.5px solid var(--rule)}
+body.vegas button.act.alt{color:var(--ink2);border-color:var(--rule);box-shadow:none}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 12px;font-size:14px;font-weight:600;color:var(--ink2)}
+.legend i{display:inline-block;width:13px;height:13px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+#tip{position:fixed;pointer-events:none;background:#12121c;color:#fff;border-radius:9px;padding:9px 12px;
+  font-size:14px;line-height:1.45;opacity:0;transition:opacity .12s;z-index:99;max-width:250px;box-shadow:0 6px 22px rgba(0,0,0,.35)}
+#tip b{font-size:15px}
+#tip .t2{color:#b9b9c9;font-size:13px}
+/* board */
+.board{position:relative;margin-top:4px}
+.board .colhead{position:absolute;top:0;font-family:var(--fd);font-weight:800;font-size:13px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink3);width:47%;text-align:center;transition:color 1.4s}
+body.vegas .board .colhead{font-weight:400;font-size:16px}
+.tile{position:absolute;top:0;display:flex;align-items:center;gap:9px;width:47%;height:36px;padding:0 9px;
+  border:1.5px solid var(--rule);border-radius:9px;background:var(--surface);
+  transition:transform 1.1s cubic-bezier(.55,.06,.25,1),border-color .7s,box-shadow .7s,background 1.4s,opacity .5s;
+  will-change:transform;cursor:pointer}
+.tile img{width:22px;height:22px;border-radius:5px;object-fit:cover;flex-shrink:0;background:var(--grid)}
+.tile .nm{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .pt{font-family:var(--fd);font-weight:800;font-size:14px;color:var(--ink2)}
+body.vegas .tile .pt{font-weight:400;font-size:17px}
+.tile .ar{font-size:14px;font-weight:800;width:14px;text-align:center}
+.tile.up{border-color:var(--good)}
+.tile.down{border-color:var(--bad)}
+body.vegas .tile.up{box-shadow:0 0 14px rgba(57,135,229,.55)}
+body.vegas .tile.down{box-shadow:0 0 14px rgba(213,81,129,.55)}
+.tile.lift{z-index:9;box-shadow:0 10px 26px rgba(0,0,0,.28)}
+body.vegas .tile.lift{box-shadow:0 0 26px rgba(0,217,255,.5)}
+.tile.dim{opacity:.42}
+.t1{display:flex;align-items:baseline;flex-wrap:wrap;gap:12px}
+.oldf{font-family:'Geologica',sans-serif;font-weight:900;font-size:21px;text-transform:uppercase;letter-spacing:.02em}
+.toSecond{display:inline-flex;align-items:baseline;gap:12px;opacity:0;transform:translateX(-14px);
+  transition:opacity .8s ease,transform .8s cubic-bezier(.2,1.3,.4,1)}
+.toSecond.on{opacity:1;transform:none}
+.arw{font-family:'Geologica',sans-serif;font-weight:400;font-size:24px;color:var(--ink3)}
+.newf{font-family:'Monoton',cursive;font-size:24px;color:var(--hi);
+  text-shadow:0 0 7px currentColor,0 0 24px rgba(0,217,255,.55)}
+@media(max-width:540px){.oldf{font-size:18px}.newf{font-size:19px}.arw{font-size:20px}}
+.halflogo{font-family:var(--fm);font-size:40px;text-align:center;color:var(--hi);margin:20px 0 2px;line-height:1.25;
+  opacity:0;transform:scale(.82);transition:opacity 1s ease,transform 1s cubic-bezier(.2,1.4,.4,1);pointer-events:none}
+.halflogo.on{opacity:1;transform:none;text-shadow:0 0 8px currentColor,0 0 30px rgba(0,217,255,.6),0 0 60px rgba(0,217,255,.35)}
+@media(max-width:540px){.halflogo{font-size:27px}}
+/* promoted logo row */
+.logorow{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin:6px 0 4px}
+.logorow figure{margin:0}
+.lgo{text-align:center;width:112px}
+.lgo img{width:56px;height:56px;border-radius:13px;object-fit:cover;background:var(--grid);
+  border:2px solid var(--good);box-shadow:0 0 0 rgba(0,0,0,0);transition:box-shadow .8s,border-color .8s}
+body.vegas .lgo img{box-shadow:0 0 16px rgba(57,135,229,.55)}
+.lgo .n{font-size:13px;font-weight:700;margin-top:7px;line-height:1.25}
+.lgo .m{font-size:12.5px;color:var(--ink3)}
+/* faces */
+.faces{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0 2px}
+.face{display:flex;align-items:center;gap:8px;border:1px solid var(--rule);border-radius:100px;padding:5px 13px 5px 5px}
+.face img{width:30px;height:30px;border-radius:50%;object-fit:cover;background:var(--grid)}
+.face .fn{font-size:13.5px;font-weight:600;line-height:1.2}
+.face .fm{font-size:12.5px;color:var(--ink3)}
+.face.g{border-color:var(--good)}
+.face.b{border-color:var(--bad)}
+/* calendar */
+.cal div{display:flex;align-items:center;gap:12px;padding:10px 13px;border:1px solid var(--rule);border-radius:9px;
+  margin-bottom:7px;opacity:0;transform:translateX(-12px);transition:opacity .5s,transform .5s}
+.cal div.on{opacity:1;transform:none}
+.cal div.new{border-color:var(--hi);box-shadow:0 0 14px rgba(0,217,255,.28)}
+.cal .rd{font-family:var(--fd);font-weight:800;font-size:16px;color:var(--ink3);min-width:38px}
+body.vegas .cal .rd{font-weight:400;font-size:20px}
+.cal .nm{font-weight:600;flex:1}
+.cal .dt{font-size:14px;color:var(--ink3)}
+.marq{font-family:var(--fm);font-size:36px;text-align:center;color:var(--hi);margin:26px 0 8px;line-height:1.35;
+  text-shadow:0 0 6px currentColor,0 0 24px rgba(0,217,255,.55)}
+.footer{margin:40px 0 20px;padding-top:18px;border-top:2px solid var(--rule);font-size:15px;color:var(--ink3)}
+@media(max-width:540px){body{font-size:16px;padding:14px}.header h1{font-size:29px}h2{font-size:23px}.dek{font-size:18px}
+  .tile{height:33px}.tile .nm{font-size:11.5px}.tile img{width:19px;height:19px}.lgo{width:92px}.lgo img{width:46px;height:46px}}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}figure{opacity:1;transform:none}}
+
+/* ============ view-as bar ============ */
+.viewas{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:11px;
+  background:var(--surface);border:1px solid var(--rule);border-radius:11px;padding:9px 12px;margin:0 0 18px;
+  transition:background 1.4s,border-color 1.4s}
+body.vegas .viewas{box-shadow:var(--glow)}
+.viewas label{font-family:var(--fd);font-weight:800;font-size:12px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink3);white-space:nowrap}
+body.vegas .viewas label{font-weight:400;font-size:15px}
+.viewas select{flex:1;min-width:0;font-family:var(--fb);font-size:15px;font-weight:600;color:var(--ink);
+  background:transparent;border:0;padding:4px 2px;cursor:pointer}
+.viewas select:focus{outline:2px solid var(--good);outline-offset:3px;border-radius:5px}
+.viewas img{width:30px;height:30px;border-radius:50%;object-fit:cover;background:var(--grid);flex-shrink:0}
+
+/* ============ your round 11 ============ */
+.ycard{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.ycard img.lg{width:52px;height:52px;border-radius:12px;object-fit:cover;background:var(--grid);flex-shrink:0}
+.ycard .yn{font-family:var(--fd);font-weight:900;font-size:21px;line-height:1.12}
+body.vegas .ycard .yn{font-weight:400;font-size:26px}
+.ycard .yp{font-size:14px;color:var(--ink3);margin-top:2px}
+.ysit{font-size:15px;color:var(--ink2);margin-bottom:12px}
+.ysit b{color:var(--ink);font-weight:700}
+/* the window of finishes still available, against the line they were chasing */
+.ywin{margin:0 0 15px}
+.ywin .cells{display:flex;gap:3px}
+.ywin .c{flex:1;height:26px;border-radius:4px;background:var(--grid);position:relative;
+  transition:background .5s,box-shadow .5s;font-size:11px;font-weight:700;color:var(--ink3);
+  display:flex;align-items:center;justify-content:center}
+.ywin .c.rng{background:var(--good);color:#fff}
+.ywin .c.me{box-shadow:inset 0 0 0 2.5px var(--ink)}
+body.vegas .ywin .c.rng{box-shadow:0 0 11px rgba(57,135,229,.5)}
+.ywin .c.bad{background:var(--bad);color:#fff}
+body.vegas .ywin .c.bad{box-shadow:0 0 11px rgba(213,81,129,.5)}
+.ywin .lbl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink3);margin-top:6px;font-weight:600}
+.yneed{font-family:var(--fd);font-weight:900;font-size:22px;line-height:1.22;margin:0 0 4px}
+body.vegas .yneed{font-weight:400;font-size:27px;color:var(--hi)}
+.ysub{font-size:14.5px;color:var(--ink3);margin-bottom:4px}
+/* click-to-reveal */
+.reveal{overflow:hidden;max-height:0;opacity:0;transition:max-height .75s cubic-bezier(.4,0,.2,1),opacity .55s .1s}
+.reveal.on{max-height:900px;opacity:1}
+.revpad{padding-top:16px;margin-top:16px;border-top:1px solid var(--rule)}
+/* matchup */
+.mu{display:flex;align-items:stretch;gap:10px}
+.mu .side{flex:1;min-width:0;border:1.5px solid var(--rule);border-radius:11px;padding:11px;transition:border-color .6s,box-shadow .6s}
+.mu .side.w{border-color:var(--best)}
+body.vegas .mu .side.w{box-shadow:0 0 15px rgba(25,158,112,.45)}
+.mu .side.l{opacity:.72}
+.mu .tn{font-size:13px;font-weight:700;line-height:1.25;margin-bottom:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mu .tot{font-family:var(--fd);font-weight:900;font-size:34px;line-height:1.05;margin:2px 0 8px}
+body.vegas .mu .tot{font-weight:400;font-size:40px}
+.mu .row{display:flex;align-items:center;gap:7px;font-size:13.5px;padding:3px 0}
+.mu .row img{width:24px;height:24px;border-radius:50%;object-fit:cover;background:var(--grid);flex-shrink:0}
+.mu .row .rn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mu .row .rv{font-family:var(--fd);font-weight:800;font-size:15px}
+body.vegas .mu .row .rv{font-weight:400;font-size:18px}
+.mu .row.bb .rn{color:var(--ink3)}
+.mu .row.you .rn{font-weight:700;color:var(--ink)}
+.mu .row.you em{font-style:normal;font-family:var(--fd);font-weight:800;font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--good);margin-left:5px}
+body.vegas .mu .row.you em{font-weight:400;font-size:13px;color:var(--hi)}
+.mu .row.you img{box-shadow:0 0 0 2px var(--good)}
+body.vegas .mu .row.you img{box-shadow:0 0 0 2px var(--hi)}
+.mu .vs{display:flex;align-items:center;font-family:var(--fd);font-weight:800;font-size:13px;color:var(--ink3)}
+body.vegas .mu .vs{font-weight:400;font-size:16px}
+/* outcome */
+.yout{font-family:var(--fd);font-weight:900;font-size:27px;line-height:1.18}
+body.vegas .yout{font-weight:400;font-size:33px}
+.yout.good{color:var(--best)}
+.yout.bad{color:var(--bad)}
+body.vegas .yout.good{text-shadow:0 0 16px rgba(25,158,112,.55)}
+body.vegas .yout.bad{text-shadow:0 0 16px rgba(213,81,129,.55)}
+.youtsub{font-size:15px;color:var(--ink2);margin-top:7px}
+@media(max-width:540px){
+  .mu{gap:6px}.mu .side{padding:8px}.mu .tot{font-size:27px}.mu .row{font-size:12px;gap:5px}
+  .mu .row img{width:20px;height:20px}.yneed{font-size:19px}.yout{font-size:22px}
+  .ywin .c{font-size:9.5px}.ycard img.lg{width:44px;height:44px}.ycard .yn{font-size:18px}
+}
+/* ============ standings column ============ */
+.col{position:relative;margin-top:4px}
+.col .row{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:9px;height:34px;padding:0 10px;
+  border:1.5px solid var(--rule);border-radius:9px;background:var(--surface);
+  transition:transform 1s cubic-bezier(.55,.06,.25,1),border-color .6s,opacity .5s,background 1.4s;
+  will-change:transform}
+.col .row img{width:21px;height:21px;border-radius:5px;object-fit:cover;flex-shrink:0;background:var(--grid)}
+.col .row .p{font-family:var(--fd);font-weight:800;font-size:13px;color:var(--ink3);width:19px;flex-shrink:0}
+body.vegas .col .row .p{font-weight:400;font-size:16px}
+.col .row .n{font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.col .row .e{font-size:12.5px;font-weight:700;color:var(--best);width:30px;text-align:right;opacity:0;transition:opacity .5s}
+.col .row .e.on{opacity:1}
+.col .row .v{font-family:var(--fd);font-weight:800;font-size:14px;width:34px;text-align:right}
+body.vegas .col .row .v{font-weight:400;font-size:17px}
+.col .row.me{border-color:var(--ink);background:var(--surface)}
+body.vegas .col .row.me{border-color:var(--hi);box-shadow:0 0 14px rgba(0,217,255,.35)}
+.col .row.up{border-color:var(--good)}
+.col .row.down{border-color:var(--bad)}
+body.vegas .col .row.up{box-shadow:0 0 12px rgba(57,135,229,.45)}
+body.vegas .col .row.down{box-shadow:0 0 12px rgba(213,81,129,.45)}
+.col .cut{position:absolute;left:0;right:0;height:0;border-top:2px dashed var(--ink3);opacity:0;
+  transition:transform 1s cubic-bezier(.55,.06,.25,1),opacity .5s}
+.col .cut.on{opacity:.75}
+.col .cut span{position:absolute;right:2px;top:-17px;font-family:var(--fd);font-weight:800;font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);background:var(--surface);padding:0 5px}
+body.vegas .col .cut span{font-weight:400;font-size:14px}
+.divhead{font-family:var(--fd);font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);margin:16px 0 7px}
+body.vegas .divhead{font-weight:400;font-size:16px}
+</style></head><body>
+<div id="tip"></div>
+
+<div class="viewas">
+  <img id="whoPic" alt="">
+  <label for="who">Viewing as</label>
+  <select id="who"></select>
+</div>
+
+<div class="header"><h1>Moving Day</h1>
+<div class="sub">Round 11 &middot; Hungaroring &middot; The first half ends</div></div>
+
+<figure id="fY" class="in">
+  <div class="fignum">Chart 1</div>
+  <div class="figtitle">Your round 11</div>
+  <div class="ycard" id="yCard"></div>
+  <div class="ysit" id="ySit"></div>
+  <div class="ywin" id="yWin"></div>
+  <div class="yneed" id="yNeed"></div>
+  <div class="ysub" id="ySub"></div>
+  <div class="btns" style="margin-top:14px"><button class="act" id="yb1">Show the matchup</button></div>
+  <div class="reveal" id="yR1"><div class="revpad"><div class="mu" id="yMu"></div>
+    <div class="btns" style="margin:15px 0 0"><button class="act" id="yb2">So did it work?</button></div></div></div>
+  <div class="reveal" id="yR2"><div class="revpad">
+    <div class="yout" id="yOut"></div><div class="youtsub" id="yOutSub"></div></div></div>
+  <figcaption id="capY">Every team went to Hungary chasing something different.</figcaption>
+</figure>
+
+<figure id="fS">
+  <div class="fignum">Chart 2</div>
+  <div class="figtitle" id="sTitle">Round 11 moved five of these teams</div>
+  <div class="btns"><button class="act" id="sb1">Play round 11</button><button class="act alt" id="sb2">Show the other division</button></div>
+  <div class="divhead" id="sHead"></div>
+  <div class="col" id="sCol"></div>
+  <div class="reveal" id="sOther"><div class="revpad">
+    <div class="divhead" id="sHead2" style="margin-top:0"></div>
+    <div class="col" id="sCol2"></div></div></div>
+  <div class="reveal" id="sR"><div class="revpad">
+    <div class="yneed" id="sPR"></div>
+    <div class="btns" style="margin:14px 0 0"><button class="act" id="sb3">Show who moved</button></div>
+    <div class="reveal" id="sR2"><div class="revpad"><div class="logorow" id="sUp"></div>
+      <div class="logorow" id="sDown"></div></div></div></div></div>
+  <figcaption id="capS">The green figure is what round 11 paid.</figcaption>
+</figure>
+
+<p class="dek">Budapest is two towns that eventually stopped arguing, Buda up on its hills and Pest laid flat across the water, the Danube between them doing what rivers always do, which is to look like a border while quietly functioning as a road.</p>
+
+<p>Out past the suburbs, Lando Norris led from the front and Lewis Hamilton, who sat on more cards in this league than any other driver, went quietly backwards to fifth. Call the Grand Prix what you like. For the forty-eight people playing this thing it was only ever the afternoon that decided which bank they would wake up on.</p>
+
+<p><strong>The top four in the Second Division go up. The bottom four in the Championship Division go down.</strong> And one more seat changes hands on top, where whoever finishes fifth in the Second Division takes the eighth-placed Championship Division team's place if they scored better on average across the half.</p>
+
+<figure id="f1" class="in">
+  <div class="fignum">Chart 3</div>
+  <div class="figtitle t1"><span class="oldf">First half</span><span class="toSecond" id="toSecond"><span class="arw">&rarr;</span><span class="newf">Second half</span></span></div>
+  <div class="btns"><button class="act" id="b0">What happened in round 11</button><button class="act alt" id="b1">Second half</button></div>
+  <div class="legend"><span><i style="background:var(--good)"></i>Promoted</span><span><i style="background:var(--bad)"></i>Relegated</span><span><i style="background:var(--stay)"></i>Stayed</span></div>
+  <div class="board" id="board"></div>
+  <div class="halflogo" id="halflogo">Second Half</div>
+  <figcaption id="cap1">Where every team finished the first half. Press the button and watch the ten that moved.</figcaption>
+</figure>
+
+<h2><span class="kicker">First question</span>What if we just went by scoring average?</h2>
+
+<p>The table pays for winning your matchup and for how big that win looked next to everyone else's. It does not pay for scoring. So the two need not agree, and they do not.</p>
+
+<figure id="fA">
+  <div class="fignum">Chart 4</div><div class="figtitle">The second half, sorted two ways</div>
+  <div class="btns"><button class="act" id="bA1">Sort by scoring average</button><button class="act alt" id="bA2">Remove the BOX BOX line</button></div>
+  <div class="legend"><span><i style="background:var(--good)"></i>&uarr; would be in the top division</span><span><i style="background:var(--bad)"></i>&darr; would be in the second</span></div>
+  <div class="board" id="boardA"></div>
+  <figcaption id="capA">The divisions as they now stand for the second half. Sort by average and two relegated teams, El Camino and Stalloni, outscore two of the teams going up.</figcaption>
+</figure>
+
+<h2><span class="kicker">Promotion</span>Cal Aggie Racing overcomes cost cap punishment, earns promotion</h2>
+
+<p>Cal Aggie were sent down for a cost cap violation, which in this league means Andrew Ishak signed the last two individual champions and the league decided that was quite enough of that. They have spent the half in the Second Division serving the sentence.</p>
+
+<div class="stake">Cal Aggie needed to beat Peloton Aubergine to give themselves a strong chance of promotion.</div>
+
+<p>The fixture list had put the only two realistic contenders for the final automatic place directly across from one another. They won it <strong>87 to 75</strong>. Ishak and Kevin Coolidge submitted identical cards and scored identically, to the point. Stacy Michaelsen, playing against them, picked the same five drivers as both, added a bonus neither managed, and finished the highest scorer on the pitch. She lost because Brett Dillon, a Frenchman with a cyclist's vocabulary and a weakness for the purple vegetable his countrymen get romantic about, was the only one of the four to trust his own eye.</p>
+
+<figure id="fUP" class="in">
+  <div class="fignum">Going up</div><div class="figtitle">The five promoted</div>
+  <div class="logorow" id="uprow"></div>
+  <figcaption>Peloton Aubergine came up through the swap seat, having lost the match that decided it.</figcaption>
+</figure>
+
+<figure id="f4"><div class="fignum">Chart 5</div><div class="figtitle">Cal Aggie climbed out of a hole</div>
+  <svg id="s4" viewBox="0 0 640 400"></svg>
+  <figcaption>Position in the Second Division after every round. Hover any line to identify a team.</figcaption></figure>
+
+<h2><span class="kicker">Relegation</span>How Cascadia did it</h2>
+
+<p>Rafik Zarifa built Van City Corsa in 2024 with the Nobar brothers. The brothers left, took the name of the whole rain-soaked bioregion instead of the one city, and became Cascadia Motorsport. They arrived in Hungary tenth of twelve and needing a result nobody expected.</p>
+
+<div class="stake">Cascadia needed to beat Van City, and beat them convincingly, or go down.</div>
+
+<p>Van City were top of the Championship Division and needed only a competent afternoon to finish the half there. Cascadia won <strong>107 to 83</strong>, the biggest score anybody posted all round. Ronnie Nobar had the highest individual card of the weekend with all five of his drivers finishing in the exact order he had called, which comes off on fewer than one card in ten, and Martin gave him the rest.</p>
+
+<p>Because championship points pay by rank among that week's winners, the biggest win took the maximum twenty-five. Cascadia went from tenth to seventh, out of the zone entirely, and the team they had broken away from lost the division on the same afternoon.</p>
+
+<figure id="f3"><div class="fignum">Chart 6</div><div class="figtitle">Cascadia's escape, and Van City's collapse</div>
+  <svg id="s3" viewBox="0 0 640 400"></svg>
+  <figcaption>Cumulative points across eleven rounds. Van City led after round ten. Cascadia spent the half in the relegation zone and left it on the last day.</figcaption></figure>
+
+<h2><span class="kicker">Second question</span>What if El Camino had scored four more?</h2>
+
+<p>Harold Gutmann and Paul Kohli went to second-placed Juicero Silicon Valley on the final day and beat them. They finished ninth, one point behind Garra, and were relegated by that single point. Their 86 was the fifth best win of the round and paid 10. Ninety would have paid 12.</p>
+
+<figure id="fEC">
+  <div class="fignum">Chart 7</div><div class="figtitle">Four points, and three teams change fate</div>
+  <div class="btns"><button class="act" id="bEC">Give El Camino four more points</button></div>
+  <div class="board" id="boardEC"></div>
+  <figcaption id="capEC">The Championship Division as it finished. Press the button to replay round 11 with El Camino scoring four more.</figcaption>
+</figure>
+
+<h2><span class="kicker">The title</span>Sacramento, from third, without ever leading</h2>
+
+<div class="stake">XLIX needed to beat Cougar Autosport and needed both teams above them to slip.</div>
+
+<p>Krista Nabil and Moses Abdelshaid handled the first part <strong>93 to 53</strong>, then stood still while the second part happened around them. There is gold in the American River and a bridge over the Sacramento whose towers spell out the number if you look at it right, and the team that carries both takes the first half having led it at no point whatsoever.</p>
+
+<p>They also gambled harder on the pit stop than almost anybody.</p>
+
+<figure id="fPIT"><div class="fignum">Chart 8</div><div class="figtitle">Who gambled on the pit stop, and who followed the crowd</div>
+  <svg id="sPIT" viewBox="0 0 640 560"></svg>
+  <figcaption>Average distance between a team's pit guesses and the whole league's consensus that round. XLIX sat third most extreme of twenty-four and won the division. Cascadia sat dead last on extremity and escaped relegation, so it is a style rather than a strategy.</figcaption></figure>
+
+<h2><span class="kicker">Strategy</span>What the first half teaches you about the second</h2>
+
+<p class="q">Is it better to streamline your picks with your partner, or to spread them?</p>
+
+<figure id="f8"><div class="fignum">Chart 9</div><div class="figtitle">Agreement, by how well the team scored</div>
+  <svg id="s8" viewBox="0 0 640 420"></svg>
+  <figcaption>The twenty-four teams split into four groups of six by scoring average, showing how much each group's partners agreed on. The bottom six are the outlier at 59.7 percent. The top eighteen sit between 72.7 and 76.7 and cannot be separated by agreement at all. Hover a bar for the six teams in it.</figcaption></figure>
+
+<p class="q">Is it better to pick early or late?</p>
+
+<figure id="fT"><div class="fignum">Chart 10</div><div class="figtitle">When cards were filed, and what they scored</div>
+  <svg id="sT" viewBox="0 0 640 380"></svg>
+  <figcaption>Average score by how long before the deadline a card arrived, earliest on the left. The spread across every bucket is under three points and the correlation is r = &minus;0.05. Filing early does not help. Filing late does not hurt, and forty-six cards arrived after the deadline anyway.</figcaption></figure>
+
+<p class="q">Is it better to be the OVER or the UNDER?</p>
+
+<figure id="fOU"><div class="fignum">Chart 11</div><div class="figtitle">The OVER is winning far too often</div>
+  <svg id="sOU" viewBox="0 0 640 250"></svg>
+  <figcaption id="capOU">The home team takes the OVER and the away team takes the UNDER. Across 132 matchups the OVER landed on the right side of the line two thirds of the time and took five times as many points from it. This looks less like a strategy question and more like something to fix.</figcaption></figure>
+
+<p class="q">Which drivers actually paid?</p>
+
+<figure id="fD"><div class="fignum">Chart 12</div><div class="figtitle">Points per race for every driver who appeared in a pool</div>
+  <svg id="sD" viewBox="0 0 640 560"></svg>
+  <figcaption>Average points across the races each driver was actually available in. Bubble size is how many cards picked him. Isack Hadjar was the most-picked driver in the league at 338 cards and returned 5.3 a race. Oliver Bearman took 219 cards for 1.7. Carlos Sainz, Alex Albon and Fernando Alonso all returned less than nothing.</figcaption></figure>
+
+<figure id="fBF"><div class="fignum">Chart 13</div><div class="figtitle">Guess P2, not P1</div>
+  <svg id="sBF" viewBox="0 0 640 260"></svg>
+  <figcaption>How often each best-finish guess paid its three points. P2 hit 42 percent of the time and P1 only 28, and P1 was guessed almost as often. The order bonus, worth six, landed on 8.7 percent of cards across the half.</figcaption></figure>
+
+<p class="q">Do the best players sit on the best teams?</p>
+
+<figure id="f10"><div class="fignum">Chart 14</div><div class="figtitle">Four quadrants of the first half</div>
+  <svg id="s10" viewBox="0 0 640 500"></svg>
+  <div class="faces" id="faces10"></div>
+  <figcaption>Every player's individual points against their team's points, split at the median of each. Strong players on weak teams sit top left. Weak players on strong teams sit bottom right. The names below are the ones whose division changed in spite of themselves.</figcaption></figure>
+
+<h2><span class="kicker">Everything else</span>The rest of the half, briefly</h2>
+<ul class="bullets">
+  <li><b>Garra</b> needed only to beat Bronco and were safe. They lost, fell to eighth, and the swap took the seat.</li>
+  <li><b>Bronco</b> needed a big win and three other results. They got the win, exactly as big as the maths demanded, and not one of the three arrived.</li>
+  <li><b>Stalloni</b> needed to beat Drivetex and were beaten instead.</li>
+  <li><b>Luxor</b> won nine matches, more than anyone in either division, and were not promoted. Without the pit stop line they would have been.</li>
+  <li><b>Meatballs</b> won the Second Division while being taken apart 97 to 62 by Prestissimo Veloce, who had nothing to play for.</li>
+  <li><b>HomeworkTubes</b> did everything available and finished one point short of a total that had been unreachable before the lights went out.</li>
+  <li><b>Scuderia Iskandaraya</b> beat Aggie Slipstream 69 to 57 and finished last anyway. Aggie Slipstream avoided the wooden spoon by losing.</li>
+</ul>
+
+<h2><span class="kicker">The second half</span>Which bank you woke up on</h2>
+<p>Now everybody gets a break, which is the other thing that happens at the end of term.</p>
+
+<figure id="fcal"><div class="fignum">The run home</div><div class="figtitle">Eleven races, a new one, and a hill</div>
+  <div class="btns"><button class="act" id="bcal">Reveal the second half</button></div>
+  <div class="cal" id="cal"></div></figure>
+
+<div id="finale" style="display:none">
+  <div class="marq">Buda</div>
+  <p>The twelve on the Buda side have a hill in front of them. The castle sits on top and only one of them reaches it, which is another way of saying eleven teams will spend the entire second half climbing and not arriving. There is a funicular. It runs up from the Buda end of the chain bridge, it takes about ninety seconds, and Andrew Ishak wants to ride it more than he has ever wanted anything in his life. Nobody is getting on it. You go up on foot or you do not go up.</p>
+  <p>And over on the Pest side, flat and wide and a long way from any hill at all, the question for the next eleven rounds is simply how close to the water you can get. Finish near enough to the bank and the Sz&eacute;chenyi is right there, lions at either end, the whole thing lit up over the black river, and you cross in the spring and start climbing in 2027.</p>
+  <p>Heraclitus had the line about never stepping in the same river twice, and he was right about the water and wrong about everything else, because the banks stay exactly where they have always been. It is only ever the people who move.</p>
+</div>
+
+<div class="footer">Formula 5 &middot; Round 11 &middot; Hungaroring &middot; Data through the end of the first half.</div>
+
+<script>
+const D=/*__DATA__*/;
+const $=s=>document.querySelector(s);
+const NS="http://www.w3.org/2000/svg";
+const el=(n,a={},p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;};
+const tip=$("#tip");
+function showTip(ev,html){tip.innerHTML=html;tip.style.opacity=1;
+  const r=tip.getBoundingClientRect();let x=ev.clientX+14,y=ev.clientY-10;
+  if(x+r.width>innerWidth-8)x=ev.clientX-r.width-14;
+  if(y+r.height>innerHeight-8)y=innerHeight-r.height-8;
+  tip.style.left=x+"px";tip.style.top=Math.max(8,y)+"px";}
+const hideTip=()=>tip.style.opacity=0;
+const hover=(n,h)=>{n.addEventListener("mousemove",e=>showTip(e,h));n.addEventListener("mouseleave",hideTip);
+  n.addEventListener("click",e=>showTip(e,h));};
+const rc=r=>({up:"var(--good)",down:"var(--bad)",stay:"var(--stay)"})[r]||"var(--stay)";
+const short=(s,n)=>s.length>n?s.slice(0,n-1)+"…":s;
+const logo=n=>D.logos[n];
+const ord=n=>n+({1:"st",2:"nd",3:"rd"}[n%100>10&&n%100<20?0:n%10]||"th");
+const img=(u,cls)=>u?`<img class="${cls||""}" src="${u}" alt="">`
+  :`<span class="${cls||""}" style="display:inline-block;background:var(--grid);border-radius:5px"></span>`;
+
+/* ============ CHART 1 & 2 : the round from one team's seat ============
+   Both charts read the same viewer. Everything is click-to-reveal, so nothing
+   below the fold gives away the answer to the question above it. */
+(function(){
+  const Y=D.cYou, teamOf=id=>Y.teams.find(t=>t.id===id);
+  const DIVN={champ:"Championship Division",second:"Second Division"};
+  let me=null, played=false;
+
+  /* --- who am I reading as --- */
+  const sel=$("#who");
+  Y.players.forEach(p=>{const o=document.createElement("option");
+    o.value=p.name;o.textContent=`${p.name} — ${teamOf(p.teamId).name}`;sel.appendChild(o);});
+
+  /* --- the window of finishes still available --- */
+  function drawWindow(t){
+    const s=t.stake, champ=t.div==="champ", cut=s.goalPos;   // last seat on the right side of the line
+    const cells=[...Array(12)].map((_,i)=>{
+      const p=i+1, inRange=p>=s.best&&p<=s.worst, ok=p<=cut;
+      return `<div class="c${inRange?(ok?" rng":" bad"):""}${p===t.posBefore?" me":""}">${p}</div>`;
+    }).join("");
+    $("#yWin").innerHTML=`<div class="cells">${cells}</div>
+      <div class="lbl"><span>Best case ${ord(s.best)}</span>
+      <span>${champ?"Relegation":"Promotion"} line after ${ord(cut)}</span>
+      <span>Worst case ${ord(s.worst)}</span></div>`;
+  }
+
+  /* --- the matchup, both cards. The reader's own row is marked, so a team's
+         two players get the same numbers but not the same card. --- */
+  function drawMatchup(t,viewer){
+    const won=t.won===true;
+    const side=(nm,tot,rows,bb,win)=>`<div class="side ${win?"w":"l"}">
+      <div class="tn">${nm}</div><div class="tot">${tot}</div>
+      ${rows.map(r=>`<div class="row${r.n===viewer?" you":""}">${img(r.ph)}<span class="rn">${r.n}${r.n===viewer?" <em>you</em>":""}</span><span class="rv">${r.v}</span></div>`).join("")}
+      <div class="row bb"><span class="rn">BOX BOX</span><span class="rv">${bb>0?"+"+bb:bb}</span></div></div>`;
+    $("#yMu").innerHTML=
+      side(t.name,t.score,[{n:t.p1,v:t.s1,ph:t.photo1},{n:t.p2,v:t.s2,ph:t.photo2}],t.bb,won)
+      +`<div class="vs">v</div>`
+      +side(t.opp,t.oppScore,[{n:t.oppP1,v:t.o1},{n:t.oppP2,v:t.o2}],t.oppBb,!won);
+  }
+
+  /* --- did it work --- */
+  function drawOutcome(t){
+    const s=t.stake.state, champ=t.div==="champ", o=$("#yOut"), sub=$("#yOutSub");
+    let line, good=t.got, note;
+    if(s==="titlewon"){ line="And you'd already won it before you got there."; }
+    else if(s==="title"){ line=t.got?"And you won the division."
+      :t.moved==="up"?"The division went elsewhere. You went up anyway.":"And you didn't.";
+      if(!t.got&&t.moved==="up") good=true; }
+    else if(s==="locked"){ line=champ?"You were safe before the race and safe after it."
+      :"You were up before the race and up after it."; good=true; }
+    else if(s==="gone"){ line="It was over before the lights went out."; good=false; }
+    // Peloton lost the match that decided it and went up on average anyway, so
+    // "you got it" on the back of a defeat needs saying differently.
+    else if(t.viaSwap&&t.moved==="up"){ line="You lost, and went up anyway."; good=true; }
+    else if(t.viaSwap&&t.moved==="down"){ line="You lost, and that's what sent you down."; good=false; }
+    else { line=t.got?"And you got it.":"But it didn't work out."; }
+
+    if(t.moved==="up") note=t.viaSwap
+      ? `Through the swap seat: ${ord(t.posAfter)} in the Second Division, and a better scoring average than the team you replaced.`
+      : `Promoted. ${ord(t.posAfter)} in the Second Division.`;
+    else if(t.moved==="down") note=t.viaSwap
+      ? `Relegated through the swap seat. ${ord(t.posAfter)} survived on points and lost on average.`
+      : `Relegated. ${ord(t.posAfter)} in the Championship Division.`;
+    else note=`${ord(t.posAfter)} in the ${DIVN[t.div]}, and staying there.`;
+
+    o.className="yout "+(good?"good":"bad");
+    o.textContent=line;
+    sub.innerHTML=`${note} <b>${t.ptsBefore} &rarr; ${t.ptsAfter} points</b>, ${t.earned>0?`+${t.earned} from round 11`:"nothing from round 11"}.`;
+  }
+
+  /* --- a standings column that can re-sort --- */
+  function makeCol(host,rows,opts={}){
+    const H=34,GAP=5;
+    const c=$(host); c.innerHTML="";
+    const nodes={};
+    rows.forEach(r=>{
+      const d=document.createElement("div");
+      d.className="row"+(r.id===opts.meId?" me":"");
+      d.innerHTML=`<span class="p">${r.pos}</span>${img(logo(r.name))}<span class="n">${r.name}</span>`
+        +`<span class="e"></span><span class="v">${r.pts}</span>`;
+      c.appendChild(d); nodes[r.id]=d;
+    });
+    const cut=document.createElement("div");
+    cut.className="cut";cut.innerHTML=`<span>${opts.cutLabel||""}</span>`;c.appendChild(cut);
+    c.style.height=(rows.length*(H+GAP))+"px";
+    const place=list=>list.forEach((r,i)=>{
+      nodes[r.id].style.transform=`translateY(${i*(H+GAP)}px)`;
+      nodes[r.id].querySelector(".p").textContent=i+1;});
+    place(rows);
+    if(opts.cutAfter){cut.style.transform=`translateY(${opts.cutAfter*(H+GAP)-GAP/2}px)`;cut.classList.add("on");}
+    return {nodes,place,
+      setPts:(id,v)=>nodes[id].querySelector(".v").textContent=v,
+      setEarned:(id,v)=>{const e=nodes[id].querySelector(".e");e.textContent="+"+v;e.classList.add("on");},
+      mark:(id,cls)=>nodes[id].classList.add(cls)};
+  }
+
+  let colA=null,colB=null;
+  const cutFor=div=>div==="champ"?{cutAfter:7,cutLabel:"the drop"}:{cutAfter:4,cutLabel:"promotion"};
+
+  function buildCols(t){
+    const other=t.div==="champ"?"second":"champ";
+    $("#sHead").textContent=DIVN[t.div];
+    $("#sHead2").textContent=DIVN[other];
+    $("#sTitle").textContent=t.div==="champ"?"Round 11 sent five of these teams down"
+      :"Round 11 sent five of these teams up";
+    colA=makeCol("#sCol",Y.standings[t.div].before,{meId:t.id,...cutFor(t.div)});
+    colB=makeCol("#sCol2",Y.standings[other].after,{...cutFor(other)});
+    Y.standings[other].after.forEach(r=>{
+      const tt=teamOf(r.id); if(tt.moved!=="stay") colB.mark(r.id,tt.moved);
+    });
+  }
+
+  /* --- promotion and relegation --- */
+  function drawPR(t){
+    const up=Y.teams.filter(x=>x.moved==="up"), down=Y.teams.filter(x=>x.moved==="down");
+    $("#sPR").textContent=t.moved==="up"?"You were one of the five who went up."
+      :t.moved==="down"?"You were one of the five who went down."
+      :"Ten teams changed divisions. You were not one of them.";
+    const card=(x,cls)=>`<div class="lgo"><img src="${logo(x.name)}" alt="" style="border-color:var(--${cls})">
+      <div class="n">${x.name}</div><div class="m">${ord(x.posAfter)}${x.viaSwap?" · swap seat":""}</div></div>`;
+    $("#sUp").innerHTML=up.map(x=>card(x,"good")).join("");
+    $("#sDown").innerHTML=down.map(x=>card(x,"bad")).join("");
+  }
+
+  /* --- render everything for one viewer --- */
+  function render(playerName){
+    const p=Y.players.find(x=>x.name===playerName);
+    me=teamOf(p.teamId);
+    $("#whoPic").src=p.photo||"";
+    $("#whoPic").style.visibility=p.photo?"visible":"hidden";
+
+    $("#yCard").innerHTML=`${img(me.logo,"lg")}<div><div class="yn">${me.name}</div>
+      <div class="yp">${me.p1} &amp; ${me.p2}</div></div>`;
+    $("#ySit").innerHTML=`Going into round 11: <b>${ord(me.posBefore)} in the ${DIVN[me.div]}</b> on <b>${me.ptsBefore} points</b>.`;
+    drawWindow(me);
+    $("#yNeed").textContent=`${me.name} ${me.stake.need}.`;
+    $("#ySub").textContent=me.stake.sub?me.stake.sub.charAt(0).toUpperCase()+me.stake.sub.slice(1)+".":"";
+    drawMatchup(me,playerName); drawOutcome(me); drawPR(me);
+
+    // every reveal snaps shut, so a new viewer starts at the question again
+    ["#yR1","#yR2","#sOther","#sR","#sR2"].forEach(s=>$(s).classList.remove("on"));
+    $("#yb1").disabled=false; $("#yb1").textContent="Show the matchup";
+    $("#yb2").disabled=false;
+    $("#sb1").disabled=false; $("#sb1").textContent="Play round 11";
+    $("#sb2").classList.add("alt");
+    played=false;
+    buildCols(me);
+  }
+
+  const open=(s,btn)=>{$(s).classList.add("on"); if(btn){$(btn).disabled=true;}};
+  $("#yb1").addEventListener("click",()=>{open("#yR1","#yb1");$("#yb1").textContent="Round 11 scored";});
+  $("#yb2").addEventListener("click",()=>open("#yR2","#yb2"));
+  $("#sb2").addEventListener("click",()=>{open("#sOther");$("#sb2").classList.remove("alt");
+    setTimeout(()=>open("#sR"),500);});
+  $("#sb3").addEventListener("click",()=>open("#sR2","#sb3"));
+
+  $("#sb1").addEventListener("click",()=>{
+    if(played)return; played=true;
+    $("#sb1").disabled=true; $("#sb1").textContent="Round 11 scored";
+    const before=Y.standings[me.div].before, after=Y.standings[me.div].after;
+    // points tick up one row at a time, then the table re-sorts underneath them
+    after.forEach((r,i)=>setTimeout(()=>{
+      colA.setEarned(r.id,r.earned); colA.setPts(r.id,r.pts);
+    },i*70));
+    setTimeout(()=>{
+      colA.place(after);
+      after.forEach(r=>{const t=teamOf(r.id); if(t.moved!=="stay") colA.mark(r.id,t.moved);});
+    },1000);
+  });
+
+  sel.addEventListener("change",()=>render(sel.value));
+  const start=Y.players.find(p=>p.name==="Andrew Ishak")||Y.players[0];
+  sel.value=start.name; render(start.name);
+})();
+
+/* ============ a generic two-column board of tiles ============ */
+function makeBoard(host,left,right,opts={}){
+  const H=36,GAP=6,TOP=26;
+  const b=$(host); b.innerHTML="";
+  const mkh=(t,side)=>{const d=document.createElement("div");d.className="colhead";d.style[side]="0";d.textContent=t;b.appendChild(d);return d;};
+  const hL=mkh(opts.left||"Championship Division","left"), hR=mkh(opts.right||"Second Division","right");
+  const tiles={};
+  [...left,...right].forEach(t=>{
+    const d=document.createElement("div");
+    d.className="tile"+(t.role==="up"?" up":t.role==="down"?" down":"");
+    const lg=logo(t.name);
+    d.innerHTML=(lg?`<img src="${lg}" alt="">`:`<span style="width:22px;height:22px;border-radius:5px;background:var(--grid);flex-shrink:0"></span>`)
+      +`<span class="nm">${t.name}</span><span class="ar"></span><span class="pt">${opts.value?opts.value(t):t.pts}</span>`;
+    if(opts.tip) hover(d,opts.tip(t));
+    b.appendChild(d); tiles[t.name]=d;
+  });
+  const rows=Math.max(left.length,right.length);
+  b.style.height=(TOP+rows*(H+GAP)+4)+"px";
+  // Both axes live in the transform so a team physically travels across the
+  // board and slots in, rather than teleporting sideways and sliding down.
+  let cur={L:left,R:right};
+  const colX=()=>b.clientWidth*0.53;
+  function place(L,R){
+    cur={L,R};
+    L.forEach((t,i)=>{tiles[t.name].style.transform=`translate(0px,${TOP+i*(H+GAP)}px)`;});
+    R.forEach((t,i)=>{tiles[t.name].style.transform=`translate(${colX()}px,${TOP+i*(H+GAP)}px)`;});
+  }
+  place(left,right);
+  addEventListener("resize",()=>{
+    const prev=[...b.querySelectorAll(".tile")].map(t=>t.style.transition);
+    b.querySelectorAll(".tile").forEach(t=>t.style.transition="none");
+    place(cur.L,cur.R);
+    requestAnimationFrame(()=>b.querySelectorAll(".tile").forEach((t,i)=>t.style.transition=prev[i]||""));
+  });
+  return {tiles,place,hL,hR,
+    setValue:(t,v)=>{tiles[t].querySelector(".pt").textContent=v;},
+    setArrow:(t,a)=>{const e=tiles[t].querySelector(".ar");
+      e.textContent=a==="up"?"▲":a==="down"?"▼":"";
+      e.style.color=a==="up"?"var(--good)":a==="down"?"var(--bad)":"transparent";}};
+}
+
+/* ============ CHART 1 : the move ============ */
+(function(){
+  const champ=D.c1.champ, second=D.c1.second;
+  const b10c=D.c1.beforeChamp, b10s=D.c1.beforeSecond;
+  const meta=n=>[...champ,...second].find(t=>t.name===n);
+  const tipBefore=t=>{const m=meta(t.name);
+    return `<b>${t.name}</b><br>${m.p1} &amp; ${m.p2}<div class="t2">${t.pts} pts going into round 11<br>${t.r11Opp?`plays ${t.r11Opp}`:""}</div>`;};
+  const tipAfter=t=>{const m=meta(t.name);const b=[...b10c,...b10s].find(x=>x.name===t.name);
+    return `<b>${t.name}</b><br>${m.p1} &amp; ${m.p2}<div class="t2">round 11: ${b.r11Won===true?"won":b.r11Won===false?"lost":"drew"} with ${b.r11Score} v ${b.r11Opp}, +${b.r11Earned}<br>${b.pts} → ${m.pts} pts<br>${m.role==="up"?"Promoted":m.role==="down"?"Relegated":"Stays"}${m.viaSwap?" · swap seat":""}</div>`;};
+  // starts on the table as it stood BEFORE round 11
+  const B=makeBoard("#board",b10c.map(t=>({...t,role:"stay"})),b10s.map(t=>({...t,role:"stay"})),{tip:tipBefore});
+  let act=0;
+  $("#b0").addEventListener("click",()=>{
+    if(act!==0)return; act=1;
+    $("#b0").disabled=true; $("#b0").textContent="Round 11 scored";
+    $("#b1").classList.remove("alt");
+    // every team's points tick up to the final figure, then the columns re-sort
+    [...b10c,...b10s].forEach((t,i)=>setTimeout(()=>{
+      const m=meta(t.name); B.setValue(t.name,m.pts);
+      const d=B.tiles[t.name];
+      d.style.borderColor = t.r11Won===true?"var(--good)" : t.r11Won===false?"var(--bad)" : "";
+      hover(d,tipAfter(t));
+    }, i*40));
+    setTimeout(()=>B.place(champ,second),700);
+    setTimeout(()=>{
+      [...champ,...second].forEach(t=>{B.tiles[t.name].style.borderColor="";});
+      $("#cap1").innerHTML="Round 11 moved the first half into its final shape. XLIX went from third to first without leading at any point, and Cascadia climbed three places out of the relegation zone. Now press <b>Second half</b>.";
+    },1900);
+  });
+  $("#b1").addEventListener("click",()=>{
+    if(act!==1){ if(act===0) return; }
+    if(act>=2)return; act=2;
+    $("#b1").disabled=true; $("#b1").textContent="Ten teams moved";
+    const movers=[...champ,...second].filter(t=>t.role!=="stay");
+    // 1. the ten that move lift off the page and the rest recede
+    movers.forEach((t,i)=>setTimeout(()=>{
+      B.tiles[t.name].classList.add("lift");
+    },i*55));
+    [...champ,...second].filter(t=>t.role==="stay").forEach(t=>B.tiles[t.name].classList.add("dim"));
+    // 2. the lights change
+    setTimeout(()=>document.body.classList.add("vegas"),650);
+    // 3. promoted land at the BOTTOM of the top flight, relegated at the TOP of the second
+    setTimeout(()=>{
+      const up=second.filter(t=>t.role==="up"), down=champ.filter(t=>t.role==="down");
+      const nc=[...champ.filter(t=>t.role!=="down"),...up];
+      const ns=[...down,...second.filter(t=>t.role!=="up")];
+      B.place(nc,ns);
+    },900);
+    // 4. settle
+    setTimeout(()=>{
+      movers.forEach(t=>B.tiles[t.name].classList.remove("lift"));
+      [...champ,...second].forEach(t=>B.tiles[t.name].classList.remove("dim"));
+      B.hL.textContent="Championship Division · second half";
+      B.hR.textContent="Second Division · second half";
+      $("#halflogo").classList.add("on");
+      $("#toSecond").classList.add("on");
+      $("#cap1").innerHTML="Five up, five down. The promoted arrive at the bottom of the top flight and the relegated at the top of the second, which is where next season starts from. Peloton Aubergine went up despite losing and Garra Dynamics went down despite finishing eighth, because the fifth-placed Second Division team takes the eighth-placed Championship seat when its scoring average is higher.";
+    },2100);
+  });
+})();
+
+/* ============ CHART 2 : sorted two ways ============ */
+(function(){
+  const nameSet=new Set(D.cAvg.champ);
+  const rowFor=(n,src)=>src.find(t=>t.name===n);
+  let mode=0; // 0 = standings, 1 = average, 2 = average without box box
+  const champTeams=D.cAvg.champ.map(n=>({name:n,role:"stay",pts:""}));
+  const secondTeams=D.cAvg.second.map(n=>({name:n,role:"stay",pts:""}));
+  const B=makeBoard("#boardA",champTeams,secondTeams,{
+    left:"Championship Division · second half", right:"Second Division · second half",
+    value:t=>"", tip:t=>{
+      const w=rowFor(t.name,D.cAvg.withBB), o=rowFor(t.name,D.cAvg.withoutBB);
+      return `<b>${t.name}</b><div class="t2">average ${w.avg} (rank ${w.rank} of 24)<br>without BOX BOX ${o.avg} (rank ${o.rank})</div>`;}
+  });
+  function apply(){
+    const src=mode===2?D.cAvg.withoutBB:D.cAvg.withBB;
+    if(mode===0){
+      B.place(champTeams,secondTeams);
+      champTeams.concat(secondTeams).forEach(t=>{B.setValue(t.name,"");B.setArrow(t.name,null);});
+      $("#capA").textContent="The divisions as they now stand for the second half. Sort by average and two relegated teams outscore two of the teams going up.";
+    } else {
+      const L=[...champTeams].sort((a,b)=>rowFor(b.name,src).avg-rowFor(a.name,src).avg);
+      const R=[...secondTeams].sort((a,b)=>rowFor(b.name,src).avg-rowFor(a.name,src).avg);
+      B.place(L,R);
+      [...L,...R].forEach(t=>{const r=rowFor(t.name,src);B.setValue(t.name,r.avg);B.setArrow(t.name,r.arrow);});
+      const ups=src.filter(t=>t.arrow==="up").map(t=>t.name), dns=src.filter(t=>t.arrow==="down").map(t=>t.name);
+      $("#capA").innerHTML=(mode===2?"With the pit stop points stripped out of the average. ":"")+
+        `On scoring average alone, <b>${ups.join(" and ")}</b> would be in the top division and <b>${dns.join(" and ")}</b> would not.`;
+    }
+  }
+  $("#bA1").addEventListener("click",()=>{mode=mode===1?0:1;apply();
+    $("#bA1").textContent=mode===1?"Back to the standings":"Sort by scoring average";
+    $("#bA2").textContent="Remove the BOX BOX line";});
+  $("#bA2").addEventListener("click",()=>{mode=mode===2?1:2;apply();
+    $("#bA2").textContent=mode===2?"Put the BOX BOX line back":"Remove the BOX BOX line";
+    $("#bA1").textContent="Back to the standings";});
+})();
+
+/* ============ promoted logo row ============ */
+(function(){
+  const row=$("#uprow");
+  const order=["Meatballs","HomeworkTubes.Com","TNT Roku F5 Team","Cal Aggie Racing","Peloton Aubergine"];
+  order.forEach(n=>{
+    const t=D.c1.second.find(x=>x.name===n);
+    const d=document.createElement("div"); d.className="lgo";
+    d.innerHTML=`<img src="${logo(n)}" alt=""><div class="n">${n}</div><div class="m">${t.pts} pts${t.viaSwap?" · swap":""}</div>`;
+    hover(d,`<b>${n}</b><br>${t.p1} &amp; ${t.p2}<div class="t2">${t.pts} pts · ${t.wins} wins · ${t.avg} avg</div>`);
+    row.appendChild(d);
+  });
+})();
+
+/* ============ CHART 5 : El Camino +4 ============ */
+(function(){
+  const real=D.cEC.real.map(t=>({...t,role:t.name==="El Camino Rapido"?"down":"stay"}));
+  const B=makeBoard("#boardEC",real,[],{left:"Championship Division",right:"",
+    value:t=>t.pts, tip:t=>`<b>${t.name}</b><div class="t2">${t.pts} pts · average ${t.avg}</div>`});
+  $("#boardEC").querySelectorAll(".colhead")[1].style.display="none";
+  $("#boardEC").querySelectorAll(".tile").forEach(t=>t.style.width="97%");
+  let done=false;
+  $("#bEC").addEventListener("click",()=>{
+    if(done)return;done=true;$("#bEC").disabled=true;$("#bEC").textContent="El Camino finish eighth";
+    const alt=D.cEC.alt;
+    const ordered=alt.map(a=>({...a,role:a.name==="El Camino Rapido"?"up":a.name==="Garra Dynamics"?"down":"stay"}));
+    ordered.forEach(t=>{
+      const d=B.tiles[t.name];
+      d.className="tile"+(t.role==="up"?" up":t.role==="down"?" down":"");
+      d.style.width="97%";
+      B.setValue(t.name,t.pts);
+    });
+    B.place(ordered,[]);
+    $("#capEC").innerHTML=`El Camino finish <b>eighth on 78</b> and Garra drop to ninth. And at eighth, El Camino's average rises to <b>${D.cEC.altSwap.avg}</b>, which beats Peloton Aubergine's ${D.cEC.fifthSecond.avg}, so the swap never fires. <b>El Camino stay up. Garra still go down. And Peloton are not promoted at all.</b> Bronco also lose two points as a knock-on. The first-half title does not change.`;
+  });
+})();
+
+/* ============ shared chart helpers ============ */
+function lineChart(sel,series,o){
+  const svg=$(sel),W=640,H=o.H||400,m={t:30,r:130,b:44,l:44};
+  const n=series[0][o.key].length,xs=i=>m.l+(W-m.l-m.r)*(i/(n-1));
+  const vals=series.flatMap(s=>s[o.key]);
+  const lo=o.invert?1:Math.min(...vals),hi=o.invert?12:Math.max(...vals);
+  const ys=v=>o.invert?m.t+(H-m.t-m.b)*((v-lo)/(hi-lo)):H-m.b-(H-m.t-m.b)*((v-lo)/(hi-lo));
+  (o.invert?[1,3,6,9,12]:Array.from({length:5},(_,g)=>Math.round(lo+(hi-lo)*g/4))).forEach(v=>{
+    el("line",{x1:m.l,x2:W-m.r,y1:ys(v),y2:ys(v),class:"gridline"},svg);
+    el("text",{x:m.l-9,y:ys(v)+5,"text-anchor":"end",class:"axlab"},svg).textContent=v;});
+  for(let i=0;i<n;i+=2)el("text",{x:xs(i),y:H-m.b+22,"text-anchor":"middle",class:"axlab"},svg).textContent=i+1;
+  el("text",{x:(m.l+W-m.r)/2,y:H-6,"text-anchor":"middle",class:"axtitle"},svg).textContent="ROUND";
+  el("text",{x:m.l-38,y:m.t-10,class:"axtitle"},svg).textContent=o.yTitle;
+  const used=[],paths=[];
+  series.forEach(s=>{
+    const on=o.highlight.includes(s.name),c=on?o.colorOf(s.name):"var(--stay)";
+    const d=s[o.key].map((v,i)=>(i?"L":"M")+xs(i)+","+ys(v)).join(" ");
+    const p=el("path",{d,fill:"none",stroke:c,"stroke-width":on?2.8:1.4,"stroke-linejoin":"round",
+      "stroke-linecap":"round",opacity:on?1:.28,class:"mark"},svg);
+    p.style.strokeDasharray=1400;p.style.strokeDashoffset=1400;paths.push(p);
+    hover(p,`<b>${s.name}</b><div class="t2">${o.yTitle.toLowerCase()} by round<br>${s[o.key].join(" › ")}</div>`);
+    p.addEventListener("mouseenter",()=>{p.setAttribute("stroke-width",3.4);p.setAttribute("opacity",1);});
+    p.addEventListener("mouseleave",()=>{p.setAttribute("stroke-width",on?2.8:1.4);p.setAttribute("opacity",on?1:.28);});
+    if(on){const last=s[o.key][n-1];let ly=ys(last)+5;
+      while(used.some(u=>Math.abs(u-ly)<15))ly+=15;used.push(ly);
+      el("circle",{cx:xs(n-1),cy:ys(last),r:5,fill:c,stroke:"var(--surface)","stroke-width":2},svg);
+      el("text",{x:xs(n-1)+11,y:ly,"font-size":13,"font-weight":700,fill:"var(--ink)"},svg).textContent=short(s.name,18);}
+  });
+  return ()=>paths.forEach((p,i)=>{p.style.transition=`stroke-dashoffset 1.2s ease ${i*.02}s`;p.style.strokeDashoffset=0;});
+}
+function barChart(sel,rows,o){
+  const svg=$(sel),W=640,m={t:o.t||14,r:o.r||60,b:20,l:o.l||176};
+  const H=m.t+m.b+rows.length*o.rowH;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  const max=o.max??Math.max(...rows.map(o.val)),xw=W-m.l-m.r,bars=[];
+  if(o.head)el("text",{x:m.l,y:14,"font-size":13,"font-weight":700,fill:"var(--ink3)"},svg).textContent=o.head;
+  rows.forEach((r,i)=>{
+    const y=m.t+i*o.rowH,h=o.rowH-7,v=o.val(r),w=Math.max(2,xw*(v/max));
+    const g=el("g",{class:"mark"},svg);
+    el("rect",{x:0,y:y-2,width:W,height:o.rowH,fill:"transparent"},g);
+    el("text",{x:m.l-10,y:y+h/2+5,"text-anchor":"end","font-size":13.5,"font-weight":o.bold&&o.bold(r,i)?700:600,fill:"var(--ink)"},g).textContent=o.label(r,i);
+    const bar=el("rect",{x:m.l,y,width:0,height:h,rx:4,fill:o.color(r),"fill-opacity":o.faint&&o.faint(r)?.25:.9},g);
+    bars.push([bar,w]);
+    el("text",{x:m.l+w+8,y:y+h/2+5,"font-size":13.5,"font-weight":700,fill:"var(--ink2)"},g).textContent=o.valLabel(r);
+    hover(g,o.tip(r));
+    if(o.ruleAfter===i)el("line",{x1:m.l-150,x2:W-m.r,y1:y+h+3,y2:y+h+3,stroke:"var(--ink3)","stroke-width":1.5,"stroke-dasharray":"5 4"},svg);
+  });
+  return ()=>bars.forEach(([b,w],i)=>{b.style.transition=`width .85s cubic-bezier(.3,1,.4,1) ${i*.022}s`;b.setAttribute("width",w);});
+}
+function scatter(sel,pts,o){
+  const svg=$(sel),W=640,H=o.H||460,m={t:22,r:24,b:52,l:58};
+  const xv=pts.map(o.x),yv=pts.map(o.y);
+  const x0=o.x0??Math.min(...xv),x1=o.x1??Math.max(...xv),y0=o.y0??Math.min(...yv),y1=o.y1??Math.max(...yv);
+  const px=v=>m.l+(W-m.l-m.r)*((v-x0)/(x1-x0||1)),py=v=>H-m.b-(H-m.t-m.b)*((v-y0)/(y1-y0||1));
+  for(let g=0;g<=4;g++){const v=y0+(y1-y0)*g/4;
+    el("line",{x1:m.l,x2:W-m.r,y1:py(v),y2:py(v),class:"gridline"},svg);
+    el("text",{x:m.l-9,y:py(v)+5,"text-anchor":"end",class:"axlab"},svg).textContent=Math.round(v);}
+  for(let g=0;g<=4;g++){const v=x0+(x1-x0)*g/4;
+    el("text",{x:px(v),y:H-m.b+22,"text-anchor":"middle",class:"axlab"},svg).textContent=Math.round(v*10)/10;}
+  el("text",{x:(m.l+W-m.r)/2,y:H-8,"text-anchor":"middle",class:"axtitle"},svg).textContent=o.xTitle;
+  el("text",{x:m.l-46,y:m.t-6,class:"axtitle"},svg).textContent=o.yTitle;
+  if(o.quads){
+    el("line",{x1:px(o.quads.x),x2:px(o.quads.x),y1:m.t,y2:H-m.b,stroke:"var(--ink3)","stroke-width":1.5,"stroke-dasharray":"6 5",opacity:.7},svg);
+    el("line",{x1:m.l,x2:W-m.r,y1:py(o.quads.y),y2:py(o.quads.y),stroke:"var(--ink3)","stroke-width":1.5,"stroke-dasharray":"6 5",opacity:.7},svg);
+    o.quads.labels.forEach(L=>el("text",{x:L.x==="l"?m.l+10:W-m.r-10,y:L.y==="t"?m.t+18:H-m.b-10,
+      "text-anchor":L.x==="l"?"start":"end","font-size":12.5,"font-weight":700,fill:"var(--ink3)"},svg).textContent=L.t);
+  }
+  if(o.trend){const n=pts.length,sx=xv.reduce((a,b)=>a+b,0),sy=yv.reduce((a,b)=>a+b,0);
+    const sxy=pts.reduce((a,p)=>a+o.x(p)*o.y(p),0),sxx=xv.reduce((a,b)=>a+b*b,0);
+    const b=(n*sxy-sx*sy)/(n*sxx-sx*sx||1),a=(sy-b*sx)/n;
+    el("line",{x1:px(x0),y1:py(a+b*x0),x2:px(x1),y2:py(a+b*x1),stroke:"var(--ink3)","stroke-width":2,"stroke-dasharray":"6 5",opacity:.85},svg);}
+  const dots=[];
+  pts.forEach(p=>{
+    const r=o.rOf?o.rOf(p):(o.r||6);
+    const c=el("circle",{cx:px(o.x(p)),cy:py(o.y(p)),r:0,fill:o.color(p),"fill-opacity":o.op??.85,
+      stroke:"var(--surface)","stroke-width":1.4,class:"mark"},svg);
+    dots.push([c,r]);hover(c,o.tip(p));
+    c.addEventListener("mouseenter",()=>c.setAttribute("r",r+3));
+    c.addEventListener("mouseleave",()=>c.setAttribute("r",r));
+    if(o.label&&o.label(p)) el("text",{x:px(o.x(p))+r+5,y:py(o.y(p))+4,"font-size":12,"font-weight":700,fill:"var(--ink2)"},svg).textContent=o.label(p);
+  });
+  return ()=>dots.forEach(([c,r],i)=>{c.style.transition=`r .5s ease ${Math.min(i*.007,.9)}s`;c.setAttribute("r",r);});
+}
+
+/* ============ the rest of the charts ============ */
+const play={};
+play.f3=lineChart("#s3",D.c3,{key:"pts",yTitle:"POINTS",
+  highlight:["Cascadia Motorsport","Van City Corsa","XLIX Racing Team"],
+  colorOf:n=>({"Cascadia Motorsport":"var(--best)","Van City Corsa":"var(--bad)","XLIX Racing Team":"var(--good)"})[n]});
+play.f4=lineChart("#s4",D.c4,{key:"pos",yTitle:"POSITION",invert:true,
+  highlight:["Cal Aggie Racing","Peloton Aubergine","Meatballs"],
+  colorOf:n=>({"Cal Aggie Racing":"var(--good)","Peloton Aubergine":"var(--s5)","Meatballs":"var(--best)"})[n]});
+play.fPIT=barChart("#sPIT",D.cPit,{rowH:21,val:r=>r.dev,max:Math.max(...D.cPit.map(r=>r.dev))*1.05,
+  label:r=>short(r.name,22),bold:r=>r.name==="XLIX Racing Team",
+  color:r=>r.name==="XLIX Racing Team"?"var(--best)":r.inNextChamp?"var(--good)":"var(--stay)",
+  valLabel:r=>r.dev+"s",
+  tip:r=>`<b>${r.name}</b><div class="t2">${r.dev}s from the league consensus on average<br>guesses ranged ${r.lo} to ${r.hi}<br>called the line right ${r.bbPct}% of the time</div>`});
+play.f8=barChart("#s8",D.cQuart,{rowH:74,l:196,t:26,r:70,val:q=>q.meanOverlap,max:100,
+  head:"AVERAGE PARTNER AGREEMENT WITHIN EACH GROUP",
+  label:q=>q.label, bold:()=>true,
+  color:q=>q.rank===1?"var(--best)":q.rank===4?"var(--bad)":"var(--good)",
+  valLabel:q=>q.meanOverlap+"%",
+  tip:q=>`<b>${q.label}</b><div class="t2">group scoring average ${q.meanAvg}<br>partners agreed on ${q.meanOverlap}% of drivers<br>${q.identical} identical cards between them<br><br>`
+    +q.teams.map(t=>`${t.name} — ${t.overlap}%`).join("<br>")+`</div>`});
+play.fT=barChart("#sT",D.cTime.buckets,{rowH:34,l:190,t:20,val:r=>r.avg,max:Math.max(...D.cTime.buckets.map(b=>b.avg))*1.12,
+  label:r=>r.label,color:r=>r.label.startsWith("After")?"var(--bad)":"var(--good)",
+  valLabel:r=>r.avg+"   (n="+r.n+")",
+  tip:r=>`<b>${r.label}</b><div class="t2">${r.n} cards, average ${r.avg}</div>`});
+play.fOU=(function(){
+  const rows=[{k:"OVER (home team)",...D.cOU.over},{k:"UNDER (away team)",...D.cOU.under}];
+  return barChart("#sOU",rows,{rowH:52,l:190,t:24,val:r=>r.pct,max:100,
+    head:"SHARE OF 132 MATCHUPS WHERE THAT SIDE WON THE LINE",
+    label:r=>r.k,color:r=>r.k.startsWith("OVER")?"var(--good)":"var(--bad)",
+    valLabel:r=>r.pct+"%   ("+r.p+" pts)",
+    tip:r=>`<b>${r.k}</b><div class="t2">won the line ${r.w} of ${r.n} times<br>net ${r.p} matchup points across the half</div>`});
+})();
+play.fD=scatter("#sD",D.cDrv,{x:p=>p.races,y:p=>p.avg,xTitle:"RACES IN A POOL",yTitle:"POINTS PER RACE",
+  H:560,trend:false,rOf:p=>Math.max(5,Math.sqrt(p.cards)/1.6),op:.7,
+  color:p=>p.avg>=8?"var(--best)":p.avg>=3?"var(--good)":"var(--bad)",
+  label:p=>p.cards>180||p.avg<0||p.avg>12?p.name.split(" ").slice(-1)[0]:null,
+  tip:p=>`<b>${p.name}</b><div class="t2">${p.avg} points per race across ${p.races} races<br>picked on ${p.cards} cards<br>${p.dnf} DNF, ${p.zero} scoreless</div>`});
+play.fBF=barChart("#sBF",D.cBF,{rowH:34,l:150,t:22,val:r=>r.pct,max:50,
+  head:"HOW OFTEN EACH BEST-FINISH GUESS PAID ITS THREE POINTS",
+  label:r=>"Guessed P"+r.g,color:r=>r.pct>=40?"var(--best)":r.pct>=25?"var(--good)":"var(--stay)",
+  valLabel:r=>r.pct+"%   (n="+r.n+")",
+  tip:r=>`<b>Guessed P${r.g}</b><div class="t2">${r.n} cards, hit ${r.hit} times (${r.pct}%)</div>`});
+play.f10=scatter("#s10",D.c10,{x:p=>p.teamPts,y:p=>p.indiv,xTitle:"TEAM POINTS",yTitle:"INDIVIDUAL POINTS",
+  H:500,r:6,color:p=>rc(p.role),
+  quads:{x:D.c10meta.medTeam,y:D.c10meta.medIndiv,labels:[
+    {x:"l",y:"t",t:"STRONG PLAYER, WEAK TEAM"},{x:"r",y:"t",t:"STRONG PLAYER, STRONG TEAM"},
+    {x:"l",y:"b",t:"WEAK PLAYER, WEAK TEAM"},{x:"r",y:"b",t:"WEAK PLAYER, STRONG TEAM"}]},
+  tip:p=>`<b>${p.player}</b><div class="t2">${p.team}<br>${p.indiv} individual pts (rank ${p.indivRank} of 48)<br>team on ${p.teamPts} pts<br>${p.role==="up"?"Promoted":p.role==="down"?"Relegated":"Stays"}</div>`});
+(function(){
+  const box=$("#faces10");
+  const relStrong=D.c10.filter(p=>p.role==="down"&&p.indiv>=D.c10meta.medIndiv).sort((a,b)=>b.indiv-a.indiv).slice(0,4);
+  const proWeak=D.c10.filter(p=>p.role==="up"&&p.indiv<D.c10meta.medIndiv).sort((a,b)=>a.indiv-b.indiv).slice(0,4);
+  const add=(p,cls,note)=>{const d=document.createElement("div");d.className="face "+cls;
+    d.innerHTML=(p.photo?`<img src="${p.photo}" alt="">`:`<span style="width:30px;height:30px;border-radius:50%;background:var(--grid)"></span>`)
+      +`<span><span class="fn">${p.player}</span><br><span class="fm">${note}</span></span>`;
+    hover(d,`<b>${p.player}</b><div class="t2">${p.team}<br>${p.indiv} individual pts, rank ${p.indivRank} of 48</div>`);
+    box.appendChild(d);};
+  relStrong.forEach(p=>add(p,"b","P"+p.indivRank+" individually, relegated"));
+  proWeak.forEach(p=>add(p,"g","P"+p.indivRank+" individually, promoted"));
+})();
+
+/* ============ calendar ============ */
+(function(){
+  const cal=$("#cal");
+  D.cal.forEach(r=>{const d=document.createElement("div");if(r.isNew)d.className="new";
+    d.innerHTML=`<span class="rd">${r.round==="—"?"NEW":"R"+r.round}</span><span class="nm">${r.name}</span><span class="dt">${r.date}</span>`;
+    cal.appendChild(d);});
+  $("#bcal").addEventListener("click",()=>{
+    $("#finale").style.display="block";$("#bcal").disabled=true;
+    [...cal.children].forEach((c,i)=>setTimeout(()=>c.classList.add("on"),80+i*85));});
+})();
+
+/* ============ reveal ============ */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting)return;e.target.classList.add("in");
+  const f=play[e.target.id];if(f)setTimeout(f,180);io.unobserve(e.target);}),{threshold:.08});
+document.querySelectorAll("figure").forEach(f=>io.observe(f));
+
+if(location.search.includes("charts")){
+  document.querySelectorAll("p,h2,.stake,ul.bullets,.header,.footer").forEach(n=>n.style.display="none");
+  const skip=+(new URLSearchParams(location.search).get("skip")||0);
+  document.querySelectorAll("figure").forEach((f,i)=>{if(i<skip){f.style.display="none";return;}f.classList.add("in");});
+  if(location.search.includes("vegas"))document.body.classList.add("vegas");
+}
+</script></body></html>

@@ -14,6 +14,8 @@ import Players from "./Players.jsx";
 import PracticePicks from "./PracticePicks.jsx";
 import PickIntel from "./PickIntel.jsx";
 import Recaps from "./Recaps.jsx";
+import VegasHome from "./VegasHome.jsx";
+import Recap from "./Recap.jsx";
 import { NEWS } from "./news";
 
 
@@ -864,7 +866,21 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 // ── Main App ─────────────────────────────────────────────
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("f1_user") || null);
-  const [activePage, setActivePage] = useState("home");
+  // ?vegas opens the second-half mockup. Query param rather than #vegas because
+  // Vercel's SSO redirect on protected previews drops the fragment, which lands
+  // you back on the normal app. Hash still works when there's no auth in the way.
+  //
+  // /deck is a real path, which needs the SPA rewrite in vercel.json or a direct
+  // hit 404s before the app ever loads. Paths survive the SSO redirect that
+  // eats fragments, so this is the shareable one.
+  const [activePage, setActivePage] = useState(() => {
+    const q = new URLSearchParams(window.location.search);
+    const path = window.location.pathname.replace(/\/+$/, "");
+    if (path === "/deck" || window.location.hash === "#recap" || q.has("recap")) return "recap";
+    const byHash = window.location.hash === "#vegas";
+    const byQuery = q.has("vegas");
+    return byHash || byQuery ? "vegas" : "home";
+  });
   const [scheduleInitialView, setScheduleInitialView] = useState(null);
 
   function navigateTo(page) {
@@ -899,6 +915,55 @@ export default function App() {
     }
     checkPicks();
   }, [currentUser, activePage]);
+
+  // The Vegas mockup renders outside .app-wrap so the light theme's background,
+  // width cap and bottom nav don't fight it. Reachable at ?vegas.
+  //
+  // Ahead of the WelcomeScreen check on purpose: it runs on a hardcoded snapshot
+  // and needs no signed-in player, so ?vegas opens the mockup on a fresh browser
+  // instead of a name picker.
+  if (activePage === "vegas") return (
+    <>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: #07070c; }`}</style>
+      <VegasHome
+        onNavigate={(p) => { window.history.replaceState(null, "", window.location.pathname); navigateTo(p); }}
+        {...(() => {
+          // ?vegas&state=final&lap=1&tab=kit deep-links a state, so a screenshot
+          // or a shared link can land on one without clicking the mock controls.
+          const q = new URLSearchParams(window.location.search);
+          const state = q.get("state"), tab = q.get("tab"), lap = q.get("lap");
+          return {
+            ...(["open", "locked", "live", "final"].includes(state) ? { initialState: state } : {}),
+            ...(["home", "kit"].includes(tab) ? { initialTab: tab } : {}),
+            ...(lap === "0" || lap === "1" ? { initialLap: Number(lap) } : {}),
+          };
+        })()}
+      />
+    </>
+  );
+
+  // The recap deck renders outside .app-wrap for the same reason the Vegas mockup
+  // does: it sets its own ground and turns dark halfway, so the light theme's
+  // background and bottom nav must not be underneath it.
+  //
+  // /deck, ?recap or #recap all land here. ?player=Andrew%20Ishak overrides the
+  // signed-in name, so any deck can be checked without switching users.
+  //
+  // With no signed-in player it falls through to WelcomeScreen below, and once a
+  // name is picked this branch catches the re-render and opens the deck. So a
+  // cold visit to /deck is: pick your name, then your recap.
+  if (activePage === "recap") {
+    const override = new URLSearchParams(window.location.search).get("player");
+    const who = override || currentUser;
+    if (who) return (
+      <Recap
+        playerName={who}
+        // Back to the root, not to the current path: leaving the deck from
+        // /deck has to drop the path or it reopens on the next load.
+        onExit={() => { window.history.replaceState(null, "", "/"); navigateTo("home"); }}
+      />
+    );
+  }
 
   if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
 
