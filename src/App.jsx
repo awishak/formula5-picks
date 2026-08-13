@@ -869,9 +869,14 @@ export default function App() {
   // ?vegas opens the second-half mockup. Query param rather than #vegas because
   // Vercel's SSO redirect on protected previews drops the fragment, which lands
   // you back on the normal app. Hash still works when there's no auth in the way.
+  //
+  // /deck is a real path, which needs the SPA rewrite in vercel.json or a direct
+  // hit 404s before the app ever loads. Paths survive the SSO redirect that
+  // eats fragments, so this is the shareable one.
   const [activePage, setActivePage] = useState(() => {
     const q = new URLSearchParams(window.location.search);
-    if (window.location.hash === "#recap" || q.has("recap")) return "recap";
+    const path = window.location.pathname.replace(/\/+$/, "");
+    if (path === "/deck" || window.location.hash === "#recap" || q.has("recap")) return "recap";
     const byHash = window.location.hash === "#vegas";
     const byQuery = q.has("vegas");
     return byHash || byQuery ? "vegas" : "home";
@@ -941,16 +946,21 @@ export default function App() {
   // does: it sets its own ground and turns dark halfway, so the light theme's
   // background and bottom nav must not be underneath it.
   //
-  // ?recap&player=Andrew%20Ishak overrides the signed-in name, so any deck can be
-  // checked without switching users. Without an override it needs a signed-in
-  // player, so it sits after the WelcomeScreen fallback below rather than before.
+  // /deck, ?recap or #recap all land here. ?player=Andrew%20Ishak overrides the
+  // signed-in name, so any deck can be checked without switching users.
+  //
+  // With no signed-in player it falls through to WelcomeScreen below, and once a
+  // name is picked this branch catches the re-render and opens the deck. So a
+  // cold visit to /deck is: pick your name, then your recap.
   if (activePage === "recap") {
     const override = new URLSearchParams(window.location.search).get("player");
     const who = override || currentUser;
     if (who) return (
       <Recap
         playerName={who}
-        onExit={() => { window.history.replaceState(null, "", window.location.pathname); navigateTo("home"); }}
+        // Back to the root, not to the current path: leaving the deck from
+        // /deck has to drop the path or it reopens on the next load.
+        onExit={() => { window.history.replaceState(null, "", "/"); navigateTo("home"); }}
       />
     );
   }
