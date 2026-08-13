@@ -15,6 +15,7 @@ import PracticePicks from "./PracticePicks.jsx";
 import PickIntel from "./PickIntel.jsx";
 import Recaps from "./Recaps.jsx";
 import VegasHome from "./VegasHome.jsx";
+import Recap from "./Recap.jsx";
 import { NEWS } from "./news";
 
 
@@ -869,8 +870,10 @@ export default function App() {
   // Vercel's SSO redirect on protected previews drops the fragment, which lands
   // you back on the normal app. Hash still works when there's no auth in the way.
   const [activePage, setActivePage] = useState(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (window.location.hash === "#recap" || q.has("recap")) return "recap";
     const byHash = window.location.hash === "#vegas";
-    const byQuery = new URLSearchParams(window.location.search).has("vegas");
+    const byQuery = q.has("vegas");
     return byHash || byQuery ? "vegas" : "home";
   });
   const [scheduleInitialView, setScheduleInitialView] = useState(null);
@@ -933,6 +936,24 @@ export default function App() {
       />
     </>
   );
+
+  // The recap deck renders outside .app-wrap for the same reason the Vegas mockup
+  // does: it sets its own ground and turns dark halfway, so the light theme's
+  // background and bottom nav must not be underneath it.
+  //
+  // ?recap&player=Andrew%20Ishak overrides the signed-in name, so any deck can be
+  // checked without switching users. Without an override it needs a signed-in
+  // player, so it sits after the WelcomeScreen fallback below rather than before.
+  if (activePage === "recap") {
+    const override = new URLSearchParams(window.location.search).get("player");
+    const who = override || currentUser;
+    if (who) return (
+      <Recap
+        playerName={who}
+        onExit={() => { window.history.replaceState(null, "", window.location.pathname); navigateTo("home"); }}
+      />
+    );
+  }
 
   if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
 

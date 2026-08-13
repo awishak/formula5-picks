@@ -37,13 +37,28 @@ const SWAP_UP = "Peloton Aubergine", SWAP_DOWN = "Garra Dynamics";
 
 /* ---------------------------------------------------------------- solver */
 
-// Pair awards with teams so that as FEW as possible (dir=-1) or as MANY as
-// possible (dir=+1) end up above `thr`. Biggest award to the team furthest from
-// the threshold minimises crossings; to the nearest team maximises them.
-function pairAwards(teams, awards, dir) {
-  const ts = [...teams].sort((a, b) => dir < 0 ? a.pts - b.pts : b.pts - a.pts);
-  const as = [...awards].sort((a, b) => b - a);
-  return ts.map((t, i) => t.pts + as[i]);
+// How many of `teams` can be pushed to `thr` or beyond, one award each.
+// dir<0 minimises that count: the biggest award goes to the team furthest below
+// the bar, where it is wasted. dir>0 maximises it: the smallest award that does
+// the job goes to the team needing least help, which keeps the big awards free
+// for the teams below. Sorting by points alone is not enough for the maximising
+// side, because it spends 25s on teams that were already clear.
+function countOver(teams, awards, thr, dir) {
+  if (dir < 0) {
+    const ts = [...teams].sort((a, b) => a.pts - b.pts);
+    const as = [...awards].sort((a, b) => b - a);
+    return ts.reduce((c, t, i) => c + (t.pts + as[i] >= thr ? 1 : 0), 0);
+  }
+  const need = teams.map(t => thr - t.pts).sort((a, b) => a - b);
+  const av = [...awards].sort((a, b) => a - b);
+  let c = 0;
+  for (const n of need) {
+    const i = av.findIndex(a => a >= n);
+    if (i < 0) break;          // need is ascending, so nothing later fits either
+    av.splice(i, 1);
+    c++;
+  }
+  return c;
 }
 
 // Best (dir=-1) or worst (dir=+1) final position for `me`, given whether we won.
@@ -72,10 +87,11 @@ function reach(divTeams, matchups, me, iWon, dir) {
 
       const wTeams = winners.map(id => ({ id, pts: pts[id] }));
       const lTeams = losers.map(id => ({ id, pts: pts[id] }));
-      const finals = [...pairAwards(wTeams, wp, dir), ...pairAwards(lTeams, lp, dir)];
 
-      // dir<0 wants me high: ties break my way. dir>0 wants me low: ties break against.
-      const above = finals.filter(v => dir < 0 ? v > myFinal : v >= myFinal).length;
+      // dir<0 wants me high: ties break my way, so the bar sits one above me.
+      // dir>0 wants me low: ties break against, so the bar is my own total.
+      const thr = dir < 0 ? myFinal + 1 : myFinal;
+      const above = countOver(wTeams, wp, thr, dir) + countOver(lTeams, lp, thr, dir);
       const pos = above + 1;
       if (dir < 0 ? pos < bestPos : pos > bestPos) bestPos = pos;
     }
