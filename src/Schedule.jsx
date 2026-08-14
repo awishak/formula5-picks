@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB } from "./theme";
+import { recapUrl, isDeck } from "./recaps";
 
 function TeamLogo({ name, size = 32, division, logoUrl }) {
   let hash = 0;
@@ -924,12 +925,16 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
             background: `${BLUE}12`, color: BLUEDARK,
             fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em"
           }}>Matchups</button>
-          <button onClick={() => window.open(`/recaps/round${activeRound}.html`, "_blank")} style={{
-            flex: 1, padding: "10px", borderRadius: 10, cursor: "pointer",
-            border: `1.5px solid ${BORDER}`,
-            background: "#fff", color: TEXT2,
-            fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em"
-          }}>Race Recap</button>
+          {/* Only offered when a recap was actually written. A scored round is
+              not the same thing, and rounds 8 and 10 never got one. */}
+          {recapUrl(activeRound) && (
+            <button onClick={() => window.open(recapUrl(activeRound), "_blank")} style={{
+              flex: 1, padding: "10px", borderRadius: 10, cursor: "pointer",
+              border: `1.5px solid ${BORDER}`,
+              background: "#fff", color: TEXT2,
+              fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em"
+            }}>{isDeck(activeRound) ? "Your First Half" : "Race Recap"}</button>
+          )}
         </div>
       )}
       {raceHasScores && (

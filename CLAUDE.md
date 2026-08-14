@@ -76,17 +76,26 @@ BOX BOX: team strategy layer.
 Team championship points per division: 25-18-15-12-10-8-6-4-2-1-0-0.
 The top 12 individual scorers from the prior season retain their team brands and are placed in the Championship Division.
 
-## Midseason recap: the card deck (in progress)
+## Midseason recap: the card deck
 
-**Superseded the twelve-chart scroll page on 2026-08-12.** The long-form
-`public/recaps/round11.html` is being retired; it still exists and still builds,
-but it is not the deliverable any more. Delete it and `template.html` once the
-deck is signed off.
+**Live in production at https://f5.andrewishak.com/deck since 2026-08-12.**
+It replaced the twelve-chart scroll page, which was deleted along with its
+`template.html`, `build.mjs` and `scripts/recap/smoke.mjs`. The prep scripts
+survived because the deck needs the same numbers. Git history has the old page.
 
-The deck is `src/Recap.jsx`, reachable at **`?recap`** (query param, not `#recap`,
-for the same Vercel SSO reason as `?vegas`). `?recap&player=Andrew%20Ishak`
-overrides the signed-in name so any of the 48 decks can be checked without
-switching users.
+The deck is `src/Recap.jsx`. Three ways in, all equivalent: **`/deck`** (the real
+path, and the one to share), `?recap`, `#recap`. The path needs the SPA rewrite
+in `vercel.json` or a direct hit 404s before the app loads, since Vercel's Vite
+preset does not add one. `?player=Andrew%20Ishak` overrides the signed-in name
+so any of the 48 decks can be checked without switching users.
+
+`src/recaps.js` maps a round to its recap URL. Both Recaps.jsx and Schedule.jsx
+used to build `/recaps/round{N}.html` from the round number and assume a file was
+there, but a round appears as soon as it is **scored**, not when it is written
+up, so rounds 8 and 10 have always offered a recap that does not exist. That
+used to 404; since `vercel.json` started serving the app for unmatched paths it
+silently returns the app shell instead. Both screens now check the map, and
+round 11 points at `/deck`.
 
 Ten cards, tap-through, forward only, one next button whose label changes on
 cards 4-6. Cards 1-6 are the light look, **card 7 turns Vegas** and stays.
@@ -200,8 +209,9 @@ sentences across the 24 teams. Worth knowing:
 
 ### Open — READ THIS FIRST when picking the deck back up
 
-Paused 2026-08-12 to build the generic Stories feature in `~/Projects/stories`.
-The deck is a working draft, not finished. Everything below is unresolved.
+**Andrew is working on this over the weekend of 2026-08-15.** The deck is a
+working draft that is already live, which is the awkward part: everything below
+is unresolved and 48 people can reach it.
 
 **Andrew's verdict on the current draft: "this needs lots of work."** He named
 two things and both are done — headline-first, and the Vegas type being too
@@ -219,32 +229,27 @@ Three questions asked and never answered:
 3. Card 9's rival label literally says `family` for the nine players with a
    relative in the league. Blunt on the card.
 
-**The deck has never been seen in motion.** The flythrough on card 2, the board
-travel on cards 5-6, the click reveal on card 4 and the Vegas flip on card 7 are
-all unverified. Smoke proves they render, not that they look right. The Chrome
-extension still will not pair (`list_connected_browsers` returned empty again),
-so this needs a human at `?recap`. `npm run dev` was serving on **:5174**, not
-5173, because 5173 was already taken.
+**The deck has never been seen in motion, and it is live.** The flythrough on
+card 2, the board travel on cards 5-6, the click reveal on card 4 and the Vegas
+flip on card 7 are all unverified. The three smoke suites prove it renders, not
+that it looks right. The Chrome extension still will not pair
+(`list_connected_browsers` returns empty), so this needs a human at
+`f5.andrewishak.com/deck`. `npm run dev` serves on **:5174** when 5173 is taken.
 
-**Nothing is committed.** Working tree has `src/Recap.jsx`,
-`src/recapData.json`, `scripts/recap/cards.mjs`, `scripts/smoke-recap.jsx` as new
-files, plus edits to `App.jsx`, `package.json`, `prep3.mjs`, `CLAUDE.md` and the
-two regenerated recap artifacts. The branch is `vegas-second-half`, which was
-already 2 commits ahead of origin before any of this.
+**The pick pages have never been opened since the driver-name refactor either.**
+`npm run smoke:drivers` checks the data hard and opens both pages, but their real
+data loads from Supabase after the page appears, which does not happen in the
+harness. Someone should submit a pick on a phone before round 12.
 
-**The old recap is still in place.** Andrew said to get rid of it; it is being
-kept until he has seen the deck, since it is the only round-11 recap that
-currently exists. `prep.mjs`, `prep2.mjs`, `prep3.mjs`, `standings.mjs` and
-`nobb.mjs` all stay regardless — `cards.mjs` depends on them. Only
-`template.html`, `build.mjs`, `scripts/recap/smoke.mjs` and
-`public/recaps/round11.html` go.
+Everything is merged to `main` and deployed. Production and `main` are the same
+commit.
 
 Dropped when the twelve charts were cut, per Andrew: the OVER/UNDER imbalance,
-partner agreement, submission timing, driver ROI. **The OVER/UNDER balance is
-still live as a rules decision** even though it is no longer a chart.
+partner agreement, submission timing, driver returns. `prep.mjs` and `prep2.mjs`
+still compute all of them. **The OVER/UNDER balance is still live as a rules
+decision** even though it is no longer a chart.
 
-**Shelf life.** This is a *first-half* recap and round 12 is next. It gets less
-interesting every week it is not shipped.
+**Shelf life.** This is a *first-half* recap and round 12 is next.
 
 ### Relationship to the Stories project
 

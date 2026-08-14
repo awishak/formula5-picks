@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 
 
 import { DARK, BLUE, BLUEDARK, TEXT, TEXT2, BORDER, FD, FB } from "./theme";
+import { recapUrl, isDeck } from "./recaps";
 
 export default function Recaps() {
   const [recaps, setRecaps] = useState([]); // [{ round, name }] latest first
@@ -17,8 +18,10 @@ export default function Recaps() {
           supabase.from("scores").select("race_id").limit(2000),
         ]);
         const scoredIds = new Set((scores || []).map(s => s.race_id));
+        // Scored is not the same as written up. Rounds 8 and 10 were scored and
+        // never got a recap, so the round also has to be in the list.
         const avail = (races || [])
-          .filter(r => scoredIds.has(r.id))
+          .filter(r => scoredIds.has(r.id) && recapUrl(r.round))
           .map(r => ({ round: r.round, name: r.race_name }))
           .sort((a, b) => b.round - a.round);
         setRecaps(avail);
@@ -28,7 +31,7 @@ export default function Recaps() {
     load();
   }, []);
 
-  const fileFor = (round) => `/recaps/round${round}.html`;
+  const fileFor = recapUrl;
 
   if (loading) {
     return <div style={{ padding: "60px 20px", textAlign: "center" }}><p style={{ fontFamily: FB, fontSize: 14, color: TEXT2 }}>Loading recaps…</p></div>;
@@ -79,13 +82,32 @@ export default function Recaps() {
         }}>Open in new tab ↗</button>
       </div>
 
-      {/* The recap itself, rendered in-app */}
-      <iframe
-        key={current.round}
-        title={`Round ${current.round} Recap`}
-        src={fileFor(current.round)}
-        style={{ width: "100%", height: "78vh", border: `1px solid ${BORDER}`, borderRadius: 14, background: "#fff" }}
-      />
+      {/* The recap itself, rendered in-app. The card deck is full-screen and
+          tap-through, so it gets a card that sends you to it rather than being
+          squeezed into an iframe. */}
+      {isDeck(current.round) ? (
+        <button onClick={() => window.open(fileFor(current.round), "_blank")} style={{
+          width: "100%", padding: "34px 20px", borderRadius: 14, cursor: "pointer",
+          border: `1px solid ${BORDER}`, background: "#fff", textAlign: "center",
+        }}>
+          <span style={{ display: "block", fontFamily: FD, fontWeight: 900, fontSize: 18,
+            color: DARK, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: 6 }}>
+            Your first half
+          </span>
+          <span style={{ display: "block", fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 16 }}>
+            Ten cards, your season. Tap through it.
+          </span>
+          <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 12, color: BLUEDARK,
+            textTransform: "uppercase", letterSpacing: "0.04em" }}>Open ↗</span>
+        </button>
+      ) : (
+        <iframe
+          key={current.round}
+          title={`Round ${current.round} Recap`}
+          src={fileFor(current.round)}
+          style={{ width: "100%", height: "78vh", border: `1px solid ${BORDER}`, borderRadius: 14, background: "#fff" }}
+        />
+      )}
     </div>
   );
 }
