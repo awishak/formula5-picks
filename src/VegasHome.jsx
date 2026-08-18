@@ -624,7 +624,7 @@ function NeedleExplainer({ side }) {
           transition: "transform .2s ease", display: "inline-block",
         }}>&rsaquo;</span>
         <span style={{ ...body("bodyMd"), fontSize: 15, color: V.purple }}>
-          How the Needle scores
+          See how the needle points work
         </span>
       </button>
 
@@ -774,8 +774,8 @@ function PickFlow() {
   const { pools } = SNAP;
   const [picked, setPicked] = useState([]);
   const [order, setOrder] = useState([]);
-  const [finish, setFinish] = useState("P2");
-  const [needle, setNeedle] = useState(2.5);
+  const [finish, setFinish] = useState("P5");
+  const [needle, setNeedle] = useState(3.0);
   const [review, setReview] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -913,7 +913,7 @@ function PickFlow() {
           <NeedleExplainer side={SNAP.boxBox.side} />
         </div>
 
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ marginBottom: 34 }}>
           <NeonBtn
             color={ready ? V.green : V.text3}
             flicker={ready && !sent}
