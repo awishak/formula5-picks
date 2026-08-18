@@ -878,9 +878,10 @@ export default function App() {
     const q = new URLSearchParams(window.location.search);
     const path = window.location.pathname.replace(/\/+$/, "");
     if (path === "/deck" || window.location.hash === "#recap" || q.has("recap")) return "recap";
-    const byHash = window.location.hash === "#vegas";
-    const byQuery = q.has("vegas");
-    return byHash || byQuery ? "vegas" : "home";
+    // /newui is the shareable path for the second-half look. ?vegas and #vegas
+    // still work, and the query param is what the mockup's own controls use.
+    if (path === "/newui" || window.location.hash === "#vegas" || q.has("vegas")) return "vegas";
+    return "home";
   });
   const [scheduleInitialView, setScheduleInitialView] = useState(null);
 
@@ -918,7 +919,7 @@ export default function App() {
   }, [currentUser, activePage]);
 
   // The Vegas mockup renders outside .app-wrap so the light theme's background,
-  // width cap and bottom nav don't fight it. Reachable at ?vegas.
+  // width cap and bottom nav don't fight it. Reachable at /newui, ?vegas or #vegas.
   //
   // Ahead of the WelcomeScreen check on purpose: it runs on a hardcoded snapshot
   // and needs no signed-in player, so ?vegas opens the mockup on a fresh browser
@@ -927,7 +928,9 @@ export default function App() {
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: #07070c; }`}</style>
       <VegasHome
-        onNavigate={(p) => { window.history.replaceState(null, "", window.location.pathname); navigateTo(p); }}
+        // Back to the root, not the current path: leaving from /newui has to drop
+        // the path or the next load reopens the mockup.
+        onNavigate={(p) => { window.history.replaceState(null, "", "/"); navigateTo(p); }}
         {...(() => {
           // ?vegas&state=final&lap=1&tab=kit deep-links a state, so a screenshot
           // or a shared link can land on one without clicking the mock controls.
