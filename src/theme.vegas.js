@@ -47,17 +47,16 @@ export const V = {
 //                    so never set 700/900 on it or the browser fakes a bold.
 //   FB  DM Sans      body copy, anything in real sentences or mixed case.
 export const FM = "'Monoton', cursive";
-export const FD = "var(--f5-display, 'Bebas Neue', sans-serif)";
-
-// Candidates for the display face, switchable at ?font=. Bebas is condensed and
-// reads cramped at label size, which is what started this.
-export const DISPLAY_FONTS = {
-  bebas:     { css: "'Bebas Neue', sans-serif",  label: "Bebas Neue", note: "current, condensed" },
-  titillium: { css: "'Titillium Web', sans-serif", label: "Titillium Web", note: "what F1 used" },
-  archivo:   { css: "'Archivo', sans-serif",     label: "Archivo", note: "wide grotesque" },
-  chakra:    { css: "'Chakra Petch', sans-serif", label: "Chakra Petch", note: "motorsport tech" },
-  saira:     { css: "'Saira', sans-serif",       label: "Saira", note: "sporty, slight width" },
-};
+// Two display faces, settled 2026-08-18 after comparing Bebas, Titillium,
+// Archivo, Chakra Petch and Saira in the real screens.
+//
+//   FD  Titillium Web   titles, headings, labels, chips. What F1 used for years,
+//                       and wide enough to stay legible at label size, which
+//                       Bebas Neue was not.
+//   FN  Chakra Petch    the big glowing numbers ONLY. Squared terminals read as
+//                       motorsport instrumentation, which is what a stat is.
+export const FD = "'Titillium Web', sans-serif";
+export const FN = "'Chakra Petch', sans-serif";
 export const FB = "'DM Sans', sans-serif";
 
 // Type scale. Floor is 13px and the labels sit at 15, which is where the old
@@ -78,7 +77,16 @@ export const TYPE = {
 
 // Bebas has one weight. Pinning 400 here means a stray fontWeight in a caller
 // cannot trigger synthetic bold, which on a condensed face looks like a smudge.
-export const display = (step, extra = {}) => ({ fontFamily: FD, fontWeight: 400, ...TYPE[step], ...extra });
+const NUMERIC = new Set(["hero", "stat"]);
+export const display = (step, extra = {}) => ({
+  fontFamily: NUMERIC.has(step) ? FN : FD,
+  // Bebas shipped one weight. Both of these have real ones, so headings sit at
+  // 600 and the glowing numbers at 700, where the glow has something to cling to.
+  fontWeight: NUMERIC.has(step) ? 700 : 600,
+  ...TYPE[step], ...extra,
+});
+// For a number that is not on the hero or stat step but still wants the face.
+export const numeric = (step, extra = {}) => ({ fontFamily: FN, fontWeight: 700, ...TYPE[step], ...extra });
 export const body = (step, extra = {}) => ({ fontFamily: FB, ...TYPE[step], ...extra });
 
 // Labels stay off the condensed face. Bebas at label size reads cramped, and

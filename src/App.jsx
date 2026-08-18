@@ -926,7 +926,7 @@ export default function App() {
   // instead of a name picker.
   if (activePage === "vegas") return (
     <>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: #07070c; }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Titillium+Web:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: #07070c; }`}</style>
       <VegasHome
         // Back to the root, not the current path: leaving from /newui has to drop
         // the path or the next load reopens the mockup.
