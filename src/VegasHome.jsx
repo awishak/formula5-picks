@@ -280,7 +280,7 @@ function DriverRow({ name, accent, badge, why, grid, dim = false }) {
       borderRadius: 14, opacity: dim ? 0.62 : 1,
     }}>
       {grid != null && (
-        <div style={{ width: 34, flexShrink: 0, textAlign: "center" }}>
+        <div style={{ width: 46, flexShrink: 0, textAlign: "center" }}>
           <p style={{ ...display("h3"), color: dim ? V.text3 : V.text, margin: 0 }}>{grid}</p>
           <Label style={{ fontSize: 13, letterSpacing: "0.06em" }} color={V.text3}>Grid</Label>
         </div>
@@ -298,11 +298,20 @@ function DriverRow({ name, accent, badge, why, grid, dim = false }) {
 }
 
 function StatTile({ label, value, unit, color = V.text, glow = false }) {
+  // Three of these across a phone leaves about 90px of content each. "4.38" at
+  // the stat step plus "km" is wider than that, and the unit was being cut off,
+  // so a tile carrying a unit drops a step and the unit shrinks with it.
   return (
-    <div style={{ ...card({ padding: "14px 16px", flex: 1, minWidth: 0 }) }}>
+    <div style={{ ...card({ padding: "14px 9px", flex: 1, minWidth: 0 }) }}>
       <Label>{label}</Label>
-      <p style={{ ...display("stat"), ...(glow ? textGlow(color) : { color }), margin: "6px 0 0" }}>
-        {value}{unit && <span style={{ ...display("h3"), color: V.text3, marginLeft: 4 }}>{unit}</span>}
+      <p style={{
+        ...(unit ? numeric("h2", { fontSize: 26 }) : display("stat")),
+        ...(glow ? textGlow(color) : { color }),
+        margin: "6px 0 0", whiteSpace: "nowrap",
+      }}>
+        {value}{unit && (
+          <span style={{ ...body("bodySm"), fontSize: 12, color: V.text3, marginLeft: 2 }}>{unit}</span>
+        )}
       </p>
     </div>
   );
@@ -819,7 +828,7 @@ function PickReview({ order, finish, needle, sent, onBack, onSubmit }) {
                   display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
                   borderRadius: 10, background: V.bg3, border: `1px solid ${V.border}`,
                 }}>
-                  <span style={{ ...numeric("h3"), color: V.blue, width: 34, flexShrink: 0 }}>{ordinal(i + 1)}</span>
+                  <span style={{ ...numeric("h3"), color: V.blue, width: 46, flexShrink: 0 }}>{ordinal(i + 1)}</span>
                   <Face name={d} size={30} ring={dColor(d)} glow={0} />
                   <span style={{ ...body("bodyMd"), fontSize: 16, color: V.text }}>{d}</span>
                 </div>
@@ -959,7 +968,7 @@ function PickFlow() {
                   borderColor: name ? V.blue : V.border2,
                   transition: "background .25s ease, border-color .25s ease",
                 }}>
-                  <span style={{ ...numeric("h3"), color: name ? V.blue : V.text3, width: 34, flexShrink: 0 }}>
+                  <span style={{ ...numeric("h3"), color: name ? V.blue : V.text3, width: 46, flexShrink: 0 }}>
                     {ordinal(i + 1)}
                   </span>
                   {name ? (
@@ -1064,7 +1073,7 @@ function HomeSubmitted({ onEdit }) {
       display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
       borderRadius: 10, background: V.bg3, border: `1px solid ${V.border}`,
     }}>
-      <span style={{ ...numeric("h3"), color: V.blue, width: 34, flexShrink: 0 }}>{ordinal(n)}</span>
+      <span style={{ ...numeric("h3"), color: V.blue, width: 46, flexShrink: 0 }}>{ordinal(n)}</span>
       <Face name={name} size={30} ring={dColor(name)} glow={0} />
       <span style={{ ...body("bodyMd"), fontSize: 16, color: V.text }}>{name}</span>
     </div>
