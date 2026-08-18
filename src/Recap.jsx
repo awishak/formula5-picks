@@ -33,7 +33,8 @@ import { V, FM, FD as VFD, FB, edgeGlow, textGlow, VEGAS_CSS } from "./theme.veg
 const FD_LIGHT = "'Geologica', sans-serif";
 const CARDS = 18;
 const VEGAS_FROM = 12;             // 0-based: card 13 is the first Vegas card
-const SCROLLS = new Set([10]);     // 0-based: card 11 lists every midfield driver
+const SCROLLS = new Set([10, 15, 16]);  // 0-based: card 11 (midfield drivers),
+                                        // 16 (the rules) and 17 (every fixture)
 const LOGO = "/formula5_logo.png";
 
 /* ------------------------------------------------------------- tokens */
@@ -124,6 +125,7 @@ const MIN_SCALE = 0.72;
 
 function Card({ children, T, wide, dep, scrolls }) {
   const inner = useRef(null);
+  const wrap = useRef(null);
   const [h, setH] = useState(null);
   const [fit, setFit] = useState(1);
   const [pad, setPad] = useState(PAD(900));
@@ -135,8 +137,17 @@ function Card({ children, T, wide, dep, scrolls }) {
     const measure = () => {
       const p = PAD(window.innerHeight);
       setPad(p);
+      // The wrapper carries the height from the LAST measurement, and the
+      // content is a flex child inside it, so reading offsetHeight now returns
+      // the constrained height rather than the real one. It converges on
+      // whatever it happened to measure first, which is how the board ended up
+      // squashed on a short screen. Release the wrapper before reading.
+      const w = wrap.current;
+      const held = w ? w.style.height : "";
+      if (w) w.style.height = "auto";
       el.style.transform = "none";
       const natural = el.offsetHeight;
+      if (w) w.style.height = held;
       const avail = window.innerHeight - p.t - p.b - 4;
       const k = scrolls || natural <= avail ? 1 : Math.max(MIN_SCALE, avail / natural);
       el.style.transform = k < 1 ? `scale(${k})` : "";
@@ -185,7 +196,7 @@ function Card({ children, T, wide, dep, scrolls }) {
       maxWidth: wide ? 760 : 560, position: "relative",
       color: T.text, fontFamily: T.fb,
     }}>
-      <div data-fit={fit.toFixed(3)} style={{ width: "100%",
+      <div ref={wrap} data-fit={fit.toFixed(3)} style={{ width: "100%",
         height: scrolls ? undefined : h ?? undefined,
         marginTop: scrolls ? 0 : lead, display: "flex", justifyContent: "center" }}>
         <div ref={inner} className="f5card" style={{
@@ -252,7 +263,7 @@ const quoteFor = rank => QUOTES.find(q => rank <= q.upTo) || QUOTES[QUOTES.lengt
 // same for everybody.
 function Ladder({ me, T, live }) {
   const rows = DATA.league.ladder;
-  const H = 52, VIEW = 420;
+  const H = 50, VIEW = 350;
   const MAX = Math.max(0, rows.length * H - VIEW);
   const idx = rows.findIndex(r => r.name === me.name);
 
@@ -360,8 +371,7 @@ function Board({ mode, meTeam, T }) {
 
   return (
     <div style={{ position: "relative", width: COL * 2 + GAP, height: 12 * H + 24,
-      margin: "0 auto", maxWidth: "100%", isolation: "isolate", zIndex: 0,
-      contain: "layout paint" }}>
+      margin: "0 auto", maxWidth: "100%", isolation: "isolate", flexShrink: 0 }}>
       <div style={{ display: "flex", gap: GAP, marginBottom: 5 }}>
         {["Championship", "Second"].map(d => (
           <div key={d} style={{ width: COL, fontFamily: T.fb, fontSize: T.micro,
@@ -687,7 +697,7 @@ function DivisionGrid({ teams, meTeam, T }) {
         const mine = t.name === meTeam;
         return (
           <div key={t.name} style={{
-            display: "grid", justifyItems: "center", gap: 4, padding: "6px 2px",
+            display: "grid", justifyItems: "center", gap: 3, padding: "4px 2px",
             borderRadius: 12, background: T.panel,
             border: `1px solid ${mine ? T.good : T.line}`,
             ...(mine ? edgeGlow(V.blue, 0.6) : {}),
@@ -696,7 +706,7 @@ function DivisionGrid({ teams, meTeam, T }) {
             {/* A long unbroken team name pushes past its tile, so it is allowed
                 to break mid-word rather than overflow. */}
             <div style={{ fontFamily: T.fb, fontSize: 14, fontWeight: mine ? 700 : 400,
-              lineHeight: 1.25, color: mine ? T.good : T.text, minHeight: 36,
+              lineHeight: 1.22, color: mine ? T.good : T.text, minHeight: 32,
               display: "flex", alignItems: "center", justifyContent: "center",
               maxWidth: "100%", overflowWrap: "anywhere" }}>{t.short || t.name}</div>
           </div>
@@ -725,13 +735,13 @@ function ResetBoard({ teams, meTeam, T, live }) {
 
   return (
     <div style={{ width: "100%", maxWidth: 460, display: "grid",
-      gridTemplateColumns: "minmax(0, 1fr)", gap: 4 }}>
+      gridTemplateColumns: "minmax(0, 1fr)", gap: 3 }}>
       {rows.map((r, n) => {
         const mine = r.name === meTeam;
         return (
           <div key={r.name} style={{
-            display: "flex", alignItems: "center", gap: 9, padding: "7px 11px",
-            borderRadius: 9, background: T.panel,
+            display: "flex", alignItems: "center", gap: 8, padding: "4px 10px",
+            borderRadius: 8, background: T.panel,
             border: `1px solid ${mine ? T.good : T.line}`,
           }}>
             <div style={{ width: zero ? 0 : 20, overflow: "hidden", flexShrink: 0,
@@ -901,7 +911,7 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
         <Head T={T}>
           You scored {deck.ppr} points a race, which puts you {ordinal(deck.rank)} out of 48.
         </Head>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 2, padding: "9px 14px", borderRadius: 12,
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 1, padding: "7px 14px", borderRadius: 12,
           background: T.panel, border: `1px solid ${T.line}`, maxWidth: 340 }}>
           <div style={{ fontFamily: T.fb, fontSize: T.micro, color: T.faint }}>
             As {q.who} would say:
@@ -921,7 +931,7 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
             { n: leader.ppr, l: leader.name === deck.name ? "Nobody higher" : leader.name, col: T.text },
           ].map(x => (
             <div key={x.l} style={{ display: "grid", gap: 2, justifyItems: "center",
-              padding: "8px 4px", borderRadius: 10, background: T.panel,
+              padding: "5px 4px", borderRadius: 10, background: T.panel,
               border: `1px solid ${T.line}` }}>
               <div style={{ fontFamily: T.fd, fontSize: 26, lineHeight: 1, color: x.col }}>{x.n}</div>
               {/* The leader's full name needs two lines in a third of the row,
@@ -1158,14 +1168,15 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
         </Line>
         <Ladder me={deck} T={T} live={i === 14} />
         <Line T={T} dim size={T.small}>
-          {noOrphan(`Small change: you'll be seeing your individual scores as a season-long scoring average rather than total points.`)}
+          {noOrphan(`Small change: scores now show as a season-long average, not a total.`)}
         </Line>
       </Card>
     ),
     // 17 ──────────────────────────────────────────── three things to know
     () => (
-      <Card T={T} dep={i}>
+      <Card T={T} dep={i} scrolls>
         <Head T={T}>Most of the rules are the same, but you should know a few things.</Head>
+        <Line T={T} dim size={T.small}>Scroll to see more.</Line>
         <div style={{ width: "100%", maxWidth: 500, display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 12 }}>
           {[
             "When you're choosing a pit stop time, you will now be able to choose all the way up to 4.5 seconds. It stopped at 4.0 in the first half.",
@@ -1186,8 +1197,9 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
     ),
     // 18 ───────────────────────────────────────────────────── the calendar
     () => (
-      <Card T={T} dep={i}>
+      <Card T={T} dep={i} scrolls>
         <Head T={T}>And here is who you play.</Head>
+        <Line T={T} dim size={T.small}>Scroll to see more.</Line>
         <Fixtures deck={deck} T={T} />
       </Card>
     ),
@@ -1225,7 +1237,11 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
         /* Nothing inside a card may be wider than the card. Without this a
            nowrap flex row pushes its panel past the edge and the text is
            clipped rather than wrapped. */
-        .f5card > * { max-width: 100% !important; }
+        .f5card > * {
+          max-width: 100% !important;
+          flex-shrink: 0 !important;
+          position: relative;
+        }
         body { background: ${T.bg}; transition: background 1.6s ease; overflow-x: hidden; }
         html { overflow-x: hidden; }
         @keyframes f5pulse {
