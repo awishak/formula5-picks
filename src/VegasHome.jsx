@@ -65,6 +65,12 @@ const SNAP = {
   myPick: {
     topPick: "Lewis Hamilton",
     order: ["Lewis Hamilton", "Max Verstappen", "Isack Hadjar", "Liam Lawson", "Arvid Lindblad"],
+    bestFinish: "P3",
+    pitGuess: 1.5,
+  },
+  matePick: {
+    order: ["Lewis Hamilton", "Max Verstappen", "Isack Hadjar", "Liam Lawson", "Arvid Lindblad"],
+    bestFinish: "P3",
     pitGuess: 1.5,
   },
   // team is the F1 constructor whose stop settles it, from race.pitQuestion.
@@ -436,8 +442,10 @@ function eventStatus({ settled, live, lapInfo, race, closesAt }) {
 }
 
 // ── State A: picks not in ────────────────────────────────
-function HomeOpen({ onNav }) {
+function HomeOpen({ onNav, submitted = false }) {
   const { race, track, myTeam, opp, pools } = SNAP;
+  const [editing, setEditing] = useState(false);
+  const showPicker = !submitted || editing;
   // Round 11's real deadline has already passed, so a live clock against it would
   // read "19h ago" in a state that only exists before the deadline. Stand-in
   // target keeps the countdown legible whenever this state is being reviewed.
@@ -448,13 +456,19 @@ function HomeOpen({ onNav }) {
         race={race}
         status={eventStatus({ settled: false, live: false, lapInfo: null, race, closesAt: demoDeadline })}
         players={[
-          { name: SNAP.me, picked: false },
-          { name: SNAP.teammate, picked: false },
+          { name: SNAP.me, picked: submitted },
+          { name: SNAP.teammate, picked: submitted },
         ]}
       />
 
-      <PickSign />
-      <PickFlow />
+      {showPicker ? (
+        <>
+          <PickSign />
+          <PickFlow />
+        </>
+      ) : (
+        <HomeSubmitted onEdit={() => setEditing(true)} />
+      )}
 
       <SectionHead accent={V.pink}>This week's opponent</SectionHead>
       <OpponentCard />
@@ -546,9 +560,34 @@ function DriverPickRow({ name, picked, muted, onTap }) {
   );
 }
 
+function NeedleSides({ side }) {
+  const winsHigh = side === "OVER";
+  const Half = ({ win, text, arrow }) => (
+    <div style={{
+      flex: 1, padding: "7px 10px", borderRadius: 9,
+      background: win ? `${V.green}14` : `${V.pink}12`,
+      border: `1px solid ${win ? V.green : V.pink}44`,
+      display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+    }}>
+      <span style={{ ...numeric("h3"), fontSize: 17, color: win ? V.green : V.pink }}>
+        {win ? "+5" : "\u22121"}
+      </span>
+      <span style={{ ...body("bodySm"), fontSize: 13, color: win ? V.green : V.pink }}>
+        {arrow} {text}
+      </span>
+    </div>
+  );
+  return (
+    <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+      <Half win={!winsHigh} text="under the line" arrow={"\u2190"} />
+      <Half win={winsHigh} text="over the line" arrow={"\u2192"} />
+    </div>
+  );
+}
+
 // Left-to-right wheel. Scroll snapping does the feel; tapping does the choosing,
 // because reading a value off scroll position is unreliable on a phone.
-function Wheel({ options, value, onChange, format = (v) => v, accent = V.purple }) {
+function Wheel({ options, value, onChange, format = (v) => v, accent = V.purple, tone }) {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
@@ -563,16 +602,20 @@ function Wheel({ options, value, onChange, format = (v) => v, accent = V.purple 
     }}>
       {options.map(o => {
         const on = o === value;
+        // Which side of the current guess pays the team, if the caller says.
+        const t = on ? null : tone ? tone(o) : null;
+        const edge = t === "win" ? V.green : t === "lose" ? V.pink : null;
         return (
           <button key={o} data-on={on ? "1" : "0"} onClick={() => onChange(o)} style={{
             flexShrink: 0, scrollSnapAlign: "center", cursor: "pointer",
             padding: "12px 18px", borderRadius: 12,
-            background: on ? `${accent}1f` : V.bg3,
-            border: `1px solid ${on ? accent : V.border}`,
+            background: on ? `${accent}1f` : edge ? `${edge}0f` : V.bg3,
+            border: `1px solid ${on ? accent : edge ? `${edge}55` : V.border}`,
             ...(on ? { boxShadow: `0 0 18px ${accent}55` } : {}),
             transition: "background .16s ease, border-color .16s ease, box-shadow .16s ease",
           }}>
-            <span style={{ ...numeric("h3"), ...(on ? textGlow(accent, 0.7) : { color: V.text2 }) }}>
+            <span style={{ ...numeric("h3"),
+              ...(on ? textGlow(accent, 0.7) : { color: edge || V.text2 }) }}>
               {format(o)}
             </span>
           </button>
@@ -908,8 +951,10 @@ function PickFlow() {
             <span style={{ color: V.purple }}>{SNAP.boxBox.team}&rsquo;s first pit stop</span>, and your
             team has the <span style={{ color: V.gold }}>{SNAP.boxBox.side}</span>.
           </p>
+          <NeedleSides side={SNAP.boxBox.side} />
           <Wheel options={NEEDLE_OPTIONS} value={needle} onChange={setNeedle}
-            format={v => v.toFixed(1)} accent={V.purple} />
+            format={v => v.toFixed(1)} accent={V.purple}
+            tone={v => ((v > needle) === (SNAP.boxBox.side === "OVER") ? "win" : "lose")} />
           <NeedleExplainer side={SNAP.boxBox.side} />
         </div>
 
@@ -939,6 +984,109 @@ function PickFlow() {
           onSubmit={() => setSent(true)}
         />
       )}
+    </>
+  );
+}
+
+// ── Submitted, deadline still open ───────────────────────
+
+// The window most people sit in: your entry is in, you can still change it, and
+// nobody outside your team can see it. PickIntel.jsx:110 gates everyone else's
+// picks on the deadline, so there is nothing of theirs to show yet.
+function HomeSubmitted({ onEdit }) {
+  const { myPick, matePick, teammate, race, boxBox } = SNAP;
+  const [compare, setCompare] = useState(false);
+  const mate1 = teammate.split(" ")[0];
+  const same = myPick.order.every((d, i) => matePick.order[i] === d);
+
+  const Row = ({ n, name }) => (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+      borderRadius: 10, background: V.bg3, border: `1px solid ${V.border}`,
+    }}>
+      <span style={{ ...numeric("h3"), color: V.blue, width: 34, flexShrink: 0 }}>{ordinal(n)}</span>
+      <Face name={name} size={30} ring={dColor(name)} glow={0} />
+      <span style={{ ...body("bodyMd"), fontSize: 16, color: V.text }}>{name}</span>
+    </div>
+  );
+
+  return (
+    <>
+      <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }), borderColor: `${V.green}33` }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+          <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: 0 }}>Your picks are in</p>
+        </div>
+        <p style={{ ...body("body"), fontSize: 16, color: V.text2, margin: "0 0 18px" }}>
+          Nobody outside your team sees them until the deadline. You can change them until then.
+        </p>
+
+        <div style={{ display: "grid", gap: 6, marginBottom: 16 }}>
+          {myPick.order.map((d, i) => <Row key={d} n={i + 1} name={d} />)}
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+          <div style={{ flex: 1, padding: "12px 14px", borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}` }}>
+            <Label color={V.text3} style={{ marginBottom: 6 }}>Best finish</Label>
+            <p style={{ ...numeric("h2"), ...textGlow(V.blue, 0.6), margin: 0 }}>{myPick.bestFinish}</p>
+          </div>
+          <div style={{ flex: 1, padding: "12px 14px", borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}` }}>
+            <Label color={V.text3} style={{ marginBottom: 6 }}>The Needle</Label>
+            <p style={{ ...numeric("h2"), ...textGlow(V.purple, 0.6), margin: 0 }}>{myPick.pitGuess.toFixed(1)}s</p>
+          </div>
+        </div>
+
+        <button onClick={onEdit} style={{
+          width: "100%", padding: "13px", borderRadius: 12, cursor: "pointer",
+          background: "transparent", border: `1px solid ${V.blue}`,
+          ...body("bodyMd"), fontSize: 16, color: V.blue,
+        }}>Edit picks</button>
+      </div>
+
+      {/* Quiet by design. You two already coordinate; the app just saves a text. */}
+      <div style={{ ...card({ padding: "16px 18px", marginBottom: 22 }) }}>
+        <button onClick={() => setCompare(c => !c)} style={{
+          display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
+          background: "transparent", border: "none", padding: 0, width: "100%",
+        }}>
+          <span style={{
+            ...numeric("h3"), fontSize: 18, color: V.blue, lineHeight: 1,
+            transform: compare ? "rotate(90deg)" : "rotate(0deg)",
+            transition: "transform .2s ease", display: "inline-block",
+          }}>&rsaquo;</span>
+          <span style={{ ...body("bodyMd"), fontSize: 16, color: V.blue }}>Compare our picks</span>
+        </button>
+
+        <div style={{
+          maxHeight: compare ? 700 : 0, opacity: compare ? 1 : 0, overflow: "hidden",
+          transition: "max-height .4s ease, opacity .3s ease",
+        }}>
+          <div style={{ paddingTop: 14 }}>
+            <p style={{ ...body("body"), color: V.text2, margin: "0 0 14px" }}>
+              {same
+                ? `You and ${mate1} picked the same five, in the same order.`
+                : `You and ${mate1} are not on the same five.`}
+            </p>
+            <Label color={V.text3} style={{ marginBottom: 8 }}>{mate1}&rsquo;s order</Label>
+            <div style={{ display: "grid", gap: 6, marginBottom: 14 }}>
+              {matePick.order.map((d, i) => <Row key={d} n={i + 1} name={d} />)}
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ flex: 1, padding: "10px 12px", borderRadius: 10, background: V.bg3, border: `1px solid ${V.border}` }}>
+                <Label color={V.text3} style={{ marginBottom: 4 }}>Their best finish</Label>
+                <p style={{ ...numeric("h3"), color: V.text, margin: 0 }}>{matePick.bestFinish}</p>
+              </div>
+              <div style={{ flex: 1, padding: "10px 12px", borderRadius: 10, background: V.bg3, border: `1px solid ${V.border}` }}>
+                <Label color={V.text3} style={{ marginBottom: 4 }}>Their Needle</Label>
+                <p style={{ ...numeric("h3"), color: V.text, margin: 0 }}>{matePick.pitGuess.toFixed(1)}s</p>
+              </div>
+            </div>
+            <p style={{ ...body("bodySm"), color: V.text3, margin: "12px 0 0" }}>
+              Both your guesses go into the BOX BOX line, and your team has the{" "}
+              <span style={{ color: V.gold }}>{boxBox.side}</span>.
+            </p>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
@@ -1531,8 +1679,8 @@ export default function VegasHome({ onNavigate, initialTab = "home", initialStat
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "18px 18px 60px" }}>
 
         {tab === "kit" ? <NeonKit /> : (
-          state === "open"
-            ? <HomeOpen onNav={nav} />
+          state === "open" || state === "submitted"
+            ? <HomeOpen onNav={nav} submitted={state === "submitted"} />
             : <HomeLocked live={state === "live"} settled={state === "final"} lapIdx={lapIdx} />
         )}
         {/* Mockup controls. Not part of the design, so they sit under it. */}
@@ -1543,6 +1691,7 @@ export default function VegasHome({ onNavigate, initialTab = "home", initialStat
             {tab === "home" && (
               <Toggle val={state} set={setState} opts={[
                 { id: "open", label: "No picks" },
+                { id: "submitted", label: "Picked" },
                 { id: "locked", label: "Locked" },
                 { id: "live", label: "Live" },
                 { id: "final", label: "Final" },

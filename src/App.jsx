@@ -937,7 +937,7 @@ export default function App() {
           const q = new URLSearchParams(window.location.search);
           const state = q.get("state"), tab = q.get("tab"), lap = q.get("lap");
           return {
-            ...(["open", "locked", "live", "final"].includes(state) ? { initialState: state } : {}),
+            ...(["open", "submitted", "locked", "live", "final"].includes(state) ? { initialState: state } : {}),
             ...(["home", "kit"].includes(tab) ? { initialTab: tab } : {}),
             ...(lap === "0" || lap === "1" ? { initialLap: Number(lap) } : {}),
           };

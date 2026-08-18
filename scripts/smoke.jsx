@@ -6,7 +6,7 @@ import VegasHome from "../src/VegasHome.jsx";
 
 const cases = [];
 for (const tab of ["home", "kit"]) {
-  for (const state of ["open", "locked", "live", "final"]) {
+  for (const state of ["open", "submitted", "locked", "live", "final"]) {
     for (const lapIdx of [0, 1]) {
       cases.push({ tab, state, lapIdx });
     }
