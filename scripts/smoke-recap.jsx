@@ -12,7 +12,7 @@ import Recap from "../src/Recap.jsx";
 import DATA from "../src/recapData.json";
 
 const names = Object.keys(DATA.players);
-const CARDS = 19;
+const CARDS = 18;
 
 // Compare CONTENT, not output length. The highlighted row on the team board
 // moves between teams without changing the byte count, so counting distinct
@@ -66,7 +66,7 @@ try {
 // Everything else has to differ across all 48.
 const EXPECTED_MIN = {
   3: 20, 4: 20, 5: 1, 6: 20, 7: 20,
-  11: 1, 12: 1, 13: 20, 14: 20, 17: 1, 18: 20,
+  11: 1, 12: 1, 13: 20, 14: 20, 16: 1, 17: 20,
 };
 const perCard = {};
 for (const [k, v] of seen) {

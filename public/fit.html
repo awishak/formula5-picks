@@ -76,6 +76,8 @@
   };
   // Read late and twice: the deck remeasures after webfonts and images land, so
   // an early reading catches a stale scale.
-  setTimeout(read, 2600);
-  setTimeout(read, 4200);
+  // Late, and twice. Team logos have no intrinsic size until they load, so an
+  // early reading under-measures a card full of them by a couple of hundred px.
+  setTimeout(read, 5000);
+  setTimeout(read, 7500);
 </script>

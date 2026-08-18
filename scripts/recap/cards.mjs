@@ -118,9 +118,12 @@ if (missing.length) throw new Error(`no short name for: ${missing.join(", ")}`);
 // oldDiv/oldPos are where the team ended the first half, before the swap. The
 // board animates from that layout to the new one, so both have to travel with
 // the team rather than being recomputed in the component.
+const ptsOf = Object.fromEntries([...C.c1.champ, ...C.c1.second].map(t => [t.name, t.pts]));
+
 const newDiv = { champ: [], second: [] };
 teams.forEach(t => newDiv[destOf(t)].push({
   name: t.name, short: shortOf(t.name), logo: t.logo, avg: avgOf[t.name], moved: t.moved,
+  pts: ptsOf[t.name],
   oldDiv: t.div, oldPos: t.posAfter,
   p1: t.p1, p2: t.p2, photo1: t.photo1, photo2: t.photo2,
 }));
@@ -482,6 +485,20 @@ function pickRival(me, mate) {
 
 const byName = Object.fromEntries(ladder.map(p => [p.name, p]));
 
+// First-half record per team, off the weeks already worked out above.
+const recordOf = {};
+Object.entries(teamWeeks).forEach(([name, weeks]) => {
+  const r = { w: 0, l: 0, d: 0 };
+  weeks.forEach(x => { if (x.result === "W") r.w++; else if (x.result === "L") r.l++; else if (x.result === "D") r.d++; });
+  recordOf[name] = r;
+});
+[...newDiv.champ, ...newDiv.second].forEach(t => (t.record = recordOf[t.name] || { w: 0, l: 0, d: 0 }));
+
+// Scoring-average rank inside each new division, for the calendar card.
+["champ", "second"].forEach(k => {
+  [...newDiv[k]].sort((a, b) => b.avg - a.avg).forEach((t, i) => (t.avgRank = i + 1));
+});
+
 /* ---------------------------------------------------- the division table */
 
 // Card 3's reveal moves your team up or down the twelve-team division table, so
@@ -714,7 +731,15 @@ ladder.forEach(p => {
       race: perRound[p.name].worst.race_name,
     },
     // Card 10: the second half, drawn 2026-08-17.
-    fixtures: FIX[t.name] || null,
+    fixtures: FIX[t.name]
+      ? {
+          ...FIX[t.name],
+          weeks: FIX[t.name].weeks.map(w => {
+            const o = [...newDiv.champ, ...newDiv.second].find(x => x.name === w.opp) || {};
+            return { ...w, oppLogo: o.logo || null, oppRank: o.avgRank || null, oppAvg: o.avg || null };
+          }),
+        }
+      : null,
   };
 });
 

@@ -31,7 +31,7 @@ import { BG, BLUE, TEXT, TEXT2, BORDER, avatarColor } from "./theme";
 import { V, FM, FD as VFD, FB, edgeGlow, textGlow, VEGAS_CSS } from "./theme.vegas";
 
 const FD_LIGHT = "'Geologica', sans-serif";
-const CARDS = 19;
+const CARDS = 18;
 const VEGAS_FROM = 12;             // 0-based: card 13 is the first Vegas card
 const SCROLLS = new Set([10]);     // 0-based: card 11 lists every midfield driver
 const LOGO = "/formula5_logo.png";
@@ -45,7 +45,7 @@ function tokens(vegas) {
     ? { bg: V.bg, panel: V.bg2, panel2: V.bg3, text: V.text, dim: V.text2,
         faint: V.text3, line: V.border, good: V.blue, great: V.green,
         bad: V.pink, fd: VFD, fb: FB, glow: true,
-        head: 27, line1: 23, small: 20, micro: 18,
+        head: 29, line1: 25, small: 22, micro: 19,
         win: V.green, loss: V.red, draw: V.text2,
         band: [V.amber, "#e8734a", "#5b8db8"] }
     : { bg: BG, panel: "#fff", panel2: "#f0f0f3", text: TEXT, dim: TEXT2,
@@ -117,7 +117,9 @@ function Logo({ src, name, size = 64, T }) {
 // scaler has to know exactly what that padding is or it leaves the difference
 // overflowing. On a short screen the standard 168px is a quarter of the display,
 // so it tightens to what the header and nav actually occupy.
-const PAD = h => (h < 740 ? { t: 60, b: 78 } : { t: 78, b: 90 });
+// The bottom value has to clear the fixed nav AND the gradient above it, or
+// the last line of a long card reads through the fade.
+const PAD = h => (h < 740 ? { t: 56, b: 96 } : { t: 66, b: 108 });
 const MIN_SCALE = 0.72;
 
 function Card({ children, T, wide, dep, scrolls }) {
@@ -140,9 +142,8 @@ function Card({ children, T, wide, dep, scrolls }) {
       el.style.transform = k < 1 ? `scale(${k})` : "";
       setH(natural * k);
       setFit(k);
-      // Hard top-align leaves a hole under a short card; centring leaves a gap
-      // above a tall one. A third of the slack above sits well at both ends.
-      setLead(Math.max(0, Math.round((avail - natural * k) * 0.34)));
+      // Top justified. Anything else leaves a gap above the headline.
+      setLead(0);
       // Published on the element so a headless screenshot run can read how much
       // each card had to shrink. 1 means it fitted as written.
       document.documentElement.dataset.fit = k.toFixed(3);
@@ -181,7 +182,7 @@ function Card({ children, T, wide, dep, scrolls }) {
       minHeight: "100dvh", width: "100%",
       display: "flex", alignItems: "flex-start", justifyContent: "center",
       padding: `${pad.t}px 14px ${pad.b}px`, margin: "0 auto",
-      maxWidth: wide ? 760 : 560,
+      maxWidth: wide ? 760 : 560, position: "relative",
       color: T.text, fontFamily: T.fb,
     }}>
       <div data-fit={fit.toFixed(3)} style={{ width: "100%",
@@ -251,7 +252,7 @@ const quoteFor = rank => QUOTES.find(q => rank <= q.upTo) || QUOTES[QUOTES.lengt
 // same for everybody.
 function Ladder({ me, T, live }) {
   const rows = DATA.league.ladder;
-  const H = 50, VIEW = 300;
+  const H = 52, VIEW = 420;
   const MAX = Math.max(0, rows.length * H - VIEW);
   const idx = rows.findIndex(r => r.name === me.name);
 
@@ -267,18 +268,28 @@ function Ladder({ me, T, live }) {
   const from = target >= TRIP ? target - TRIP : Math.min(target + TRIP, MAX);
 
   const [y, setY] = useState(from);
+  // Once the trip has finished, the column becomes an ordinary scroller so you
+  // can go and look at anyone else.
+  const [free, setFree] = useState(false);
+  const box = useRef(null);
   useEffect(() => {
-    if (!live) { setY(from); return; }
-    const t = setTimeout(() => setY(target), 420);
-    return () => clearTimeout(t);
+    if (!live) { setY(from); setFree(false); return; }
+    const go = setTimeout(() => setY(target), 420);
+    const hand = setTimeout(() => {
+      setFree(true);
+      if (box.current) box.current.scrollTop = target;
+    }, 2600);
+    return () => { clearTimeout(go); clearTimeout(hand); };
   }, [live, from, target]);
 
   return (
-    <div style={{ height: VIEW, width: "100%", maxWidth: 340, overflow: "hidden",
+    <div ref={box} style={{ height: VIEW, width: "100%", maxWidth: 340,
+      overflowY: free ? "auto" : "hidden", overflowX: "hidden",
+      WebkitOverflowScrolling: "touch",
       position: "relative", borderRadius: 16, background: T.panel,
       border: `1px solid ${T.line}` }}>
-      <div style={{ transform: `translateY(${-y}px)`,
-        transition: "transform 2s cubic-bezier(0.34, 0.02, 0.2, 1)" }}>
+      <div style={{ transform: free ? "none" : `translateY(${-y}px)`,
+        transition: free ? "none" : "transform 2s cubic-bezier(0.34, 0.02, 0.2, 1)" }}>
         {rows.map(r => {
           const you = r.name === me.name;
           return (
@@ -349,7 +360,8 @@ function Board({ mode, meTeam, T }) {
 
   return (
     <div style={{ position: "relative", width: COL * 2 + GAP, height: 12 * H + 24,
-      margin: "0 auto", maxWidth: "100%" }}>
+      margin: "0 auto", maxWidth: "100%", isolation: "isolate", zIndex: 0,
+      contain: "layout paint" }}>
       <div style={{ display: "flex", gap: GAP, marginBottom: 5 }}>
         {["Championship", "Second"].map(d => (
           <div key={d} style={{ width: COL, fontFamily: T.fb, fontSize: T.micro,
@@ -597,6 +609,39 @@ function Ranks({ deck, T }) {
   );
 }
 
+/* -------------------------------------------------- card 4: the reaction */
+
+// Sixteen pieces on fixed paths. A win sends them up in the good colours; a
+// loss drops them slowly in the bad one. No randomness, so every render of a
+// given deck is identical and the smoke check stays meaningful.
+function Confetti({ tone, T, live }) {
+  const on = useDrawn(live, 120);
+  const good = tone === "good";
+  const cols = good ? [T.win, T.good, T.band[0]] : [T.loss, T.dim];
+  return (
+    <div aria-hidden style={{ position: "absolute", inset: 0, overflow: "hidden",
+      pointerEvents: "none", borderRadius: 16 }}>
+      {Array.from({ length: 16 }, (_, n) => {
+        const left = 6 + ((n * 37) % 89);
+        const delay = ((n * 13) % 90) / 100;
+        const size = 5 + (n % 3) * 3;
+        return (
+          <span key={n} style={{
+            position: "absolute", left: `${left}%`, top: good ? "78%" : "-8%",
+            width: size, height: size + (n % 2) * 4,
+            borderRadius: n % 2 ? 2 : "50%",
+            background: cols[n % cols.length],
+            opacity: on ? 1 : 0,
+            animation: on
+              ? `${good ? "f5pop" : "f5drop"} ${good ? 1.5 : 2.6}s ease-out ${delay}s both`
+              : "none",
+          }} />
+        );
+      })}
+    </div>
+  );
+}
+
 /* ------------------------------------------------- card 12: the doorway */
 
 // Two dice that tumble and settle. Drawn rather than emoji so they glow with
@@ -665,56 +710,66 @@ function DivisionGrid({ teams, meTeam, T }) {
 
 // All 48 players as points: midfield return across, top-driver return up. Yours
 // is the one with a ring round it and a label.
-const SCH = 250;   // the scatter is the only thing on its card
+/* ------------------------------------------- card 14: everything to zero */
 
-function Scatter({ deck, T, live }) {
-  const on = useDrawn(live, 200);
-  const pts = DATA.league.scatter;
-  const xs = pts.map(p => p.mid), ys = pts.map(p => p.top);
-  const x0 = Math.floor(Math.min(...xs) - 1), x1 = Math.ceil(Math.max(...xs) + 1);
-  const y0 = Math.floor(Math.min(...ys) - 1), y1 = Math.ceil(Math.max(...ys) + 1);
-  const sx = v => PL + ((v - x0) / (x1 - x0)) * (CW - PL - PR);
-  const sy = v => PT + (1 - (v - y0) / (y1 - y0)) * (SCH - PT - PB);
-  const me = pts.find(p => p.name === deck.name);
+// Your new division as it finished the first half, places and records and
+// points, and then the points count down to nothing and the places drop away.
+function ResetBoard({ teams, meTeam, T, live }) {
+  const rows = useMemo(() => [...teams].sort((a, b) => b.pts - a.pts), [teams]);
+  const [zero, setZero] = useState(false);
+  useEffect(() => {
+    if (!live) { setZero(false); return; }
+    const t = setTimeout(() => setZero(true), 1500);
+    return () => clearTimeout(t);
+  }, [live]);
 
   return (
-    <div style={{ width: "100%", maxWidth: 500 }}>
-      <svg viewBox={`0 0 ${CW} ${SCH}`} style={{ width: "100%", height: "auto" }}>
-        {[0, 0.5, 1].map(f => (
-          <line key={f} x1={PL} x2={CW - PR} y1={PT + f * (SCH - PT - PB)} y2={PT + f * (SCH - PT - PB)}
-            stroke={T.line} strokeWidth="1" />
-        ))}
-        {[y0, (y0 + y1) / 2, y1].map((v, n) => (
-          <text key={n} x={PL - 7} y={sy(v) + 5} textAnchor="end" fontFamily={T.fd}
-            fontSize="13" fill={T.faint}>{Math.round(v)}</text>
-        ))}
-        {[x0, (x0 + x1) / 2, x1].map((v, n) => (
-          <text key={n} x={sx(v)} y={SCH - PB + 18} textAnchor="middle" fontFamily={T.fd}
-            fontSize="13" fill={T.faint}>{Math.round(v)}</text>
-        ))}
-        <text x={(PL + CW - PR) / 2} y={SCH - 6} textAnchor="middle" fontFamily={T.fb}
-          fontSize="14" fontWeight="600" fill={T.dim}>Midfield points a race</text>
-        <text x={13} y={(PT + SCH - PB) / 2} textAnchor="middle"
-          transform={`rotate(-90 13 ${(PT + SCH - PB) / 2})`} fontFamily={T.fb}
-          fontSize="14" fontWeight="600" fill={T.dim}>Top driver a race</text>
-        {pts.filter(p => p.name !== deck.name).map((p, n) => (
-          <circle key={p.name} cx={sx(p.mid)} cy={sy(p.top)} r="4.5" fill={T.dim}
-            style={{ opacity: on ? 0.45 : 0, transition: `opacity .4s ease ${n * 0.012}s` }} />
-        ))}
-        {me && (
-          <g style={{ opacity: on ? 1 : 0, transition: "opacity .5s ease 0.7s" }}>
-            <circle cx={sx(me.mid)} cy={sy(me.top)} r="13" fill="none"
-              stroke={T.good} strokeWidth="2" />
-            <circle cx={sx(me.mid)} cy={sy(me.top)} r="6" fill={T.good} />
-          </g>
-        )}
-      </svg>
-      {me && (
-        <Line T={T} size={T.small}>
-          {noOrphan(`You are at ${me.mid} from the midfield and ${me.top} from your top driver.`)}
-        </Line>
-      )}
+    <div style={{ width: "100%", maxWidth: 460, display: "grid",
+      gridTemplateColumns: "minmax(0, 1fr)", gap: 4 }}>
+      {rows.map((r, n) => {
+        const mine = r.name === meTeam;
+        return (
+          <div key={r.name} style={{
+            display: "flex", alignItems: "center", gap: 9, padding: "7px 11px",
+            borderRadius: 9, background: T.panel,
+            border: `1px solid ${mine ? T.good : T.line}`,
+          }}>
+            <div style={{ width: zero ? 0 : 20, overflow: "hidden", flexShrink: 0,
+              transition: "width .5s ease", fontFamily: T.fd, fontSize: T.micro,
+              color: T.faint, textAlign: "right" }}>{n + 1}</div>
+            <Logo src={r.logo} name={r.name} size={20} T={T} />
+            <div style={{ flex: "1 1 0", minWidth: 0, textAlign: "left",
+              fontFamily: T.fb, fontSize: T.micro - 3, fontWeight: mine ? 700 : 400,
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+              color: mine ? T.good : T.text }}>{r.short || r.name}</div>
+            <div style={{ fontFamily: T.fd, fontSize: T.micro - 3, color: T.faint,
+              flexShrink: 0 }}>{r.record.w}-{r.record.l}{r.record.d ? `-${r.record.d}` : ""}</div>
+            <Counter to={zero ? 0 : r.pts} T={T} />
+          </div>
+        );
+      })}
     </div>
+  );
+}
+
+// Counts down rather than cutting, so the wipe is watched rather than found.
+function Counter({ to, T }) {
+  const [n, setN] = useState(to);
+  useEffect(() => {
+    if (n === to) return;
+    const step = Math.max(1, Math.ceil(Math.abs(n - to) / 22));
+    const id = setInterval(() => {
+      setN(v => {
+        if (v === to) { clearInterval(id); return v; }
+        return v > to ? Math.max(to, v - step) : Math.min(to, v + step);
+      });
+    }, 45);
+    return () => clearInterval(id);
+  }, [to, n]);
+  return (
+    <div style={{ width: 42, textAlign: "right", flexShrink: 0, fontFamily: T.fd,
+      fontSize: 20, color: n === 0 ? T.bad : T.good,
+      ...(T.glow ? textGlow(n === 0 ? V.pink : V.blue, 0.7) : {}) }}>{n}</div>
   );
 }
 
@@ -730,28 +785,46 @@ function Fixtures({ deck, T }) {
   const f = deck.fixtures;
   if (!f) return <Line T={T} dim>Your fixtures land as soon as the draw is published.</Line>;
   return (
-    <div style={{ width: "100%", maxWidth: 500, display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 4 }}>
+    <div style={{ width: "100%", maxWidth: 500, display: "grid",
+      gridTemplateColumns: "minmax(0, 1fr)", gap: 6 }}>
       {f.weeks.map(w => (
         <div key={w.round} style={{
-          display: "flex", alignItems: "center", gap: 9, padding: "6px 11px",
-          borderRadius: 9, background: T.panel, border: `1px solid ${T.line}`,
+          display: "flex", alignItems: "center", gap: 8, padding: "5px 10px",
+          borderRadius: 10, background: T.panel, border: `1px solid ${T.line}`,
         }}>
-          <div style={{ fontFamily: T.fd, fontSize: 16, width: 30, textAlign: "left",
-            color: T.good }}>R{w.round}</div>
-          <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
-            <div style={{ fontFamily: T.fb, fontSize: T.micro, fontWeight: 600,
-              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{SHORT_BY_NAME[w.opp] || w.opp}</div>
+          <div style={{ fontFamily: T.fd, fontSize: 17, width: 30, textAlign: "left",
+            flexShrink: 0, color: T.good }}>R{w.round}</div>
+          <Logo src={w.oppLogo} name={w.opp} size={26} T={T} />
+          <div style={{ flex: "1 1 0", textAlign: "left", minWidth: 0 }}>
+            <div style={{ fontFamily: T.fb, fontSize: T.micro - 3, fontWeight: 600,
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {SHORT_BY_NAME[w.opp] || w.opp}
+            </div>
+            {w.oppRank && (
+              <div style={{ fontFamily: T.fb, fontSize: T.micro - 5, color: T.faint,
+                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {ordinal(w.oppRank)} on scoring average
+              </div>
+            )}
           </div>
-          <div style={{ fontFamily: T.fd, fontSize: 14, letterSpacing: "0.07em",
-            padding: "2px 8px", borderRadius: 999,
+          <div style={{ fontFamily: T.fd, fontSize: T.micro - 2, letterSpacing: "0.07em",
+            padding: "3px 9px", borderRadius: 999, flexShrink: 0,
             color: w.side === "over" ? T.good : T.bad,
             border: `1px solid ${w.side === "over" ? T.good : T.bad}` }}>
             {w.side === "over" ? "OVER" : "UNDER"}
           </div>
         </div>
       ))}
-      <div style={{ fontFamily: T.fb, fontSize: T.micro, color: T.faint, marginTop: 5 }}>
-        Round 23 at Abu Dhabi is seeded once round 22 is scored.
+      <div style={{ textAlign: "left", padding: "10px 12px", borderRadius: 10,
+        background: T.panel2, border: `1px solid ${T.line}`, marginTop: 4 }}>
+        <div style={{ fontFamily: T.fb, fontSize: T.micro - 4, color: T.dim,
+          lineHeight: 1.45 }}>
+          If the FIA holds a 23rd race, it will be seeded as follows:
+          <br />1st place plays 12th place
+          <br />2nd place plays 11th place
+          <br />and so on.
+          <br /><br />If there happens to be a round 24, the format will be announced then.
+        </div>
       </div>
     </div>
   );
@@ -879,6 +952,9 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
     // 4 ──────────────────────────────────────────────────────── the result
     () => (
       <Card T={T} dep={i}>
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+          <Confetti tone={deck.result.tone} T={T} live={i === 3} />
+        </div>
         <Kicker T={T}>Round 11</Kicker>
         <Head T={T}>How did it go?</Head>
         <Head T={T} color={deck.result.tone === "good" ? T.win : deck.result.tone === "bad" ? T.loss : null}>
@@ -1012,6 +1088,7 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
     () => (
       <Card T={T} dep={i} scrolls>
         <Head T={T}>What will you do in the second half to be even better?</Head>
+        <Line T={T} dim size={T.small}>Scroll to see more.</Line>
         <div style={{ width: "100%", maxWidth: 500, display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 7 }}>
           <Panel T={T} title="Every top driver, per pick">
             {prep.drivers.top.map(d => (
@@ -1064,59 +1141,36 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
         <DivisionGrid teams={myDivision} meTeam={t.name} T={T} />
       </Card>
     ),
-    // 13 ────────────────────────────────────────────── the team game resets
+    // 14 ────────────────────────────────────────────── the team game resets
     () => (
       <Card T={T} dep={i}>
-        <Head T={T}>
-          All teams start the second half on the same level.
-        </Head>
-        <Line T={T}>Every team championship point is wiped clean.</Line>
-        {/* Two even columns, and one word under each. The headline already says
-            which is which, so a longer label only wraps. */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10,
-          width: "100%", maxWidth: 330 }}>
-          <div style={{ display: "grid", gap: 4, justifyItems: "center" }}>
-            <div style={{ fontFamily: T.fd, fontSize: 60, lineHeight: 1, color: T.bad,
-              ...textGlow(V.pink, 0.85) }}>0</div>
-            <Kicker T={T}>{t.short || t.name}</Kicker>
-          </div>
-          <div style={{ display: "grid", gap: 4, justifyItems: "center" }}>
-            <div style={{ fontFamily: T.fd, fontSize: 60, lineHeight: 1, color: T.bad,
-              ...textGlow(V.pink, 0.85) }}>0</div>
-            <Kicker T={T}>Everyone else</Kicker>
-          </div>
-        </div>
-        <Line T={T} dim size={T.small}>
-          All twelve teams in your division, level with each other.
-        </Line>
+        <Head T={T}>All teams start the second half on the same level.</Head>
+        <Line T={T} size={T.small}>Every team championship point is wiped clean.</Line>
+        <ResetBoard teams={myDivision} meTeam={t.name} T={T} live={i === 13} />
       </Card>
     ),
     // 15 ─────────────────────────────────────── VEGAS. the individual game
     () => (
       <Card T={T} dep={i}>
         <Head T={T}>The individual title runs all the way through the season.</Head>
-        <Line T={T} size={T.small}>Your points carry, and nothing about them resets.</Line>
+        <Line T={T} size={T.small}>
+          The individual title goes to whoever has the highest scoring average over the entire season.
+        </Line>
         <Ladder me={deck} T={T} live={i === 14} />
         <Line T={T} dim size={T.small}>
           {noOrphan(`Small change: you'll be seeing your individual scores as a season-long scoring average rather than total points.`)}
         </Line>
       </Card>
     ),
-    // 16 ────────────────────────────────────────── VEGAS. where you sit
-    () => (
-      <Card T={T} dep={i}>
-        <Head T={T}>Every player, on the two picks that matter most.</Head>
-        <Scatter deck={deck} T={T} live={i === 15} />
-      </Card>
-    ),
     // 17 ──────────────────────────────────────────── three things to know
     () => (
       <Card T={T} dep={i}>
-        <Head T={T}>Most of the rules are the same, but you should know three things.</Head>
+        <Head T={T}>Most of the rules are the same, but you should know a few things.</Head>
         <div style={{ width: "100%", maxWidth: 500, display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 12 }}>
           {[
-            "The BOX BOX line moves to 4.5 seconds, up from 4.",
+            "When you're choosing a pit stop time, you will now be able to choose all the way up to 4.5 seconds. It stopped at 4.0 in the first half.",
             "There will be 11 or 12 races in the second half, depending on what happens with the F1 calendar.",
+            "Anyone who does not pick on time will have their picks made at random by Formula 5 Bot's less popular cousin, Fernolo 5 Bort, who is not very good at making picks.",
             "We'll crown a champion at the end, but promotion and relegation still applies. Keep driving all the way to the finish, wherever you are in the standings.",
           ].map((s, n) => (
             <div key={n} style={{ display: "flex", gap: 14, alignItems: "flex-start",
@@ -1213,6 +1267,16 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
           62%  { transform: translateY(14px) rotate(28deg) scale(1.16); }
           80%  { transform: translateY(-6px) rotate(-9deg) scale(0.96); }
           100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+        }
+        @keyframes f5pop {
+          0%   { transform: translateY(0) scale(0.4) rotate(0deg); opacity: 0; }
+          18%  { opacity: 1; }
+          100% { transform: translateY(-190px) scale(1) rotate(220deg); opacity: 0; }
+        }
+        @keyframes f5drop {
+          0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+          14%  { opacity: 0.75; }
+          100% { transform: translateY(230px) rotate(90deg); opacity: 0; }
         }
         @keyframes f5halo {
           0%, 100% { transform: scale(0.9); opacity: 0.5; }
