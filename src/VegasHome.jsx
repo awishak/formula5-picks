@@ -604,10 +604,168 @@ function DriverCard({ name }) {
   );
 }
 
+// Shut by default. The needle is the one part of the game that pays you and your
+// team differently, and the two payoffs pull against each other, so the
+// explanation has to be available without being in the way.
+function NeedleExplainer({ side }) {
+  const [open, setOpen] = useState(false);
+  const other = side === "OVER" ? "UNDER" : "OVER";
+  const nudge = side === "OVER" ? "low" : "high";
+  const dir = side === "OVER" ? "down" : "up";
+  return (
+    <div style={{ marginTop: 6 }}>
+      <button onClick={() => setOpen(o => !o)} style={{
+        display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
+        background: "transparent", border: "none", padding: "6px 0",
+      }}>
+        <span style={{
+          ...numeric("h3"), fontSize: 18, color: V.purple, lineHeight: 1,
+          transform: open ? "rotate(90deg)" : "rotate(0deg)",
+          transition: "transform .2s ease", display: "inline-block",
+        }}>&rsaquo;</span>
+        <span style={{ ...body("bodyMd"), fontSize: 15, color: V.purple }}>
+          How the Needle scores
+        </span>
+      </button>
+
+      <div style={{
+        maxHeight: open ? 620 : 0, opacity: open ? 1 : 0, overflow: "hidden",
+        transition: "max-height .4s ease, opacity .3s ease",
+      }}>
+        <div style={{ paddingTop: 8 }}>
+          <Label color={V.blue} style={{ marginBottom: 8 }}>For you</Label>
+          <p style={{ ...body("body"), color: V.text2, margin: "0 0 10px" }}>
+            You score on how close your guess lands, and it counts toward your individual
+            score only. It never touches the matchup.
+          </p>
+          <div style={{ display: "grid", gap: 4, marginBottom: 18 }}>
+            {[["Exact", "+5"], ["Within 0.1s", "+4"], ["Within 0.2s", "+3"],
+              ["Within 0.3s", "+2"], ["Within 0.4s", "+1"], ["Further out", "0"]].map(([l, v]) => (
+              <div key={l} style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                <span style={{ ...body("bodySm"), color: V.text2, flex: 1 }}>{l}</span>
+                <span style={{ ...numeric("h3"), fontSize: 17, color: v === "0" ? V.text3 : V.blue }}>{v}</span>
+              </div>
+            ))}
+          </div>
+
+          <Label color={V.gold} style={{ marginBottom: 8 }}>For your team</Label>
+          <p style={{ ...body("body"), color: V.text2, margin: "0 0 10px" }}>
+            All four guesses in the matchup are averaged into the BOX BOX line. Your team has
+            the <span style={{ color: V.gold }}>{side}</span> and theirs has the {other}. If the
+            real stop lands on your side, your team takes +5 and theirs loses 1.
+          </p>
+          <p style={{ ...body("body"), color: V.text2, margin: 0 }}>
+            Your own guess moves that line. Guessing {nudge} drags it {dir} and gives your team
+            more room, which is not always the guess that wins you needle points. That is the
+            whole tension.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Everything read back before it goes anywhere: the five in order, where the
+// best one lands, and the Needle guess with the side it affects.
+function PickReview({ order, finish, needle, sent, onBack, onSubmit }) {
+  return (
+    <div
+      onClick={onBack}
+      style={{
+        position: "fixed", inset: 0, zIndex: 40, display: "flex",
+        alignItems: "flex-end", justifyContent: "center",
+        background: "rgba(3,3,8,0.78)", backdropFilter: "blur(3px)",
+        animation: "v-fade .2s ease",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: "100%", maxWidth: 480, maxHeight: "88vh", overflowY: "auto",
+          background: V.bg2, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+          border: `1px solid ${V.border2}`, borderBottom: "none",
+          padding: "22px 18px 26px", animation: "v-rise .28s cubic-bezier(0.2,0.9,0.3,1)",
+        }}
+      >
+        <div style={{ width: 42, height: 4, borderRadius: 4, background: V.border2, margin: "0 auto 18px" }} />
+
+        {sent ? (
+          <div style={{ textAlign: "center", padding: "10px 0 4px" }}>
+            <p style={{ ...display("h1"), ...textGlow(V.green), margin: "0 0 8px" }}>You&rsquo;re in</p>
+            <p style={{ ...body("body"), color: V.text2, margin: "0 0 22px" }}>
+              Picks are locked for the {SNAP.race.name}. You can change them until the deadline.
+            </p>
+            <button onClick={onBack} style={{
+              width: "100%", padding: "14px", borderRadius: 12, cursor: "pointer",
+              background: "transparent", border: `1px solid ${V.border2}`,
+              ...body("bodyMd"), fontSize: 16, color: V.text2,
+            }}>Close</button>
+          </div>
+        ) : (
+          <>
+            <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 4px" }}>
+              Check your picks
+            </p>
+            <p style={{ ...body("body"), fontSize: 16, color: V.text2, margin: "0 0 18px" }}>
+              Nothing is sent until you confirm.
+            </p>
+
+            <Label color={V.blue} style={{ marginBottom: 10 }}>Your finishing order</Label>
+            <div style={{ display: "grid", gap: 6, marginBottom: 20 }}>
+              {order.map((d, i) => (
+                <div key={d} style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                  borderRadius: 10, background: V.bg3, border: `1px solid ${V.border}`,
+                }}>
+                  <span style={{ ...numeric("h3"), color: V.blue, width: 34, flexShrink: 0 }}>{ordinal(i + 1)}</span>
+                  <Face name={d} size={30} ring={dColor(d)} glow={0} />
+                  <span style={{ ...body("bodyMd"), fontSize: 16, color: V.text }}>{d}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginBottom: 22 }}>
+              <div style={{ flex: 1, padding: "12px 14px", borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}` }}>
+                <Label color={V.text3} style={{ marginBottom: 6 }}>Best finish</Label>
+                <p style={{ ...numeric("h2"), ...textGlow(V.blue, 0.6), margin: 0 }}>{finish}</p>
+              </div>
+              <div style={{ flex: 1, padding: "12px 14px", borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}` }}>
+                <Label color={V.text3} style={{ marginBottom: 6 }}>The Needle</Label>
+                <p style={{ ...numeric("h2"), ...textGlow(V.purple, 0.6), margin: 0 }}>{needle.toFixed(1)}s</p>
+              </div>
+            </div>
+
+            <p style={{ ...body("bodySm"), color: V.text3, margin: "0 0 18px" }}>
+              Your guess of {needle.toFixed(1)}s moves the BOX BOX line, and your team has the{" "}
+              <span style={{ color: V.gold }}>{SNAP.boxBox.side}</span>.
+            </p>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={onBack} style={{
+                flex: 1, padding: "15px", borderRadius: 12, cursor: "pointer",
+                background: "transparent", border: `1px solid ${V.border2}`,
+                ...body("bodyMd"), fontSize: 16, color: V.text2,
+              }}>Go back</button>
+              <button onClick={onSubmit} style={{
+                flex: 2, padding: "15px", borderRadius: 12, cursor: "pointer",
+                background: V.green, border: `1px solid ${V.green}`,
+                boxShadow: `0 0 22px ${V.green}66`,
+                ...body("bodyMd"), fontSize: 17, color: V.bg,
+              }}>Submit picks</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── The pick flow ────────────────────────────────────────
 
 const TOP_PICKS = 1, MID_PICKS = 4;
-const FINISH_OPTIONS = ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10"];
+// P1 to P20. Rules.jsx:127 says the best-finish call runs the whole field, and
+// real picks have used P1 through P10 already.
+const FINISH_OPTIONS = Array.from({ length: 20 }, (_, i) => `P${i + 1}`);
 // 1.5 to 4.5 in tenths. The first half stopped at 4.0 and the second-half rules
 // card told the league it now goes to 4.5, so this has to.
 const NEEDLE_OPTIONS = Array.from({ length: 31 }, (_, i) => +(1.5 + i * 0.1).toFixed(1));
@@ -618,6 +776,8 @@ function PickFlow() {
   const [order, setOrder] = useState([]);
   const [finish, setFinish] = useState("P2");
   const [needle, setNeedle] = useState(2.5);
+  const [review, setReview] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const topPicked = picked.filter(d => pools.top.includes(d));
   const midPicked = picked.filter(d => pools.mid.includes(d));
@@ -638,6 +798,7 @@ function PickFlow() {
 
   const place = (name) => setOrder(o => (o.includes(name) ? o.filter(x => x !== name) : [...o, name]));
   const unplaced = picked.filter(d => !order.includes(d));
+  const ready = full && order.length === 5;
 
   const Group = ({ title, cap, chosen, accent, names, inTop }) => (
     <>
@@ -678,9 +839,9 @@ function PickFlow() {
         transition: "max-height .6s ease, opacity .45s ease",
       }}>
         <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }) }}>
-          <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 4px" }}>Put them in order</p>
-          <p style={{ ...body("bodySm"), color: V.text3, margin: "0 0 16px" }}>
-            Tap them first to fifth. Tap a placed driver to take them back out.
+          <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 6px" }}>Order your drivers</p>
+          <p style={{ ...body("body"), fontSize: 16, color: V.text2, margin: "0 0 16px" }}>
+            Tap a driver to put them in order, and tap the order to move the driver back out.
           </p>
 
           <div style={{ display: "grid", gap: 8, marginBottom: 16 }}>
@@ -734,21 +895,50 @@ function PickFlow() {
 
         <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }) }}>
           <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 4px" }}>Best finish</p>
-          <p style={{ ...body("bodySm"), color: V.text3, margin: "0 0 12px" }}>
-            Where does your best driver come home?
+          <p style={{ ...body("body"), fontSize: 16, color: V.text2, margin: "0 0 12px" }}>
+            Where will your best driver finish this week?
           </p>
           <Wheel options={FINISH_OPTIONS} value={finish} onChange={setFinish} accent={V.blue} />
         </div>
 
         <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }), borderColor: `${V.purple}33` }}>
-          <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 4px" }}>The Needle</p>
-          <p style={{ ...body("bodySm"), color: V.text3, margin: "0 0 12px" }}>
-            {SNAP.race.pitQuestion}
+          <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 8px" }}>The Needle</p>
+          <p style={{ ...body("body"), fontSize: 16, color: V.text, margin: "0 0 14px", fontWeight: 600 }}>
+            This week, we are predicting{" "}
+            <span style={{ color: V.purple }}>{SNAP.boxBox.team}&rsquo;s first pit stop</span>, and your
+            team has the <span style={{ color: V.gold }}>{SNAP.boxBox.side}</span>.
           </p>
           <Wheel options={NEEDLE_OPTIONS} value={needle} onChange={setNeedle}
             format={v => v.toFixed(1)} accent={V.purple} />
+          <NeedleExplainer side={SNAP.boxBox.side} />
+        </div>
+
+        <div style={{ marginBottom: 8 }}>
+          <NeonBtn
+            color={ready ? V.green : V.text3}
+            flicker={ready && !sent}
+            onClick={() => ready && setReview(true)}
+          >
+            {sent ? "Picks submitted" : "Submit your picks"}
+          </NeonBtn>
+          {!ready && (
+            <p style={{ ...body("bodySm"), color: V.text3, textAlign: "center", margin: "10px 0 0" }}>
+              Put all five drivers in order first.
+            </p>
+          )}
         </div>
       </div>
+
+      {review && (
+        <PickReview
+          order={order}
+          finish={finish}
+          needle={needle}
+          sent={sent}
+          onBack={() => setReview(false)}
+          onSubmit={() => setSent(true)}
+        />
+      )}
     </>
   );
 }

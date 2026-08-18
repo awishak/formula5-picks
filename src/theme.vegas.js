@@ -140,6 +140,8 @@ export const card = (extra = {}) => ({
 // reads as broken UI rather than as Vegas. prefers-reduced-motion kills all of
 // it, which is not optional for an effect that pulses luminance this hard.
 export const VEGAS_CSS = `
+@keyframes v-fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes v-rise { from { transform: translateY(26px); opacity: 0 } to { transform: none; opacity: 1 } }
 @keyframes vFlicker {
   0%, 100%   { opacity: 1; }
   41%        { opacity: 1; }

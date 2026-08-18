@@ -90,7 +90,7 @@ export default function Rules() {
         <P>Your Individual Score each race is your total points. The player with the most total points after 23 races wins. Additionally, the <strong>top 10 players each week</strong> earn bonus points: 1st gets <Badge text="+10" color={ORANGE} />, 2nd <Badge text="+9" color={ORANGE} />, down to 10th getting <Badge text="+1" color={ORANGE} />.</P>
 
         <Label>Team Championship</Label>
-        <P>Win your weekly matchup against another team. Accumulate Team Points across each 11-race half. The team with the most points in the <strong>second half</strong> is the overall season champion. The first half determines your division for the second half.</P>
+        <P>Win your weekly matchup against another team. Accumulate Team Points across each half. The team with the most points in the <strong>second half</strong> is the overall season champion. The first half determines your division for the second half.</P>
       </Section>
 
       {/* THE PICKS */}
@@ -129,7 +129,7 @@ export default function Rules() {
 
       {/* THE NEEDLE */}
       <Section title="The Needle">
-        <P>Each race designates a specific pit stop to bet on (e.g. "Red Bull Racing's 1st pit stop"). Guess the duration in seconds using the dial (1.5s – 4.0s).</P>
+        <P>Each race designates a specific pit stop to bet on (e.g. "Red Bull Racing's 1st pit stop"). Guess the duration in seconds using the dial (1.5s – 4.5s).</P>
         <div style={{
           background: `${DARK}04`, borderRadius: 10, padding: "8px 12px", margin: "8px 0"
         }}>
