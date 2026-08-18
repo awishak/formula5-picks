@@ -7,7 +7,7 @@
 //
 // Nothing here touches Supabase. It is a design surface, reachable at #vegas.
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { V, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
@@ -46,6 +46,17 @@ const SNAP = {
     turns: 14, km: 4.38, laps: 70,
     tags: ["High downforce", "Track position is king", "Safety car likely"],
     note: "Only one real overtaking spot, the run down to Turn 1. Grid position tends to hold, so qualifying is your best form guide this weekend.",
+  },
+  // INVENTED 2026 championship points. There is no standings source in the app
+  // and OpenF1 has no standings endpoint, which is the same blocker holding up
+  // automated pools. Consistent with the pools: the top three sit inside
+  // positions 1-5 and the seven midfielders inside 6-15.
+  f1Points: {
+    "Lando Norris": 241, "Oscar Piastri": 219, "George Russell": 198,
+    "Lewis Hamilton": 176, "Charles Leclerc": 165, "Andrea Kimi Antonelli": 149,
+    "Max Verstappen": 132, "Isack Hadjar": 96, "Liam Lawson": 74,
+    "Arvid Lindblad": 61, "Franco Colapinto": 48, "Pierre Gasly": 37,
+    "Oliver Bearman": 29, "Nico Hulkenberg": 24, "Gabriel Bortoleto": 18,
   },
   pools: {
     top: ["Lando Norris", "Lewis Hamilton", "George Russell"],
@@ -442,19 +453,8 @@ function HomeOpen({ onNav }) {
         ]}
       />
 
-      <div style={{ marginBottom: 22 }}>
-        <NeonBtn flicker onClick={() => onNav("picks")}>
-          Make your picks
-        </NeonBtn>
-      </div>
-
-      <DriverPoolCard />
-
-      <SectionHead accent={V.purple}>The Needle</SectionHead>
-      <div style={{ ...card({ padding: "18px 20px", marginBottom: 22 }), borderColor: `${V.purple}33` }}>
-        <p style={{ ...body("body"), color: V.text2, margin: "0 0 6px" }}>Guess the time of</p>
-        <p style={{ ...display("h2"), ...textGlow(V.purple, 0.8), margin: 0 }}>{race.pitQuestion}</p>
-      </div>
+      <PickSign />
+      <PickFlow />
 
       <SectionHead accent={V.pink}>This week's opponent</SectionHead>
       <OpponentCard />
@@ -473,6 +473,112 @@ function HomeOpen({ onNav }) {
         <p style={{ ...body("body"), color: V.text2, margin: 0 }}>{track.note}</p>
       </div>
     </>
+  );
+}
+
+// ── Picking ──────────────────────────────────────────────
+
+// A neon sign that points down at the thing it is talking about, because on this
+// screen the picker is right underneath it rather than a page away.
+function PickSign() {
+  return (
+    <div style={{ textAlign: "center", marginBottom: 18 }}>
+      <div className="v-flicker" style={{
+        display: "inline-block", padding: "14px 26px 12px", borderRadius: 14,
+        border: `2px solid ${V.blue}`, ...edgeGlow(V.blue, 1),
+      }}>
+        <p style={{ ...display("h2"), ...textGlow(V.blue), margin: 0, textTransform: "uppercase" }}>
+          Make your picks
+        </p>
+      </div>
+      <div style={{ display: "flex", justifyContent: "center", marginTop: -2 }}>
+        <svg width="34" height="30" viewBox="0 0 34 30" aria-hidden style={{ overflow: "visible" }}>
+          <path d="M17 2 L17 20 M8 13 L17 22 L26 13" fill="none" stroke={V.blue} strokeWidth="3"
+            strokeLinecap="round" strokeLinejoin="round"
+            style={{ filter: `drop-shadow(0 0 6px ${V.blue}) drop-shadow(0 0 14px ${V.blue}99)` }} />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+// One driver, one row. Tapping picks them; tapping again puts them back. When a
+// pool is full the rest of that pool goes quiet rather than disappearing, so you
+// can still see who you passed on.
+function DriverPickRow({ name, picked, muted, onTap }) {
+  const c = dColor(name);
+  return (
+    <button
+      onClick={onTap}
+      disabled={muted}
+      style={{
+        width: "100%", display: "flex", alignItems: "center", gap: 12,
+        padding: "10px 12px", borderRadius: 12, cursor: muted ? "default" : "pointer",
+        background: picked ? `${V.green}14` : V.bg3,
+        border: `1px solid ${picked ? V.green : V.border}`,
+        opacity: muted ? 0.32 : 1,
+        boxShadow: picked ? `0 0 16px ${V.green}44` : "none",
+        transform: picked ? "scale(1.015)" : "scale(1)",
+        transition: "background .18s ease, border-color .18s ease, opacity .25s ease, transform .18s ease, box-shadow .18s ease",
+        textAlign: "left",
+      }}
+    >
+      <Face name={name} size={44} ring={picked ? V.green : c} glow={picked ? 1.4 : 0.6} />
+      <div style={{ flex: "1 1 0", minWidth: 0 }}>
+        <p style={{ ...body("bodyMd"), fontSize: 17, color: V.text, margin: 0,
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</p>
+        <p style={{ ...body("bodySm"), color: c, margin: "1px 0 0" }}>{dTeam(name)}</p>
+      </div>
+      <div style={{ textAlign: "right", flexShrink: 0 }}>
+        <p style={{ ...numeric("h3"), color: V.text2, margin: 0 }}>{SNAP.f1Points[name] ?? "-"}</p>
+        <Label color={V.text3}>pts</Label>
+      </div>
+      <span style={{
+        width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: picked ? V.green : "transparent",
+        border: `2px solid ${picked ? V.green : V.border2}`,
+        color: V.bg, fontSize: 15, fontWeight: 900, lineHeight: 1,
+        transform: picked ? "scale(1)" : "scale(0.85)",
+        transition: "background .18s ease, transform .18s ease, border-color .18s ease",
+      }}>{picked ? "\u2713" : ""}</span>
+    </button>
+  );
+}
+
+// Left-to-right wheel. Scroll snapping does the feel; tapping does the choosing,
+// because reading a value off scroll position is unreliable on a phone.
+function Wheel({ options, value, onChange, format = (v) => v, accent = V.purple }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const on = el.querySelector("[data-on='1']");
+    if (on) el.scrollTo({ left: on.offsetLeft - el.clientWidth / 2 + on.clientWidth / 2, behavior: "smooth" });
+  }, [value]);
+  return (
+    <div ref={ref} style={{
+      display: "flex", gap: 8, overflowX: "auto", padding: "4px 2px 10px",
+      scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
+    }}>
+      {options.map(o => {
+        const on = o === value;
+        return (
+          <button key={o} data-on={on ? "1" : "0"} onClick={() => onChange(o)} style={{
+            flexShrink: 0, scrollSnapAlign: "center", cursor: "pointer",
+            padding: "12px 18px", borderRadius: 12,
+            background: on ? `${accent}1f` : V.bg3,
+            border: `1px solid ${on ? accent : V.border}`,
+            ...(on ? { boxShadow: `0 0 18px ${accent}55` } : {}),
+            transition: "background .16s ease, border-color .16s ease, box-shadow .16s ease",
+          }}>
+            <span style={{ ...numeric("h3"), ...(on ? textGlow(accent, 0.7) : { color: V.text2 }) }}>
+              {format(o)}
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -498,33 +604,152 @@ function DriverCard({ name }) {
   );
 }
 
-// You pick ONE of the three top drivers and FOUR of the seven midfielders. The
-// pool sizes and the pick counts are different numbers and this said the pool
-// sizes for a while.
-function DriverPoolCard() {
+// ── The pick flow ────────────────────────────────────────
+
+const TOP_PICKS = 1, MID_PICKS = 4;
+const FINISH_OPTIONS = ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10"];
+// 1.5 to 4.5 in tenths. The first half stopped at 4.0 and the second-half rules
+// card told the league it now goes to 4.5, so this has to.
+const NEEDLE_OPTIONS = Array.from({ length: 31 }, (_, i) => +(1.5 + i * 0.1).toFixed(1));
+
+function PickFlow() {
   const { pools } = SNAP;
-  const Group = ({ title, pick, accent, names }) => (
+  const [picked, setPicked] = useState([]);
+  const [order, setOrder] = useState([]);
+  const [finish, setFinish] = useState("P2");
+  const [needle, setNeedle] = useState(2.5);
+
+  const topPicked = picked.filter(d => pools.top.includes(d));
+  const midPicked = picked.filter(d => pools.mid.includes(d));
+  const full = topPicked.length === TOP_PICKS && midPicked.length === MID_PICKS;
+
+  const toggle = (name, inTop) => {
+    setPicked(prev => {
+      if (prev.includes(name)) {
+        setOrder(o => o.filter(x => x !== name));
+        return prev.filter(x => x !== name);
+      }
+      const cap = inTop ? TOP_PICKS : MID_PICKS;
+      const same = prev.filter(d => (inTop ? pools.top : pools.mid).includes(d));
+      if (same.length >= cap) return prev;
+      return [...prev, name];
+    });
+  };
+
+  const place = (name) => setOrder(o => (o.includes(name) ? o.filter(x => x !== name) : [...o, name]));
+  const unplaced = picked.filter(d => !order.includes(d));
+
+  const Group = ({ title, cap, chosen, accent, names, inTop }) => (
     <>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
         <p style={{ ...body("bodyMd"), fontSize: 17, color: V.text, margin: 0 }}>{title}</p>
-        <p style={{ ...body("bodySm"), color: accent, margin: 0 }}>pick {pick}</p>
+        <p style={{ ...body("bodySm"), color: chosen.length === cap ? V.green : accent, margin: 0 }}>
+          {chosen.length} of {cap}
+        </p>
       </div>
-      <div style={{
-        display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))",
-        gap: 8, marginBottom: 22,
-      }}>
-        {names.map(d => <DriverCard key={d} name={d} />)}
+      <div style={{ display: "grid", gap: 8, marginBottom: 22 }}>
+        {names.map(d => (
+          <DriverPickRow
+            key={d}
+            name={d}
+            picked={picked.includes(d)}
+            muted={!picked.includes(d) && chosen.length >= cap}
+            onTap={() => toggle(d, inTop)}
+          />
+        ))}
       </div>
     </>
   );
+
   return (
-    <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }) }}>
-      <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 18px" }}>
-        This week's driver pool
-      </p>
-      <Group title="Top drivers" pick={1} accent={V.gold} names={pools.top} />
-      <Group title="Midfield drivers" pick={4} accent={V.silver} names={pools.mid} />
-    </div>
+    <>
+      <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }) }}>
+        <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 18px" }}>
+          This week's driver pool
+        </p>
+        <Group title="Top drivers" cap={TOP_PICKS} chosen={topPicked} accent={V.gold} names={pools.top} inTop />
+        <Group title="Midfield drivers" cap={MID_PICKS} chosen={midPicked} accent={V.silver} names={pools.mid} />
+      </div>
+
+      {/* Everything below opens only once all five are in. */}
+      <div style={{
+        maxHeight: full ? 2000 : 0, opacity: full ? 1 : 0,
+        overflow: "hidden",
+        transition: "max-height .6s ease, opacity .45s ease",
+      }}>
+        <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }) }}>
+          <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 4px" }}>Put them in order</p>
+          <p style={{ ...body("bodySm"), color: V.text3, margin: "0 0 16px" }}>
+            Tap them first to fifth. Tap a placed driver to take them back out.
+          </p>
+
+          <div style={{ display: "grid", gap: 8, marginBottom: 16 }}>
+            {[0, 1, 2, 3, 4].map(i => {
+              const name = order[i];
+              return (
+                <div key={i} style={{
+                  display: "flex", alignItems: "center", gap: 12, minHeight: 58,
+                  padding: "8px 12px", borderRadius: 12,
+                  background: name ? `${V.blue}12` : V.bg3,
+                  border: `1px dashed ${name ? "transparent" : V.border2}`,
+                  borderStyle: name ? "solid" : "dashed",
+                  borderColor: name ? V.blue : V.border2,
+                  transition: "background .25s ease, border-color .25s ease",
+                }}>
+                  <span style={{ ...numeric("h3"), color: name ? V.blue : V.text3, width: 34, flexShrink: 0 }}>
+                    {ordinal(i + 1)}
+                  </span>
+                  {name ? (
+                    <button onClick={() => place(name)} style={{
+                      flex: 1, display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
+                      background: "transparent", border: "none", padding: 0, textAlign: "left",
+                    }}>
+                      <Face name={name} size={36} ring={dColor(name)} glow={0.6} />
+                      <span style={{ ...body("bodyMd"), fontSize: 16, color: V.text }}>{name}</span>
+                    </button>
+                  ) : (
+                    <span style={{ ...body("bodySm"), color: V.text3 }}>Tap a driver below</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {unplaced.map(d => (
+              <button key={d} onClick={() => place(d)} style={{
+                display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
+                padding: "8px 12px 8px 8px", borderRadius: 999,
+                background: V.bg3, border: `1px solid ${dColor(d)}55`,
+              }}>
+                <Face name={d} size={28} ring={dColor(d)} glow={0} />
+                <span style={{ ...body("bodySm"), fontSize: 15, color: V.text }}>{lastName(d)}</span>
+              </button>
+            ))}
+            {unplaced.length === 0 && (
+              <p style={{ ...body("bodySm"), color: V.green, margin: 0 }}>That's your order.</p>
+            )}
+          </div>
+        </div>
+
+        <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }) }}>
+          <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 4px" }}>Best finish</p>
+          <p style={{ ...body("bodySm"), color: V.text3, margin: "0 0 12px" }}>
+            Where does your best driver come home?
+          </p>
+          <Wheel options={FINISH_OPTIONS} value={finish} onChange={setFinish} accent={V.blue} />
+        </div>
+
+        <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }), borderColor: `${V.purple}33` }}>
+          <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 4px" }}>The Needle</p>
+          <p style={{ ...body("bodySm"), color: V.text3, margin: "0 0 12px" }}>
+            {SNAP.race.pitQuestion}
+          </p>
+          <Wheel options={NEEDLE_OPTIONS} value={needle} onChange={setNeedle}
+            format={v => v.toFixed(1)} accent={V.purple} />
+        </div>
+      </div>
+    </>
   );
 }
 
