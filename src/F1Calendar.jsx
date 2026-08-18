@@ -122,7 +122,7 @@ export default function F1Calendar() {
   return (
     <div style={{ padding: "20px 20px 100px" }}>
       <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 22, color: DARK, textTransform: "uppercase", letterSpacing: "0.03em", margin: "0 0 4px" }}>F1 Calendar</p>
-      <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 20 }}>2026 Season — 22 Grands Prix</p>
+      <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 20 }}>2026 Season — 23 Grands Prix</p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {races.map(r => {

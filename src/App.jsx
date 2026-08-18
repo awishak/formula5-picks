@@ -865,12 +865,48 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 }
 
 // ── Main App ─────────────────────────────────────────────
-// Every page the state-driven nav can reach.
+// Every page the state-driven nav can reach. Kept so ?page= still works for
+// the pages that have no path of their own yet.
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
   "team-standings", "division-trends", "players", "rules", "strategy",
   "f1-calendar", "season-preview", "recaps", "admin",
 ]);
+
+// ── Routing ──────────────────────────────────────────────
+//
+// Hand-rolled on the History API rather than a router dependency: the pages are
+// flat, and vercel.json already serves the app for any path so a direct hit or a
+// refresh lands correctly.
+//
+// Every page here has a real URL, which means it can be linked, bookmarked,
+// shared and reloaded into. Before this the whole app rendered at "/" and none
+// of that was possible.
+const ROUTES = [
+  { path: "/", page: "home" },
+  { path: "/picks", page: "picks" },
+  { path: "/teams", page: "team-standings" },
+  { path: "/players", page: "player-standings" },
+  { path: "/schedule", page: "schedule" },
+  { path: "/results", page: "results" },
+  { path: "/rules", page: "rules" },
+  { path: "/calendar", page: "f1-calendar" },
+  { path: "/admin", page: "admin" },
+  { path: "/deck", page: "recap" },
+  { path: "/newui", page: "vegas" },
+];
+const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
+
+// A path in, a page and any parameter out.
+function readPath(pathname) {
+  const clean = (pathname || "/").replace(/\/+$/, "") || "/";
+  const hit = ROUTES.find(r => r.path === clean);
+  if (hit) return { page: hit.page, round: null };
+  // /results/12 is the only parameterised route so far.
+  const m = clean.match(/^\/results\/(\d+)$/);
+  if (m) return { page: "results", round: Number(m[1]) };
+  return null;
+}
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("f1_user") || null);
@@ -881,9 +917,14 @@ export default function App() {
   // /deck is a real path, which needs the SPA rewrite in vercel.json or a direct
   // hit 404s before the app ever loads. Paths survive the SSO redirect that
   // eats fragments, so this is the shareable one.
+  const [routeRound, setRouteRound] = useState(() => readPath(window.location.pathname)?.round ?? null);
   const [activePage, setActivePage] = useState(() => {
     const q = new URLSearchParams(window.location.search);
     const path = window.location.pathname.replace(/\/+$/, "");
+    // Paths first. The query and hash entries below are the old ways in and
+    // still work, so nothing anyone has bookmarked breaks mid-season.
+    const routed = readPath(window.location.pathname);
+    if (routed) return routed.page;
     if (path === "/deck" || window.location.hash === "#recap" || q.has("recap")) return "recap";
     // ?page=rules opens any page directly. Eleven of the sixteen pages are only
     // reachable from inside another one, which makes them impossible to
@@ -898,13 +939,29 @@ export default function App() {
   });
   const [scheduleInitialView, setScheduleInitialView] = useState(null);
 
+  // Back and forward move through the app rather than off it.
+  useEffect(() => {
+    const onPop = () => {
+      const r = readPath(window.location.pathname);
+      if (!r) return;
+      setActivePage(r.page);
+      setRouteRound(r.round);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   function navigateTo(page) {
     if (page === "schedule-recap") {
       setScheduleInitialView("recap");
       setActivePage("schedule");
+      // Same page, so it gets the same URL.
+      if (window.location.pathname !== "/schedule") window.history.pushState(null, "", "/schedule");
     } else {
       setScheduleInitialView(null);
       setActivePage(page);
+      const to = PATH_FOR[page];
+      if (to && window.location.pathname !== to) window.history.pushState(null, "", to);
     }
   }
   const [hasSubmittedPicks, setHasSubmittedPicks] = useState(false);
@@ -1019,7 +1076,7 @@ export default function App() {
             )}
           </div>
         ))}
-        {activePage === "results" && <RaceResults currentUser={currentUser} />}
+        {activePage === "results" && <RaceResults currentUser={currentUser} initialRound={routeRound} />}
         {activePage === "strategy" && <Strategy />}
         {activePage === "f1-calendar" && <F1Calendar />}
         {activePage === "players" && <Players currentUser={currentUser} />}

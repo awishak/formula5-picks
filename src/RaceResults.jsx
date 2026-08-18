@@ -16,9 +16,11 @@ function lastName(name) {
   return name.split(" ").pop();
 }
 
-export default function RaceResults({ currentUser }) {
+// initialRound comes from /results/12. Without it the page opens on nothing
+// and the round in the URL is decoration.
+export default function RaceResults({ currentUser, initialRound = null }) {
   const [races, setRaces] = useState([]);
-  const [selectedRound, setSelectedRound] = useState(null);
+  const [selectedRound, setSelectedRound] = useState(initialRound);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [activeTab, setActiveTab] = useState("individual");
