@@ -560,6 +560,22 @@ function DriverPickRow({ name, picked, muted, onTap }) {
   );
 }
 
+function NeedleYou() {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+      padding: "8px 12px", borderRadius: 9, marginBottom: 2,
+      background: `${V.blue}10`, border: `1px solid ${V.blue}33`,
+    }}>
+      <Label color={V.blue}>For you</Label>
+      <span style={{ ...body("bodySm"), fontSize: 13, color: V.text2 }}>
+        <span style={{ ...numeric("h3"), fontSize: 16, color: V.blue }}>+5</span> exact,
+        down to <span style={{ ...numeric("h3"), fontSize: 16, color: V.blue }}>+1</span> at 0.4s off
+      </span>
+    </div>
+  );
+}
+
 function NeedleSides({ side }) {
   const winsHigh = side === "OVER";
   const Half = ({ win, text, arrow }) => (
@@ -578,49 +594,86 @@ function NeedleSides({ side }) {
     </div>
   );
   return (
-    <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-      <Half win={!winsHigh} text="under the line" arrow={"\u2190"} />
-      <Half win={winsHigh} text="over the line" arrow={"\u2192"} />
-    </div>
+    <>
+      <Label color={V.gold} style={{ margin: "2px 0 8px" }}>For your team</Label>
+      <div style={{ display: "flex", gap: 8 }}>
+        <Half win={!winsHigh} text="under the line" arrow={"\u2190"} />
+        <Half win={winsHigh} text="over the line" arrow={"\u2192"} />
+      </div>
+    </>
   );
 }
 
 // Left-to-right wheel. Scroll snapping does the feel; tapping does the choosing,
 // because reading a value off scroll position is unreliable on a phone.
+//
+// The track is padded to half the width at both ends so the first and last
+// options can actually reach the middle. Centring uses scrollIntoView rather
+// than offsetLeft arithmetic, which was measuring against the wrong parent and
+// left the selection hanging off the left edge.
 function Wheel({ options, value, onChange, format = (v) => v, accent = V.purple, tone }) {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const on = el.querySelector("[data-on='1']");
-    if (on) el.scrollTo({ left: on.offsetLeft - el.clientWidth / 2 + on.clientWidth / 2, behavior: "smooth" });
+    if (on && on.scrollIntoView) on.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }, [value]);
+
+  const idx = options.indexOf(value);
+
   return (
-    <div ref={ref} style={{
-      display: "flex", gap: 8, overflowX: "auto", padding: "4px 2px 10px",
-      scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
-    }}>
-      {options.map(o => {
-        const on = o === value;
-        // Which side of the current guess pays the team, if the caller says.
-        const t = on ? null : tone ? tone(o) : null;
-        const edge = t === "win" ? V.green : t === "lose" ? V.pink : null;
-        return (
-          <button key={o} data-on={on ? "1" : "0"} onClick={() => onChange(o)} style={{
-            flexShrink: 0, scrollSnapAlign: "center", cursor: "pointer",
-            padding: "12px 18px", borderRadius: 12,
-            background: on ? `${accent}1f` : edge ? `${edge}0f` : V.bg3,
-            border: `1px solid ${on ? accent : edge ? `${edge}55` : V.border}`,
-            ...(on ? { boxShadow: `0 0 18px ${accent}55` } : {}),
-            transition: "background .16s ease, border-color .16s ease, box-shadow .16s ease",
-          }}>
-            <span style={{ ...numeric("h3"),
-              ...(on ? textGlow(accent, 0.7) : { color: edge || V.text2 }) }}>
-              {format(o)}
-            </span>
-          </button>
-        );
-      })}
+    <div style={{ position: "relative" }}>
+      <div ref={ref} style={{
+        display: "flex", gap: 8, overflowX: "auto",
+        padding: "16px calc(50% - 44px) 18px",
+        scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none",
+      }}>
+        {options.map((o, i) => {
+          const on = o === value;
+          const d = Math.abs(i - idx);
+          // Two steps up for the selection, one for its neighbours, and a step
+          // down for everything else. That is the wheel.
+          const scale = on ? 1.22 : d === 1 ? 1.06 : 0.9;
+          const t = on ? null : tone ? tone(o) : null;
+          const edge = t === "win" ? V.green : t === "lose" ? V.pink : null;
+          return (
+            <button key={o} data-on={on ? "1" : "0"} onClick={() => onChange(o)} style={{
+              flexShrink: 0, scrollSnapAlign: "center", cursor: "pointer",
+              padding: "12px 18px", borderRadius: 12,
+              background: on ? `${accent}1f` : edge ? `${edge}0f` : V.bg3,
+              border: `1px solid ${on ? accent : edge ? `${edge}55` : V.border}`,
+              ...(on ? { boxShadow: `0 0 18px ${accent}55` } : {}),
+              transform: `scale(${scale})`,
+              opacity: on ? 1 : d === 1 ? 0.95 : 0.62,
+              transition: "transform .22s cubic-bezier(0.2,0.9,0.3,1), opacity .22s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease",
+            }}>
+              <span style={{ ...numeric("h3"),
+                ...(on ? textGlow(accent, 0.7) : { color: edge || V.text2 }) }}>
+                {format(o)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Both edges fade, so it reads as a strip that keeps going. */}
+      {["left", "right"].map(sideName => (
+        <div key={sideName} aria-hidden style={{
+          position: "absolute", top: 0, bottom: 0, [sideName]: 0, width: 46,
+          pointerEvents: "none",
+          background: `linear-gradient(to ${sideName === "left" ? "right" : "left"}, ${V.bg2}, ${V.bg2}00)`,
+        }} />
+      ))}
+      <div aria-hidden style={{
+        position: "absolute", top: "50%", left: 4, transform: "translateY(-50%)",
+        pointerEvents: "none", color: V.text3, fontSize: 20, lineHeight: 1,
+      }}>&lsaquo;</div>
+      <div aria-hidden style={{
+        position: "absolute", top: "50%", right: 4, transform: "translateY(-50%)",
+        pointerEvents: "none", color: V.text3, fontSize: 20, lineHeight: 1,
+      }}>&rsaquo;</div>
     </div>
   );
 }
@@ -951,10 +1004,11 @@ function PickFlow() {
             <span style={{ color: V.purple }}>{SNAP.boxBox.team}&rsquo;s first pit stop</span>, and your
             team has the <span style={{ color: V.gold }}>{SNAP.boxBox.side}</span>.
           </p>
-          <NeedleSides side={SNAP.boxBox.side} />
+          <NeedleYou />
           <Wheel options={NEEDLE_OPTIONS} value={needle} onChange={setNeedle}
             format={v => v.toFixed(1)} accent={V.purple}
             tone={v => ((v > needle) === (SNAP.boxBox.side === "OVER") ? "win" : "lose")} />
+          <NeedleSides side={SNAP.boxBox.side} />
           <NeedleExplainer side={SNAP.boxBox.side} />
         </div>
 
