@@ -561,18 +561,22 @@ function DriverPickRow({ name, picked, muted, onTap }) {
 }
 
 function NeedleYou() {
+  const steps = [["+5", "exact"], ["+4", "0.1s"], ["+3", "0.2s"], ["+2", "0.3s"], ["+1", "0.4s"]];
   return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-      padding: "8px 12px", borderRadius: 9, marginBottom: 2,
-      background: `${V.blue}10`, border: `1px solid ${V.blue}33`,
-    }}>
-      <Label color={V.blue}>For you</Label>
-      <span style={{ ...body("bodySm"), fontSize: 13, color: V.text2 }}>
-        <span style={{ ...numeric("h3"), fontSize: 16, color: V.blue }}>+5</span> exact,
-        down to <span style={{ ...numeric("h3"), fontSize: 16, color: V.blue }}>+1</span> at 0.4s off
-      </span>
-    </div>
+    <>
+      <Label color={V.blue} style={{ margin: "14px 0 8px" }}>For you</Label>
+      <div style={{ display: "flex", gap: 6 }}>
+        {steps.map(([pts, off]) => (
+          <div key={off} style={{
+            flex: 1, minWidth: 0, padding: "7px 4px", borderRadius: 9, textAlign: "center",
+            background: `${V.blue}12`, border: `1px solid ${V.blue}44`,
+          }}>
+            <p style={{ ...numeric("h3"), fontSize: 17, color: V.blue, margin: 0 }}>{pts}</p>
+            <p style={{ ...body("bodySm"), fontSize: 12, color: V.text3, margin: "1px 0 0" }}>{off}</p>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -611,7 +615,7 @@ function NeedleSides({ side }) {
 // options can actually reach the middle. Centring uses scrollIntoView rather
 // than offsetLeft arithmetic, which was measuring against the wrong parent and
 // left the selection hanging off the left edge.
-function Wheel({ options, value, onChange, format = (v) => v, accent = V.purple, tone }) {
+function Wheel({ options, value, onChange, format = (v) => v, accent = V.purple, tone, depth = "wheel" }) {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
@@ -635,7 +639,7 @@ function Wheel({ options, value, onChange, format = (v) => v, accent = V.purple,
           const d = Math.abs(i - idx);
           // Two steps up for the selection, one for its neighbours, and a step
           // down for everything else. That is the wheel.
-          const scale = on ? 1.22 : d === 1 ? 1.06 : 0.9;
+          const scale = on ? 1.22 : depth === "flat" ? 1 : d === 1 ? 1.06 : 0.9;
           const t = on ? null : tone ? tone(o) : null;
           const edge = t === "win" ? V.green : t === "lose" ? V.pink : null;
           return (
@@ -646,7 +650,9 @@ function Wheel({ options, value, onChange, format = (v) => v, accent = V.purple,
               border: `1px solid ${on ? accent : edge ? `${edge}55` : V.border}`,
               ...(on ? { boxShadow: `0 0 18px ${accent}55` } : {}),
               transform: `scale(${scale})`,
-              opacity: on ? 1 : d === 1 ? 0.95 : 0.62,
+              opacity: on ? 1 : depth === "flat" ? 0.8 : d === 1 ? 0.95 : 0.62,
+              // The raised one sits over its neighbours rather than under them.
+              position: "relative", zIndex: on ? 2 : 1,
               transition: "transform .22s cubic-bezier(0.2,0.9,0.3,1), opacity .22s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease",
             }}>
               <span style={{ ...numeric("h3"),
@@ -994,7 +1000,7 @@ function PickFlow() {
           <p style={{ ...body("body"), fontSize: 16, color: V.text2, margin: "0 0 12px" }}>
             Where will your best driver finish this week?
           </p>
-          <Wheel options={FINISH_OPTIONS} value={finish} onChange={setFinish} accent={V.blue} />
+          <Wheel options={FINISH_OPTIONS} value={finish} onChange={setFinish} accent={V.blue} depth="flat" />
         </div>
 
         <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }), borderColor: `${V.purple}33` }}>
@@ -1004,11 +1010,11 @@ function PickFlow() {
             <span style={{ color: V.purple }}>{SNAP.boxBox.team}&rsquo;s first pit stop</span>, and your
             team has the <span style={{ color: V.gold }}>{SNAP.boxBox.side}</span>.
           </p>
-          <NeedleYou />
           <Wheel options={NEEDLE_OPTIONS} value={needle} onChange={setNeedle}
             format={v => v.toFixed(1)} accent={V.purple}
             tone={v => ((v > needle) === (SNAP.boxBox.side === "OVER") ? "win" : "lose")} />
           <NeedleSides side={SNAP.boxBox.side} />
+          <NeedleYou />
           <NeedleExplainer side={SNAP.boxBox.side} />
         </div>
 
