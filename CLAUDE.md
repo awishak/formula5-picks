@@ -24,7 +24,12 @@ Players.jsx: all players & team rosters, seasons-played descriptors, avatars.
 App.jsx: app shell, routing, F1 starting-light bottom nav, player switcher on HomePage.
 VegasHome.jsx: the Second Half Vegas Refresh mockup. Neon kit plus the state-driven Home and rooting board. Hardcoded round-11 snapshot, touches no Supabase.
 theme.vegas.js: Vegas tokens. Type scale with a 13px floor, palette, neon glow helpers, motion CSS. Vegas components take color and type from here, never inline hex.
+Recap.jsx: the 18-card first-half recap deck. Live at /deck.
 scripts/smoke.jsx: renders every VegasHome branch through react-dom/server and exits non-zero on a runtime error. Run with npm run smoke.
+scripts/smoke-recap.jsx: 864 renders of the deck, and checks each card differs across players by content hash. npm run smoke:recap.
+scripts/peek.jsx: prints the rendered TEXT of recap cards so copy gets read as copy. npm run peek.
+scripts/schedule2.mjs: draws and checks the second-half round robin, writes schedule2.sql and recap/schedule2.json.
+public/fit.html, public/names.html: dev harnesses for phone layout and name widths. Unlinked, but they do ship.
 
 All components live in src/. Recaps are static HTML in public/recaps/, surfaced via the recap button in App.jsx and Schedule.jsx.
 
@@ -37,6 +42,9 @@ Identical output lengths across smoke cases means the props are not actually dri
 ## Data model
 
 races.pick_deadline: controls when picks open and close.
+races: 23 rounds for 2026. Round 16 is the Bahrain Grand Prix at Sepang; the season ends at round 23, Abu Dhabi.
+teams.division: the FIRST-half division. teams.division_h2 is the second half. Never read `division` alone for a round 12+ question.
+schedule: home_team_id IS the OVER seat. Rounds 1-22 exist; round 23 is seeded after round 22 is scored.
 results.finishing_order: 22-driver array stored with Postgres {} array literal syntax.
 driver_pts in score records: stored as a JSON string, must json.loads() before use.
 DRIVER_NAMES: canonical driver name strings, defined in src/drivers.js. Every driver reference (scoring, headshots, team color chips, pick intel) must use these exact strings or it breaks silently. Resolve external or legacy spellings with canonicalName() rather than comparing strings directly.
@@ -78,197 +86,171 @@ The top 12 individual scorers from the prior season retain their team brands and
 
 ## Midseason recap: the card deck
 
-**Live in production at https://f5.andrewishak.com/deck since 2026-08-12.**
-It replaced the twelve-chart scroll page, which was deleted along with its
-`template.html`, `build.mjs` and `scripts/recap/smoke.mjs`. The prep scripts
-survived because the deck needs the same numbers. Git history has the old page.
+**Live at https://f5.andrewishak.com/deck. Eighteen cards. Finished and
+deployed 2026-08-17.** It replaced the twelve-chart scroll page; git history has
+that. The prep scripts survived because the deck needs the same numbers.
 
-The deck is `src/Recap.jsx`. Three ways in, all equivalent: **`/deck`** (the real
-path, and the one to share), `?recap`, `#recap`. The path needs the SPA rewrite
-in `vercel.json` or a direct hit 404s before the app loads, since Vercel's Vite
-preset does not add one. `?player=Andrew%20Ishak` overrides the signed-in name
-so any of the 48 decks can be checked without switching users.
+Three ways in, all equivalent: **`/deck`**, `?recap`, `#recap`. The path needs
+the SPA rewrite in `vercel.json` or a direct hit 404s. `?player=Andrew%20Ishak`
+overrides the signed-in name. **`?card=7` opens on that card**, which is what
+makes every card screenshottable without clicking through.
 
-`src/recaps.js` maps a round to its recap URL. Both Recaps.jsx and Schedule.jsx
-used to build `/recaps/round{N}.html` from the round number and assume a file was
-there, but a round appears as soon as it is **scored**, not when it is written
-up, so rounds 8 and 10 have always offered a recap that does not exist. That
-used to 404; since `vercel.json` started serving the app for unmatched paths it
-silently returns the app shell instead. Both screens now check the map, and
-round 11 points at `/deck`.
+The deck is `src/Recap.jsx`. Cards 1-12 are the light look, **card 13 turns
+Vegas** after the dice roll on 12.
 
-Ten cards, tap-through, forward only, one next button whose label changes on
-cards 4-6. Cards 1-6 are the light look, **card 7 turns Vegas** and stays.
+| # | Card |
+|---|---|
+| 1 | Title, avatar and team logo, three derived notes |
+| 2 | You and the field: quote, flythrough, three stat tiles |
+| 3 | Your team and what was at stake |
+| 4 | Round 11's result, with confetti up on a win and down on a loss |
+| 5 | Three round-11 stories from around the league |
+| 6 | Promotion and relegation, played out on a button in four stages |
+| 7 | Did promotion and relegation work |
+| 8 | Your rounds and your team's weeks, two charts |
+| 9 | Where the points came from, stacked |
+| 10 | How you score on each component, with ranks |
+| 11 | What to do next half. **Scrolls** |
+| 12 | Are you ready, with the dice |
+| 13 | **VEGAS.** Your division, ranked on scoring average. **Scrolls** |
+| 14 | Every team's points counting down to zero |
+| 15 | The individual game, full-width flythrough |
+| 16 | The rules. **Scrolls** |
+| 17 | Your calendar. **Scrolls** |
+| 18 | Good luck, and Make your picks |
 
-**Three rules the file exists to hold. Break any and the deck stops working:**
+### Rules the file exists to hold
 
-1. **Headline first.** Every card opens with the one sentence that is its
-   takeaway, then supports it underneath. Never build up to the point. Andrew
-   rewrote the whole deck around this on 2026-08-12.
-2. **Real sentences, not fragments.** This deck is narration, so it does NOT
-   follow [[f5-ui-copy-is-fragments]] — that rule is for product chrome. "You
-   scored 42.6 points a race, which puts you 4th out of 48."
-3. **Centred on both axes, and nothing below 13px.** Centring comes from the one
-   `Card` shell, never per card. The 13px floor is `theme.vegas.js`'s rule and
-   the first draft broke it in three places. The Vegas half runs a step LARGER
-   than the light half, not smaller.
+1. **Headline first.** Every card opens with its takeaway, then supports it.
+2. **Real sentences.** The deck is narration, so it does NOT follow
+   [[f5-ui-copy-is-fragments]] — that rule is for product chrome.
+3. **Nothing scrolls except the four cards marked above**, and nothing is ever
+   clipped. `SCROLLS` holds those four; everything else is measured and scaled
+   to fit. Cards are top justified.
+4. **Animate with CSS, never by slicing data.** Every chart renders its full
+   geometry on the server and then draws itself. Slicing by a timer makes all 48
+   decks render identically under react-dom/server, which is what
+   `scripts/smoke-recap.jsx` exists to catch.
+5. **Charts carry a legend and both axis labels.**
 
-| # | Card | Headline shape |
-|---|---|---|
-| 1 | Title | "Let's take a look at your first half, {first}." |
-| 2 | You and the field | "You scored X a race, which puts you Nth out of 48." Flythrough down all 48, landing on you |
-| 3 | Your team | "As for the team competition, you and {mate} race as {team}." |
-| 4 | Round 11 | "You were playing for {stake}." **Click**, then the score and outcome |
-| 5 | The swap | "Five teams go up, and five come down." Board travels |
-| 6 | By average | "10 of the 12 best averages are in the Championship Division." |
-| 7 | **Vegas** | "Team scores reset, but your points carry." Six-component breakdown |
-| 8 | You and your teammate | "You and {mate} have a choice to make." |
-| 9 | The title race | "Right now, {leader} is in the driver's seat." |
-| 10 | Good luck | |
+### The layout traps, all of which bit
 
-Card 4 is the only one with an internal beat: the stake lands alone, the button
-reads "What happened?", then the score and result appear under it. Back
-un-reveals before it leaves the card.
+- **Never set an animated value as an SVG attribute while the transition targets
+  the CSS property.** `opacity={x}` with `transition: opacity` does not connect:
+  three beeswarm dots never painted and the stacked chart rendered empty. Put it
+  in the `style` object.
+- **The card body is a flex column with a measured height, so children shrink.**
+  That squashed the 12-team board and cut teams off. `.f5card > *` sets
+  `flex-shrink: 0`.
+- **`position: relative` paints above every non-positioned sibling**, whatever
+  the DOM order. The board covered its own button and the next card's text.
+  `.f5card > *` sets `position: relative` so DOM order decides again.
+- **Do not reach for `contain: paint`.** It clips rather than prevents, and it
+  hides the overflow from the check meant to catch it.
+- **Measure with the wrapper released.** Reading `offsetHeight` while the parent
+  still carries the previous height measures the content through its own
+  constraint and converges on the first value it happened to read.
+- **Re-measure after `document.fonts.ready` and after images load.** Team logos
+  have no intrinsic size until they load; measuring early under-measures a card
+  full of them by a couple of hundred pixels.
 
-Data is `src/recapData.json`, built by `scripts/recap/cards.mjs` from a Supabase
-export plus `chart-data.json`. **Never hand-edit it.** Rebuild with:
+### Checking layout
 
-```
-export F5_DATA=~/Downloads/formula5_data_2026-07-27.json
-node scripts/recap/prep3.mjs && node scripts/recap/cards.mjs
-```
+`public/fit.html` loads the deck in an iframe at an exact phone size and reports
+the fit scale, anything crossing the viewport edge, and anything truncated.
+**macOS Chrome clamps its own window to about 500px, so `--window-size` is
+useless for testing a 375px phone** — that is why the iframe exists.
+
+    open http://localhost:5173/fit.html?w=393&h=852&card=8
+
+`public/names.html` measures team names against the 120px a board row gives one.
+Both ship to production, unlinked. `npm run peek` prints the rendered TEXT of
+cards so copy gets read as copy rather than reviewed as code.
+
+Verified at 393x852 and 375x667: nothing clipped, nothing scrolls outside the
+four list cards. On an iPhone SE a few cards scale to 0.72-0.98.
+
+### Data
+
+`src/recapData.json`, built by `scripts/recap/cards.mjs`. **Never hand-edit.**
+
+    export F5_DATA=~/Downloads/formula5_data_2026-07-27.json
+    node scripts/recap/prep3.mjs && node scripts/recap/cards.mjs
 
 `prep3.mjs` must run first: the stake windows come from it.
 
-**Run `npm run smoke:recap` before any deploy.** It renders all 48 decks × 10
-cards (528 renders — card 4 goes twice, once each side of the click) through
-react-dom/server and fails on a runtime error, which `npm run build` cannot
-catch. It also checks that each card renders *distinctly* across players — by
-content hash, never by output length, because the highlighted row on the team
-board moves without changing the byte count. Cards 5 and 6 are team-level, so 24
-distinct renders is correct for them; card 4 gives 36 because its two halves
-differ; the rest give 48. Adding a card means raising `CARDS` in the smoke
-script or the new one is silently uncovered.
+**Run `npm run smoke:recap` before any deploy.** 864 renders, and it checks each
+card renders *distinctly* across players by content hash. Cards that are
+deliberately identical for everyone are listed in `EXPECTED_MIN`; adding a card
+means raising `CARDS` there or it is silently uncovered.
 
-`initialCard` and `initialReveal` on the component exist only for that script,
-which cannot click. Nothing in the app passes them.
-
-### Conventions that took several rounds to land
-
-- Colour semantics: **blue is good, green is really good, pink is bad**. Validated with the dataviz skill's script in both modes. **Green and pink can never share a chart** — ΔE 1.6 under deuteranopia, indistinguishable. Blue against pink is 15.9 and safe, so promoted vs relegated always uses that pair.
-- Raw Vegas neon fails the dark lightness band as a chart fill. Marks use deepened steps; neon stays on glow and text.
-- Logos and player photos wherever they fit. All 24 team logos and 44 of 48 player photos are in Supabase and publicly reachable.
-- No explanatory paragraphs. See [[f5-ui-copy-is-fragments]].
-- Stake sentences are noun phrases, because they render straight after "You were
-  playing for". A verb in there doubles the sentence up on itself.
+- Driver returns are ranked on **points per pick**, and the denominator shown is
+  **rounds in the pool**. 48 people picking the same driver in one round is one
+  race, not 48 samples: Antonelli's 25.0 a pick came off three rounds, all of
+  which he won. Andrew caught that number as wrong on sight.
+- A driver belongs to whichever pool they were picked from more, so nobody
+  appears in both lists.
+- Short team names live in `SHORT` in cards.mjs, used only on the board and the
+  division list. Nothing is renamed. A missing one throws at build time.
+- Scoring-average rank is across all 24 teams, never within a division.
 
 ### Findings from the first half worth acting on
 
-- **The OVER won 66% of 132 matchups; the UNDER won 25%, and took a fifth of the points.** Home teams take the OVER. This reads as a balance problem, not a strategy.
-- Without the BOX BOX line, Drivetex win the Championship Division, HomeworkTubes win the Second, **Luxor are promoted and Cal Aggie are not**. 28 of 132 matchups had a different winner.
-- Best-finish guesses of P2 hit 42%; P1 only 28%, and P1 is guessed nearly as often.
-- Partner agreement only separates the **bottom six** (59.7%). The top eighteen sit 72.7–76.7 and cannot be told apart by it. The r = 0.59 correlation is almost entirely that bottom group.
-- Submission timing does nothing. r = −0.05 across 528 cards.
-- Most-picked driver is Hadjar at 338 cards for 5.3 a race. Bearman took 219 cards for 1.7. Sainz, Albon and Alonso returned less than zero.
+- **The OVER won 66% of 132 matchups; the UNDER won 25%.** Still live as a rules
+  decision.
+- Without the BOX BOX line, 29 of 132 matchups had a different result.
+- Best-finish guesses of P2 hit 42%; P1 only 28%, and P1 is guessed nearly as
+  often.
+- Most-picked midfielder is Hadjar, 301 picks for 5.9 each. **Sainz was picked
+  142 times and returned -0.1 a pick.**
 
-### Bugs found in the data
+### Bugs found in the data, still unfixed at source
 
-- **The stake solver was wrong for 14 of 24 teams.** `pairAwards` in `prep3.mjs`
-  worked out a team's worst case by sorting teams on points *descending* and
-  handing the biggest championship award to the highest-points team, spending
-  25s on teams already clear of the line. To maximise how many teams finish
-  above you, the smallest sufficient award goes to the team needing least help,
-  which keeps the big awards free for teams below. Every error made the table
-  look safer than it was. Fixed 2026-08-12: `pairAwards` is now `countOver`.
-  **Only the worst case was affected**; the minimising direction was already
-  correct, so every `best` value was right and every `worst` was understated.
-  Consequences: Drivetex and East Bay could have gone down (4-8, not 4-7) and
-  were playing to stay up, not already safe; Prestissimo, Aggie Slipstream and
-  Scuderia could all have finished last. Andrew caught this from memory before
-  the code did.
-- **`driver_pts` contains both "Andrea Kimi Antonelli" and "Kimi Antonelli"**, splitting 133 cards across two spellings. Merged in the recap pipeline via a local `CANON()`, not fixed at source. This is the exact failure the driver-name section of this file warns about, now sitting in scored data.
-- `results.finishing_order` stores only the top 5, but `driver_pts` proves scoring used a full order (Hadjar scored 8 in round 11, which is P6). **So there is no scoring bug** — the persistence is lossy, and positions are recoverable from `driver_pts` rather than from `results`. That resolves the doc/code mismatch noted at the bottom of this file.
-- Round 14 is a second "Spanish Grand Prix", at Ifema Madrid. In real 2026 that is the Madrid Grand Prix. It shows in the calendar reveal.
-
-### The stake states, and the stories in them
-
-Six states going into round 11: title 6, must-win 5, win-and-help 6,
-win-is-enough 2, already up 1, out of it 4. Eighteen distinct stake+outcome
-sentences across the 24 teams. Worth knowing:
-
-- **Every must-win team lost.** Five teams needed one result, none got it.
-- **Bronco won 89-68 and went down anyway. Luxor won 75-72 and still didn't go
-  up.** Both won the exact match they needed. The consequence differs by
-  division, so these are two branches, not one — an early version told Luxor
-  they had been relegated out of the Second Division.
-- Only TJ Premium had truly nothing at stake: they could neither go up nor
-  finish last. Their card says "All good."
-- Fairness check: 10 of the 12 best scoring averages are in the new Championship
-  Division. El Camino (77.7) and Stalloni (76.8) went down having outscored
-  three teams above them, including champions Meatballs (74.5).
-
-### Open — READ THIS FIRST when picking the deck back up
-
-**Andrew is working on this over the weekend of 2026-08-15.** The deck is a
-working draft that is already live, which is the awkward part: everything below
-is unresolved and 48 people can reach it.
-
-**Andrew's verdict on the current draft: "this needs lots of work."** He named
-two things and both are done — headline-first, and the Vegas type being too
-small. **The rest of that list was never given.** Ask for it before doing
-anything else; guessing one item at a time was already going badly.
-
-Three questions asked and never answered:
-
-1. Card 3 ends on a flat standings line ("You went into round 11 5th in the
-   Second Division"). Andrew's own draft had tension there instead: "you and
-   your teammate had some work to do in round 11." Should it vary by how much
-   was at stake?
-2. "You're killing it on **the** midfield" reads off. Keep the articles, or drop
-   them so it's "midfield" / "top pool" / "needle"?
-3. Card 9's rival label literally says `family` for the nine players with a
-   relative in the league. Blunt on the card.
-
-**The deck has never been seen in motion, and it is live.** The flythrough on
-card 2, the board travel on cards 5-6, the click reveal on card 4 and the Vegas
-flip on card 7 are all unverified. The three smoke suites prove it renders, not
-that it looks right. The Chrome extension still will not pair
-(`list_connected_browsers` returns empty), so this needs a human at
-`f5.andrewishak.com/deck`. `npm run dev` serves on **:5174** when 5173 is taken.
-
-**The pick pages have never been opened since the driver-name refactor either.**
-`npm run smoke:drivers` checks the data hard and opens both pages, but their real
-data loads from Supabase after the page appears, which does not happen in the
-harness. Someone should submit a pick on a phone before round 12.
-
-Everything is merged to `main` and deployed. Production and `main` are the same
-commit.
-
-Dropped when the twelve charts were cut, per Andrew: the OVER/UNDER imbalance,
-partner agreement, submission timing, driver returns. `prep.mjs` and `prep2.mjs`
-still compute all of them. **The OVER/UNDER balance is still live as a rules
-decision** even though it is no longer a chart.
-
-**Shelf life.** This is a *first-half* recap and round 12 is next.
+- **`results.top_driver` for round 5 contains "Claude responded: Andrea Kimi
+  AntonelliAndrea Kimi Antonelli".** An AI response was written into the field.
+  Scoring reads `driver_pts` so round 5 scored fine, but the row is wrong.
+- **Round 9 and 10 pit times are 10 and 11 seconds** against 2.2-4.8 everywhere
+  else, and round 2 is null. Either real disaster stops or data entry.
+- **`driver_pts` holds both "Andrea Kimi Antonelli" and "Kimi Antonelli"**,
+  splitting 133 cards. Merged in the recap pipeline via a local `CANON()`, not
+  fixed at source.
+- `results.finishing_order` stores only the top 5, but `driver_pts` proves
+  scoring used a full order. The persistence is lossy; positions are recoverable
+  from `driver_pts`.
 
 ### Relationship to the Stories project
 
-The deck is the reference implementation for `~/Projects/stories`, the generic
-version of this pattern. Vocabulary settled 2026-08-12: the format is a **story**
-(tap-through cards, from Instagram/Snapchat), the genre is a **Wrapped**
-(personalised data recap), and gating the app behind it makes it an
-**interstitial**. The reusable product is really the config — trigger, audience,
-frequency, dismissal — not the cards.
+The deck is the reference implementation for `~/Projects/stories`. The format is
+a **story**, the genre is a **Wrapped**, gating the app behind it makes it an
+**interstitial**. The reusable product is the config, not the cards. Two things
+would have to be extracted: the `Card` shell with its fit measurement, and the
+light-to-dark flip partway through. Not solved for a real gate: F5 has no
+persisted "seen" flag, which needs a Supabase column and a write.
 
-If Stories lands first, this deck should become its first consumer rather than
-staying a one-off. Two things here would have to be extracted: the `Card` shell
-plus token switching, and the light-to-dark flip partway through a deck.
+## The second half: calendar, schedule and divisions
 
-Not yet solved for a real gate: F5 has no persisted "seen" flag. `?recap` is a
-URL anyone can revisit, which is fine for a preview and not enough for gating.
-That needs a Supabase column and a write, and this app has no server-side code.
+**Done and live, 2026-08-17.** Three database changes, all additive.
 
-## Second Half Vegas Refresh
+- **The calendar is 23 races.** The Bahrain Grand Prix at Sepang was inserted at
+  round 16 and everything from the old round 16 shifted up, so the season now
+  ends at Abu Dhabi in round 23. Yes, the race at Kuala Lumpur is called the
+  Bahrain Grand Prix. Andrew confirmed that; OpenF1 agrees.
+- **Rounds 12-22 are drawn**, a straight round robin per division: every pair
+  meets once, round 22 is seeded 1v2, 3v4 and so on by first-half scoring
+  average, and every team takes the OVER five or six times with both sides
+  inside the opening three rounds. `scripts/schedule2.mjs` draws it and checks
+  it; `scripts/schedule2.sql` is what was run. **Round 23 is deliberately
+  undrawn**: it gets seeded 1v12, 2v11 once round 22 is scored.
+- `home_team_id` IS the OVER seat (Admin.jsx:547). Home carries no other
+  meaning, in either half.
+- **`teams.division_h2`** splits divisions by half so first-half standings keep
+  rendering as they were played. `TeamStandings.jsx` picks by round, and the
+  team game now resets at the half while the individual game runs all 23 races.
+  **`scripts/division_h2.sql` may not have been run yet** — the app falls back to
+  the first-half division when the column is missing, so nothing breaks, but
+  second-half standings will not group correctly until it does. Check first.
+
+### The Vegas refresh itself
 
 In progress on branch `vegas-second-half`, 10 commits, all pushed. Not merged, nothing user-facing changed. Design is settled; the data is not.
 
@@ -306,13 +288,26 @@ Doing this properly needs the pure scoring math extracted out of scoreRace() in 
 
 ### Next chunks, not started
 
-- Standings and the team table in the Vegas look, fewer columns and bigger type, folding in the jump chip scoped earlier this session
+- Standings and the team table in the Vegas look, fewer columns and bigger type, folding in the jump chip scoped earlier
 - Home reading live Supabase data instead of the hardcoded snapshot
-- Second-half matchups do not exist in `schedule` yet. It only covers rounds 1-11, so a real second-half Home has no opponent to show.
 
-### Unverified
+**RESOLVED 2026-08-17: the second-half schedule now exists.** `schedule` covers
+rounds 12-22, so a real second-half Home has an opponent to show. See below.
 
-Every deploy this session went out unseen; the Chrome extension would not pair (`list_connected_browsers` returned empty). Smoke proves it renders, not that it looks right. Whether the marquee is crowded now that the teammate avatars live in it is the most likely thing to be wrong.
+### What the recap deck learned that this should reuse
+
+The deck went from unseen to verified on 2026-08-17 and the tooling transfers:
+
+- **Drive Chrome headless through `public/fit.html`** to see any screen at a
+  true phone viewport. macOS Chrome clamps its own window to about 500px, so
+  `--window-size` is useless for testing a 375px phone; the iframe is the fix.
+  This is how everything finally got looked at, and the Chrome extension still
+  will not pair (`list_connected_browsers` returns empty).
+- The layout traps listed under the recap section all apply here too, especially
+  animating an SVG attribute while the transition targets the CSS property, and
+  `position: relative` painting above non-positioned siblings.
+- **Read rendered copy as copy.** `npm run peek` exists because the deck's voice
+  mistakes all happened in template strings that were reviewed as code.
 
 ## Open work items
 
@@ -330,3 +325,8 @@ Blockers found 2026-07-20, all unresolved:
 Decision still open: full cron automation vs an Admin "auto-generate pool" button that needs no new service and keeps a human veto.
 
 Doc/code mismatch to resolve: this file says results.finishing_order is a 22-driver array, but Admin.jsx:668 writes finishOrder.slice(0, 5). Confirm the intended shape for both results.finishing_order and picks.finishing_order, then correct whichever is wrong.
+
+Announced to the league in the deck, so these are now promises:
+- The pit stop input must accept up to 4.5 seconds. It stopped at 4.0 in the first half and the rules card says it now goes higher. **Not yet implemented.**
+- Fernolo 5 Bort, Formula 5 Bot's less popular cousin, makes random picks for anyone who misses the deadline. **Not yet implemented.**
+- Round 23, if the FIA holds it, is seeded 1v12, 2v11 and so on.
