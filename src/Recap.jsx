@@ -262,7 +262,7 @@ const quoteFor = rank => QUOTES.find(q => rank <= q.upTo) || QUOTES[QUOTES.lengt
 // Starts at the top of the table and travels down to the viewer, passing every
 // player between. Two seconds whether you are 3rd or 48th, so the trip reads the
 // same for everybody.
-function Ladder({ me, T, live }) {
+function Ladder({ me, T, live, big }) {
   const rows = DATA.league.ladder;
   const H = 50;
   const [VIEW, setView] = useState(350);
@@ -303,7 +303,7 @@ function Ladder({ me, T, live }) {
   }, [live, from, target]);
 
   return (
-    <div ref={box} style={{ height: VIEW, width: "100%", maxWidth: 340,
+    <div ref={box} style={{ height: VIEW, width: "100%", maxWidth: big ? 560 : 340,
       overflowY: free ? "auto" : "hidden", overflowX: "hidden",
       WebkitOverflowScrolling: "touch",
       position: "relative", borderRadius: 16, background: T.panel,
@@ -314,17 +314,20 @@ function Ladder({ me, T, live }) {
           const you = r.name === me.name;
           return (
             <div key={r.name} style={{
-              height: H, display: "flex", alignItems: "center", gap: 8, padding: "0 10px",
+              height: H, display: "flex", alignItems: "center", gap: big ? 12 : 8,
+              padding: big ? "0 14px" : "0 10px",
               opacity: you ? 1 : 0.4,
               background: you ? (T.glow ? "rgba(0,217,255,0.10)" : "rgba(108,184,224,0.16)") : "transparent",
             }}>
-              <div style={{ fontFamily: T.fd, fontSize: 17, width: 20, textAlign: "right",
-                flexShrink: 0, color: you ? T.good : T.faint }}>{r.rank}</div>
-              <Avatar name={r.name} photo={r.photo} size={30} T={T} ring={you ? T.good : null} />
-              <div style={{ fontFamily: T.fb, fontSize: 14, fontWeight: you ? 700 : 400,
+              <div style={{ fontFamily: T.fd, fontSize: big ? 21 : 17, width: big ? 28 : 20,
+                textAlign: "right", flexShrink: 0,
+                color: you ? T.good : T.faint }}>{r.rank}</div>
+              <Avatar name={r.name} photo={r.photo} size={big ? 36 : 30} T={T}
+                ring={you ? T.good : null} />
+              <div style={{ fontFamily: T.fb, fontSize: big ? 18 : 14, fontWeight: you ? 700 : 400,
                 whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                 flex: "1 1 0", minWidth: 0, textAlign: "left" }}>{r.name}</div>
-              <div style={{ fontFamily: T.fd, fontSize: 18, flexShrink: 0,
+              <div style={{ fontFamily: T.fd, fontSize: big ? 24 : 18, flexShrink: 0,
                 color: you ? T.good : T.dim }}>{r.ppr.toFixed(1)}</div>
             </div>
           );
@@ -1172,12 +1175,12 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
     // 15 ─────────────────────────────────────── VEGAS. the individual game
     () => (
       <Card T={T} dep={i}>
-        <Head T={T}>The individual title runs all the way through the season.</Head>
+        <Head T={T}>And the individual game runs all season.</Head>
         <Line T={T} size={T.small}>
           The individual title goes to whoever has the highest scoring average over the entire season.
         </Line>
-        <Ladder me={deck} T={T} live={i === 14} />
-        <Line T={T} dim size={T.small}>
+        <Ladder me={deck} T={T} live={i === 14} big />
+        <Line T={T} dim size={T.micro}>
           {noOrphan(`Small change: scores now show as a season-long average, not a total.`)}
         </Line>
       </Card>
@@ -1199,7 +1202,7 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
               border: `1px solid ${T.line}`, textAlign: "left" }}>
               <div style={{ fontFamily: T.fd, fontSize: 24, color: T.good, lineHeight: 1,
                 ...textGlow(V.blue, 0.7) }}>{n + 1}</div>
-              <div style={{ fontFamily: T.fb, fontSize: T.small, lineHeight: 1.5 }}>{s}</div>
+              <div style={{ fontFamily: T.fb, fontSize: T.micro - 2, lineHeight: 1.5 }}>{s}</div>
             </div>
           ))}
         </div>
