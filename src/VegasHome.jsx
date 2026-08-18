@@ -112,7 +112,8 @@ const SNAP = {
 const F1_PTS = { 1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1 };
 const ptsForPos = (pos) => (pos === -1 ? -1 : F1_PTS[pos] || 0);
 
-// This week's ten. Three from the top pool, seven from the mid, and nobody else
+// This week's ten. The pool is three top and seven midfield; you pick one and
+// four of them. Nobody else
 // on the grid can score for anyone in F5 this round. That split drives row
 // height: the ten get a full row, the other twelve stay as thin context so you
 // can still find a driver by position without them competing for attention.
@@ -387,9 +388,9 @@ function Marquee({ race, status, players = [] }) {
                 </div>
               ))}
             </div>
-            <p style={{ ...labelType(), color: allIn ? V.green : V.pink, margin: "6px 0 0" }}>
-              {allIn ? "Picks in" : inCount === 0 ? "No picks" : `${inCount} of ${players.length} in`}
-            </p>
+            {allIn && (
+              <p style={{ ...labelType(), color: V.green, margin: "6px 0 0" }}>Picks in</p>
+            )}
           </div>
         )}
       </div>
@@ -409,9 +410,16 @@ function Marquee({ race, status, players = [] }) {
 
 // One place to decide what the event is doing, so a red flag or a delay only has
 // to be added here.
-function eventStatus({ settled, live, lapInfo, race }) {
+function eventStatus({ settled, live, lapInfo, race, closesAt }) {
   if (settled) return { text: "Race over", color: V.text2 };
   if (live) return { text: `Live · Lap ${lapInfo.lap} of ${SNAP.totalLaps}`, color: V.pink };
+  if (closesAt) {
+    const ms = new Date(closesAt) - Date.now();
+    if (ms > 0) {
+      const h = Math.floor(ms / 3600e3), m = Math.floor((ms % 3600e3) / 60e3);
+      return { text: `Picks close in ${h}h ${m}m`, color: V.blue };
+    }
+  }
   const t = new Date(race.lightsOut).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   return { text: `Lights out ${t}`, color: V.blue };
 }
@@ -427,16 +435,12 @@ function HomeOpen({ onNav }) {
     <>
       <Marquee
         race={race}
-        status={eventStatus({ settled: false, live: false, lapInfo: null, race })}
+        status={eventStatus({ settled: false, live: false, lapInfo: null, race, closesAt: demoDeadline })}
         players={[
           { name: SNAP.me, picked: false },
           { name: SNAP.teammate, picked: false },
         ]}
       />
-
-      <div style={{ ...card({ padding: "20px", marginBottom: 18 }), borderColor: `${V.blue}33` }}>
-        <Countdown to={demoDeadline} label="Picks close in" />
-      </div>
 
       <div style={{ marginBottom: 22 }}>
         <NeonBtn flicker onClick={() => onNav("picks")}>
@@ -444,17 +448,7 @@ function HomeOpen({ onNav }) {
         </NeonBtn>
       </div>
 
-      <SectionHead accent={V.blue} sub="Three from the top drivers, seven from the midfield.">This week's driver pool</SectionHead>
-      <div style={{ ...card({ padding: "16px 18px", marginBottom: 22 }) }}>
-        <Label color={V.gold} style={{ marginBottom: 10 }}>Top drivers · pick 3</Label>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
-          {pools.top.map(d => <Chip key={d} color={dColor(d)}>{d}</Chip>)}
-        </div>
-        <Label color={V.silver} style={{ marginBottom: 10 }}>Midfield drivers · pick 7</Label>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {pools.mid.map(d => <Chip key={d} color={dColor(d)}>{d}</Chip>)}
-        </div>
-      </div>
+      <DriverPoolCard />
 
       <SectionHead accent={V.purple}>The Needle</SectionHead>
       <div style={{ ...card({ padding: "18px 20px", marginBottom: 22 }), borderColor: `${V.purple}33` }}>
@@ -479,6 +473,58 @@ function HomeOpen({ onNav }) {
         <p style={{ ...body("body"), color: V.text2, margin: 0 }}>{track.note}</p>
       </div>
     </>
+  );
+}
+
+// ── This week's driver pool ──────────────────────────────
+
+function DriverCard({ name }) {
+  const c = dColor(name);
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+      padding: "12px 6px", borderRadius: 12, background: V.bg3,
+      border: `1px solid ${c}44`, minWidth: 0,
+    }}>
+      <Face name={name} size={48} ring={c} glow={0.7} />
+      <div style={{ textAlign: "center", minWidth: 0, width: "100%" }}>
+        <p style={{ ...body("bodyMd"), fontSize: 15, color: V.text, margin: 0, lineHeight: 1.2 }}>
+          {lastName(name)}
+        </p>
+        <p style={{ ...body("bodySm"), fontSize: 13, color: c, margin: "2px 0 0",
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{dTeam(name)}</p>
+      </div>
+    </div>
+  );
+}
+
+// You pick ONE of the three top drivers and FOUR of the seven midfielders. The
+// pool sizes and the pick counts are different numbers and this said the pool
+// sizes for a while.
+function DriverPoolCard() {
+  const { pools } = SNAP;
+  const Group = ({ title, pick, accent, names }) => (
+    <>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
+        <p style={{ ...body("bodyMd"), fontSize: 17, color: V.text, margin: 0 }}>{title}</p>
+        <p style={{ ...body("bodySm"), color: accent, margin: 0 }}>pick {pick}</p>
+      </div>
+      <div style={{
+        display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))",
+        gap: 8, marginBottom: 22,
+      }}>
+        {names.map(d => <DriverCard key={d} name={d} />)}
+      </div>
+    </>
+  );
+  return (
+    <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }) }}>
+      <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 18px" }}>
+        This week's driver pool
+      </p>
+      <Group title="Top drivers" pick={1} accent={V.gold} names={pools.top} />
+      <Group title="Midfield drivers" pick={4} accent={V.silver} names={pools.mid} />
+    </div>
   );
 }
 
