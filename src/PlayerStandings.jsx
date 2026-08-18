@@ -311,11 +311,18 @@ export default function PlayerStandings({ currentUser }) {
     load();
   }, []);
 
+  // Individual points run all 23 races and never reset, so these standings
+  // cover the whole season. The team badge still shows the division a team is
+  // in right now, which changes at round 12.
+  const scoredRaceIds = new Set(allScores.map(s => s.race_id));
+  const inSecondHalf = races.some(r => r.round >= 12 && scoredRaceIds.has(r.id));
+
   const getTeamInfo = (pid) => {
     const t = teams.find(t => t.player1_id === pid || t.player2_id === pid);
     if (!t) return { name: null, division: "second", teammateId: null, logoUrl: null };
     const mateId = t.player1_id === pid ? t.player2_id : t.player1_id;
-    return { name: t.name, division: t.division || "second", teammateId: mateId, logoUrl: t.logo_url || null };
+    const division = (inSecondHalf ? t.division_h2 : t.division) || t.division || "second";
+    return { name: t.name, division, teammateId: mateId, logoUrl: t.logo_url || null };
   };
 
   const getRaceName = (raceId) => { const r = races.find(r => r.id === raceId); return r ? `R${r.round} – ${r.race_name}` : "Race"; };

@@ -4,8 +4,10 @@ import { supabase } from "./supabaseClient";
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, FD, FB } from "./theme";
 
-const SPRINT_ROUNDS = [2, 4, 5, 9, 12, 16];
-const SATURDAY_ROUNDS = [15, 20];
+// Sepang joins as round 16, so Singapore's sprint and the Las Vegas Saturday
+// each move up one. Sepang runs three practices and no sprint.
+const SPRINT_ROUNDS = [2, 4, 5, 9, 12, 17];
+const SATURDAY_ROUNDS = [15, 21];
 
 // Race start times in UTC (from official FIA announcements)
 // Local times → UTC: Australia 3pm AEDT (UTC+11)=04:00, China 3pm CST (UTC+8)=07:00,
@@ -34,13 +36,14 @@ const RACE_UTC = {
   13: "2026-09-06T13:00:00Z",
   14: "2026-09-13T13:00:00Z",
   15: "2026-09-26T11:00:00Z",  // Saturday
-  16: "2026-10-11T12:00:00Z",
-  17: "2026-10-25T20:00:00Z",
-  18: "2026-11-01T19:00:00Z",
-  19: "2026-11-08T17:00:00Z",
-  20: "2026-11-22T04:00:00Z",  // Saturday night, technically Sunday UTC
-  21: "2026-11-29T16:00:00Z",
-  22: "2026-12-06T13:00:00Z"
+  16: "2026-10-04T07:00:00Z",
+  17: "2026-10-11T12:00:00Z",
+  18: "2026-10-25T20:00:00Z",
+  19: "2026-11-01T19:00:00Z",
+  20: "2026-11-08T17:00:00Z",
+  21: "2026-11-22T04:00:00Z",  // Saturday night, technically Sunday UTC
+  22: "2026-11-29T16:00:00Z",
+  23: "2026-12-06T13:00:00Z"
 };
 
 const CIRCUITS = {
@@ -59,13 +62,14 @@ const CIRCUITS = {
   13: { city: "Monza",       country: "\u{1F1EE}\u{1F1F9}", circuit: "Autodromo di Monza" },
   14: { city: "Madrid",      country: "\u{1F1EA}\u{1F1F8}", circuit: "Madrid Street Circuit" },
   15: { city: "Baku",        country: "\u{1F1E6}\u{1F1FF}", circuit: "Baku City Circuit" },
-  16: { city: "Singapore",   country: "\u{1F1F8}\u{1F1EC}", circuit: "Marina Bay" },
-  17: { city: "Austin",      country: "\u{1F1FA}\u{1F1F8}", circuit: "COTA" },
-  18: { city: "Mexico City", country: "\u{1F1F2}\u{1F1FD}", circuit: "Aut\u00f3dromo Hermanos Rodr\u00edguez" },
-  19: { city: "S\u00e3o Paulo",   country: "\u{1F1E7}\u{1F1F7}", circuit: "Interlagos" },
-  20: { city: "Las Vegas",   country: "\u{1F1FA}\u{1F1F8}", circuit: "Las Vegas Strip" },
-  21: { city: "Lusail",      country: "\u{1F1F6}\u{1F1E6}", circuit: "Lusail International" },
-  22: { city: "Abu Dhabi",   country: "\u{1F1E6}\u{1F1EA}", circuit: "Yas Marina" }
+  16: { city: "Kuala Lumpur", country: "\u{1F1F2}\u{1F1FE}", circuit: "Sepang International" },
+  17: { city: "Singapore",   country: "\u{1F1F8}\u{1F1EC}", circuit: "Marina Bay" },
+  18: { city: "Austin",      country: "\u{1F1FA}\u{1F1F8}", circuit: "COTA" },
+  19: { city: "Mexico City", country: "\u{1F1F2}\u{1F1FD}", circuit: "Aut\u00f3dromo Hermanos Rodr\u00edguez" },
+  20: { city: "S\u00e3o Paulo",   country: "\u{1F1E7}\u{1F1F7}", circuit: "Interlagos" },
+  21: { city: "Las Vegas",   country: "\u{1F1FA}\u{1F1F8}", circuit: "Las Vegas Strip" },
+  22: { city: "Lusail",      country: "\u{1F1F6}\u{1F1E6}", circuit: "Lusail International" },
+  23: { city: "Abu Dhabi",   country: "\u{1F1E6}\u{1F1EA}", circuit: "Yas Marina" }
 };
 
 export default function F1Calendar() {

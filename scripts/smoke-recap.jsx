@@ -12,7 +12,7 @@ import Recap from "../src/Recap.jsx";
 import DATA from "../src/recapData.json";
 
 const names = Object.keys(DATA.players);
-const CARDS = 10;
+const CARDS = 19;
 
 // Compare CONTENT, not output length. The highlighted row on the team board
 // moves between teams without changing the byte count, so counting distinct
@@ -29,8 +29,9 @@ const seen = new Map();
 
 for (const name of names) {
   for (let i = 0; i < CARDS; i++) {
-    // Card 4 holds its outcome behind a click, so both halves need rendering.
-    for (const reveal of i === 3 ? [false, true] : [false]) {
+    // No card holds anything behind a click any more: the round 11 result is
+    // its own card. The loop is kept so a future gated card is easy to add.
+    for (const reveal of [false]) {
       total++;
       try {
         const html = renderToString(<Recap playerName={name} initialCard={i} initialReveal={reveal} />);
@@ -55,9 +56,18 @@ try {
 }
 
 // One identical render for all 48 means the card is not reading the player at
-// all. Cards 4, 5 and 6 are about the team rather than the player, so they top
-// out at 24: teammates share a team and correctly get the same screen.
-const EXPECTED_MIN = { 4: 20, 5: 20, 6: 20 };
+// all, EXCEPT where a card is deliberately not personal.
+//
+//   Cards 5, 11, 12 and 15 are league-wide, rules copy, or the doorway into the
+//   second half. Identical by design.
+//   Cards 3, 4, 6, 7, 13 and 16 are about the team, so they top out at 24:
+//   teammates share a team and correctly get the same screen.
+//
+// Everything else has to differ across all 48.
+const EXPECTED_MIN = {
+  3: 20, 4: 20, 5: 1, 6: 20, 7: 20,
+  11: 1, 12: 1, 13: 20, 14: 20, 17: 1, 18: 20,
+};
 const perCard = {};
 for (const [k, v] of seen) {
   const i = parseInt(k.split("|")[1], 10);

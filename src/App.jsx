@@ -39,13 +39,14 @@ const CIRCUITS = {
   13: { city: "Monza",       country: "🇮🇹", circuit: "Autodromo di Monza" },
   14: { city: "Madrid",      country: "🇪🇸", circuit: "Madrid Street Circuit" },
   15: { city: "Baku",        country: "🇦🇿", circuit: "Baku City Circuit" },
-  16: { city: "Singapore",   country: "🇸🇬", circuit: "Marina Bay" },
-  17: { city: "Austin",      country: "🇺🇸", circuit: "COTA" },
-  18: { city: "Mexico City", country: "🇲🇽", circuit: "Autódromo Hermanos Rodríguez" },
-  19: { city: "São Paulo",   country: "🇧🇷", circuit: "Interlagos" },
-  20: { city: "Las Vegas",   country: "🇺🇸", circuit: "Las Vegas Strip" },
-  21: { city: "Lusail",      country: "🇶🇦", circuit: "Lusail International" },
-  22: { city: "Abu Dhabi",   country: "🇦🇪", circuit: "Yas Marina" }
+  16: { city: "Kuala Lumpur", country: "🇲🇾", circuit: "Sepang International" },
+  17: { city: "Singapore",   country: "🇸🇬", circuit: "Marina Bay" },
+  18: { city: "Austin",      country: "🇺🇸", circuit: "COTA" },
+  19: { city: "Mexico City", country: "🇲🇽", circuit: "Autódromo Hermanos Rodríguez" },
+  20: { city: "São Paulo",   country: "🇧🇷", circuit: "Interlagos" },
+  21: { city: "Las Vegas",   country: "🇺🇸", circuit: "Las Vegas Strip" },
+  22: { city: "Lusail",      country: "🇶🇦", circuit: "Lusail International" },
+  23: { city: "Abu Dhabi",   country: "🇦🇪", circuit: "Yas Marina" }
 };
 
 // ── Season Preview Carousel ──────────────────────────────
@@ -953,11 +954,17 @@ export default function App() {
   // name is picked this branch catches the re-render and opens the deck. So a
   // cold visit to /deck is: pick your name, then your recap.
   if (activePage === "recap") {
-    const override = new URLSearchParams(window.location.search).get("player");
+    const q = new URLSearchParams(window.location.search);
+    const override = q.get("player");
     const who = override || currentUser;
+    // ?card=7 opens the deck on that card. It exists so every card can be
+    // screenshotted at phone size without clicking through, which is how the
+    // no-scrolling rule gets checked.
+    const card = Math.max(1, parseInt(q.get("card") || "1", 10) || 1) - 1;
     if (who) return (
       <Recap
         playerName={who}
+        initialCard={card}
         // Back to the root, not to the current path: leaving the deck from
         // /deck has to drop the path or it reopens on the next load.
         onExit={() => { window.history.replaceState(null, "", "/"); navigateTo("home"); }}

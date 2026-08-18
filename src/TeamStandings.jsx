@@ -5,6 +5,11 @@ import { supabase } from "./supabaseClient";
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB, avatarColor } from "./theme";
 const TEAM_PTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1, 0, 0];
 
+// The second half starts at round 12, where promotion and relegation take
+// effect. Teams carry two divisions: teams.division for rounds 1-11 and
+// teams.division_h2 for everything after.
+const FIRST_H2_ROUND = 12;
+
 // 2025 individual points — used as preseason tiebreaker when all teams have 0 pts
 const PTS_2025 = {
   "Andrew Ishak": 473, "George Fahmy": 459, "Krista Nabil": 457, "Rafik Zarifa": 438,
@@ -51,6 +56,7 @@ export default function TeamStandings({ currentUser, onNavigate }) {
   const [scoringOpen, setScoringOpen] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [playerScoreTotals, setPlayerScoreTotals] = useState({});
+  const [inSecondHalf, setInSecondHalf] = useState(false);
   const secondDivRef = useRef(null);
 
   useEffect(() => {
@@ -75,8 +81,23 @@ export default function TeamStandings({ currentUser, onNavigate }) {
         const scoreMap = {};
         (scores || []).forEach(s => { scoreMap[scoreKey(s.player_id, s.race_id)] = s; });
 
-        const racesWithScores = new Set();
-        (scores || []).forEach(s => racesWithScores.add(s.race_id));
+        const allScored = new Set();
+        (scores || []).forEach(s => allScored.add(s.race_id));
+
+        // The team game resets at the half. Championship points, records and
+        // matchup averages all start again at round 12, so everything below
+        // counts only the races in the half being shown. Individual scoring
+        // carries across all 23 races and is worked out in PlayerStandings.
+        const latestRound = Math.max(0, ...[...allScored].map(id => raceMap[id]?.round || 0));
+        const secondHalf = latestRound >= FIRST_H2_ROUND;
+        setInSecondHalf(secondHalf);
+
+        const racesWithScores = new Set(
+          [...allScored].filter(id => {
+            const round = raceMap[id]?.round || 0;
+            return secondHalf ? round >= FIRST_H2_ROUND : round < FIRST_H2_ROUND;
+          })
+        );
         setRacesCompleted(racesWithScores.size);
 
         const timestamps = (scores || []).map(s => s.calculated_at).filter(Boolean).sort().reverse();
@@ -89,7 +110,11 @@ export default function TeamStandings({ currentUser, onNavigate }) {
         const teamData = (teams || []).map(team => {
           const p1 = team.player1_id, p2 = team.player2_id;
           const p1Name = playerMap[p1] || "?", p2Name = playerMap[p2] || "?";
+          // teams.division is the first-half division and stays that way, so
+          // rounds 1-11 keep rendering the way they were played. division_h2
+          // is what rounds 12 and up use.
           const division = team.division || "second";
+          const divisionH2 = team.division_h2 || division;
           let totalWins = 0, totalMatchupScore = 0, matchupCount = 0;
           let p1Total = 0, p2Total = 0;
           const weeklyResults = [];
@@ -151,7 +176,7 @@ export default function TeamStandings({ currentUser, onNavigate }) {
           const boxBoxPct = boxBoxTotal > 0 ? Math.round((boxBoxWins / boxBoxTotal) * 100) : null;
 
           return {
-            id: team.id, name: team.name, division, p1Name, p2Name, p1Id: p1, p2Id: p2,
+            id: team.id, name: team.name, division, divisionH2, p1Name, p2Name, p1Id: p1, p2Id: p2,
             logo_url: team.logo_url,
             totalTeamPts: 0, totalWins, totalMatchupScore, matchupCount,
             avgMatchupScore: matchupCount > 0 ? (totalMatchupScore / matchupCount) : 0,
@@ -166,8 +191,12 @@ export default function TeamStandings({ currentUser, onNavigate }) {
 
         // Calculate team points per race within each division
         racesWithScores.forEach(raceId => {
+          // Championship points are ranked inside a division, and which division
+          // a team is in depends on the half the race belongs to.
+          const round = raceMap[raceId]?.round || 0;
+          const divisionAt = t => (round >= FIRST_H2_ROUND ? t.divisionH2 : t.division);
           ["championship", "second"].forEach(div => {
-            const divTeams = teamData.filter(t => t.division === div);
+            const divTeams = teamData.filter(t => divisionAt(t) === div);
             const raceResults = divTeams.map(t => { const wr = t.weeklyResults.find(w => w.raceId === raceId); return wr ? { teamId: t.id, ...wr } : null; }).filter(Boolean);
             const winners = raceResults.filter(r => r.won === true).sort((a, b) => b.matchupScore - a.matchupScore);
             const ties = raceResults.filter(r => r.won === null).sort((a, b) => { if (a.boxBoxCorrect && !b.boxBoxCorrect) return -1; if (!a.boxBoxCorrect && b.boxBoxCorrect) return 1; return b.matchupScore - a.matchupScore; });
@@ -222,18 +251,22 @@ export default function TeamStandings({ currentUser, onNavigate }) {
         const oppId = m.home_team_id === teamId ? m.away_team_id : m.home_team_id;
         const opp = standings.find(t => t.id === oppId);
         const isOver = m.home_team_id === teamId;
-        // Find opponent rank in their division
-        const oppDiv = standings.filter(t => t.division === opp?.division);
+        // Find opponent rank in their division, which depends on the half the
+        // upcoming race falls in.
+        const round = race?.round || 99;
+        const divOf = t => (round >= FIRST_H2_ROUND ? t?.divisionH2 : t?.division);
+        const oppDiv = standings.filter(t => divOf(t) === divOf(opp));
         const oppRank = oppDiv.findIndex(t => t.id === oppId) + 1;
-        return { round: race?.round || 99, raceName: race?.race_name || "TBD", opponentName: opp?.name || "TBD", isOver, oppRank };
+        return { round, raceName: race?.race_name || "TBD", opponentName: opp?.name || "TBD", isOver, oppRank };
       })
       .sort((a, b) => a.round - b.round).slice(0, 3);
   };
 
   if (loading) return <div style={{ padding: "60px 20px", textAlign: "center" }}><p style={{ fontFamily: FB, fontSize: 14, color: TEXT2 }}>Loading standings…</p></div>;
 
-  const champTeams = standings.filter(t => t.division === "championship");
-  const secondTeams = standings.filter(t => t.division === "second");
+  const activeDivision = t => (inSecondHalf ? t?.divisionH2 : t?.division);
+  const champTeams = standings.filter(t => activeDivision(t) === "championship");
+  const secondTeams = standings.filter(t => activeDivision(t) === "second");
   const hasData = racesCompleted > 0;
 
   // Matchup Position: compare 8th in Championship vs 5th in Second Division
@@ -503,7 +536,7 @@ export default function TeamStandings({ currentUser, onNavigate }) {
             <p style={{ margin: "0 0 8px" }}>The Bahrain and Saudi Arabian Grands Prix were cancelled due to safety concerns related to the war in Iran. That shortened the first half from 12 races to 11, which meant the Week 12 playoff no longer made sense.</p>
             <p style={{ margin: "0 0 8px" }}>Here's how it works now. The <strong style={{ color: RED }}>bottom four teams</strong> in the Championship Division (9th through 12th) are automatically relegated. The <strong style={{ color: GREEN }}>top four teams</strong> in the Second Division (1st through 4th) are automatically promoted.</p>
             <p style={{ margin: "0 0 8px" }}>There's one more wrinkle. If the <strong style={{ color: ORANGE }}>5th-place team</strong> in the Second Division has a higher scoring average than the <strong style={{ color: ORANGE }}>8th-place team</strong> in the Championship Division, they swap too. We call that the <strong style={{ color: ORANGE }}>Matchup Position</strong>.</p>
-            <p style={{ margin: 0 }}>After Round 11, divisions reset and the second half is an <strong style={{ color: BLUEDARK }}>11-race sprint</strong> for the Team Championship.</p>
+            <p style={{ margin: 0 }}>After Round 11, divisions reset and the second half is a <strong style={{ color: BLUEDARK }}>12-race sprint</strong> for the Team Championship.</p>
           </div>
         )}
       </div>
@@ -563,7 +596,7 @@ export default function TeamStandings({ currentUser, onNavigate }) {
               ))}
             </div>
 
-            <p style={{ margin: 0 }}>The team with the most championship points at the end of the <strong style={{ color: TEXT }}>second half</strong> (Races 12–22) wins the <strong style={{ color: GOLD }}>Team Championship</strong>.</p>
+            <p style={{ margin: 0 }}>The team with the most championship points at the end of the <strong style={{ color: TEXT }}>second half</strong> (Races 12–23) wins the <strong style={{ color: GOLD }}>Team Championship</strong>.</p>
           </div>
         )}
       </div>

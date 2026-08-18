@@ -81,13 +81,13 @@ export default function Rules() {
       {/* SCHEDULE */}
       <Section title="Weekly Schedule">
         <P>Picks open by <strong>5 PM Pacific on Tuesdays</strong> and lock on <strong>Friday at noon</strong>. If you don't submit by the deadline, you receive <Badge text="0 PTS" color={RED} /> for that race.</P>
-        <P>The season runs <strong>22 races</strong> split into two halves of 11. Team standings reset between halves. Individual (Formula 50) standings run all 22 races.</P>
+        <P>The season runs <strong>23 races</strong>, 11 in the first half and 12 in the second. Team standings reset between halves. Individual (Formula 50) standings run all 23 races.</P>
       </Section>
 
       {/* HOW TO WIN */}
       <Section title="How to Win">
         <Label>Players Championship</Label>
-        <P>Your Individual Score each race is your total points. The player with the most total points after 22 races wins. Additionally, the <strong>top 10 players each week</strong> earn bonus points: 1st gets <Badge text="+10" color={ORANGE} />, 2nd <Badge text="+9" color={ORANGE} />, down to 10th getting <Badge text="+1" color={ORANGE} />.</P>
+        <P>Your Individual Score each race is your total points. The player with the most total points after 23 races wins. Additionally, the <strong>top 10 players each week</strong> earn bonus points: 1st gets <Badge text="+10" color={ORANGE} />, 2nd <Badge text="+9" color={ORANGE} />, down to 10th getting <Badge text="+1" color={ORANGE} />.</P>
 
         <Label>Team Championship</Label>
         <P>Win your weekly matchup against another team. Accumulate Team Points across each 11-race half. The team with the most points in the <strong>second half</strong> is the overall season champion. The first half determines your division for the second half.</P>
@@ -163,7 +163,7 @@ export default function Rules() {
       <Section title="Player Standings">
         <P>After each race, all players across both divisions are ranked by Individual Score on a single unified leaderboard.</P>
         <P>The <strong>top 10 players</strong> each week earn bonus points: 1st gets <Badge text="+10" color={ORANGE} />, 2nd gets <Badge text="+9" color={ORANGE} />, and so on down to 10th getting <Badge text="+1" color={ORANGE} />. Non-submitters get <Badge text="0 PTS" color={RED} />.</P>
-        <P>Player standings accumulate across <strong>all 22 races</strong> and never reset.</P>
+        <P>Player standings accumulate across <strong>all 23 races</strong> and never reset.</P>
 
         <Label>Weekly Tiebreakers (in order)</Label>
         <div style={{

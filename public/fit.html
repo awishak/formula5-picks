@@ -1,0 +1,81 @@
+<!-- Dev harness. Loads the deck inside an iframe at an exact phone size so the
+     layout viewport is real: macOS Chrome clamps its own window width to about
+     500px, which makes --window-size useless for testing a 375px phone.
+     Usage: /fit.html?w=375&h=667&card=8&player=Andrew%20Ishak
+     Not linked from anywhere. Delete before deploy if it bothers you. -->
+<meta charset="utf-8" />
+<style>body{margin:0;font:13px monospace;background:#111;color:#eee}
+#out{padding:8px;white-space:pre}iframe{border:0;display:block}</style>
+<div id="out">measuring...</div>
+<iframe id="f"></iframe>
+<script>
+  const q = new URLSearchParams(location.search);
+  const w = +(q.get("w") || 375), h = +(q.get("h") || 667);
+  const card = q.get("card") || "1";
+  const player = q.get("player") || "Andrew Ishak";
+  // ?bare=1 drops the readout so the screenshot is exactly the phone.
+  if (q.get("bare")) {
+    document.getElementById("out").style.display = "none";
+    document.body.style.background = "#fff";
+  }
+  const f = document.getElementById("f");
+  f.style.width = w + "px";
+  f.style.height = h + "px";
+  f.src = `/deck?player=${encodeURIComponent(player)}&card=${card}`;
+  const read = () => {
+    try {
+      const d = f.contentDocument.documentElement;
+      const de = f.contentDocument.documentElement;
+      const fit = d.dataset.fit, nat = d.dataset.natural;
+      if (!fit) return false;
+      // overflow-x: hidden makes scrollWidth lie, so walk the tree and find
+      // anything whose box actually crosses the viewport edge.
+      const doc = f.contentDocument;
+      const over = [];
+      doc.querySelectorAll("*").forEach(el => {
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) return;
+        // Decorative layers (the Vegas light sweep, the passing headlights) are
+        // deliberately wider than the screen and are clipped. They carry no
+        // content and cannot be touched, so they are not overflow.
+        const cs2 = getComputedStyle(el);
+        if (cs2.pointerEvents === "none" && !(el.textContent || "").trim()) return;
+        const past = Math.round(Math.max(r.right - w, -r.left));
+        if (past > 1) {
+          const t = (el.textContent || "").trim().slice(0, 34);
+          over.push(`${el.tagName.toLowerCase()}+${past}px "${t}"`);
+        }
+      });
+      // Anything the browser is actually cutting off: nowrap + ellipsis boxes
+      // whose content is wider than the box, and boxes wrapping to extra lines.
+      const cut = [];
+      doc.querySelectorAll("div").forEach(el => {
+        const cs = getComputedStyle(el);
+        const t = (el.textContent || "").trim();
+        if (!t || el.children.length) return;
+        if (cs.textOverflow === "ellipsis" && cs.whiteSpace === "nowrap") {
+          const over = el.scrollWidth - el.clientWidth;
+          if (over > 0) cut.push(`${t} | cut ${over}px of ${el.scrollWidth}`);
+        } else if (cs.overflowWrap === "anywhere") {
+          // Count real line boxes with a Range; dividing height by line-height
+          // guesses wrong when line-height computes to "normal".
+          const r = doc.createRange();
+          r.selectNodeContents(el);
+          const lines = r.getClientRects().length;
+          if (lines > 1) cut.push(`${t} | ${lines} lines`);
+        }
+      });
+      document.getElementById("out").textContent = JSON.stringify({
+        cut,
+        card: +card, w, h, fit: +fit, natural: +nat,
+        scrollH: de.scrollHeight, clientH: de.clientHeight,
+        overflows: over.slice(0, 6), overflowCount: over.length,
+      });
+      return true;
+    } catch (e) { document.getElementById("out").textContent = "ERR " + e.message; return true; }
+  };
+  // Read late and twice: the deck remeasures after webfonts and images land, so
+  // an early reading catches a stale scale.
+  setTimeout(read, 2600);
+  setTimeout(read, 4200);
+</script>

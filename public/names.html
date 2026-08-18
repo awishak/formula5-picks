@@ -1,0 +1,30 @@
+<!-- Dev harness. Measures team names at the exact type used on the recap board
+     (13px DM Sans) against the 120px the board row gives a name.
+     Usage: /names.html?n=Shoey%20Time!,Cascadia,Juicero%20SV -->
+<meta charset="utf-8" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&display=swap" rel="stylesheet" />
+<style>body{margin:0;font:13px monospace;background:#111;color:#eee}#out{padding:10px;white-space:pre}
+.m{font-family:'DM Sans',sans-serif;font-size:13px;position:absolute;visibility:hidden;white-space:nowrap}</style>
+<div id="out">measuring...</div>
+<script>
+  const BUDGET = 120;           // board row width minus logo, gaps and padding
+  const names = (new URLSearchParams(location.search).get("n") || "").split(",").filter(Boolean);
+  const measure = (s, w) => {
+    const d = document.createElement("div");
+    d.className = "m"; d.style.fontWeight = w; d.textContent = s;
+    document.body.appendChild(d);
+    const px = d.getBoundingClientRect().width;
+    d.remove();
+    return px;
+  };
+  const run = () => {
+    const rows = names.map(n => {
+      const reg = measure(n, 400), bold = measure(n, 700);
+      const worst = Math.max(reg, bold);
+      return `${worst <= BUDGET ? "fits  " : "OVER  "} ${String(Math.round(worst)).padStart(4)}px  ${n}`;
+    });
+    document.getElementById("out").textContent =
+      "BUDGET " + BUDGET + "px (bold, since your own team is bold)\n" + rows.join("\n");
+  };
+  document.fonts.ready.then(() => setTimeout(run, 400));
+</script>

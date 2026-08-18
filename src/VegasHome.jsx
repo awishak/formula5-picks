@@ -350,7 +350,7 @@ function Marquee({ race, status, players = [] }) {
     }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
         <div style={{ paddingTop: 4 }}>
-          <Chip color={V.blue}>Round {race.round} of 22</Chip>
+          <Chip color={V.blue}>Round {race.round} of 23</Chip>
         </div>
         {players.length > 0 && (
           <div style={{ marginLeft: "auto", textAlign: "right", flexShrink: 0 }}>
