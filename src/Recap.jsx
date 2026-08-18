@@ -33,8 +33,9 @@ import { V, FM, FD as VFD, FB, edgeGlow, textGlow, VEGAS_CSS } from "./theme.veg
 const FD_LIGHT = "'Geologica', sans-serif";
 const CARDS = 18;
 const VEGAS_FROM = 12;             // 0-based: card 13 is the first Vegas card
-const SCROLLS = new Set([10, 15, 16]);  // 0-based: card 11 (midfield drivers),
-                                        // 16 (the rules) and 17 (every fixture)
+const SCROLLS = new Set([10, 12, 15, 16]);  // 0-based: card 11 (midfield drivers),
+                                            // 13 (the division), 16 (the rules)
+                                            // and 17 (every fixture)
 const LOGO = "/formula5_logo.png";
 
 /* ------------------------------------------------------------- tokens */
@@ -46,7 +47,7 @@ function tokens(vegas) {
     ? { bg: V.bg, panel: V.bg2, panel2: V.bg3, text: V.text, dim: V.text2,
         faint: V.text3, line: V.border, good: V.blue, great: V.green,
         bad: V.pink, fd: VFD, fb: FB, glow: true,
-        head: 29, line1: 25, small: 22, micro: 19,
+        head: 33, line1: 29, small: 26, micro: 23,
         win: V.green, loss: V.red, draw: V.text2,
         band: [V.amber, "#e8734a", "#5b8db8"] }
     : { bg: BG, panel: "#fff", panel2: "#f0f0f3", text: TEXT, dim: TEXT2,
@@ -263,7 +264,15 @@ const quoteFor = rank => QUOTES.find(q => rank <= q.upTo) || QUOTES[QUOTES.lengt
 // same for everybody.
 function Ladder({ me, T, live }) {
   const rows = DATA.league.ladder;
-  const H = 50, VIEW = 350;
+  const H = 50;
+  const [VIEW, setView] = useState(350);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const fit = () => setView(Math.max(200, Math.min(350, Math.round(window.innerHeight * 0.41))));
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []);
   const MAX = Math.max(0, rows.length * H - VIEW);
   const idx = rows.findIndex(r => r.name === me.name);
 
@@ -690,25 +699,29 @@ const Dice = ({ T, live }) => (
 /* -------------------------------------------- card 13: the new division */
 
 function DivisionGrid({ teams, meTeam, T }) {
+  // Ordered by where each team sits against all 24 on scoring average, so the
+  // list reads as a ranking rather than an alphabet.
+  const rows = useMemo(() => [...teams].sort((a, b) => a.avgRank - b.avgRank), [teams]);
   return (
-    <div style={{ width: "100%", maxWidth: 520,
-      display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
-      {teams.map(t => {
+    <div style={{ width: "100%", maxWidth: 500, display: "grid",
+      gridTemplateColumns: "minmax(0, 1fr)", gap: 5 }}>
+      {rows.map(t => {
         const mine = t.name === meTeam;
         return (
           <div key={t.name} style={{
-            display: "grid", justifyItems: "center", gap: 3, padding: "4px 2px",
-            borderRadius: 12, background: T.panel,
+            display: "flex", alignItems: "center", gap: 7, padding: "5px 9px",
+            borderRadius: 10, background: T.panel,
             border: `1px solid ${mine ? T.good : T.line}`,
-            ...(mine ? edgeGlow(V.blue, 0.6) : {}),
+            ...(mine ? edgeGlow(V.blue, 0.5) : {}),
           }}>
-            <Logo src={t.logo} name={t.name} size={32} T={T} />
-            {/* A long unbroken team name pushes past its tile, so it is allowed
-                to break mid-word rather than overflow. */}
-            <div style={{ fontFamily: T.fb, fontSize: 14, fontWeight: mine ? 700 : 400,
-              lineHeight: 1.22, color: mine ? T.good : T.text, minHeight: 32,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              maxWidth: "100%", overflowWrap: "anywhere" }}>{t.short || t.name}</div>
+            <div style={{ fontFamily: T.fd, fontSize: T.micro - 3, width: 92, flexShrink: 0,
+              whiteSpace: "nowrap", textAlign: "left",
+              color: mine ? T.good : T.faint }}>Ranked #{t.avgRank}</div>
+            <Logo src={t.logo} name={t.name} size={24} T={T} />
+            <div style={{ flex: "1 1 0", minWidth: 0, textAlign: "left",
+              fontFamily: T.fb, fontSize: T.micro, fontWeight: mine ? 700 : 400,
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+              color: mine ? T.good : T.text }}>{t.short || t.name}</div>
           </div>
         );
       })}
@@ -716,10 +729,6 @@ function DivisionGrid({ teams, meTeam, T }) {
   );
 }
 
-/* -------------------------------------------------- card 16: the scatter */
-
-// All 48 players as points: midfield return across, top-driver return up. Yours
-// is the one with a ring round it and a label.
 /* ------------------------------------------- card 14: everything to zero */
 
 // Your new division as it finished the first half, places and records and
@@ -811,9 +820,9 @@ function Fixtures({ deck, T }) {
               {SHORT_BY_NAME[w.opp] || w.opp}
             </div>
             {w.oppRank && (
-              <div style={{ fontFamily: T.fb, fontSize: T.micro - 5, color: T.faint,
+              <div style={{ fontFamily: T.fb, fontSize: T.micro - 6, color: T.faint,
                 whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {ordinal(w.oppRank)} on scoring average
+                Ranked #{w.oppRank}
               </div>
             )}
           </div>
@@ -1137,17 +1146,18 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
     ),
     // 13 ──────────────────────────────── VEGAS. your division for the half
     () => (
-      <Card T={T} wide dep={i}>
+      <Card T={T} wide dep={i} scrolls>
         <Head T={T}>
           The second half is where it gets really interesting.
         </Head>
-        <Line T={T} size={T.small}>
+        <Line T={T} size={T.micro}>
           Teams in the Championship Division fight for the season title, and teams in the Second
           Division look to win and get promoted for 2027.
         </Line>
-        <Line T={T} dim size={T.small}>
+        <Line T={T} size={T.line1}>
           You're in the {t.dest === "champ" ? "Championship" : "Second"} Division.
         </Line>
+        <Line T={T} dim size={T.micro}>Scroll to see more (ranked by scoring average).</Line>
         <DivisionGrid teams={myDivision} meTeam={t.name} T={T} />
       </Card>
     ),
@@ -1199,7 +1209,7 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
     () => (
       <Card T={T} dep={i} scrolls>
         <Head T={T}>And here is who you play.</Head>
-        <Line T={T} dim size={T.small}>Scroll to see more.</Line>
+        <Line T={T} dim size={T.small}>Scroll to see more (ranked by scoring average).</Line>
         <Fixtures deck={deck} T={T} />
       </Card>
     ),

@@ -494,10 +494,12 @@ Object.entries(teamWeeks).forEach(([name, weeks]) => {
 });
 [...newDiv.champ, ...newDiv.second].forEach(t => (t.record = recordOf[t.name] || { w: 0, l: 0, d: 0 }));
 
-// Scoring-average rank inside each new division, for the calendar card.
-["champ", "second"].forEach(k => {
-  [...newDiv[k]].sort((a, b) => b.avg - a.avg).forEach((t, i) => (t.avgRank = i + 1));
-});
+// Scoring-average rank across ALL 24 teams, not within a division. A team's
+// standing against the whole league is the interesting number; ranking them
+// inside their own twelve just renumbers the same order.
+[...newDiv.champ, ...newDiv.second]
+  .sort((a, b) => b.avg - a.avg)
+  .forEach((t, i) => (t.avgRank = i + 1));
 
 /* ---------------------------------------------------- the division table */
 
