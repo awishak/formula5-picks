@@ -865,6 +865,13 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 }
 
 // ── Main App ─────────────────────────────────────────────
+// Every page the state-driven nav can reach.
+const PAGES = new Set([
+  "home", "picks", "practice", "schedule", "results", "player-standings",
+  "team-standings", "division-trends", "players", "rules", "strategy",
+  "f1-calendar", "season-preview", "recaps", "admin",
+]);
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("f1_user") || null);
   // ?vegas opens the second-half mockup. Query param rather than #vegas because
@@ -878,6 +885,12 @@ export default function App() {
     const q = new URLSearchParams(window.location.search);
     const path = window.location.pathname.replace(/\/+$/, "");
     if (path === "/deck" || window.location.hash === "#recap" || q.has("recap")) return "recap";
+    // ?page=rules opens any page directly. Eleven of the sixteen pages are only
+    // reachable from inside another one, which makes them impossible to
+    // screenshot or link to. The second-half rebuild gives every page a real
+    // path; this is the stopgap that also let the old UI be photographed.
+    const page = q.get("page");
+    if (page && PAGES.has(page)) return page;
     // /newui is the shareable path for the second-half look. ?vegas and #vegas
     // still work, and the query param is what the mockup's own controls use.
     if (path === "/newui" || window.location.hash === "#vegas" || q.has("vegas")) return "vegas";
