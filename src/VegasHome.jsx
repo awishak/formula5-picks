@@ -13,6 +13,13 @@ import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
 
 // ── Real league snapshot, round 11 ───────────────────────
+const PLAYER_PHOTOS = {
+  "Andrew Ishak": "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/74e68847-70fe-4eaf-9075-f4cfaa642cdd.png?t=1772682494867",
+  "Kevin Coolidge": "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/719da11a-6cd8-42f4-aba5-a3bd95742a1a.png?t=1772503404813",
+  "Brett Dillon": "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d9e8e2f9-ddb4-4aca-a67e-43264d19751c.png?t=1772428753985",
+  "Stacy Michaelsen": "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/0f599d2b-a7e8-4407-8a48-7bb08e1bd446.png?t=1772503349191",
+};
+
 const SNAP = {
   me: "Andrew Ishak",
   myTeam: { name: "Cal Aggie Racing", division: "second", rank: 4, champPts: 108, record: "6-5", avg: 79.1, avgRank: 5 },
@@ -200,7 +207,7 @@ function Chip({ children, color = V.blue, solid = false }) {
 function Face({ name, size = 40, ring, glow = 1, drained = false }) {
   const [bad, setBad] = useState(false);
   const c = ring || dColor(name);
-  const url = DRIVER_HEADSHOTS[name];
+  const url = DRIVER_HEADSHOTS[name] || PLAYER_PHOTOS[name];
   if (!url || bad) {
     return (
       <div style={{
@@ -209,7 +216,9 @@ function Face({ name, size = 40, ring, glow = 1, drained = false }) {
         boxShadow: glow ? `0 0 ${12 * glow}px ${c}66` : "none",
         display: "flex", alignItems: "center", justifyContent: "center",
         ...display("chip"), color: c,
-      }}>{lastName(name).slice(0, 3).toUpperCase()}</div>
+      }}>{PLAYER_PHOTOS[name] !== undefined || !DRIVER_HEADSHOTS[name]
+        ? name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
+        : lastName(name).slice(0, 3).toUpperCase()}</div>
     );
   }
   return (
@@ -322,16 +331,20 @@ function TeamBadge({ name, size = 28, ring }) {
 function PlayerBadge({ name, picked, size = 38 }) {
   const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   const c = picked ? V.green : V.text3;
+  const photo = PLAYER_PHOTOS[name];
   return (
     <div style={{ position: "relative", flexShrink: 0 }}>
       <div style={{
-        width: size, height: size, borderRadius: "50%",
-        background: picked ? `${V.green}1a` : V.bg3,
+        width: size, height: size, borderRadius: "50%", overflow: "hidden",
+        background: photo ? `center/cover url(${photo})` : picked ? `${V.green}1a` : V.bg3,
         border: `2px solid ${c}`,
         boxShadow: picked ? `0 0 12px ${V.green}77` : "none",
         display: "flex", alignItems: "center", justifyContent: "center",
         ...display("chip"), color: c,
-      }}>{initials}</div>
+        // A photo that has not loaded should still show the ring, so the badge
+        // never reads as an empty hole.
+        filter: picked ? "none" : "grayscale(0.7) brightness(0.75)",
+      }}>{photo ? "" : initials}</div>
       {picked && (
         <span style={{
           position: "absolute", right: -3, bottom: -3,
