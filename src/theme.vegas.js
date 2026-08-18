@@ -47,7 +47,17 @@ export const V = {
 //                    so never set 700/900 on it or the browser fakes a bold.
 //   FB  DM Sans      body copy, anything in real sentences or mixed case.
 export const FM = "'Monoton', cursive";
-export const FD = "'Bebas Neue', sans-serif";
+export const FD = "var(--f5-display, 'Bebas Neue', sans-serif)";
+
+// Candidates for the display face, switchable at ?font=. Bebas is condensed and
+// reads cramped at label size, which is what started this.
+export const DISPLAY_FONTS = {
+  bebas:     { css: "'Bebas Neue', sans-serif",  label: "Bebas Neue", note: "current, condensed" },
+  titillium: { css: "'Titillium Web', sans-serif", label: "Titillium Web", note: "what F1 used" },
+  archivo:   { css: "'Archivo', sans-serif",     label: "Archivo", note: "wide grotesque" },
+  chakra:    { css: "'Chakra Petch', sans-serif", label: "Chakra Petch", note: "motorsport tech" },
+  saira:     { css: "'Saira', sans-serif",       label: "Saira", note: "sporty, slight width" },
+};
 export const FB = "'DM Sans', sans-serif";
 
 // Type scale. Floor is 13px and the labels sit at 15, which is where the old

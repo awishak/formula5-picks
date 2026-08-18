@@ -8,7 +8,7 @@
 // Nothing here touches Supabase. It is a design surface, reachable at #vegas.
 
 import { useState } from "react";
-import { V, display, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
+import { V, display, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS, DISPLAY_FONTS } from "./theme.vegas";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
 
@@ -1110,8 +1110,15 @@ export default function VegasHome({ onNavigate, initialTab = "home", initialStat
     </div>
   );
 
+  const fontKey = (() => {
+    if (typeof window === "undefined") return "bebas";
+    const f = new URLSearchParams(window.location.search).get("font");
+    return DISPLAY_FONTS[f] ? f : "bebas";
+  })();
+
   return (
-    <div style={{ background: V.bg, minHeight: "100vh" }}>
+    <div style={{ background: V.bg, minHeight: "100vh", "--f5-display": DISPLAY_FONTS[fontKey].css }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&family=Archivo:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700&family=Saira:wght@400;500;600;700&display=swap');`}</style>
       <style>{VEGAS_CSS}</style>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "18px 18px 60px" }}>
 
@@ -1145,6 +1152,31 @@ export default function VegasHome({ onNavigate, initialTab = "home", initialStat
                 { id: 1, label: "Lost by 7" },
               ]} />
             )}
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <Label color={V.text3} style={{ marginBottom: 8 }}>Display font</Label>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {Object.entries(DISPLAY_FONTS).map(([k, f]) => {
+                const on = k === fontKey;
+                return (
+                  <a key={k} href={(() => {
+                    // Keep whatever state is being looked at while the font changes.
+                    const q = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
+                    q.set("font", k);
+                    return `?${q.toString()}`;
+                  })()} style={{
+                    padding: "8px 11px", borderRadius: 9, textDecoration: "none",
+                    border: `1px solid ${on ? V.blue : V.border2}`,
+                    background: on ? `${V.blue}22` : "transparent",
+                    fontFamily: f.css, fontSize: 15,
+                    color: on ? V.blue : V.text2,
+                  }}>{f.label}</a>
+                );
+              })}
+            </div>
+            <p style={{ ...body("bodySm"), color: V.text3, margin: "8px 0 0" }}>
+              {DISPLAY_FONTS[fontKey].label} — {DISPLAY_FONTS[fontKey].note}
+            </p>
           </div>
           <button onClick={() => nav("home")} style={{
             marginTop: 10, width: "100%", padding: "9px", borderRadius: 9, cursor: "pointer",
