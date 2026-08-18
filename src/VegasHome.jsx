@@ -15,9 +15,19 @@ import { F1_TEAM_COLORS } from "./theme";
 // ── Real league snapshot, round 11 ───────────────────────
 const SNAP = {
   me: "Andrew Ishak",
-  myTeam: { name: "Cal Aggie Racing", division: "second", rank: 4, champPts: 105, record: "6-4" },
+  myTeam: { name: "Cal Aggie Racing", division: "second", rank: 4, champPts: 108, record: "6-5", avg: 79.1, avgRank: 5 },
   teammate: "Kevin Coolidge",
-  opp: { name: "Peloton Aubergine", rank: 5, champPts: 100, record: "5-5", p1: "Brett Dillon", p2: "Stacy Michaelsen" },
+  // avgRank is out of all 24 teams. divRank is null until the second half has
+  // rounds on the board; once it does, that becomes the big number instead.
+  opp: {
+    name: "Peloton Aubergine", rank: 5, champPts: 99, record: "5-6",
+    avg: 76.3, avgRank: 11, divRank: null,
+    players: [
+      { name: "Brett Dillon", ppr: 33.5, rank: 40 },
+      { name: "Stacy Michaelsen", ppr: 42.5, rank: 5 },
+    ],
+    p1: "Brett Dillon", p2: "Stacy Michaelsen",
+  },
   race: {
     round: 11, name: "Hungarian Grand Prix", circuit: "Hungaroring", location: "Budapest",
     date: "2026-07-26", lightsOut: "2026-07-26T13:00:00Z", deadline: "2026-07-25T00:00:00Z",
@@ -25,7 +35,7 @@ const SNAP = {
   },
   // Hungaroring character. This is the "what kind of track is this" answer.
   track: {
-    headline: "Tight, twisty, and nearly impossible to pass on",
+    headline: "This track is tight, twisty, and nearly impossible to pass on.",
     turns: 14, km: 4.38, laps: 70,
     tags: ["High downforce", "Track position is king", "Safety car likely"],
     note: "Only one real overtaking spot, the run down to Turn 1. Grid position tends to hold, so qualifying is your best form guide this weekend.",
@@ -416,13 +426,35 @@ function HomeOpen({ onNav }) {
       </div>
 
       <div style={{ marginBottom: 22 }}>
-        <NeonBtn flicker onClick={() => onNav("picks")} sub="22 drivers, 3 from the top pool, 7 from the mid">
+        <NeonBtn flicker onClick={() => onNav("picks")}>
           Make your picks
         </NeonBtn>
       </div>
 
-      <SectionHead accent={V.blue} sub={track.headline}>What kind of track is this</SectionHead>
+      <SectionHead accent={V.blue} sub="Three from the top drivers, seven from the midfield.">This week's driver pool</SectionHead>
+      <div style={{ ...card({ padding: "16px 18px", marginBottom: 22 }) }}>
+        <Label color={V.gold} style={{ marginBottom: 10 }}>Top drivers · pick 3</Label>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+          {pools.top.map(d => <Chip key={d} color={dColor(d)}>{d}</Chip>)}
+        </div>
+        <Label color={V.silver} style={{ marginBottom: 10 }}>Midfield drivers · pick 7</Label>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {pools.mid.map(d => <Chip key={d} color={dColor(d)}>{d}</Chip>)}
+        </div>
+      </div>
+
+      <SectionHead accent={V.purple}>The Needle</SectionHead>
+      <div style={{ ...card({ padding: "18px 20px", marginBottom: 22 }), borderColor: `${V.purple}33` }}>
+        <p style={{ ...body("body"), color: V.text2, margin: "0 0 6px" }}>Guess the time of</p>
+        <p style={{ ...display("h2"), ...textGlow(V.purple, 0.8), margin: 0 }}>{race.pitQuestion}</p>
+      </div>
+
+      <SectionHead accent={V.pink}>This week's opponent</SectionHead>
+      <OpponentCard />
+
+      <SectionHead accent={V.blue}>{race.circuit} intel</SectionHead>
       <div style={{ ...card({ padding: "18px 20px", marginBottom: 22 }) }}>
+        <p style={{ ...body("body"), color: V.text, margin: "0 0 14px" }}>{track.headline}</p>
         <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
           <StatTile label="Turns" value={track.turns} />
           <StatTile label="Length" value={track.km} unit="km" />
@@ -433,30 +465,60 @@ function HomeOpen({ onNav }) {
         </div>
         <p style={{ ...body("body"), color: V.text2, margin: 0 }}>{track.note}</p>
       </div>
-
-      <SectionHead accent={V.pink} sub={`${myTeam.name} sits ${myTeam.rank}th, they sit ${opp.rank}th. Five points apart.`}>Who you're playing</SectionHead>
-      <MatchupCard />
-
-      <SectionHead accent={V.blue} sub="Three from the top pool, seven from the mid pool.">Your driver pools</SectionHead>
-      <div style={{ ...card({ padding: "16px 18px", marginBottom: 22 }) }}>
-        <Label color={V.gold} style={{ marginBottom: 10 }}>Top pool · pick 3</Label>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
-          {pools.top.map(d => <Chip key={d} color={dColor(d)}>{d}</Chip>)}
-        </div>
-        <Label color={V.silver} style={{ marginBottom: 10 }}>Mid pool · pick 7</Label>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {pools.mid.map(d => <Chip key={d} color={dColor(d)}>{d}</Chip>)}
-        </div>
-      </div>
-
-      <SectionHead accent={V.purple}>The Needle</SectionHead>
-      <div style={{ ...card({ padding: "18px 20px" }), borderColor: `${V.purple}33` }}>
-        <p style={{ ...body("body"), color: V.text2, margin: "0 0 6px" }}>Guess the time of</p>
-        <p style={{ ...display("h2"), ...textGlow(V.purple, 0.8), margin: 0 }}>{race.pitQuestion}</p>
-      </div>
     </>
   );
 }
+
+// ── This week's opponent ─────────────────────────────────
+
+// The big number is the opponent's scoring-average rank out of all 24 teams
+// while the second half has no rounds on the board. Once it does, divRank takes
+// over and the label under it changes to match.
+function OpponentCard() {
+  const { opp } = SNAP;
+  const usingDiv = opp.divRank != null;
+  const big = usingDiv ? opp.divRank : opp.avgRank;
+  const bigLabel = usingDiv ? "Division rank" : "Scoring average rank";
+  return (
+    <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }), borderColor: `${V.pink}2a` }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+        <TeamBadge name={opp.name} size={44} ring={V.pink} />
+        <p style={{ ...display("h2"), color: V.text, margin: 0 }}>{opp.name}</p>
+      </div>
+
+      <div style={{ textAlign: "center", marginBottom: 18 }}>
+        <p style={{ ...display("stat"), ...textGlow(V.pink, 0.85), margin: 0, fontSize: 66, lineHeight: 1 }}>
+          {ordinal(big)}
+        </p>
+        <Label color={V.text2} style={{ marginTop: 6 }}>{bigLabel}</Label>
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+        <StatTile label="Championship points" value={opp.champPts} />
+        <StatTile label="Record" value={opp.record} />
+      </div>
+
+      <div style={{ display: "flex", gap: 10 }}>
+        {opp.players.map(pl => (
+          <div key={pl.name} style={{
+            flex: 1, minWidth: 0, textAlign: "center", padding: "12px 8px",
+            borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}`,
+          }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+              <Face name={pl.name} size={44} />
+            </div>
+            <p style={{ ...body("bodySm"), color: V.text, margin: "0 0 4px",
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{pl.name}</p>
+            <p style={{ ...display("h3"), ...textGlow(V.pink, 0.5), margin: 0 }}>{ordinal(pl.rank)}</p>
+            <Label color={V.text3} style={{ marginTop: 2 }}>Scoring average</Label>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const ordinal = (n) => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
 
 // ── Shared: the matchup card ─────────────────────────────
 function MatchupCard({ compact = false }) {
@@ -994,8 +1056,13 @@ export default function VegasHome({ onNavigate, initialTab = "home", initialStat
       <style>{VEGAS_CSS}</style>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "18px 18px 60px" }}>
 
-        {/* Mockup controls. Not part of the design. */}
-        <div style={{ border: `1px dashed ${V.border2}`, borderRadius: 14, padding: 12, marginBottom: 20 }}>
+        {tab === "kit" ? <NeonKit /> : (
+          state === "open"
+            ? <HomeOpen onNav={nav} />
+            : <HomeLocked live={state === "live"} settled={state === "final"} lapIdx={lapIdx} />
+        )}
+        {/* Mockup controls. Not part of the design, so they sit under it. */}
+        <div style={{ border: `1px dashed ${V.border2}`, borderRadius: 14, padding: 12, marginTop: 34 }}>
           <Label color={V.text3} style={{ marginBottom: 10 }}>Mockup controls</Label>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <Toggle val={tab} set={setTab} opts={[{ id: "home", label: "Home" }, { id: "kit", label: "Neon kit" }]} />
@@ -1026,11 +1093,6 @@ export default function VegasHome({ onNavigate, initialTab = "home", initialStat
           }}>Back to the real app</button>
         </div>
 
-        {tab === "kit" ? <NeonKit /> : (
-          state === "open"
-            ? <HomeOpen onNav={nav} />
-            : <HomeLocked live={state === "live"} settled={state === "final"} lapIdx={lapIdx} />
-        )}
       </div>
     </div>
   );
