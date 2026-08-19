@@ -10,6 +10,46 @@ import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } 
 
 const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 
+// TEMPORARY. A font picker so the display face can be judged on the real page
+// with the real names, rather than in a specimen. Delete FACES, FacePicker and
+// every f5d className once the face is chosen and FD is set in theme.vegas.js.
+const FACES = [
+  ["Titillium Web", "current"],
+  ["Saira Semi Condensed", "condensed"],
+  ["Barlow Semi Condensed", "plainer"],
+  ["Oswald", "tall"],
+  ["Rajdhani", "squared"],
+  ["Chakra Petch", "on the numbers"],
+  ["Exo 2", "rounded"],
+  ["Archivo", "wide"],
+];
+const FACE_IMPORT = FACES.map(([f]) => `family=${f.replace(/ /g, "+")}:wght@600;700`).join("&");
+
+function FacePicker({ face, onPick }) {
+  return (
+    <div style={{ ...card({ padding: 14, marginTop: 8 }), border: `1px dashed ${V.border2}` }}>
+      <div style={label({ color: V.amber, marginBottom: 10 })}>Font picker (temporary)</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+        {FACES.map(([f, note]) => {
+          const on = f === face;
+          return (
+            <button key={f} onClick={() => onPick(f)} style={{
+              padding: "7px 11px", borderRadius: 10, cursor: "pointer",
+              background: on ? "rgba(0,217,255,0.12)" : V.bg3,
+              border: `1px solid ${on ? V.blue : V.border}`,
+              fontFamily: `'${f}', sans-serif`, fontWeight: 600, fontSize: 15,
+              lineHeight: 1.35, color: on ? V.blue : V.text2,
+            }}>{f}</button>
+          );
+        })}
+      </div>
+      <div style={body("bodySm", { color: V.text3, marginTop: 10 })}>
+        Showing <strong style={{ color: V.text2 }}>{face}</strong>. It changes the team names and the rank line, which is where the face has to work hardest.
+      </div>
+    </div>
+  );
+}
+
 // Monoton is the marquee face and gets wide fast, so the title sets one word
 // per line rather than wrapping mid-word at phone width.
 function Title() {
@@ -38,7 +78,7 @@ function YourTeam({ row, place, avgRank, played }) {
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {row.logo && <img src={row.logo} alt="" style={{ width: 44, height: 44, objectFit: "contain", flexShrink: 0 }} />}
         <div style={{ minWidth: 0 }}>
-          <div style={display("h3", { lineHeight: 1.35, color: V.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.name}</div>
+          <div className="f5d" style={display("h3", { lineHeight: 1.35, color: V.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.name}</div>
           <div style={body("bodySm", { color: V.text2, marginTop: 3 })}>
             {started ? (
               <>Sitting <strong style={{ color: V.text }}>{ordinal(place)}</strong> with <strong style={{ color: V.text }}>{row.pts}</strong> {row.pts === 1 ? "point" : "points"}.</>
@@ -72,13 +112,13 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {
           {/* lineHeight has to clear the descenders. TYPE.h3 sets 1.05, which is
               fine for a heading and wrong inside overflow:hidden: the box is
               shorter than the glyphs and the tail of every g and y gets cut. */}
-          <span style={display("h3", { fontSize: 21, lineHeight: 1.35, color: mine ? V.blue : V.text, letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.short}</span>
+          <span className="f5d" style={display("h3", { fontSize: 21, lineHeight: 1.35, color: mine ? V.blue : V.text, letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.short}</span>
           {/* Season record, not the half. The team game's points reset at the
               break; what a team has won across the year does not. */}
           <span style={body("body", { color: V.text2, fontVariantNumeric: "tabular-nums", flexShrink: 0 })}>{record}</span>
         </div>
         {nextOpp && (
-          <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, letterSpacing: "0.04em", color: V.text3, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div className="f5d" style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, letterSpacing: "0.04em", color: V.text3, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {/* Both ranks are on scoring average across all 24 teams, never
                 within a division. A place in this table is noise while
                 everybody is level on nought. */}
@@ -93,6 +133,12 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {
 
 export default function TeamsPage({ currentUser }) {
   const [state, setState] = useState({ loading: true });
+  // TEMPORARY, goes with FacePicker.
+  // ?face=Oswald opens on one, so a look can be shared as a link.
+  const [face, setFace] = useState(() => {
+    const q = new URLSearchParams(window.location.search).get("face");
+    return FACES.some(([f]) => f === q) ? q : FACES[0][0];
+  });
 
   useEffect(() => {
     (async () => {
@@ -150,7 +196,10 @@ export default function TeamsPage({ currentUser }) {
     <div style={{ background: V.bg, minHeight: "100vh" }}>
       {/* The Vegas faces load here rather than in the app shell, so the pages
           still on the light theme do not pay for three families they never set. */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Titillium+Web:wght@400;600;700&family=Chakra+Petch:wght@600;700&display=swap');`}</style>
+      {/* The candidate faces load with the page while the picker is up. When it
+          goes, this comes back to Monoton plus whichever face won. */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&${FACE_IMPORT}&display=swap');
+        .f5d { font-family: '${face}', sans-serif !important; }`}</style>
       <div style={WRAP}>
         <Title />
 
@@ -199,6 +248,8 @@ export default function TeamsPage({ currentUser }) {
             No second-half race scored yet, so everyone is level and the order is scoring average.
           </div>
         )}
+
+        <FacePicker face={face} onPick={setFace} />
 
         {fixtures.race && (
           <div style={body("bodySm", { color: V.text3, textAlign: "center", padding: "0 0 8px" })}>
