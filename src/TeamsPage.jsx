@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit } from "./theme.vegas";
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
+import { displayOf } from "./teams";
 
 // The team standings, second half. Deliberately thin: position, who you are,
 // your record, who you play next, and the number that decides the title.
@@ -17,7 +18,9 @@ const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 // steps down rather than cutting "HomeworkTubes" in half on a narrower one.
 // Below about 350px it gives up and ellipsises, which is the right trade for a
 // phone almost nobody in the league is carrying.
-const NAME_SIZE = "clamp(17px, calc(13.2vw - 28.8px), 23px)";
+// Same budget as the players page: full team names against the room a row
+// leaves after the place, the logo and the number.
+const NAME_SIZE = "clamp(15px, calc(9.55vw - 22.0px), 19px)";
 
 const TITLE_SIZE = titleFit("TEAM STANDINGS");
 
@@ -67,35 +70,44 @@ const rec = s => (s.d > 0 ? `${s.w}-${s.l}-${s.d}` : `${s.w}-${s.l}`);
 function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank, innerRef }) {
   return (
     <div ref={innerRef} style={{
-      display: "flex", alignItems: "center", gap: 9,
-      padding: "8px 11px", borderRadius: 14, marginBottom: 6,
+      display: "flex", alignItems: "center", gap: 8,
+      padding: "8px 10px", borderRadius: 14, marginBottom: 6,
       background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
       border: `1px solid ${mine ? V.blue : V.border}`,
     }}>
-      <div style={numeric("stat", { fontSize: 22, color: V.text2, flexShrink: 0 })}>P{pos}</div>
+      <div style={numeric("stat", { fontSize: 21, color: V.text2, flexShrink: 0 })}>P{pos}</div>
       {row.logo
-        ? <img src={row.logo} alt="" style={{ width: 58, height: 58, objectFit: "contain", flexShrink: 0 }} />
-        : <div style={{ width: 58, height: 58, flexShrink: 0 }} />}
+        ? <img src={row.logo} alt="" style={{ width: 46, height: 46, objectFit: "contain", flexShrink: 0 }} />
+        : <div style={{ width: 46, height: 46, flexShrink: 0 }} />}
+      {/* Same shape as a player row: the name owns the first line, everything
+          that supports it goes on the second. That is what gives a full team
+          name the room to stay whole. */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", gap: 7, alignItems: "baseline" }}>
-          {/* lineHeight has to clear the descenders. TYPE.h3 sets 1.05, which is
-              fine for a heading and wrong inside overflow:hidden: the box is
-              shorter than the glyphs and the tail of every g and y gets cut. */}
-          <span style={display("h3", { fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text, letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.short}</span>
+        <div style={display("h3", {
+          fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text,
+          letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        })}>{displayOf(row.name)}</div>
+        <div style={{
+          display: "flex", gap: 8, alignItems: "baseline", marginTop: 1,
+          whiteSpace: "nowrap", overflow: "hidden",
+        }}>
           {/* Season record, not the half. The team game's points reset at the
               break; what a team has won across the year does not. */}
-          <span style={body("body", { color: V.text2, fontVariantNumeric: "tabular-nums", flexShrink: 0 })}>{record}</span>
+          <span style={body("bodySm", { color: V.text2, fontVariantNumeric: "tabular-nums", flexShrink: 0 })}>{record}</span>
+          {nextOpp && (
+            <span style={{
+              fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.04em",
+              textTransform: "uppercase", color: V.text2, flexShrink: 0,
+            }}>
+              {/* Both ranks are on scoring average across all 24 teams, never
+                  within a division. A place in this table is noise while
+                  everybody is level on nought. */}
+              #{rank} VS {nextOppRank ? `#${nextOppRank} ` : ""}{nextOpp}
+            </span>
+          )}
         </div>
-        {nextOpp && (
-          <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, letterSpacing: "0.04em", color: V.text2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {/* Both ranks are on scoring average across all 24 teams, never
-                within a division. A place in this table is noise while
-                everybody is level on nought. */}
-            <span style={{ color: V.text2 }}>#{rank}</span> VS {nextOppRank ? `#${nextOppRank} ` : ""}{nextOpp}
-          </div>
-        )}
       </div>
-      <div style={numeric("stat", { fontSize: 32, color: V.text, flexShrink: 0, ...(row.pts > 0 ? textGlow(V.blue, 0.7) : {}) })}>{row.pts}</div>
+      <div style={numeric("stat", { fontSize: 28, color: V.text, flexShrink: 0, width: 56, textAlign: "center", ...textGlow(V.blue, 0.7) })}>{row.pts}</div>
     </div>
   );
 }

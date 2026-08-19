@@ -1,0 +1,53 @@
+<!-- Dev harness. Measures every route at every phone width in ONE browser run.
+     fit.html does one page at one width, which meant a dozen 40-second Chrome
+     launches to answer a single layout question.
+     Usage: /check.html?paths=/teams,/players&widths=430,393,375,360 -->
+<meta charset="utf-8" /><style>body{margin:0;font:12px monospace;background:#111;color:#eee}
+#o{padding:8px;white-space:pre}iframe{border:0;position:absolute;left:-9999px}</style>
+<div id="o">measuring...</div><iframe id="f"></iframe>
+<script>
+  const q = new URLSearchParams(location.search);
+  const paths = (q.get("paths") || "/teams,/players").split(",");
+  const widths = (q.get("widths") || "430,393,375,360").split(",").map(Number);
+  const player = q.get("player") || "Andrew Ishak";
+  const f = document.getElementById("f");
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  // Anything crossing the viewport edge, and anything the browser is clipping.
+  const scan = (doc, w) => {
+    const over = [], cut = [];
+    doc.querySelectorAll("*").forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      const cs = getComputedStyle(el);
+      if (cs.pointerEvents === "none" && !(el.textContent || "").trim()) return;
+      const past = Math.round(Math.max(r.right - w, -r.left));
+      if (past > 1) over.push(`${el.tagName.toLowerCase()}+${past}px "${(el.textContent||"").trim().slice(0,26)}"`);
+    });
+    doc.querySelectorAll("div, span").forEach(el => {
+      const cs = getComputedStyle(el);
+      if (cs.textOverflow !== "ellipsis" || cs.whiteSpace !== "nowrap") return;
+      const n = el.scrollWidth - el.clientWidth;
+      if (n > 0) cut.push(`${(el.textContent||"").trim().slice(0,26)} -${n}px`);
+    });
+    return { over, cut };
+  };
+
+  (async () => {
+    const out = [];
+    for (const path of paths) {
+      for (const w of widths) {
+        f.style.width = w + "px"; f.style.height = "900px";
+        f.src = `${path}?player=${encodeURIComponent(player)}&t=${w}`;
+        await new Promise(r => f.onload = r);
+        await wait(2600);                        // fonts, logos, avatars
+        const { over, cut } = scan(f.contentDocument, w);
+        out.push(`${path} @${w}  over ${over.length}  cut ${cut.length}` +
+                 (over.length ? `\n    OVER ${over.slice(0,3).join(" | ")}` : "") +
+                 (cut.length ? `\n    CUT  ${[...new Set(cut)].slice(0,5).join(" | ")}` : ""));
+      }
+    }
+    document.getElementById("o").textContent = out.join("\n");
+    document.title = "done";
+  })();
+</script>

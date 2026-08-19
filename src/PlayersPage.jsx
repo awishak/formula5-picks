@@ -12,8 +12,8 @@ import { ordinal } from "./teamTable";
 const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 // Two characters longer than the team page's title, so it takes less of
 // the width rather than stretching to the same edges.
-const TITLE_SIZE = titleFit("PLAYER STANDINGS", { fill: 0.86 });
-const TEAM_SIZE = "clamp(13px, 3.3vw, 13px)";
+const TITLE_SIZE = titleFit("PLAYER STANDINGS", { fill: 0.78 });
+const TEAM_SIZE = "clamp(13px, 3.5vw, 14px)";
 // Real names are longer than team short names, and 48 of them set the budget:
 // at 19px two of them run past the column and at 21px ten do. Measured across
 // all 48 rather than eyeballed off the top of the table.
@@ -54,43 +54,13 @@ function Face({ name, photo, size }) {
   );
 }
 
-// A week's finish among all 48, one mark per finish rather than a count. A
-// trophy for a win, a silver for a second, a bronze for a third, and a dot for
-// a top ten that was not a podium, so nothing is marked twice.
-//
-// Its own column at the end of the row. Sharing the team line cut most of the
-// full names in half, and stacking it under the average made that column three
-// deep. On its own it wraps inside its width and pushes nothing.
-function TrophyCase({ row }) {
-  const marks = [
-    ...Array(row.p1).fill("\u{1F3C6}"),
-    ...Array(row.p2).fill("\u{1F948}"),
-    ...Array(row.p3).fill("\u{1F949}"),
-  ];
-  if (!marks.length && !row.top10) return null;
-  return (
-    <div style={{
-      display: "flex", alignItems: "center", flexWrap: "wrap", gap: 3,
-    }}>
-      {marks.map((m, i) => (
-        <span key={i} style={{ fontSize: 13, lineHeight: 1.15, flexShrink: 0 }}>{m}</span>
-      ))}
-      {Array.from({ length: row.top10 }).map((_, i) => (
-        <span key={`d${i}`} style={{
-          width: 7, height: 7, borderRadius: "50%", background: V.text2, flexShrink: 0,
-        }} />
-      ))}
-    </div>
-  );
-}
-
 function YouAre({ row, place }) {
   if (!row) return null;
   return (
     <div style={{ ...card({ padding: 16, marginBottom: 20 }), ...edgeGlow(V.blue, 0.8) }}>
       <div style={label({ color: V.blue, marginBottom: 8 })}>You</div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Face name={row.name} photo={row.photo} size={34} />
+        <Face name={row.name} photo={row.photo} size={42} />
         <div style={{ minWidth: 0 }}>
           <div style={display("h3", { lineHeight: 1.35, color: V.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.name}</div>
           <div style={body("bodySm", { color: V.text2, marginTop: 3 })}>
@@ -120,14 +90,14 @@ function Row({ row, place, mine, innerRef }) {
           letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
         })}>{row.name}</div>
         <div style={{
-          fontFamily: FD, fontWeight: 600, fontSize: TEAM_SIZE, letterSpacing: "-0.005em",
+          fontFamily: FD, fontWeight: 600, fontSize: TEAM_SIZE, letterSpacing: "0.01em",
           textTransform: "uppercase", color: V.text2, marginTop: 1, minWidth: 0,
           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
         }}>{row.teamName || "No team"}</div>
       </div>
 
       {/* How they are scoring. */}
-      <div style={{ flexShrink: 0, width: 48, textAlign: "center" }}>
+      <div style={{ flexShrink: 0, width: 56, textAlign: "center" }}>
         <div style={numeric("stat", { fontSize: 26, color: V.text, ...textGlow(V.blue, 0.7) })}>{row.avg.toFixed(1)}</div>
         {row.last != null && (
           <div style={{
@@ -137,10 +107,6 @@ function Row({ row, place, mine, innerRef }) {
         )}
       </div>
 
-      {/* What they have won. Its own column, so nothing here is ever a third row. */}
-      <div style={{ flexShrink: 0, width: 30 }}>
-        <TrophyCase row={row} />
-      </div>
     </div>
   );
 }

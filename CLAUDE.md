@@ -36,7 +36,7 @@ scripts/smoke.jsx: renders every VegasHome branch through react-dom/server and e
 scripts/smoke-recap.jsx: 864 renders of the deck, and checks each card differs across players by content hash. npm run smoke:recap.
 scripts/peek.jsx: prints the rendered TEXT of recap cards so copy gets read as copy. npm run peek.
 scripts/schedule2.mjs: draws and checks the second-half round robin, writes schedule2.sql and recap/schedule2.json.
-public/fit.html, public/scroll.html, public/drive.html, public/names.html: dev harnesses. fit.html measures any route at a true phone viewport (?path=/teams) and reports overflow and truncation; scroll.html shows a given offset; drive.html walks a multi-step flow so a step deep inside a wizard can be photographed; names.html measures name widths. All unlinked, and they do ship.
+public/check.html, public/fit.html, public/scroll.html, public/drive.html, public/names.html: dev harnesses. check.html measures every route at every phone width in ONE browser run and is what to reach for first: fit.html does one page at one width, which meant a dozen 40-second Chrome launches to answer a single layout question. fit.html measures any route at a true phone viewport (?path=/teams) and reports overflow and truncation; scroll.html shows a given offset; drive.html walks a multi-step flow so a step deep inside a wizard can be photographed; names.html measures name widths. All unlinked, and they do ship.
 
 All components live in src/. Recaps are static HTML in public/recaps/, surfaced via the recap button in App.jsx and Schedule.jsx.
 
