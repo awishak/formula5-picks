@@ -9,6 +9,7 @@
 
 import { useState, useRef, useEffect , createContext, useContext } from "react";
 import { V, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
+import { supabase } from "./supabaseClient";
 import { useLeague } from "./useLeague";
 import { ordinal } from "./teamTable";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
@@ -816,7 +817,7 @@ function NeedleExplainer({ side }) {
 
 // Everything read back before it goes anywhere: the five in order, where the
 // best one lands, and the Needle guess with the side it affects.
-function PickReview({ order, finish, needle, sent, onBack, onSubmit }) {
+function PickReview({ order, finish, needle, sent, onBack, onSubmit, saving, error }) {
   // Everything it reads off the week, taken off the week. Reaching for these
   // without this is what threw on submit, twice.
   const { boxBox, race } = useWeek();
@@ -824,7 +825,9 @@ function PickReview({ order, finish, needle, sent, onBack, onSubmit }) {
     <div
       onClick={onBack}
       style={{
-        position: "fixed", inset: 0, zIndex: 40, display: "flex",
+        // Above the bottom nav, which sits at 100. At 40 the review modal came
+        // up behind it and the submit button was under the tab bar.
+        position: "fixed", inset: 0, zIndex: 300, display: "flex",
         alignItems: "flex-end", justifyContent: "center",
         background: "rgba(3,3,8,0.78)", backdropFilter: "blur(3px)",
         animation: "v-fade .2s ease",
@@ -898,13 +901,19 @@ function PickReview({ order, finish, needle, sent, onBack, onSubmit }) {
                 background: "transparent", border: `1px solid ${V.border2}`,
                 ...body("bodyMd"), fontSize: 16, color: V.text2,
               }}>Go back</button>
-              <button onClick={onSubmit} style={{
-                flex: 2, padding: "15px", borderRadius: 12, cursor: "pointer",
+              <button onClick={onSubmit} disabled={saving} style={{
+                flex: 2, padding: "15px", borderRadius: 12, cursor: saving ? "default" : "pointer",
                 background: V.green, border: `1px solid ${V.green}`,
                 boxShadow: `0 0 22px ${V.green}66`,
+                opacity: saving ? 0.6 : 1,
                 ...body("bodyMd"), fontSize: 17, color: V.bg,
-              }}>Submit picks</button>
+              }}>{saving ? "Saving" : "Submit picks"}</button>
             </div>
+            {error && (
+              <p style={{ ...body("bodySm"), fontSize: 15, color: V.pink, textAlign: "center", margin: "12px 0 0" }}>
+                {error}
+              </p>
+            )}
           </>
         )}
       </div>
@@ -923,13 +932,49 @@ const FINISH_OPTIONS = Array.from({ length: 20 }, (_, i) => `P${i + 1}`);
 const NEEDLE_OPTIONS = Array.from({ length: 31 }, (_, i) => +(1.5 + i * 0.1).toFixed(1));
 
 function PickFlow() {
-  const { pools, f1Points, boxBox, race } = useWeek();
+  const { pools, f1Points, boxBox, race, playerId } = useWeek();
   const [picked, setPicked] = useState([]);
   const [order, setOrder] = useState([]);
   const [finish, setFinish] = useState("P5");
   const [needle, setNeedle] = useState(3.0);
   const [review, setReview] = useState(false);
   const [sent, setSent] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  // Actually save them. This was onSubmit={() => setSent(true)}: the flow said
+  // "picks submitted" and wrote nothing, so a whole week's picks went nowhere.
+  const submit = async () => {
+    if (saving || sent) return;
+    setSaveError(null);
+    if (!playerId) { setSaveError("No player is signed in."); return; }
+    if (race.deadline && new Date() >= new Date(race.deadline)) {
+      setSaveError("The deadline has passed. This race is locked.");
+      return;
+    }
+    setSaving(true);
+    try {
+      // .select() so a policy or deadline failure surfaces instead of coming
+      // back as zero rows and looking like success.
+      const { data, error } = await supabase.from("picks").insert({
+        player_id: playerId,
+        race_id: race.id,
+        top_pick: order[0],
+        finishing_order: order,
+        best_finish: finish,
+        pit_guess: needle,
+        submitted_at: new Date().toISOString(),
+      }).select();
+      if (error) throw error;
+      if (!data || !data.length) throw new Error("Your picks did not save. Try again.");
+      setSent(true);
+    } catch (e) {
+      // The picks stay on screen, so a retry costs nothing.
+      setSaveError(e.message || "Something went wrong. Your picks are still here.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const topPicked = picked.filter(d => pools.top.includes(d));
   const midPicked = picked.filter(d => pools.mid.includes(d));
@@ -1089,7 +1134,9 @@ function PickFlow() {
           needle={needle}
           sent={sent}
           onBack={() => setReview(false)}
-          onSubmit={() => setSent(true)}
+          onSubmit={submit}
+          saving={saving}
+          error={saveError}
         />
       )}
     </>

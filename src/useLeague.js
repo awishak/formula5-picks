@@ -115,6 +115,7 @@ export function useLeague(currentUser) {
         setState({
           loading: false,
           me: currentUser,
+          playerId: me ? me.id : null,
           myTeam: teamShape(myTeamRow),
           // Ten weeks of form for the opponent card, oldest first.
           oppWeeks: oppRow && seasonOf[oppRow.id] ? seasonOf[oppRow.id].weeks : [],
