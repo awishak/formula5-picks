@@ -21,13 +21,21 @@
   const f = document.getElementById("f");
   f.style.width = w + "px";
   f.style.height = h + "px";
-  f.src = `/deck?player=${encodeURIComponent(player)}&card=${card}`;
+  // Any route, not just the deck. ?path=/teams checks a normal page at a true
+  // phone size, which is the whole reason this harness exists.
+  const path = q.get("path");
+  f.src = path
+    ? `${path}${path.includes("?") ? "&" : "?"}player=${encodeURIComponent(player)}`
+    : `/deck?player=${encodeURIComponent(player)}&card=${card}`;
   const read = () => {
     try {
       const d = f.contentDocument.documentElement;
       const de = f.contentDocument.documentElement;
       const fit = d.dataset.fit, nat = d.dataset.natural;
-      if (!fit) return false;
+      // Only the deck stamps data-fit. A normal page has no fit scale to
+      // report, so wait for it to have painted something instead.
+      if (path) { if (!f.contentDocument.body || f.contentDocument.body.scrollHeight < 50) return false; }
+      else if (!fit) return false;
       // overflow-x: hidden makes scrollWidth lie, so walk the tree and find
       // anything whose box actually crosses the viewport edge.
       const doc = f.contentDocument;

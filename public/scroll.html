@@ -1,0 +1,19 @@
+<!-- Dev harness, companion to fit.html. Same iframe trick for a true phone
+     viewport, but this one scrolls the page to a given offset so anything below
+     the fold can be screenshotted. fit.html reports; this one shows.
+     Usage: /scroll.html?w=393&h=852&y=1500&path=/teams&player=Andrew%20Ishak
+     Not linked from anywhere. -->
+<meta charset="utf-8" /><style>body{margin:0;background:#07070c}iframe{border:0;display:block}</style>
+<iframe id="f"></iframe>
+<script>
+  const q = new URLSearchParams(location.search);
+  const w = +(q.get("w") || 393), h = +(q.get("h") || 852), y = +(q.get("y") || 0);
+  const f = document.getElementById("f");
+  f.style.width = w + "px";
+  f.style.height = h + "px";
+  const path = q.get("path") || "/";
+  f.src = `${path}${path.includes("?") ? "&" : "?"}player=${encodeURIComponent(q.get("player") || "Andrew Ishak")}`;
+  // Late: webfonts and team logos change the page height, so scrolling early
+  // lands at an offset that no longer means what it meant.
+  setTimeout(() => { try { f.contentWindow.scrollTo(0, y); } catch (e) {} }, 4000);
+</script>

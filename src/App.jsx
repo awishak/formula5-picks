@@ -7,6 +7,7 @@ import RaceResults from "./RaceResults.jsx";
 import MyPicks, { PickHistory } from "./MyPicks.jsx";
 import PlayerStandings from "./PlayerStandings.jsx";
 import TeamStandings from "./TeamStandings.jsx";
+import TeamsPage from "./TeamsPage.jsx";
 import DivisionTrends from "./DivisionTrends.jsx";
 import Strategy from "./Strategy.jsx";
 import F1Calendar from "./F1Calendar.jsx";
@@ -869,7 +870,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 // the pages that have no path of their own yet.
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
-  "team-standings", "division-trends", "players", "rules", "strategy",
+  "team-standings", "team-standings-v1", "division-trends", "players", "rules", "strategy",
   "f1-calendar", "season-preview", "recaps", "admin",
 ]);
 
@@ -897,6 +898,11 @@ const ROUTES = [
 ];
 const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 
+// Pages rebuilt on the Vegas look. They set their own ground and their own
+// header, so the light shell's logo bar and background have to get out of the
+// way or a dark page opens under a white block.
+const VEGAS_PAGES = new Set(["team-standings"]);
+
 // A path in, a page and any parameter out.
 function readPath(pathname) {
   const clean = (pathname || "/").replace(/\/+$/, "") || "/";
@@ -909,7 +915,11 @@ function readPath(pathname) {
 }
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("f1_user") || null);
+  // ?player=Andrew%20Ishak overrides the signed-in name for one load, without
+  // writing to localStorage. It is how any page gets checked as any player,
+  // which fit.html needs and which the deck already relied on.
+  const [currentUser, setCurrentUser] = useState(() =>
+    new URLSearchParams(window.location.search).get("player") || localStorage.getItem("f1_user") || null);
   // ?vegas opens the second-half mockup. Query param rather than #vegas because
   // Vercel's SSO redirect on protected previews drops the fragment, which lands
   // you back on the normal app. Hash still works when there's no auth in the way.
@@ -1047,11 +1057,13 @@ export default function App() {
 
   if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
 
+  const onVegas = VEGAS_PAGES.has(activePage);
+
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: ${BG}; } .app-wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; background: ${BG}; padding-bottom: 80px; }`}</style>
-      <div className="app-wrap">
-        {activePage !== "home" && (
+      <div className="app-wrap" style={onVegas ? { background: "#07070c" } : undefined}>
+        {activePage !== "home" && !onVegas && (
           <div style={{ padding: "14px 20px 10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <img src={LOGO_B64} alt="Formula 5" style={{ height: 85, objectFit: "contain" }} />
           </div>
@@ -1059,7 +1071,10 @@ export default function App() {
         {activePage === "home" && <HomePage currentUser={currentUser} onNavigate={navigateTo} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
         {activePage === "player-standings" && <PlayerStandings currentUser={currentUser} />}
         {activePage === "picks" && <MyPicksPage currentUser={currentUser} onNavigate={navigateTo} />}
-        {activePage === "team-standings" && <TeamStandings currentUser={currentUser} onNavigate={navigateTo} />}
+        {activePage === "team-standings" && <TeamsPage currentUser={currentUser} />}
+        {/* The first-half team table, kept reachable while the second-half page
+            is still thin. It is the only place the 1-11 standings render. */}
+        {activePage === "team-standings-v1" && <TeamStandings currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "division-trends" && <DivisionTrends currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "schedule" && <Schedule currentUser={currentUser} onNavigate={navigateTo} initialView={scheduleInitialView} />}
         {activePage === "rules" && <Rules />}
