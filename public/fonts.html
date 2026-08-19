@@ -1,0 +1,47 @@
+<!-- Dev harness. The 24 team names at the size the standings row uses, in each
+     candidate face, so a font gets chosen by looking at the actual words rather
+     than at a specimen. Unlinked. -->
+<meta charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@600;700&family=Chakra+Petch:wght@600;700&family=Rajdhani:wght@600;700&family=Saira+Semi+Condensed:wght@600;700&family=Barlow+Semi+Condensed:wght@600;700&family=Oswald:wght@500;600&family=Archivo:wght@600;700&family=Exo+2:wght@600;700&family=Teko:wght@600&display=swap" />
+<style>
+  body { margin:0; background:#07070c; color:#f2f2f7; font-family:'DM Sans',sans-serif; padding:14px 16px 40px; }
+  h2 { font:700 12px/1 'DM Sans',sans-serif; letter-spacing:.12em; text-transform:uppercase; color:#00d9ff; margin:16px 0 4px; }
+  .n { font-size:21px; font-weight:600; letter-spacing:.01em; line-height:1.35;
+       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:168px; }
+  .row { display:flex; align-items:baseline; gap:7px; padding:3px 0; }
+  .rec { font:400 15px/1.4 'DM Sans',sans-serif; color:#a8a8c0; }
+  .w { font:400 11px/1 'DM Sans',sans-serif; color:#7a7a94; margin-left:auto; }
+</style>
+<div id="o"></div>
+<script>
+  const FACES = [
+    ["Titillium Web", "current"],
+    ["Chakra Petch", "already in the app, on the numbers"],
+    ["Rajdhani", "squared, narrow"],
+    ["Saira Semi Condensed", "condensed, fits more"],
+    ["Barlow Semi Condensed", "condensed, plainer"],
+    ["Oswald", "tall condensed"],
+    ["Archivo", "wide, neutral"],
+    ["Exo 2", "rounded technical"],
+  ];
+  // The widest names, and the ones with descenders, which is where the clipping shows.
+  const NAMES = ["Magic Kingdom","Cougar","Shoey Time!"];
+  const RECS = ["5-6","7-4","4-7"];
+  document.fonts.ready.then(async () => {
+    // Measure the rendered span, not a canvas. A canvas context silently keeps
+    // the fallback face unless the font is loaded into it first, which made
+    // every face report identical widths.
+    document.getElementById("o").innerHTML = FACES.map(([f, note]) => {
+      const rows = NAMES.map((n, i) =>
+        `<div class="row"><span class="n" style="font-family:'${f}',sans-serif">${n}</span>` +
+        `<span class="rec">${RECS[i]}</span><span class="w"></span></div>`).join("");
+      return `<h2>${f} &mdash; ${note}</h2>${rows}`;
+    }).join("");
+    await Promise.all(FACES.map(([f]) => document.fonts.load(`600 21px '${f}'`)));
+    await new Promise(r => setTimeout(r, 400));
+    document.querySelectorAll(".row").forEach(row => {
+      const n = row.querySelector(".n"), w = n.scrollWidth;
+      row.querySelector(".w").textContent = w + "px" + (w > 168 ? "  CUT" : "");
+    });
+  });
+</script>

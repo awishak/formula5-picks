@@ -38,7 +38,7 @@ function YourTeam({ row, place, avgRank, played }) {
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {row.logo && <img src={row.logo} alt="" style={{ width: 44, height: 44, objectFit: "contain", flexShrink: 0 }} />}
         <div style={{ minWidth: 0 }}>
-          <div style={display("h3", { color: V.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.name}</div>
+          <div style={display("h3", { lineHeight: 1.35, color: V.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.name}</div>
           <div style={body("bodySm", { color: V.text2, marginTop: 3 })}>
             {started ? (
               <>Sitting <strong style={{ color: V.text }}>{ordinal(place)}</strong> with <strong style={{ color: V.text }}>{row.pts}</strong> {row.pts === 1 ? "point" : "points"}.</>
@@ -69,7 +69,10 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {
         : <div style={{ width: 58, height: 58, flexShrink: 0 }} />}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", gap: 7, alignItems: "baseline" }}>
-          <span style={display("h3", { fontSize: 21, color: mine ? V.blue : V.text, letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.short}</span>
+          {/* lineHeight has to clear the descenders. TYPE.h3 sets 1.05, which is
+              fine for a heading and wrong inside overflow:hidden: the box is
+              shorter than the glyphs and the tail of every g and y gets cut. */}
+          <span style={display("h3", { fontSize: 21, lineHeight: 1.35, color: mine ? V.blue : V.text, letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.short}</span>
           {/* Season record, not the half. The team game's points reset at the
               break; what a team has won across the year does not. */}
           <span style={body("body", { color: V.text2, fontVariantNumeric: "tabular-nums", flexShrink: 0 })}>{record}</span>
