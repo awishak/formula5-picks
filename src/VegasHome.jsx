@@ -1844,6 +1844,13 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
   // server-side, which it cannot do against a database.
   const loaded = useLeague(given ? null : currentUser);
   const week = given || loaded;
+
+  // The page triples in height the moment the week arrives. Whatever the
+  // scroll position was against the short version is meaningless against the
+  // tall one, so it goes back to the top when the content is actually there.
+  useEffect(() => {
+    if (!week.loading) window.scrollTo(0, 0);
+  }, [week.loading]);
   const [tab, setTab] = useState(initialTab);
   const [lapIdx, setLapIdx] = useState(initialLap);
 

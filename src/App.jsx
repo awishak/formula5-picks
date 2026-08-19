@@ -978,9 +978,22 @@ export default function App() {
 
   const onVegas = VEGAS_PAGES.has(activePage);
 
-  // Every page starts at the top. Without this the browser keeps the previous
-  // page's scroll position, which drops you into the middle of Home.
-  useEffect(() => { window.scrollTo(0, 0); }, [activePage]);
+  // Every page starts at the top.
+  //
+  // Two things put you in the middle otherwise. The browser restores the scroll
+  // position on a reload, which it does after the page has painted, so telling
+  // it not to has to happen up front. And a page that loads its data grows
+  // after this effect runs, so scrolling once at mount lands on a page that is
+  // still short. Hence manual restoration, and a second scroll on the frame
+  // after the first.
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+  }, []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const r = requestAnimationFrame(() => window.scrollTo(0, 0));
+    return () => cancelAnimationFrame(r);
+  }, [activePage]);
 
   return (
     <>
