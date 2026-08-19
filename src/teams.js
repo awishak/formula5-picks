@@ -19,7 +19,7 @@ export const TEAMS = [
   { code: "JSV", name: "Juicero Silicon Valley", short: "Juicero SV" },
   { code: "CSC", name: "Cascadia Motorsport", short: "Cascadia" },
   { code: "PEL", name: "Peloton Aubergine", short: "Peloton" },
-  { code: "COU", name: "Cougar Autosport", short: "Cougar Auto" },
+  { code: "COU", name: "Cougar Autosport", short: "Cougar" },
   { code: "MEA", name: "Meatballs", short: "Meatballs" },
   { code: "TNT", name: "TNT Roku F5 Team", short: "TNT Roku" },
   { code: "ECR", name: "El Camino Rapido", short: "El Camino" },
