@@ -54,6 +54,9 @@ function Face({ name, photo, size }) {
   );
 }
 
+// Emoji carry their own padding, so they read smaller than a drawn dot set to
+// the same size. 22 next to an 11px dot looks level.
+//
 // The mark a finish earns. Anything in the top ten is worth showing; only the
 // first three get metal.
 const markFor = place =>
@@ -63,46 +66,51 @@ function YouAre({ row, place, total }) {
   if (!row) return null;
   return (
     <div style={{ ...card({ padding: 16, marginBottom: 20 }), ...edgeGlow(V.blue, 0.8) }}>
-      <div style={label({ color: V.blue, marginBottom: 10 })}>Your season</div>
-      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+      <div style={label({ color: V.blue, fontSize: 15, marginBottom: 12 })}>Your season so far</div>
+      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <Face name={row.name} photo={row.photo} size={44} />
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={display("h3", {
+            // The trophy case takes a fixed column, so the name is what gives
+            // on a narrow phone rather than being clipped.
+            fontSize: "clamp(18px, 5.1vw, 23px)",
             lineHeight: 1.3, color: V.text,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           })}>{row.name}</div>
-          <div style={body("bodySm", { fontSize: 13, color: V.text2, marginTop: 4, lineHeight: 1.55, whiteSpace: "nowrap" })}>
+          <div style={body("bodySm", { fontSize: 15, color: V.text2, marginTop: 4, lineHeight: 1.5, whiteSpace: "nowrap" })}>
             You&rsquo;re <strong style={{ color: V.text }}>{ordinal(place)}</strong> of {total} overall
           </div>
           {row.last != null && (
-            <div style={body("bodySm", { fontSize: 13, color: V.text2, lineHeight: 1.55, whiteSpace: "nowrap" })}>
+            <div style={body("bodySm", { fontSize: 15, color: V.text2, lineHeight: 1.5, whiteSpace: "nowrap" })}>
               Last race: <strong style={{ color: V.text }}>{row.last}</strong>
               {row.lastPlace ? ` (P${row.lastPlace})` : ""}
             </div>
           )}
           {row.formRaces > 0 && (
-            <div style={body("bodySm", { fontSize: 13, color: V.text2, lineHeight: 1.55, whiteSpace: "nowrap" })}>
+            <div style={body("bodySm", { fontSize: 15, color: V.text2, lineHeight: 1.5, whiteSpace: "nowrap" })}>
               Last {row.formRaces}: <strong style={{ color: V.text }}>{row.formAvg.toFixed(1)}</strong>
-              {row.formRank ? ` (P${row.formRank})` : ""}
+              {row.formRank ? ` (${ordinal(row.formRank)})` : ""}
             </div>
           )}
         </div>
 
         {/* The trophy case, in the order the finishes happened. */}
         {row.finishes.length > 0 && (
-          <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+          <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 5 }}>
             {row.finishes.map((f, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}>
                 {markFor(f.place)
-                  ? <span style={{ fontSize: 14, lineHeight: 1.2 }}>{markFor(f.place)}</span>
-                  : <span style={{ width: 8, height: 8, borderRadius: "50%", background: V.text2 }} />}
+                  ? <span style={{ fontSize: 22, lineHeight: 1.1, width: 24, textAlign: "center" }}>{markFor(f.place)}</span>
+                  : <span style={{ width: 24, display: "flex", justifyContent: "center" }}>
+                      <span style={{ width: 11, height: 11, borderRadius: "50%", background: V.blue, boxShadow: `0 0 6px ${V.blue}90` }} />
+                    </span>}
                 <span style={{
-                  fontFamily: FD, fontWeight: 700, fontSize: 13, color: V.text,
-                  minWidth: 22,
+                  fontFamily: FD, fontWeight: 700, fontSize: 15, color: V.text,
+                  minWidth: 26,
                 }}>P{f.place}</span>
                 <span style={{
-                  fontFamily: FD, fontWeight: 600, fontSize: 13, color: V.text2,
+                  fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text2,
                 }}>{f.where}</span>
               </div>
             ))}
