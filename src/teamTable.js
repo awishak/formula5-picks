@@ -26,6 +26,17 @@ const playerPart = s =>
 const divisionAt = (team, round) =>
   round >= FIRST_H2_ROUND ? (team.division_h2 || team.division || "second") : (team.division || "second");
 
+// The coin flip at the end of the tiebreak chain. Flipped from the team and race
+// ids, so it is arbitrary between two teams and identical on every load. A flip
+// that came out differently each time would be the bug this chain exists to fix.
+const hash = (str) => {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+};
+const flip = (a, b) =>
+  hash(a.row.id + a.wk.raceId) - hash(b.row.id + b.wk.raceId);
+
 /**
  * @param {object} db  { teams, races, scores, schedule } straight from Supabase
  * @param {object} opts { fromRound, toRound } inclusive round window
@@ -58,6 +69,11 @@ export function buildTeamTable(db, { fromRound = 1, toRound = 99, seed = null } 
       const drivers = playerPart(s1) + playerPart(s2);
       const boxBox = s1.pit_matchup_pts || 0;
       const score = drivers + boxBox;
+      // Tiebreak inputs. order_pts is dead in the table (every row is 0);
+      // order_bonus is the live field, 6 a player for a perfect order.
+      const orderPts = (s1.order_bonus || 0) + (s2.order_bonus || 0);
+      const midPts = (s1.midfield_pts || 0) + (s2.midfield_pts || 0);
+      const bestPlayer = Math.max(playerPart(s1), playerPart(s2));
 
       const fixture = schedule.find(m =>
         m.race_id === raceId && (m.home_team_id === team.id || m.away_team_id === team.id));
@@ -80,6 +96,7 @@ export function buildTeamTable(db, { fromRound = 1, toRound = 99, seed = null } 
       weeks.push({
         raceId, round: roundOf[raceId], score, oppScore, oppId, won,
         boxBoxWon: boxBox > 0, decidedByBoxBox,
+        orderPts, midPts, bestPlayer,
         // home_team_id IS the OVER seat. Home carries no other meaning.
         over: fixture.home_team_id === team.id,
         teamPts: 0,
@@ -124,46 +141,49 @@ export function buildTeamTable(db, { fromRound = 1, toRound = 99, seed = null } 
         return wk ? { row: r, wk } : null;
       }).filter(Boolean);
 
-      // Winners first by score, then draws, then losers by score. A draw where
-      // the team won BOX BOX outranks a draw where it did not.
+      // Winners first, then draws, then losers, each block ordered by the
+      // tiebreak chain below. Nobody shares a place: the chain runs until one
+      // team is above the other.
       //
-      // Every sort below ends on team name. That is not cosmetic. Two teams in a
-      // division can post the identical score in the same race (it happened 36
-      // times in the first half), and score alone leaves their order to whatever
-      // sequence Postgres handed back, which has no ORDER BY and is not stable.
-      // The same table could rank them differently on two page loads and hand
-      // one of them 18 points instead of 15. Ties break on margin of victory,
-      // then on BOX BOX, then on name, so the answer is the same every time.
-      const cmp = (a, b) =>
-        (b.wk.score - a.wk.score) ||
+      // This exists because score alone left the order to whatever sequence
+      // Postgres handed back. The query has no ORDER BY, heap order is not
+      // stable, and an UPDATE rewrites a row to the end of the heap, so adding
+      // the division_h2 column silently reshuffled 45 championship points
+      // across ten tied places in the first half. A rule fixes that; a better
+      // sort key would not have.
+      //
+      // Andrew's chain, set for the second half:
+      //   1. score
+      //   2. BOX BOX. On a WIN the team that did NOT win BOX BOX goes ahead,
+      //      because BOX BOX swings 6 and a team level without it picked six
+      //      points better. On a DRAW it is the other way round: winning BOX
+      //      BOX is the thing that separates two teams who could not be
+      //      separated on the day.
+      //   3. margin of victory
+      //   4. order points, both players
+      //   5. midfield points, both players
+      //   6. the better of the two players
+      //   7. coin flip
+      const rest = (a, b) =>
         ((b.wk.score - b.wk.oppScore) - (a.wk.score - a.wk.oppScore)) ||
-        (b.wk.boxBoxWon - a.wk.boxBoxWon) ||
-        a.row.name.localeCompare(b.row.name);
-      const winners = results.filter(x => x.wk.won === true).sort(cmp);
-      const draws = results.filter(x => x.wk.won === null)
-        .sort((a, b) => (b.wk.boxBoxWon - a.wk.boxBoxWon) || cmp(a, b));
-      const losers = results.filter(x => x.wk.won === false).sort(cmp);
-      const ranked = [...winners, ...draws, ...losers];
+        (b.wk.orderPts - a.wk.orderPts) ||
+        (b.wk.midPts - a.wk.midPts) ||
+        (b.wk.bestPlayer - a.wk.bestPlayer) ||
+        flip(a, b);
+      const onWin = (a, b) => (b.wk.score - a.wk.score) || (a.wk.boxBoxWon - b.wk.boxBoxWon) || rest(a, b);
+      const onDraw = (a, b) => (b.wk.boxBoxWon - a.wk.boxBoxWon) || rest(a, b);
 
-      let i = 0;
-      while (i < ranked.length) {
-        // Teams that drew and are level on the BOX BOX tiebreak share the points
-        // for the places they occupy, rather than one of them taking the higher.
-        let end = i + 1;
-        if (ranked[i].wk.won === null) {
-          while (end < ranked.length && ranked[end].wk.won === null &&
-                 ranked[end].wk.boxBoxWon === ranked[i].wk.boxBoxWon) end++;
-        }
-        const size = end - i;
-        let pool = 0;
-        for (let k = i; k < end; k++) pool += TEAM_PTS_TABLE[k] ?? 0;
-        const each = size > 1 ? pool / size : (TEAM_PTS_TABLE[i] ?? 0);
-        for (let k = i; k < end; k++) {
-          ranked[k].row.pts += each;
-          ranked[k].wk.teamPts = each;
-        }
-        i = end;
-      }
+      const ranked = [
+        ...results.filter(x => x.wk.won === true).sort(onWin),
+        ...results.filter(x => x.wk.won === null).sort(onDraw),
+        ...results.filter(x => x.wk.won === false).sort(onWin),
+      ];
+
+      ranked.forEach((x, k) => {
+        const pts = TEAM_PTS_TABLE[k] ?? 0;
+        x.row.pts += pts;
+        x.wk.teamPts = pts;
+      });
     });
   });
 
@@ -205,3 +225,14 @@ export const ordinal = n => {
   const s = ["th", "st", "nd", "rd"], v = n % 100;
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 };
+
+// The tiebreak chain in one place, for the rules page and the glossary.
+export const TIEBREAKS = [
+  "Matchup score",
+  "BOX BOX: on a win the team that did not win BOX BOX goes ahead, on a draw the team that did",
+  "Margin of victory",
+  "Order points",
+  "Midfield points",
+  "The better of the two players",
+  "Coin flip",
+];
