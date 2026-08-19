@@ -650,11 +650,14 @@ export default function Admin() {
 
     try {
       // Save results
-      const top5 = preview.finishOrder.slice(0, 5);
+      // The whole order, not the top five. Slicing it here is why the
+      // championship table cannot be built from our own results for rounds 3
+      // to 11: positions 6 to 22 were thrown away at write time.
+      const finishOrder = preview.finishOrder;
       const { error: resultsErr } = await supabase.from("results").upsert({
         race_id: preview.raceId,
         top_driver: preview.finishOrder[0],
-        finishing_order: top5,
+        finishing_order: finishOrder,
         pit_stop_time: preview.pitTime
       }, { onConflict: "race_id" });
       if (resultsErr) {

@@ -53,7 +53,7 @@ races.pick_deadline: controls when picks open and close.
 races: 23 rounds for 2026. Round 16 is the Bahrain Grand Prix at Sepang; the season ends at round 23, Abu Dhabi.
 teams.division: the FIRST-half division. teams.division_h2 is the second half. Never read `division` alone for a round 12+ question.
 schedule: home_team_id IS the OVER seat. Rounds 1-22 exist; round 23 is seeded after round 22 is scored.
-results.finishing_order: 22-driver array stored with Postgres {} array literal syntax.
+results.finishing_order: the full 22-driver order. Admin sliced it to 5 before writing until 2026-08-19, so rounds 3-11 hold only the top five and cannot be used to rebuild a championship; rounds 1-2 and everything from 12 on hold all 22.
 driver_pts in score records: stored as a JSON string, must json.loads() before use.
 DRIVER_NAMES: canonical driver name strings, defined in src/drivers.js. Every driver reference (scoring, headshots, team color chips, pick intel) must use these exact strings or it breaks silently. Resolve external or legacy spellings with canonicalName() rather than comparing strings directly.
 
@@ -342,7 +342,9 @@ Matchup leading player stat: the higher scorer on the winning team in a head-to-
 
 Automated driver pools (deferred to August 2026). Goal: generate pools automatically the Monday before each race. Rule: 3 random drivers from driver standings positions 1-5, 7 random from positions 6-15, weighted to avoid drivers who appeared in recent rounds' pools. Prior pools are already in races.top_drivers / races.mid_drivers, so repeat-avoidance needs no new storage.
 Blockers found 2026-07-20, all unresolved:
-- RESOLVED 2026-08-19, with a caveat. src/standings.js builds the championship from our own data. OpenF1 still has no standings endpoint (/v1/standings and /v1/driver_standings 404); it does have /v1/session_result with a points column, but for 2026 only Australia and the China sprint and race carry one, so summing it gives a table of two race weekends. Our own results.finishing_order holds all 22 finishers for rounds 1-2 and only the top 5 from round 3 on (Admin.jsx:668 slices it), and driver_pts holds that round's pool. Layering the two reaches 11-13 drivers a round instead of 5. A driver who finished outside the top five and was not in the pool is still invisible, so the tail of the table is approximate. Fixing Admin to write all 22 makes it exact from round 12 on.
+- RESOLVED 2026-08-19. src/standings.js builds the real drivers' championship. OpenF1 has no standings endpoint (/v1/standings and /v1/driver_standings 404) and its session_result carries points for only three 2026 sessions, so both look like answers and are not. /v1/position is populated for every session, and the last position record per driver is where they finished: checked against the official Australia result, all 22, same order. Sprints count and pay 8-7-6-5-4-3-2-1. Totals reconcile exactly at 1255, which is 11 races at 101 plus 4 sprints at 36.
+  OpenF1 rate limits and answers 429. That is what made two runs a minute apart count 14 races and then 12, and it was silently swallowed. get() backs off to 8s and gives up loudly; finished races are cached in scripts/f1-results.json so a rerun is 1.6s instead of a rate limit.
+  A session OpenF1 has nothing for answers 404, not an empty list. Bahrain and Saudi Arabia 2026 are both that, which is also why neither is on the F5 calendar. They are recorded as skipped rather than thrown.
 - OPEN QUESTION 2026-07-25, gates the live rooting board. drivers.js warns that OpenF1 returns 401 across the whole API while a session is live, which is exactly when a live board would poll it. Tested during the Hungary weekend and got 200s from /v1/position with real data, but no session was live at the time, so that proves nothing. If the 401 is real, live results need a server-side proxy with a cache, which is a new service. The only cheap test is polling /v1/position during an actual race hour.
 - No server-side code exists. Pure client-side Vite SPA, no api/, no vercel.json, no cron. Unattended Monday runs need a Vercel Cron plus an api/ function, plus a Supabase service-role key in env, since supabaseClient.js is anon-only and all writes go through RLS.
 - An emailed digest on generation day was wanted. No mail provider is set up, so that is a third new service.
@@ -350,7 +352,7 @@ Blockers found 2026-07-20, all unresolved:
 - RESOLVED 2026-07-24: name matching now goes through canonicalName() in src/drivers.js, backed by a NAME_ALIASES map, instead of string equality. Antonelli, Albon, Hulkenberg and Perez variants are covered.
 Decision still open: full cron automation vs an Admin "auto-generate pool" button that needs no new service and keeps a human veto.
 
-Doc/code mismatch to resolve: this file says results.finishing_order is a 22-driver array, but Admin.jsx:668 writes finishOrder.slice(0, 5). Confirm the intended shape for both results.finishing_order and picks.finishing_order, then correct whichever is wrong.
+RESOLVED 2026-08-19: Admin now writes the full finishing order. Rounds 3-11 keep the five they were written with; nothing rewrote history.
 
 Announced to the league in the deck, so these are now promises:
 - The pit stop input must accept up to 4.5 seconds. **Done 2026-08-18.** Raised in MyPicks.jsx, PracticePicks.jsx, the Schedule.jsx guess bar and Admin's random-pick generator. Driven to the stop in the browser: the dial reads "4.5 or above".

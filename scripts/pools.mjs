@@ -8,6 +8,16 @@
 import { drawPools, seededRandom, recentlyUsed } from "../src/pools.js";
 import { driverStandings } from "../src/standings.js";
 import { canonicalName } from "../src/drivers.js";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
+
+// Finished races do not change, so their orders are kept on disk. Without this
+// every run refetches seventeen sessions and gets rate limited.
+const CACHE = new URL("f1-results.json", import.meta.url);
+const store = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, "utf8")) : {};
+const cache = {
+  get: k => store[k] || null,
+  set: (k, v) => { store[k] = v; writeFileSync(CACHE, JSON.stringify(store, null, 1)); },
+};
 
 const round = Number(process.argv[2] || 12);
 const seedArg = process.argv.indexOf("--seed");
@@ -22,18 +32,14 @@ if (url && key) {
 }
 
 if (!url || !key) throw new Error("set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY");
-const H = { headers: { apikey: key, Authorization: `Bearer ${key}` } };
-const [results, scores, allRaces] = await Promise.all([
-  fetch(`${url}/rest/v1/results?select=race_id,finishing_order&limit=5000`, H).then(r => r.json()),
-  fetch(`${url}/rest/v1/scores?select=race_id,driver_pts&limit=5000`, H).then(r => r.json()),
-  fetch(`${url}/rest/v1/races?select=id,round&limit=5000`, H).then(r => r.json()),
-]);
-const table = driverStandings({ results, scores, races: allRaces }, canonicalName);
+const table = await driverStandings(2026, canonicalName, { cache });
+
 const pools = drawPools(table.map(d => d.name), { rand, avoid });
 
 console.log(`Round ${round}`);
-console.log(`  standings: ${table.length} drivers over ${results.length} rounds, leader ${table[0].name} on ${table[0].points}`);
+console.log(`  standings: ${table.length} drivers over ${table.sessions} sessions, leader ${table[0].name} on ${table[0].points}`);
 console.log(`  avoiding ${avoid.length} from the last two rounds`);
+if (table.skipped.length) console.log(`  no data for: ${table.skipped.join(", ")}`);
 console.log(`\n  CHAMPIONSHIP, top 15`);
 table.slice(0, 15).forEach((d, i) => {
   const band = i < 5 ? "1-5" : i < 10 ? "6-10" : "11-15";
