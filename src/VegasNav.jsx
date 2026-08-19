@@ -1,4 +1,4 @@
-import { V, FD, textGlow } from "./theme.vegas";
+import { V, FD } from "./theme.vegas";
 
 // The bottom nav, on the Vegas look.
 //
@@ -61,14 +61,19 @@ export default function VegasNav({ active, onChange, hasSubmittedPicks }) {
             }}>
               <Light color={color} lit={lit} big={t.middle}
                      pulse={t.middle && !hasSubmittedPicks} />
+              {/* No glow on the label. Neon bloom on 14px uppercase turns the
+                  letterforms to mush, and the glow already has somewhere to
+                  live: the light above it. The text stays flat and bright, and
+                  the inactive ones sit at text2 rather than the dimmest step,
+                  because a nav label is a target, not a caption. */}
               <span style={{
-                fontFamily: FD, fontWeight: on ? 700 : 600,
+                fontFamily: FD, fontWeight: on || t.middle ? 700 : 600,
                 // Five labels across a 320px phone is what sets the ceiling.
                 // The tracking is off for the same reason.
-                fontSize: "clamp(13px, 3.7vw, 14px)",
+                fontSize: "clamp(13px, 3.9vw, 15px)",
                 lineHeight: 1.2, letterSpacing: "0.02em", textTransform: "uppercase",
                 whiteSpace: "nowrap",
-                ...(on || t.middle ? textGlow(color, 0.45) : { color: V.text3 }),
+                color: on || t.middle ? color : V.text2,
               }}>{t.label}</span>
             </button>
           );
