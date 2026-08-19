@@ -12,7 +12,7 @@ import { ordinal } from "./teamTable";
 const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 // Two characters longer than the team page's title, so it takes less of
 // the width rather than stretching to the same edges.
-const TITLE_SIZE = titleFit("PLAYER STANDINGS", { fill: 0.78 });
+const TITLE_SIZE = titleFit("PLAYER STANDINGS", { fill: 0.72, min: 15 });
 const TEAM_SIZE = "clamp(13px, 3.5vw, 14px)";
 // Real names are longer than team short names, and 48 of them set the budget:
 // at 19px two of them run past the column and at 21px ten do. Measured across
