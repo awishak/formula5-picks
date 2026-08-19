@@ -817,8 +817,9 @@ function NeedleExplainer({ side }) {
 // Everything read back before it goes anywhere: the five in order, where the
 // best one lands, and the Needle guess with the side it affects.
 function PickReview({ order, finish, needle, sent, onBack, onSubmit }) {
-  // It reads boxBox.side. Reaching for it without this is what threw on submit.
-  const { boxBox } = useWeek();
+  // Everything it reads off the week, taken off the week. Reaching for these
+  // without this is what threw on submit, twice.
+  const { boxBox, race } = useWeek();
   return (
     <div
       onClick={onBack}
