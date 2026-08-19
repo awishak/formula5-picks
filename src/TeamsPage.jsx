@@ -14,14 +14,17 @@ const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 // with the real names, rather than in a specimen. Delete FACES, FacePicker and
 // every f5d className once the face is chosen and FD is set in theme.vegas.js.
 const FACES = [
-  ["Titillium Web", "current"],
-  ["Saira Semi Condensed", "condensed"],
-  ["Barlow Semi Condensed", "plainer"],
-  ["Oswald", "tall"],
-  ["Rajdhani", "squared"],
-  ["Chakra Petch", "on the numbers"],
-  ["Exo 2", "rounded"],
-  ["Archivo", "wide"],
+  ["Saira Semi Condensed", "the one you liked"],
+  ["Saira Condensed", "narrower sibling"],
+  ["Kanit", "sporty, heavier"],
+  ["Encode Sans Semi Condensed", "closest cousin"],
+  ["Fira Sans Condensed", "warmer"],
+  ["IBM Plex Sans Condensed", "engineered"],
+  ["Roboto Condensed", "the default one"],
+  ["Asap Condensed", "softer corners"],
+  ["Archivo Narrow", "narrow grotesque"],
+  ["Oxanium", "technical"],
+  ["Bai Jamjuree", "squared, like Chakra"],
 ];
 const FACE_IMPORT = FACES.map(([f]) => `family=${f.replace(/ /g, "+")}:wght@600;700`).join("&");
 
