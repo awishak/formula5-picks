@@ -1249,21 +1249,31 @@ function OpponentCard() {
               })}
             </div>
           )}
-        </div>
 
-        <div style={{ flexShrink: 0, width: 92 }}>
-          <Label color={V.pink} style={{ marginBottom: 6, textAlign: "center" }}>Their two</Label>
-          {opp.players.map(pl => (
-            <div key={pl.name} style={{ textAlign: "center", marginBottom: 8 }}>
-              <PlayerBadge name={pl.name} picked={false} dim={false} ring={V.pink} photo={pl.photo} />
-              <p style={{ ...display("chip"), fontSize: 13, color: V.text2, margin: "4px 0 0", lineHeight: 1.25 }}>
-                {pl.name.split(" ")[0]}
-              </p>
-              <p style={{ ...numeric("chip"), fontSize: 15, ...textGlow(V.pink, 0.5), margin: "1px 0 0" }}>
-                {(pl.avg ?? 0).toFixed(1)}
-              </p>
-            </div>
-          ))}
+          {/* The two people you are playing, under the run of results rather
+              than beside it, and ranked instead of averaged: a rank says where
+              they sit without you having to know what a good average is. */}
+          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+            {opp.players.map(pl => (
+              <div key={pl.name} style={{
+                flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 9,
+                padding: "9px 11px", borderRadius: 12,
+                background: V.bg3, border: `1px solid ${V.border}`,
+              }}>
+                <PlayerBadge name={pl.name} picked={false} dim={false} ring={V.pink}
+                             photo={pl.photo} size={34} />
+                <div style={{ minWidth: 0 }}>
+                  <p style={{
+                    ...display("chip"), fontSize: 14, color: V.text, margin: 0,
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                  }}>{pl.name.split(" ")[0]}</p>
+                  <p style={{ ...numeric("chip"), fontSize: 15, ...textGlow(V.pink, 0.5), margin: "1px 0 0" }}>
+                    {pl.rank ? ordinal(pl.rank) : "-"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

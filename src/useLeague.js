@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { buildTeamTable, rankByAverage, FIRST_H2_ROUND } from "./teamTable";
-import { buildPlayerTable } from "./playerTable";
+import { buildPlayerTable, placesBy } from "./playerTable";
 import { displayOf, shortOf } from "./teams";
 
 // The week, for real. Everything the Home page needs about the next race, who
@@ -55,8 +55,11 @@ export function useLeague(currentUser) {
         const half = buildTeamTable(db, { fromRound: FIRST_H2_ROUND, toRound: 99 });
         const avgRank = Object.fromEntries(rankByAverage(season).map(r => [r.id, r.avgRank]));
         // Each player's own scoring average, for the two names on a team card.
-        const byPlayer = Object.fromEntries(
-          buildPlayerTable({ players, teams, races, scores }).map(r => [r.id, r]));
+        const playerTable = buildPlayerTable({ players, teams, races, scores });
+        const byPlayer = Object.fromEntries(playerTable.map(r => [r.id, r]));
+        // Rank on scoring average across all 48, the same as the player
+        // standings, so a rank shown here means what it means there.
+        const playerRank = placesBy(playerTable, r => r.avg);
         const seasonOf = Object.fromEntries(season.map(r => [r.id, r]));
         const halfOf = Object.fromEntries(half.map(r => [r.id, r]));
         // Places share on level points, the same as the team standings page,
@@ -96,6 +99,7 @@ export function useLeague(currentUser) {
             players: [p1, p2].filter(Boolean).map(p => ({
               name: p.name, photo: p.photo_url || null,
               avg: byPlayer[p.id] ? byPlayer[p.id].avg : 0,
+              rank: playerRank[p.id] || null,
             })),
           };
         };
