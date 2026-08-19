@@ -43,7 +43,7 @@ function YourTeam({ row, place, avgRank, played }) {
             {started ? (
               <>Sitting <strong style={{ color: V.text }}>{ordinal(place)}</strong> with <strong style={{ color: V.text }}>{row.pts}</strong> {row.pts === 1 ? "point" : "points"}.</>
             ) : (
-              <>Ranked <strong style={{ color: V.text }}>{ordinal(avgRank)}</strong> of 24 on first-half scoring average.</>
+              <>Ranked <strong style={{ color: V.text }}>{ordinal(avgRank)}</strong> of 24 on scoring average.</>
             )}
           </div>
         </div>
@@ -52,30 +52,35 @@ function YourTeam({ row, place, avgRank, played }) {
   );
 }
 
-function Row({ row, pos, mine, nextOpp, nextOppPos }) {
+function Row({ row, pos, mine, record, nextOpp, nextOppRank }) {
   return (
     <div style={{
-      display: "flex", alignItems: "center", gap: 10,
-      padding: "10px 12px", borderRadius: 14, marginBottom: 6,
+      display: "flex", alignItems: "center", gap: 9,
+      padding: "8px 11px", borderRadius: 14, marginBottom: 6,
       background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
       border: `1px solid ${mine ? V.blue : V.border}`,
     }}>
-      <div style={numeric("chip", { fontSize: 17, color: V.text3, width: 26, flexShrink: 0 })}>P{pos}</div>
+      <div style={numeric("stat", { fontSize: 22, color: V.text2, flexShrink: 0 })}>P{pos}</div>
       {row.logo
-        ? <img src={row.logo} alt="" style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }} />
-        : <div style={{ width: 32, height: 32, flexShrink: 0 }} />}
+        ? <img src={row.logo} alt="" style={{ width: 46, height: 46, objectFit: "contain", flexShrink: 0 }} />
+        : <div style={{ width: 46, height: 46, flexShrink: 0 }} />}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={display("h3", { fontSize: 21, color: mine ? V.blue : V.text, letterSpacing: "0.06em" })}>{row.code}</div>
-        <div style={{ display: "flex", gap: 8, marginTop: 2, alignItems: "baseline" }}>
-          <span style={body("bodySm", { color: V.text2, fontVariantNumeric: "tabular-nums" })}>{row.w}-{row.l}-{row.d}</span>
-          {nextOpp && (
-            <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.06em", color: V.text3 }}>
-              VS {nextOppPos ? `#${nextOppPos} ` : ""}{nextOpp}
-            </span>
-          )}
+        <div style={{ display: "flex", gap: 7, alignItems: "baseline" }}>
+          <span style={display("h3", { fontSize: 26, color: mine ? V.blue : V.text, letterSpacing: "0.05em" })}>{row.code}</span>
+          {/* Season record, not the half. The team game's points reset at the
+              break; what a team has won across the year does not. */}
+          <span style={body("bodySm", { color: V.text2, fontVariantNumeric: "tabular-nums" })}>{record}</span>
         </div>
+        {nextOpp && (
+          <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.06em", color: V.text3, marginTop: 1 }}>
+            {/* The opponent's rank is on scoring average across all 24 teams,
+                never within a division. Their place in this table is noise
+                while everybody is level on nought. */}
+            VS {nextOppRank ? `#${nextOppRank} ` : ""}{nextOpp}
+          </div>
+        )}
       </div>
-      <div style={numeric("stat", { fontSize: 30, color: V.text, ...(row.pts > 0 ? textGlow(V.blue, 0.7) : {}) })}>{row.pts}</div>
+      <div style={numeric("stat", { fontSize: 32, color: V.text, flexShrink: 0, ...(row.pts > 0 ? textGlow(V.blue, 0.7) : {}) })}>{row.pts}</div>
     </div>
   );
 }
@@ -96,22 +101,26 @@ export default function TeamsPage({ currentUser }) {
 
         const db = { teams, races, scores, schedule };
 
-        // Scoring-average rank is across all 24 teams, never within a division,
-        // and it comes from the first half because the second has not run yet.
-        const firstHalf = buildTeamTable(db, { fromRound: 1, toRound: FIRST_H2_ROUND - 1 });
-        const avg = rankByAverage(firstHalf);
-        const avgRankOf = Object.fromEntries(avg.map(r => [r.id, r.avgRank]));
+        // Two tables, because the two halves of the page count different things.
+        // Championship points are the second half only: the team game resets at
+        // the break. Records and scoring average run the whole season, because
+        // what a team has won across the year does not reset.
+        const season = buildTeamTable(db, { fromRound: 1, toRound: 99 });
+        const seasonOf = Object.fromEntries(season.map(r => [r.id, r]));
 
-        // Seeded on first-half average so the table has a real order on the
-        // morning of round 12, when every team is on nought points.
-        const seed = Object.fromEntries(firstHalf.map(r => [r.id, r.avg]));
+        // Scoring-average rank is across all 24 teams, never within a division.
+        const avgRankOf = Object.fromEntries(rankByAverage(season).map(r => [r.id, r.avgRank]));
+
+        // Seeded on season average so the table has a real order on the morning
+        // of round 12, when every team is on nought points.
+        const seed = Object.fromEntries(season.map(r => [r.id, r.avg]));
         const rows = buildTeamTable(db, { fromRound: FIRST_H2_ROUND, toRound: 99, seed });
         const fixtures = nextFixtures(db);
 
         const me = players.find(p => p.name === currentUser);
         const myTeam = me ? teams.find(t => t.player1_id === me.id || t.player2_id === me.id) : null;
 
-        setState({ loading: false, rows, avgRankOf, fixtures, myTeamId: myTeam ? myTeam.id : null, teams });
+        setState({ loading: false, rows, seasonOf, avgRankOf, fixtures, myTeamId: myTeam ? myTeam.id : null, teams });
       } catch (e) {
         console.error(e);
         setState({ loading: false, error: true });
@@ -122,7 +131,7 @@ export default function TeamsPage({ currentUser }) {
   if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text3 }) }}>Loading</div>;
   if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text3 }) }}>Standings did not load.</div>;
 
-  const { rows, avgRankOf, fixtures, myTeamId } = state;
+  const { rows, seasonOf, avgRankOf, fixtures, myTeamId } = state;
   const byId = Object.fromEntries(rows.map(r => [r.id, r]));
   const mine = rows.find(r => r.id === myTeamId);
 
@@ -149,7 +158,13 @@ export default function TeamsPage({ currentUser }) {
         {groups.map(g => {
           const list = rows.filter(r => r.division === g.key);
           if (!list.length) return null;
-          const posOf = Object.fromEntries(list.map((r, i) => [r.id, i + 1]));
+          // Teams level on points share a position. Before a second-half race
+          // is scored that is all 24 of them, and numbering them 1 to 12 down
+          // the page claims an order nobody has played for.
+          const posOf = {};
+          list.forEach((r, i) => {
+            posOf[r.id] = (i > 0 && list[i - 1].pts === r.pts) ? posOf[list[i - 1].id] : i + 1;
+          });
           return (
             <div key={g.key} style={{ marginBottom: 26 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 2px 10px" }}>
@@ -161,9 +176,10 @@ export default function TeamsPage({ currentUser }) {
                 const opp = oppId ? byId[oppId] : null;
                 return (
                   <Row
-                    key={r.id} row={r} pos={i + 1} mine={r.id === myTeamId}
+                    key={r.id} row={r} pos={posOf[r.id]} mine={r.id === myTeamId}
+                    record={(() => { const s = seasonOf[r.id]; return `${s.w}-${s.l}-${s.d}`; })()}
                     nextOpp={opp ? opp.code : null}
-                    nextOppPos={opp ? posOf[opp.id] : null}
+                    nextOppRank={opp ? avgRankOf[opp.id] : null}
                   />
                 );
               })}
@@ -173,7 +189,7 @@ export default function TeamsPage({ currentUser }) {
 
         {rows.every(r => r.played === 0) && (
           <div style={body("bodySm", { color: V.text3, textAlign: "center", padding: "2px 0 10px" })}>
-            No second-half race scored yet, so the order is first-half scoring average.
+            No second-half race scored yet, so everyone is level and the order is scoring average.
           </div>
         )}
 
