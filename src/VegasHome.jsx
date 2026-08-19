@@ -7,8 +7,9 @@
 //
 // Nothing here touches Supabase. It is a design surface, reachable at #vegas.
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect , createContext, useContext } from "react";
 import { V, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
+import { useLeague } from "./useLeague";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
 
@@ -19,6 +20,15 @@ const PLAYER_PHOTOS = {
   "Brett Dillon": "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d9e8e2f9-ddb4-4aca-a67e-43264d19751c.png?t=1772428753985",
   "Stacy Michaelsen": "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/0f599d2b-a7e8-4407-8a48-7bb08e1bd446.png?t=1772503349191",
 };
+
+// The week. Real data comes through this; the object below is what the page
+// was built against and is now only a shape reference plus the pieces that have
+// no source: the circuit's character, a running order, a lap count.
+// The snapshot the page was built against, exported for the smoke test so it
+// can render every state without a database.
+export const SNAP_FOR_SMOKE = () => SNAP;
+const Week = createContext(null);
+const useWeek = () => useContext(Week) || SNAP;
 
 const SNAP = {
   me: "Andrew Ishak",
@@ -134,13 +144,15 @@ const ptsForPos = (pos) => (pos === -1 ? -1 : F1_PTS[pos] || 0);
 // on the grid can score for anyone in F5 this round. That split drives row
 // height: the ten get a full row, the other twelve stay as thin context so you
 // can still find a driver by position without them competing for attention.
-const POOL = new Set([...SNAP.pools.top, ...SNAP.pools.mid]);
+// Derived per render: the pool is this round's, not a constant.
+const poolSet = (pools) => new Set([...(pools.top || []), ...(pools.mid || [])]);
 
 // One pass over the running order produces everything the board needs: each
 // driver's side, what he is worth to each team, and both team totals. Deriving
 // it means the column numbers and the total can never disagree.
 function readBoard(order) {
-  const { counts } = SNAP;
+  const { counts, pools } = useWeek();
+  const POOL = poolSet(pools);
   let totalMine = 0, totalTheirs = 0;
   const rows = order.map((name, i) => {
     const pos = i + 1;
@@ -438,7 +450,7 @@ function Marquee({ race, status, players = [] }) {
 // to be added here.
 function eventStatus({ settled, live, lapInfo, race, closesAt }) {
   if (settled) return { text: "Race over", color: V.text2 };
-  if (live) return { text: `Live · Lap ${lapInfo.lap} of ${SNAP.totalLaps}`, color: V.pink };
+  if (live) return { text: `Live · Lap ${lapInfo.lap} of ${lapInfo.total ?? SNAP.totalLaps}`, color: V.pink };
   if (closesAt) {
     const ms = new Date(closesAt) - Date.now();
     if (ms > 0) {
@@ -452,21 +464,19 @@ function eventStatus({ settled, live, lapInfo, race, closesAt }) {
 
 // ── State A: picks not in ────────────────────────────────
 function HomeOpen({ onNav, submitted = false }) {
-  const { race, track, myTeam, opp, pools } = SNAP;
+  const week = useWeek();
+  const { race, track, myTeam, opp, pools } = week;
   const [editing, setEditing] = useState(false);
   const showPicker = !submitted || editing;
-  // Round 11's real deadline has already passed, so a live clock against it would
-  // read "19h ago" in a state that only exists before the deadline. Stand-in
-  // target keeps the countdown legible whenever this state is being reviewed.
-  const demoDeadline = new Date(Date.now() + 18.7 * 3600e3).toISOString();
+  // The real deadline, which is the whole point of the clock.
   return (
     <>
       <Marquee
         race={race}
-        status={eventStatus({ settled: false, live: false, lapInfo: null, race, closesAt: demoDeadline })}
+        status={eventStatus({ settled: false, live: false, lapInfo: null, race, closesAt: race.deadline })}
         players={[
-          { name: SNAP.me, picked: submitted },
-          { name: SNAP.teammate, picked: submitted },
+          { name: week.me, picked: submitted },
+          { name: week.teammate, picked: submitted },
         ]}
       />
 
@@ -482,7 +492,12 @@ function HomeOpen({ onNav, submitted = false }) {
       <SectionHead accent={V.pink}>This week's opponent</SectionHead>
       <OpponentCard />
 
-      <SectionHead accent={V.blue}>{race.circuit} intel</SectionHead>
+      {/* Circuit character has no source. The snapshot had it written by hand
+          for the Hungaroring; there is nothing like it for Zandvoort, and a
+          page that makes it up is worse than a page without it. */}
+      {track && (
+      <>
+      <SectionHead accent={V.blue}>{race.circuit || race.name} intel</SectionHead>
       <div style={{ ...card({ padding: "18px 20px", marginBottom: 22 }) }}>
         <p style={{ ...body("body"), color: V.text, margin: "0 0 14px" }}>{track.headline}</p>
         <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
@@ -495,6 +510,8 @@ function HomeOpen({ onNav, submitted = false }) {
         </div>
         <p style={{ ...body("body"), color: V.text2, margin: 0 }}>{track.note}</p>
       </div>
+      </>
+      )}
     </>
   );
 }
@@ -529,6 +546,9 @@ function PickSign() {
 // pool is full the rest of that pool goes quiet rather than disappearing, so you
 // can still see who you passed on.
 function DriverPickRow({ name, picked, muted, onTap }) {
+  // Championship points, from the standings the Monday cron writes. A dash
+  // when that table is empty, rather than a number nobody earned.
+  const { f1Points } = useWeek();
   const c = dColor(name);
   return (
     <button
@@ -553,7 +573,7 @@ function DriverPickRow({ name, picked, muted, onTap }) {
         <p style={{ ...body("bodySm"), color: c, margin: "1px 0 0" }}>{dTeam(name)}</p>
       </div>
       <div style={{ textAlign: "right", flexShrink: 0 }}>
-        <p style={{ ...numeric("h3"), color: V.text2, margin: 0 }}>{SNAP.f1Points[name] ?? "-"}</p>
+        <p style={{ ...numeric("h3"), color: V.text2, margin: 0 }}>{f1Points[name] ?? "-"}</p>
         <Label color={V.text3}>pts</Label>
       </div>
       <span style={{
@@ -804,7 +824,7 @@ function PickReview({ order, finish, needle, sent, onBack, onSubmit }) {
           <div style={{ textAlign: "center", padding: "10px 0 4px" }}>
             <p style={{ ...display("h1"), ...textGlow(V.green), margin: "0 0 8px" }}>You&rsquo;re in</p>
             <p style={{ ...body("body"), color: V.text2, margin: "0 0 22px" }}>
-              Picks are locked for the {SNAP.race.name}. You can change them until the deadline.
+              Picks are locked for the {race.name}. You can change them until the deadline.
             </p>
             <button onClick={onBack} style={{
               width: "100%", padding: "14px", borderRadius: 12, cursor: "pointer",
@@ -848,7 +868,7 @@ function PickReview({ order, finish, needle, sent, onBack, onSubmit }) {
 
             <p style={{ ...body("bodySm"), color: V.text3, margin: "0 0 18px" }}>
               Your guess of {needle.toFixed(1)}s moves the BOX BOX line, and your team has the{" "}
-              <span style={{ color: V.gold }}>{SNAP.boxBox.side}</span>.
+              <span style={{ color: V.gold }}>{boxBox.side}</span>.
             </p>
 
             <div style={{ display: "flex", gap: 10 }}>
@@ -882,7 +902,7 @@ const FINISH_OPTIONS = Array.from({ length: 20 }, (_, i) => `P${i + 1}`);
 const NEEDLE_OPTIONS = Array.from({ length: 31 }, (_, i) => +(1.5 + i * 0.1).toFixed(1));
 
 function PickFlow() {
-  const { pools } = SNAP;
+  const { pools, f1Points, boxBox, race } = useWeek();
   const [picked, setPicked] = useState([]);
   const [order, setOrder] = useState([]);
   const [finish, setFinish] = useState("P5");
@@ -1016,15 +1036,15 @@ function PickFlow() {
           <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 8px" }}>The Needle</p>
           <p style={{ ...body("body"), fontSize: 16, color: V.text, margin: "0 0 14px", fontWeight: 600 }}>
             This week, we are predicting{" "}
-            <span style={{ color: V.purple }}>{SNAP.boxBox.team}&rsquo;s first pit stop</span>, and your
-            team has the <span style={{ color: V.gold }}>{SNAP.boxBox.side}</span>.
+            <span style={{ color: V.purple }}>{boxBox.team}&rsquo;s first pit stop</span>, and your
+            team has the <span style={{ color: V.gold }}>{boxBox.side}</span>.
           </p>
           <Wheel options={NEEDLE_OPTIONS} value={needle} onChange={setNeedle}
             format={v => v.toFixed(1)} accent={V.purple}
-            tone={v => ((v > needle) === (SNAP.boxBox.side === "OVER") ? "win" : "lose")} />
-          <NeedleSides side={SNAP.boxBox.side} />
+            tone={v => ((v > needle) === (boxBox.side === "OVER") ? "win" : "lose")} />
+          <NeedleSides side={boxBox.side} />
           <NeedleYou />
-          <NeedleExplainer side={SNAP.boxBox.side} />
+          <NeedleExplainer side={boxBox.side} />
         </div>
 
         <div style={{ marginBottom: 34 }}>
@@ -1063,7 +1083,7 @@ function PickFlow() {
 // nobody outside your team can see it. PickIntel.jsx:110 gates everyone else's
 // picks on the deadline, so there is nothing of theirs to show yet.
 function HomeSubmitted({ onEdit }) {
-  const { myPick, matePick, teammate, race, boxBox } = SNAP;
+  const { myPick, matePick, teammate, race, boxBox } = useWeek();
   const [compare, setCompare] = useState(false);
   const mate1 = teammate.split(" ")[0];
   const same = myPick.order.every((d, i) => matePick.order[i] === d);
@@ -1166,7 +1186,7 @@ function HomeSubmitted({ onEdit }) {
 // while the second half has no rounds on the board. Once it does, divRank takes
 // over and the label under it changes to match.
 function OpponentCard() {
-  const { opp } = SNAP;
+  const { opp } = useWeek();
   const usingDiv = opp.divRank != null;
   const big = usingDiv ? opp.divRank : opp.avgRank;
   const bigLabel = usingDiv ? "Division rank" : "Scoring average rank";
@@ -1213,7 +1233,7 @@ const ordinal = (n) => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["t
 
 // ── Shared: the matchup card ─────────────────────────────
 function MatchupCard({ compact = false }) {
-  const { myTeam, opp, me, teammate } = SNAP;
+  const { myTeam, opp, me, teammate } = useWeek();
   const Side = ({ name, rank, pts, record, p1, p2, mine }) => (
     <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
       <p style={{ ...display("h3"), color: mine ? V.text : V.text2, margin: 0 }}>{name}</p>
@@ -1242,7 +1262,7 @@ function MatchupCard({ compact = false }) {
 
 // ── Shared: BOX BOX ──────────────────────────────────────
 function BoxBoxCard() {
-  const { boxBox, race } = SNAP;
+  const { boxBox, race } = useWeek();
   const over = boxBox.side === "OVER";
   const c = over ? V.gold : V.purple;
   return (
@@ -1266,7 +1286,8 @@ function BoxBoxCard() {
 
 // ── States B, C and D: locked pre-race, race live, race final ────
 function HomeLocked({ live = false, settled = false, lapIdx = 0 }) {
-  const { race, myPick, grid, standings, laps } = SNAP;
+  const week = useWeek();
+  const { race, myPick, grid, standings, laps } = week;
   const lapInfo = live ? laps[lapIdx] : null;
   // Grid order before the race, running order during it, finishing order after.
   // The two lap snapshots double as the two possible results, so the settled
@@ -1279,8 +1300,8 @@ function HomeLocked({ live = false, settled = false, lapIdx = 0 }) {
         race={race}
         status={eventStatus({ settled, live, lapInfo, race })}
         players={[
-          { name: SNAP.me, picked: SNAP.picksIn.me },
-          { name: SNAP.teammate, picked: SNAP.picksIn.teammate },
+          { name: week.me, picked: week.picksIn.me },
+          { name: week.teammate, picked: week.picksIn.mate },
         ]}
       />
 
@@ -1328,7 +1349,7 @@ function HomeLocked({ live = false, settled = false, lapIdx = 0 }) {
 // decided, so both sides keep their neutral ownership colors and the language
 // stays provisional: ahead and behind, not won and lost.
 function RootingBoard({ order, live, lapInfo, settled = false }) {
-  const { myTeam, opp, boxBox } = SNAP;
+  const { myTeam, opp, boxBox } = useWeek();
   const boxSide = boxBox.side;
   // Before lights out nothing has pitted; during the race the snapshot says.
   const pitted = settled ? true : live ? lapInfo.alpineStopped : false;
@@ -1722,10 +1743,19 @@ function NeonKit() {
 // ── Shell ────────────────────────────────────────────────
 // initialTab/State/Lap exist so scripts/smoke.jsx can render every branch. The
 // app never passes them.
-export default function VegasHome({ onNavigate, initialTab = "home", initialState = "live", initialLap = 0 }) {
+export default function VegasHome({ onNavigate, currentUser, week: given, initialTab = "home", initialState = null, initialLap = 0 }) {
+  // A week can be handed in. scripts/smoke.jsx does that to render every state
+  // server-side, which it cannot do against a database.
+  const loaded = useLeague(given ? null : currentUser);
+  const week = given || loaded;
   const [tab, setTab] = useState(initialTab);
-  const [state, setState] = useState(initialState);
   const [lapIdx, setLapIdx] = useState(initialLap);
+
+  // The state is the week, not a control. Before the deadline it is whether the
+  // picks are in; after it, they are locked. Live and final need a running
+  // order, which has no source yet, so nothing reaches them.
+  const state = initialState
+    || (week.locked ? "locked" : week.picksIn && week.picksIn.me ? "submitted" : "open");
   const nav = onNavigate || (() => {});
 
   const Toggle = ({ opts, val, set }) => (
@@ -1742,7 +1772,15 @@ export default function VegasHome({ onNavigate, initialTab = "home", initialStat
     </div>
   );
 
+  if (week.loading || week.error) return (
+    <div style={{ background: V.bg, minHeight: "100vh", padding: "40px 18px" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Encode+Sans+Semi+Condensed:wght@400;600;700&display=swap');`}</style>
+      <p style={{ ...body("body"), color: V.text2 }}>{week.error ? "This week did not load." : "Loading"}</p>
+    </div>
+  );
+
   return (
+    <Week.Provider value={week}>
     <div style={{ background: V.bg, minHeight: "100vh" }}>
       {/* The faces load with the page. This used to come from a branch in
           App.jsx that rendered VegasHome outside the shell; when it became a
@@ -1757,40 +1795,8 @@ export default function VegasHome({ onNavigate, initialTab = "home", initialStat
             ? <HomeOpen onNav={nav} submitted={state === "submitted"} />
             : <HomeLocked live={state === "live"} settled={state === "final"} lapIdx={lapIdx} />
         )}
-        {/* Mockup controls. Not part of the design, so they sit under it. */}
-        <div style={{ border: `1px dashed ${V.border2}`, borderRadius: 14, padding: 12, marginTop: 34 }}>
-          <Label color={V.text3} style={{ marginBottom: 10 }}>Mockup controls</Label>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <Toggle val={tab} set={setTab} opts={[{ id: "home", label: "Home" }, { id: "kit", label: "Neon kit" }]} />
-            {tab === "home" && (
-              <Toggle val={state} set={setState} opts={[
-                { id: "open", label: "No picks" },
-                { id: "submitted", label: "Picked" },
-                { id: "locked", label: "Locked" },
-                { id: "live", label: "Live" },
-                { id: "final", label: "Final" },
-              ]} />
-            )}
-            {tab === "home" && state === "live" && (
-              <Toggle val={lapIdx} set={setLapIdx} opts={[
-                { id: 0, label: "Lap 30 · ahead" },
-                { id: 1, label: "Lap 52 · behind" },
-              ]} />
-            )}
-            {tab === "home" && state === "final" && (
-              <Toggle val={lapIdx} set={setLapIdx} opts={[
-                { id: 0, label: "Won by 17" },
-                { id: 1, label: "Lost by 7" },
-              ]} />
-            )}
-          </div>
-          <button onClick={() => nav("home")} style={{
-            marginTop: 10, width: "100%", padding: "9px", borderRadius: 9, cursor: "pointer",
-            background: "transparent", border: `1px solid ${V.border2}`, ...display("chip"), color: V.text3,
-          }}>Back to the real app</button>
-        </div>
-
       </div>
     </div>
+    </Week.Provider>
   );
 }

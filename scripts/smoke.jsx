@@ -2,7 +2,7 @@
 // Catches what `vite build` cannot: undefined identifiers, bad property access,
 // anything that only explodes when a component actually runs.
 import { renderToString } from "react-dom/server";
-import VegasHome from "../src/VegasHome.jsx";
+import VegasHome, { SNAP_FOR_SMOKE } from "../src/VegasHome.jsx";
 
 const cases = [];
 for (const tab of ["home", "kit"]) {
@@ -17,7 +17,7 @@ let failed = 0;
 for (const c of cases) {
   const label = `${c.tab}/${c.state}/lap${c.lapIdx}`;
   try {
-    const html = renderToString(<VegasHome initialTab={c.tab} initialState={c.state} initialLap={c.lapIdx} />);
+    const html = renderToString(<VegasHome week={SNAP_FOR_SMOKE()} initialTab={c.tab} initialState={c.state} initialLap={c.lapIdx} />);
     if (!html || html.length < 200) throw new Error(`suspiciously short output: ${html.length} chars`);
     console.log(`  ok    ${label}  (${html.length} chars)`);
   } catch (e) {

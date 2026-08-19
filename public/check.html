@@ -16,7 +16,15 @@
   // Anything crossing the viewport edge, and anything the browser is clipping.
   const scan = (doc, w) => {
     const over = [], cut = [];
+    // Anything inside a horizontal scroller is meant to sit past the edge: the
+    // pick wheels are exactly that. Measure the scroller itself, not its items.
+    const scrollers = [...doc.querySelectorAll("*")].filter(el => {
+      const cs = getComputedStyle(el);
+      return /auto|scroll/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 1;
+    });
+    const inScroller = el => scrollers.some(s => s !== el && s.contains(el));
     doc.querySelectorAll("*").forEach(el => {
+      if (inScroller(el)) return;
       const r = el.getBoundingClientRect();
       if (!r.width || !r.height) return;
       const cs = getComputedStyle(el);

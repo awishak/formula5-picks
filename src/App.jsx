@@ -827,7 +827,8 @@ const PAGES = new Set([
 // shared and reloaded into. Before this the whole app rendered at "/" and none
 // of that was possible.
 const ROUTES = [
-  { path: "/", page: "home" },
+  { path: "/", page: "vegas" },
+  { path: "/more", page: "home" },
   { path: "/picks", page: "picks" },
   { path: "/teams", page: "team-standings" },
   { path: "/players", page: "player-standings" },
@@ -837,7 +838,7 @@ const ROUTES = [
   { path: "/calendar", page: "f1-calendar" },
   { path: "/admin", page: "admin" },
   { path: "/deck", page: "recap" },
-  { path: "/newui", page: "vegas" },
+
 ];
 const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 
@@ -997,6 +998,7 @@ export default function App() {
         {activePage === "vegas" && (
           <VegasHome
             onNavigate={navigateTo}
+            currentUser={currentUser}
             {...(() => {
               // ?state=final&lap=1&tab=kit deep-links a state, so a screenshot
               // or a shared link can land on one without clicking the controls.

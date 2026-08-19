@@ -1,0 +1,137 @@
+import { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
+import { buildTeamTable, rankByAverage, FIRST_H2_ROUND } from "./teamTable";
+import { displayOf, shortOf } from "./teams";
+
+// The week, for real. Everything the Home page needs about the next race, who
+// you are playing, and whether the picks are in.
+//
+// It returns the same shape the hardcoded snapshot had, so the components that
+// read it did not have to change. What it does not return is what the snapshot
+// invented: the running order, the lap count, the F1 points table and the
+// circuit's character. Those have no source, and a page that makes them up is
+// worse than a page that leaves them out.
+
+// home_team_id IS the OVER seat. Home carries no other meaning.
+const sideOf = (fixture, teamId) => (fixture.home_team_id === teamId ? "OVER" : "UNDER");
+
+export function useLeague(currentUser) {
+  const [state, setState] = useState({ loading: true });
+
+  useEffect(() => {
+    if (currentUser === null) { setState({ loading: true, skipped: true }); return; }
+    let alive = true;
+    (async () => {
+      try {
+        const [players, teams, races, scores, schedule] = await Promise.all([
+          supabase.from("players").select("id,name,photo_url"),
+          supabase.from("teams").select("*"),
+          supabase.from("races").select("*").order("round"),
+          supabase.from("scores").select("*"),
+          supabase.from("schedule").select("*"),
+        ]).then(rs => rs.map(r => r.data || []));
+
+        // The championship, refreshed by the Monday cron. Empty is fine: the
+        // driver cards fall back to a dash rather than a made-up number.
+        const standings = (await supabase.from("driver_standings")
+          .select("driver,points").order("position")).data || [];
+
+        // The next race is the earliest whose deadline has not passed. Once it
+        // has, this is still the race being run, so the page keeps showing it.
+        const now = new Date().toISOString();
+        const upcoming = races.find(r => r.pick_deadline && r.pick_deadline > now);
+        const scored = new Set(scores.map(s => s.race_id));
+        const race = upcoming || races.filter(r => !scored.has(r.id))[0] || races[races.length - 1];
+
+        const me = players.find(p => p.name === currentUser) || null;
+        const myTeamRow = me ? teams.find(t => t.player1_id === me.id || t.player2_id === me.id) : null;
+        const mateId = myTeamRow ? [myTeamRow.player1_id, myTeamRow.player2_id].find(id => id !== me.id) : null;
+        const teammate = mateId ? players.find(p => p.id === mateId) || null : null;
+
+        // Season table for the form numbers, second-half table for the points.
+        const db = { teams, races, scores, schedule };
+        const season = buildTeamTable(db, { fromRound: 1, toRound: 99 });
+        const half = buildTeamTable(db, { fromRound: FIRST_H2_ROUND, toRound: 99 });
+        const avgRank = Object.fromEntries(rankByAverage(season).map(r => [r.id, r.avgRank]));
+        const seasonOf = Object.fromEntries(season.map(r => [r.id, r]));
+        const halfOf = Object.fromEntries(half.map(r => [r.id, r]));
+
+        const fixture = myTeamRow
+          ? schedule.find(m => m.race_id === race.id &&
+              (m.home_team_id === myTeamRow.id || m.away_team_id === myTeamRow.id))
+          : null;
+        const oppRow = fixture
+          ? teams.find(t => t.id === (fixture.home_team_id === myTeamRow.id
+              ? fixture.away_team_id : fixture.home_team_id))
+          : null;
+
+        const teamShape = (row) => {
+          if (!row) return null;
+          const s = seasonOf[row.id], h = halfOf[row.id];
+          const [p1, p2] = [row.player1_id, row.player2_id].map(id => players.find(p => p.id === id));
+          return {
+            id: row.id,
+            name: displayOf(row.name),
+            short: shortOf(row.name),
+            division: row.division_h2 || row.division,
+            champPts: h ? h.pts : 0,
+            record: s ? (s.d > 0 ? `${s.w}-${s.l}-${s.d}` : `${s.w}-${s.l}`) : "0-0",
+            avg: s ? s.avg : 0,
+            avgRank: avgRank[row.id] || null,
+            logo: row.logo_url || null,
+            players: [p1, p2].filter(Boolean).map(p => ({ name: p.name, photo: p.photo_url || null })),
+          };
+        };
+
+        // Who has actually submitted for this race.
+        const teamIds = [myTeamRow, oppRow].filter(Boolean).flatMap(t => [t.player1_id, t.player2_id]);
+        const picks = teamIds.length
+          ? (await supabase.from("picks").select("*").eq("race_id", race.id).in("player_id", teamIds)).data || []
+          : [];
+        const pickOf = Object.fromEntries(picks.map(p => [p.player_id, p]));
+
+        if (!alive) return;
+        setState({
+          loading: false,
+          me: currentUser,
+          myTeam: teamShape(myTeamRow),
+          teammate: teammate ? teammate.name : null,
+          opp: teamShape(oppRow),
+          side: fixture && myTeamRow ? sideOf(fixture, myTeamRow.id) : null,
+          race: {
+            id: race.id, round: race.round, name: race.race_name,
+            date: race.race_date, deadline: race.pick_deadline,
+            pitQuestion: race.pit_stop_question || null,
+          },
+          pools: {
+            top: race.top_drivers || [],
+            mid: race.mid_drivers || [],
+          },
+          myPick: me ? pickOf[me.id] || null : null,
+          matePick: mateId ? pickOf[mateId] || null : null,
+          picksIn: {
+            me: Boolean(me && pickOf[me.id]),
+            mate: Boolean(mateId && pickOf[mateId]),
+          },
+          f1Points: Object.fromEntries(standings.map(d => [d.driver, d.points])),
+          // The needle. The constructor comes out of the question itself, which
+          // is the only place it is written down.
+          boxBox: {
+            side: fixture && myTeamRow ? sideOf(fixture, myTeamRow.id) : null,
+            team: (race.pit_stop_question || "").replace(/['\u2019]s?\s+first pit stop.*$/i, "") || null,
+            line: null, guesses: {},
+          },
+          // Before the deadline nobody's picks are public, so an opponent's
+          // BOX BOX guesses cannot be shown. PickIntel gates on the same thing.
+          locked: race.pick_deadline ? race.pick_deadline <= now : false,
+        });
+      } catch (e) {
+        console.error(e);
+        if (alive) setState({ loading: false, error: true });
+      }
+    })();
+    return () => { alive = false; };
+  }, [currentUser]);
+
+  return state;
+}
