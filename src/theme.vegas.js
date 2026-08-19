@@ -116,9 +116,12 @@ export const marquee = (text, extra = {}) => {
 // to the edge: measured-to-the-pixel filled the line exactly and read as too
 // big on a real phone. Passing the text means a longer title gets a smaller size on its
 // own, instead of every page inheriting a number tuned for one of them.
-export const titleFit = (text, { min = 22, max = 40, pad = 32 } = {}) => {
+export const titleFit = (text, { min = 22, max = 40, pad = 32, fill = 1 } = {}) => {
   const n = Math.max(1, (text || "").length);
-  const per = 0.83 * n;           // px of width per point of type, plus slack
+  // fill is how much of the column the title should take. A long title sized to
+  // span the full width reads stretched even when it technically fits, so a
+  // page with a longer title passes something under 1.
+  const per = (0.83 * n) / fill;
   return `clamp(${min}px, calc(${(100 / per).toFixed(2)}vw - ${(pad / per).toFixed(2)}px), ${max}px)`;
 };
 
