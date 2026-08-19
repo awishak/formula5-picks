@@ -38,27 +38,91 @@ function Title() {
   );
 }
 
-// The one personalised thing on the page. Before a second-half race is scored
-// there is no place and no points to report, so it falls back to where the team
-// ranks on scoring average, which is the only form line that exists.
-function YourTeam({ row, place, avgRank, played }) {
+const DIV_NAME = { championship: "Championship Division", second: "Second Division" };
+
+const initialsOf = name =>
+  (name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+
+const colorOf = (name) => {
+  let h = 0;
+  for (let i = 0; i < (name || "").length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return `hsl(${h % 360} 62% 52%)`;
+};
+
+function Face({ name, photo, size }) {
+  const st = { width: size, height: size, borderRadius: "50%", flexShrink: 0 };
+  if (photo) return <img src={photo} alt="" style={{ ...st, objectFit: "cover" }} />;
+  return (
+    <div style={{
+      ...st, background: colorOf(name), display: "flex",
+      alignItems: "center", justifyContent: "center",
+      fontFamily: FD, fontWeight: 700, fontSize: size * 0.36, color: "#fff",
+    }}>{initialsOf(name)}</div>
+  );
+}
+
+// The last ten weeks, oldest first. A won week is blue, a lost one pink, a draw
+// grey. A box around the letter means BOX BOX decided it: the drivers alone
+// were within its six points of swing, so the pit call is what settled it.
+function Form({ weeks }) {
+  const last = weeks.slice(-10);
+  if (!last.length) return null;
+  return (
+    <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10 }}>
+      {last.map((w, i) => {
+        const letter = w.won === true ? "W" : w.won === false ? "L" : "D";
+        const color = w.won === true ? V.blue : w.won === false ? V.pink : V.silver;
+        const boxed = w.decidedByBoxBox;
+        return (
+          <div key={i} title={`Round ${w.round}`} style={{
+            width: 26, height: 26, borderRadius: 7,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            border: `1.5px solid ${boxed ? color : "transparent"}`,
+            background: boxed ? `${color}18` : "transparent",
+            fontFamily: FD, fontWeight: 700, fontSize: 15,
+            ...textGlow(color, w.won === true ? 0.6 : 0.35),
+          }}>{letter}</div>
+        );
+      })}
+    </div>
+  );
+}
+
+// The one personalised thing on the page: where your team stands, how it has
+// been scoring, how the last ten weeks went, and who you are doing it with.
+function YourTeam({ row, season, place, avgRank, teammate }) {
   if (!row) return null;
-  const started = played > 0;
   return (
     <div style={{ ...card({ padding: 16, marginBottom: 20 }), ...edgeGlow(V.blue, 0.8) }}>
-      <div style={label({ color: V.blue, marginBottom: 8 })}>Your team</div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        {row.logo && <img src={row.logo} alt="" style={{ width: 44, height: 44, objectFit: "contain", flexShrink: 0 }} />}
-        <div style={{ minWidth: 0 }}>
-          <div className="f5d" style={display("h3", { lineHeight: 1.35, color: V.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.name}</div>
-          <div style={body("bodySm", { color: V.text2, marginTop: 3 })}>
-            {started ? (
-              <>Sitting <strong style={{ color: V.text }}>{ordinal(place)}</strong> with <strong style={{ color: V.text }}>{row.pts}</strong> {row.pts === 1 ? "point" : "points"}.</>
-            ) : (
-              <>Ranked <strong style={{ color: V.text }}>{ordinal(avgRank)}</strong> of 24 on scoring average.</>
-            )}
+      <div style={label({ color: V.blue, fontSize: 15, marginBottom: 12 })}>Your team&rsquo;s season so far</div>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {row.logo && <img src={row.logo} alt="" style={{ width: 42, height: 42, objectFit: "contain", flexShrink: 0 }} />}
+            <div style={display("h3", {
+              fontSize: "clamp(17px, 5.1vw, 23px)", lineHeight: 1.3, color: V.text,
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            })}>{displayOf(row.name)}</div>
           </div>
+          <div style={body("bodySm", { fontSize: 15, color: V.text2, lineHeight: 1.55, marginTop: 8, whiteSpace: "nowrap" })}>
+            Overall: <strong style={{ color: V.text }}>P{place}</strong> in {DIV_NAME[row.division] || "the league"}
+          </div>
+          <div style={body("bodySm", { fontSize: 15, color: V.text2, lineHeight: 1.55, whiteSpace: "nowrap" })}>
+            Scoring average: <strong style={{ color: V.text }}>{ordinal(avgRank)}</strong> ({season.avg.toFixed(1)})
+          </div>
+          <Form weeks={season.weeks} />
         </div>
+
+        {teammate && (
+          <div style={{ flexShrink: 0, textAlign: "center", width: 74 }}>
+            <div style={label({ color: V.blue, fontSize: 12, marginBottom: 6 })}>Teammate</div>
+            <Face name={teammate.name} photo={teammate.photo_url} size={46} />
+            <div style={{
+              fontFamily: FD, fontWeight: 600, fontSize: 13, color: V.text2,
+              lineHeight: 1.3, marginTop: 5,
+            }}>{teammate.name.split(" ")[0]}<br />{teammate.name.split(" ").slice(1).join(" ")}</div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -124,7 +188,7 @@ export default function TeamsPage({ currentUser }) {
           supabase.from("races").select("*"),
           supabase.from("scores").select("*"),
           supabase.from("schedule").select("*"),
-          supabase.from("players").select("id,name"),
+          supabase.from("players").select("id,name,photo_url"),
         ]).then(rs => rs.map(r => r.data || []));
 
         const db = { teams, races, scores, schedule };
@@ -147,8 +211,11 @@ export default function TeamsPage({ currentUser }) {
 
         const me = players.find(p => p.name === currentUser);
         const myTeam = me ? teams.find(t => t.player1_id === me.id || t.player2_id === me.id) : null;
+        // The other seat on your team.
+        const mateId = myTeam ? [myTeam.player1_id, myTeam.player2_id].find(id => id !== me.id) : null;
+        const teammate = mateId ? players.find(p => p.id === mateId) || null : null;
 
-        setState({ loading: false, rows, seasonOf, avgRankOf, fixtures, myTeamId: myTeam ? myTeam.id : null, teams });
+        setState({ loading: false, rows, seasonOf, avgRankOf, fixtures, teammate, myTeamId: myTeam ? myTeam.id : null, teams });
       } catch (e) {
         console.error(e);
         setState({ loading: false, error: true });
@@ -169,9 +236,19 @@ export default function TeamsPage({ currentUser }) {
   if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
   if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Standings did not load.</div>;
 
-  const { rows, seasonOf, avgRankOf, fixtures, myTeamId } = state;
+  const { rows, seasonOf, avgRankOf, fixtures, teammate, myTeamId } = state;
   const byId = Object.fromEntries(rows.map(r => [r.id, r]));
   const mine = rows.find(r => r.id === myTeamId);
+
+  // Positions share on level points, worked out once so the personal box and
+  // the table cannot disagree. Everybody on nought is everybody in first.
+  const posOf = {};
+  ["championship", "second"].forEach(div => {
+    const list = rows.filter(r => r.division === div);
+    list.forEach((r, i) => {
+      posOf[r.id] = (i > 0 && list[i - 1].pts === r.pts) ? posOf[list[i - 1].id] : i + 1;
+    });
+  });
 
   const groups = [
     { key: "championship", name: "Championship", color: V.gold },
@@ -188,21 +265,15 @@ export default function TeamsPage({ currentUser }) {
 
         <YourTeam
           row={mine}
-          place={mine ? rows.filter(r => r.division === mine.division).findIndex(r => r.id === mine.id) + 1 : 0}
+          season={mine ? seasonOf[mine.id] : null}
+          place={mine ? posOf[mine.id] : 0}
           avgRank={mine ? avgRankOf[mine.id] : 0}
-          played={mine ? mine.played : 0}
+          teammate={teammate}
         />
 
         {groups.map(g => {
           const list = rows.filter(r => r.division === g.key);
           if (!list.length) return null;
-          // Teams level on points share a position. Before a second-half race
-          // is scored that is all 24 of them, and numbering them 1 to 12 down
-          // the page claims an order nobody has played for.
-          const posOf = {};
-          list.forEach((r, i) => {
-            posOf[r.id] = (i > 0 && list[i - 1].pts === r.pts) ? posOf[list[i - 1].id] : i + 1;
-          });
           return (
             <div key={g.key} style={{ marginBottom: 26 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 2px 12px" }}>

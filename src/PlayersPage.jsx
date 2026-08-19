@@ -12,7 +12,7 @@ import { ordinal } from "./teamTable";
 const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 // Two characters longer than the team page's title, so it takes less of
 // the width rather than stretching to the same edges.
-const TITLE_SIZE = titleFit("PLAYER STANDINGS", { fill: 0.72, min: 15 });
+const TITLE_SIZE = titleFit("PLAYER STANDINGS", { fill: 0.95, min: 15 });
 const TEAM_SIZE = "clamp(13px, 3.5vw, 14px)";
 // Real names are longer than team short names, and 48 of them set the budget:
 // at 19px two of them run past the column and at 21px ten do. Measured across
@@ -62,6 +62,14 @@ function Face({ name, photo, size }) {
 const markFor = place =>
   place === 1 ? "\u{1F3C6}" : place === 2 ? "\u{1F948}" : place === 3 ? "\u{1F949}" : null;
 
+function Stat({ k, place, v }) {
+  return (
+    <div style={body("bodySm", { fontSize: 15, color: V.text2, lineHeight: 1.55, whiteSpace: "nowrap" })}>
+      {k}: <strong style={{ color: V.text }}>{ordinal(place)}</strong> ({v})
+    </div>
+  );
+}
+
 function YouAre({ row, place, total }) {
   if (!row) return null;
   return (
@@ -78,26 +86,20 @@ function YouAre({ row, place, total }) {
             lineHeight: 1.3, color: V.text,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           })}>{row.name}</div>
-          <div style={body("bodySm", { fontSize: 15, color: V.text2, marginTop: 4, lineHeight: 1.5, whiteSpace: "nowrap" })}>
-            You&rsquo;re <strong style={{ color: V.text }}>{ordinal(place)}</strong> of {total} overall
-          </div>
-          {row.last != null && (
-            <div style={body("bodySm", { fontSize: 15, color: V.text2, lineHeight: 1.5, whiteSpace: "nowrap" })}>
-              Last race: <strong style={{ color: V.text }}>{row.last}</strong>
-              {row.lastPlace ? ` (P${row.lastPlace})` : ""}
-            </div>
+          {/* Place first on every line, since that is the comparison. */}
+          <Stat k="Overall" place={place} v={`${row.avg.toFixed(1)} avg`} />
+          {row.lastPlace != null && (
+            <Stat k="Last race" place={row.lastPlace} v={`${row.last} pts`} />
           )}
           {row.formRaces > 0 && (
-            <div style={body("bodySm", { fontSize: 15, color: V.text2, lineHeight: 1.5, whiteSpace: "nowrap" })}>
-              Last {row.formRaces}: <strong style={{ color: V.text }}>{row.formAvg.toFixed(1)}</strong>
-              {row.formRank ? ` (${ordinal(row.formRank)})` : ""}
-            </div>
+            <Stat k={`Last ${row.formRaces}`} place={row.formRank} v={`${row.formAvg.toFixed(1)} avg`} />
           )}
         </div>
 
         {/* The trophy case, in the order the finishes happened. */}
         {row.finishes.length > 0 && (
           <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 5 }}>
+            <div style={label({ color: V.blue, fontSize: 12, marginBottom: 2 })}>Trophy case</div>
             {row.finishes.map((f, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}>
                 {markFor(f.place)
