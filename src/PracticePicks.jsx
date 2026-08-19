@@ -191,7 +191,9 @@ function StepBestFinish({ selected, onSelect }) {
 
 // ── Step 5: Pit Stop Speedometer (The Needle) ───────────
 function StepPitStop({ value, onChange, teamSide }) {
-  const min = 1.5, max = 4.0, stepVal = 0.1;
+  // 1.5 to 4.5, same range as the real pick. Practice that cannot reach a
+  // value the real dial can is practice for the wrong game.
+  const min = 1.5, max = 4.5, stepVal = 0.1;
   const svgRef = useRef(null);
   const draggingRef = useRef(false);
   const isUnder = teamSide === "UNDER";

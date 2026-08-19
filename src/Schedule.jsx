@@ -581,7 +581,8 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
     }
 
     // Vertical over/under bar
-    const barMin = 1.5, barMax = 4.0;
+    // Matches the dial. A 4.3 guess against a 4.0 bar renders off the top.
+    const barMin = 1.5, barMax = 4.5;
     const barLine = boxLine != null ? boxLine : 2.75;
     const goldPct = showBoxLine ? Math.max(5, Math.min(95, ((barMax - barLine) / (barMax - barMin)) * 100)) : 50;
     const actualPitTime = resultsMap[raceId]?.pit_stop_time;

@@ -931,17 +931,20 @@ export default function App() {
   const [activePage, setActivePage] = useState(() => {
     const q = new URLSearchParams(window.location.search);
     const path = window.location.pathname.replace(/\/+$/, "");
-    // Paths first. The query and hash entries below are the old ways in and
+    // ?page=practice opens any page directly, and it goes first because it is
+    // an explicit request. Behind readPath it was dead on "/": the root is a
+    // route now, so the path matched and the parameter was never read.
+    //
+    // It exists because several pages are only reachable from inside another
+    // one, which makes them impossible to screenshot or link to. The rebuild
+    // gives every page a real path; this is the stopgap until it does.
+    const page = q.get("page");
+    if (page && PAGES.has(page)) return page;
+    // Then paths. The hash and query entries below are the old ways in and
     // still work, so nothing anyone has bookmarked breaks mid-season.
     const routed = readPath(window.location.pathname);
     if (routed) return routed.page;
     if (path === "/deck" || window.location.hash === "#recap" || q.has("recap")) return "recap";
-    // ?page=rules opens any page directly. Eleven of the sixteen pages are only
-    // reachable from inside another one, which makes them impossible to
-    // screenshot or link to. The second-half rebuild gives every page a real
-    // path; this is the stopgap that also let the old UI be photographed.
-    const page = q.get("page");
-    if (page && PAGES.has(page)) return page;
     // /newui is the shareable path for the second-half look. ?vegas and #vegas
     // still work, and the query param is what the mockup's own controls use.
     if (path === "/newui" || window.location.hash === "#vegas" || q.has("vegas")) return "vegas";

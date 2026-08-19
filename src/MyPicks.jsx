@@ -373,7 +373,9 @@ function StepBestFinish({ selected, onSelect }) {
 function StepPitStop({ question, value, onChange, teamSide }) {
   const [scoringOpen, setScoringOpen] = useState(true);
   const [pitDataOpen, setPitDataOpen] = useState(false);
-  const min = 1.5, max = 4.0, stepVal = 0.1;
+  // 1.5 to 4.5. The first half stopped at 4.0 and the deck's rules card told
+  // the league it goes higher in the second, so this is a promise, not a tweak.
+  const min = 1.5, max = 4.5, stepVal = 0.1;
   const svgRef = useRef(null);
   const draggingRef = useRef(false);
   const isUnder = teamSide === "UNDER";

@@ -32,7 +32,7 @@ scripts/smoke.jsx: renders every VegasHome branch through react-dom/server and e
 scripts/smoke-recap.jsx: 864 renders of the deck, and checks each card differs across players by content hash. npm run smoke:recap.
 scripts/peek.jsx: prints the rendered TEXT of recap cards so copy gets read as copy. npm run peek.
 scripts/schedule2.mjs: draws and checks the second-half round robin, writes schedule2.sql and recap/schedule2.json.
-public/fit.html, public/names.html: dev harnesses for phone layout and name widths. Unlinked, but they do ship.
+public/fit.html, public/scroll.html, public/drive.html, public/names.html: dev harnesses. fit.html measures any route at a true phone viewport (?path=/teams) and reports overflow and truncation; scroll.html shows a given offset; drive.html walks a multi-step flow so a step deep inside a wizard can be photographed; names.html measures name widths. All unlinked, and they do ship.
 
 All components live in src/. Recaps are static HTML in public/recaps/, surfaced via the recap button in App.jsx and Schedule.jsx.
 
@@ -348,6 +348,6 @@ Decision still open: full cron automation vs an Admin "auto-generate pool" butto
 Doc/code mismatch to resolve: this file says results.finishing_order is a 22-driver array, but Admin.jsx:668 writes finishOrder.slice(0, 5). Confirm the intended shape for both results.finishing_order and picks.finishing_order, then correct whichever is wrong.
 
 Announced to the league in the deck, so these are now promises:
-- The pit stop input must accept up to 4.5 seconds. It stopped at 4.0 in the first half and the rules card says it now goes higher. **Not yet implemented.**
+- The pit stop input must accept up to 4.5 seconds. **Done 2026-08-18.** Raised in MyPicks.jsx, PracticePicks.jsx, the Schedule.jsx guess bar and Admin's random-pick generator. Driven to the stop in the browser: the dial reads "4.5 or above".
 - Fernolo 5 Bort, Formula 5 Bot's less popular cousin, makes random picks for anyone who misses the deadline. **Not yet implemented.**
 - Round 23, if the FIA holds it, is seeded 1v12, 2v11 and so on.

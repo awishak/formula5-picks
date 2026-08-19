@@ -900,7 +900,7 @@ export default function Admin() {
               top_pick: topPick,
               finishing_order: order,
               best_finish: `P${Math.floor(Math.random() * 10) + 1}`,
-              pit_guess: Math.round((1.5 + Math.random() * 2.5) * 10) / 10,
+              pit_guess: Math.round((1.5 + Math.random() * 3.0) * 10) / 10,
               submitted_at: new Date().toISOString()
             };
           });

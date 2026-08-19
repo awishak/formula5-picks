@@ -1,0 +1,54 @@
+<!-- Dev harness. Loads a route at phone size and walks a multi-step flow, so a
+     step deep inside a wizard can be screenshotted without a human clicking.
+
+     Each tick: if the advance button is enabled, press it; otherwise press the
+     first other live control, which is what satisfies "choose one before you
+     continue". Stops after `ticks`.
+
+     Usage: /drive.html?w=393&h=852&path=/?page=practice&next=next&ticks=40 -->
+<meta charset="utf-8" /><style>body{margin:0;background:#fff}iframe{border:0;display:block}</style>
+<iframe id="f"></iframe>
+<script>
+  const q = new URLSearchParams(location.search);
+  const w = +(q.get("w") || 393), h = +(q.get("h") || 852);
+  const f = document.getElementById("f");
+  f.style.width = w + "px"; f.style.height = h + "px";
+  const path = q.get("path") || "/";
+  f.src = `${path}${path.includes("?") ? "&" : "?"}player=${encodeURIComponent(q.get("player") || "Andrew Ishak")}`;
+  const nextLabel = (q.get("next") || "next").toLowerCase();
+  const stop = (q.get("stop") || "").toLowerCase();
+  let left = +(q.get("ticks") || 30), i = 0;
+  const live = el => el.offsetParent && !el.disabled;
+  const tick = () => {
+    if (left-- <= 0) return;
+    const d = f.contentDocument;
+    const all = [...d.querySelectorAll("button, [role=button]")].filter(live);
+    const txt = el => (el.textContent || "").trim().toLowerCase();
+    // Reached the step we came for: stop pressing things.
+    if (stop && d.body.innerText.toLowerCase().includes(stop)) {
+      // Landed. Scroll to ?y so the part worth photographing is on screen.
+      // ?after=+ 0.1&afterTimes=25 presses one control repeatedly once we are
+      // there, which is how the far end of a slider gets photographed.
+      const label = (q.get("after") || "").toLowerCase();
+      let n = +(q.get("afterTimes") || 0);
+      const press = () => {
+        if (n-- <= 0) {
+          const y = +(q.get("y") || 0);
+          if (y) f.contentWindow.scrollTo(0, y);
+          return;
+        }
+        const b = [...d.querySelectorAll("button")].find(x => txt(x) === label && live(x));
+        if (b) b.click();
+        setTimeout(press, 120);
+      };
+      setTimeout(press, 300);
+      return;
+    }
+    const next = all.find(b => txt(b).includes(nextLabel));
+    const other = all.filter(b => !txt(b).includes(nextLabel) && !txt(b).includes("back"));
+    if (next) { next.click(); i = 0; }          // advanced: start the next step fresh
+    else if (other.length) other[i++ % other.length].click();  // walk distinct choices
+    setTimeout(tick, 420);
+  };
+  setTimeout(tick, 3500);
+</script>
