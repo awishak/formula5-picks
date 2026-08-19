@@ -16,6 +16,8 @@ PickIntel.jsx: pick intel display, depends on canonical driver names for headsho
 drivers.js: canonical driver identity. Names, teams, cached headshot URLs, name aliases, the useOpenF1Drivers hook and findDriver. Single source of truth for anything driver-shaped.
 teams.js: canonical team identity. Full name (matches teams.name in Supabase), short name for tight spots, three-letter code for URLs. Single source of truth for anything team-shaped. Codes are part of the URL scheme, so changing one breaks a link.
 teamTable.js: the team game computed. Pure, no React and no Supabase, so any page can render a standings row without growing a second copy of the scoring rules. buildTeamTable, rankByAverage, nextFixtures, TIEBREAKS.
+playerTable.js: the individual game computed. Pure. buildPlayerTable, placesBy. The individual score is wider than the team score: it includes pit_individual_pts and weekly_bonus_pts, which the team score leaves out.
+PlayersPage.jsx: the individual standings at /players, on the Vegas look. Same skeleton as TeamsPage. Ranked on points a race, which is also the big number. Trophies are a placing among everyone who scored that week: gold, silver, bronze, and a dot for a top ten that was not a podium, so nothing is counted twice. PlayerStandings.jsx is the old one, unrouted, at ?page=player-standings-v1.
 TeamsPage.jsx: the second-half team standings at /teams, on the Vegas look. Position, logo, code, record, next opponent, championship points, nothing else. TeamStandings.jsx is the first-half table, unrouted, still at ?page=team-standings-v1.
 Rules.jsx: rules and glossary.
 PlayerStandings.jsx: individual standings and player stats.

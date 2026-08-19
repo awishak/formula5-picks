@@ -8,6 +8,7 @@ import MyPicks, { PickHistory } from "./MyPicks.jsx";
 import PlayerStandings from "./PlayerStandings.jsx";
 import TeamStandings from "./TeamStandings.jsx";
 import TeamsPage from "./TeamsPage.jsx";
+import PlayersPage from "./PlayersPage.jsx";
 import DivisionTrends from "./DivisionTrends.jsx";
 import Strategy from "./Strategy.jsx";
 import F1Calendar from "./F1Calendar.jsx";
@@ -811,7 +812,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 // the pages that have no path of their own yet.
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
-  "team-standings", "team-standings-v1", "division-trends", "players", "rules", "strategy",
+  "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
   "f1-calendar", "season-preview", "recaps", "admin",
 ]);
 
@@ -842,7 +843,7 @@ const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 // Pages rebuilt on the Vegas look. They set their own ground and their own
 // header, so the light shell's logo bar and background have to get out of the
 // way or a dark page opens under a white block.
-const VEGAS_PAGES = new Set(["team-standings"]);
+const VEGAS_PAGES = new Set(["team-standings", "player-standings"]);
 
 // A path in, a page and any parameter out.
 function readPath(pathname) {
@@ -1018,7 +1019,9 @@ export default function App() {
           <ViewingAs currentUser={currentUser} onSelect={handleSelectName} />
         </div>
         {activePage === "home" && <HomePage currentUser={currentUser} onNavigate={navigateTo} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
-        {activePage === "player-standings" && <PlayerStandings currentUser={currentUser} />}
+        {activePage === "player-standings" && <PlayersPage currentUser={currentUser} />}
+        {/* The first-half individual table, unrouted. */}
+        {activePage === "player-standings-v1" && <PlayerStandings currentUser={currentUser} />}
         {activePage === "picks" && <MyPicksPage currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "team-standings" && <TeamsPage currentUser={currentUser} />}
         {/* The first-half team table, kept reachable while the second-half page
