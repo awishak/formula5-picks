@@ -1744,6 +1744,11 @@ export default function VegasHome({ onNavigate, initialTab = "home", initialStat
 
   return (
     <div style={{ background: V.bg, minHeight: "100vh" }}>
+      {/* The faces load with the page. This used to come from a branch in
+          App.jsx that rendered VegasHome outside the shell; when it became a
+          tab that went with it, and FM fell back to the browser's cursive,
+          which is why the race name turned into handwriting. */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');`}</style>
       <style>{VEGAS_CSS}</style>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "18px 18px 60px" }}>
 
