@@ -14,6 +14,9 @@ PracticePicks.jsx: practice/preview picks UI.
 Schedule.jsx: dynamic recap button, reads pick_deadline.
 PickIntel.jsx: pick intel display, depends on canonical driver names for headshots and color chips.
 drivers.js: canonical driver identity. Names, teams, cached headshot URLs, name aliases, the useOpenF1Drivers hook and findDriver. Single source of truth for anything driver-shaped.
+teams.js: canonical team identity. Full name (matches teams.name in Supabase), short name for tight spots, three-letter code for URLs. Single source of truth for anything team-shaped. Codes are part of the URL scheme, so changing one breaks a link.
+teamTable.js: the team game computed. Pure, no React and no Supabase, so any page can render a standings row without growing a second copy of the scoring rules. buildTeamTable, rankByAverage, nextFixtures, TIEBREAKS.
+TeamsPage.jsx: the second-half team standings at /teams, on the Vegas look. Position, logo, code, record, next opponent, championship points, nothing else. TeamStandings.jsx is the first-half table, unrouted, still at ?page=team-standings-v1.
 Rules.jsx: rules and glossary.
 PlayerStandings.jsx: individual standings and player stats.
 TeamStandings.jsx: team standings by championship points and division.
@@ -51,6 +54,8 @@ DRIVER_NAMES: canonical driver name strings, defined in src/drivers.js. Every dr
 
 ## Known bugs and gotchas
 
+Standings depended on database row order. RESOLVED 2026-08-18. Two teams in a division can post the identical matchup score, ten times in the first half, and nothing decided which took the higher championship-points place. It fell to Postgres heap order, which is not stable: an UPDATE rewrites a row to the end of the heap, so adding division_h2 reshuffled 45 championship points with no score changing. Any query whose output order matters needs an explicit rule, not an implicit one.
+
 needleScore threshold bug: the bucket thresholds use 0.05/0.15/0.25 instead of clean 0.0/0.1/0.2. Pit times entered as hundredths (e.g. 2.17) are silently scored as the nearest tenth. Open decision below.
 Supabase silent writes: RLS policy mismatches swallow writes with no error. Always append .select() to update calls so failures surface.
 Duplicate const declarations: cause silent Vercel build failures. The old build keeps serving, so a deploy looks like it did nothing. Check for these first when a deploy seems to have no effect.
@@ -74,6 +79,22 @@ Card-based, mobile-first layouts. Rounded corners. Bottom navigation.
 The bot makes pit stop guesses for TJ Premium. The actual stop landing on the team's assigned side of the line is what wins.
 OVER assignment: guess lower, to pull the team average down so the real stop more likely lands above the line.
 UNDER assignment: guess higher, to raise the line average.
+
+## Tiebreaks
+
+Set by Andrew 2026-08-18, live from round 12. When two teams in a division post the same matchup score, the higher championship-points place goes on:
+
+1. Matchup score
+2. BOX BOX. On a WIN the team that did NOT win BOX BOX goes ahead, since BOX BOX swings 6 and a team level without it picked six points better. On a DRAW the other way round: winning BOX BOX is what separates two teams the day could not.
+3. Margin of victory
+4. Order points, both players
+5. Midfield points, both players
+6. The better of the two players
+7. Coin flip, drawn from the team and race ids so it is arbitrary between two teams and identical on every load
+
+Nobody shares a place. Drawn matchups used to split the points between teams level on BOX BOX; the chain runs until one is above the other. Lives in `cmp` in src/teamTable.js. Deliberately NOT on the rules page: Andrew's call, nobody asks.
+
+Run over the first half it leaves promotion untouched, moves the Second Division title from Meatballs to HomeworkTubes, and puts El Camino one point above East Bay, the reverse of the relegation that was played. **The first half stands as played and nothing was written to the database.**
 
 ## League structure
 
