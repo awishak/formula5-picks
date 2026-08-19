@@ -15,9 +15,9 @@ import { V, FD, textGlow } from "./theme.vegas";
 //   any other tab  blue when you are on it, grey when you are not
 const TABS = [
   { id: "home", label: "Home" },
-  { id: "team-standings", label: "Teams" },
-  { id: "picks", label: "Picks", middle: true },
   { id: "player-standings", label: "Players" },
+  { id: "picks", label: "Picks", middle: true },
+  { id: "team-standings", label: "Teams" },
   { id: "schedule", label: "Schedule" },
 ];
 
@@ -63,10 +63,9 @@ export default function VegasNav({ active, onChange, hasSubmittedPicks }) {
                      pulse={t.middle && !hasSubmittedPicks} />
               <span style={{
                 fontFamily: FD, fontWeight: on ? 700 : 600,
-                // Five labels across a 320px phone: PLAYERS and SCHEDULE ran
-                // into each other at a flat 13px. The floor stays 12 and the
-                // tracking comes off, which is enough to open a gap.
-                fontSize: "clamp(12px, 3.4vw, 13px)",
+                // Five labels across a 320px phone is what sets the ceiling.
+                // The tracking is off for the same reason.
+                fontSize: "clamp(13px, 3.7vw, 14px)",
                 lineHeight: 1.2, letterSpacing: "0.02em", textTransform: "uppercase",
                 whiteSpace: "nowrap",
                 ...(on || t.middle ? textGlow(color, 0.45) : { color: V.text3 }),

@@ -31,8 +31,10 @@ function Title() {
       <div style={{
         fontFamily: FM, fontWeight: 400, fontSize: TITLE_SIZE,
         lineHeight: 1.15, letterSpacing: "0.02em", whiteSpace: "nowrap",
-        ...textGlow(V.blue),
-      }}>TEAM STANDINGS</div>
+      }}>
+        <span style={textGlow(V.pink)}>TEAM</span>{" "}
+        <span style={textGlow(V.blue)}>STANDINGS</span>
+      </div>
     </div>
   );
 }
