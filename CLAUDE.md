@@ -29,6 +29,7 @@ Players.jsx: all players & team rosters, seasons-played descriptors, avatars.
 App.jsx: app shell, routing, F1 starting-light bottom nav, player switcher on HomePage.
 VegasHome.jsx: the Second Half Vegas Refresh mockup. Neon kit plus the state-driven Home and rooting board. Hardcoded round-11 snapshot, touches no Supabase.
 theme.vegas.js: Vegas tokens. Type scale with a 13px floor, palette, neon glow helpers, motion CSS. Vegas components take color and type from here, never inline hex. FD is Encode Sans Semi Condensed, chosen 2026-08-18 with a live picker on /teams after fifteen faces in the real team names; FN is Chakra Petch for glowing numbers only.
+MorePage.jsx: the fifth tab at /. A holding page: coming soon, and a link to Admin. The old home page (next race, season summary, week by week, league news) is still in App.jsx, unrouted, at ?page=home-v1. The news itself lives on in src/news.js.
 ViewingAs.jsx: who you are looking at the app as. Top right of every page, rendered by the app shell. Used to live inside HomePage, so switching player meant going home first.
 VegasNav.jsx: the bottom nav on the Vegas look. Five starting lights, same five slots and the same order as the old one so the positions stay where people's thumbs expect. Home, Teams, Picks, Players, Schedule. The middle light reports the week rather than the route: green when picks are in, pink and pulsing when they are not.
 Recap.jsx: the 18-card first-half recap deck. Live at /deck.

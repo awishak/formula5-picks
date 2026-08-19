@@ -18,6 +18,7 @@ import PickIntel from "./PickIntel.jsx";
 import Recaps from "./Recaps.jsx";
 import VegasHome from "./VegasHome.jsx";
 import ViewingAs from "./ViewingAs.jsx";
+import MorePage from "./MorePage.jsx";
 import VegasNav from "./VegasNav.jsx";
 import Recap from "./Recap.jsx";
 import { NEWS } from "./news";
@@ -812,7 +813,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 // the pages that have no path of their own yet.
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
-  "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
+  "home-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
   "f1-calendar", "season-preview", "recaps", "admin",
 ]);
 
@@ -843,7 +844,7 @@ const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 // Pages rebuilt on the Vegas look. They set their own ground and their own
 // header, so the light shell's logo bar and background have to get out of the
 // way or a dark page opens under a white block.
-const VEGAS_PAGES = new Set(["team-standings", "player-standings"]);
+const VEGAS_PAGES = new Set(["home", "team-standings", "player-standings"]);
 
 // A path in, a page and any parameter out.
 function readPath(pathname) {
@@ -1018,7 +1019,10 @@ export default function App() {
           <img src={LOGO_B64} alt="Formula 5" style={{ height: 40, maxWidth: "36%", objectFit: "contain", objectPosition: "left", flexShrink: 1, minWidth: 0 }} />
           <ViewingAs currentUser={currentUser} onSelect={handleSelectName} />
         </div>
-        {activePage === "home" && <HomePage currentUser={currentUser} onNavigate={navigateTo} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
+        {activePage === "home" && <MorePage onNavigate={navigateTo} />}
+        {/* The old home page: next race, season summary, week by week and the
+            league news. Unrouted while the second half is being built. */}
+        {activePage === "home-v1" && <HomePage currentUser={currentUser} onNavigate={navigateTo} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
         {activePage === "player-standings" && <PlayersPage currentUser={currentUser} />}
         {/* The first-half individual table, unrouted. */}
         {activePage === "player-standings-v1" && <PlayerStandings currentUser={currentUser} />}

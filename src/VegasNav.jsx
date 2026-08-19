@@ -14,7 +14,7 @@ import { V, FD } from "./theme.vegas";
 //   picks not in   pink, and it pulses
 //   any other tab  blue when you are on it, grey when you are not
 const TABS = [
-  { id: "home", label: "Home" },
+  { id: "home", label: "More" },
   { id: "player-standings", label: "Players" },
   { id: "picks", label: "Picks", middle: true },
   { id: "team-standings", label: "Teams" },
