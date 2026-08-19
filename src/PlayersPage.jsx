@@ -51,31 +51,34 @@ function Face({ name, photo, size }) {
   );
 }
 
-// A week's finish among all 48. Gold, silver and bronze carry a count; a top ten
-// that was not a podium is a dot, so nothing is marked twice.
-function Trophies({ row }) {
+// A week's finish among all 48, one mark per finish rather than a count. A
+// trophy for a win, a silver for a second, a bronze for a third, and a dot for
+// a top ten that was not a podium, so nothing is marked twice.
+//
+// It gets its own line. At eleven races a full case is eleven marks, and by the
+// end of the season it could be twenty-three, which is more than fits beside
+// anything else.
+function TrophyCase({ row }) {
   const marks = [
-    { n: row.p1, c: V.gold }, { n: row.p2, c: V.silver }, { n: row.p3, c: V.bronze },
-  ].filter(m => m.n > 0);
+    ...Array(row.p1).fill("\u{1F3C6}"),
+    ...Array(row.p2).fill("\u{1F948}"),
+    ...Array(row.p3).fill("\u{1F949}"),
+  ];
   if (!marks.length && !row.top10) return null;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+    <div style={{
+      display: "flex", alignItems: "center", gap: 3, marginTop: 2,
+      minWidth: 0, overflow: "hidden",
+    }}>
       {marks.map((m, i) => (
-        <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-          <span style={{ width: 9, height: 9, borderRadius: "50%", background: m.c, boxShadow: `0 0 5px ${m.c}90` }} />
-          {/* The count only appears when there is more than one. Most players
-              have a single win or a single second, and "1" beside every disc
-              was 22px of nothing that pushed the team name off the row. */}
-          {m.n > 1 && <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, color: m.c }}>{m.n}</span>}
-        </span>
+        <span key={i} style={{ fontSize: 13, lineHeight: 1.2, flexShrink: 0 }}>{m}</span>
       ))}
-      {row.top10 > 0 && (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: V.text3 }} />
-          {row.top10 > 1 && <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 13, color: V.text3 }}>{row.top10}</span>}
-        </span>
-      )}
-    </span>
+      {Array.from({ length: row.top10 }).map((_, i) => (
+        <span key={`d${i}`} style={{
+          width: 7, height: 7, borderRadius: "50%", background: V.text3, flexShrink: 0,
+        }} />
+      ))}
+    </div>
   );
 }
 
@@ -114,20 +117,18 @@ function Row({ row, place, mine, innerRef }) {
           fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text,
           letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
         })}>{row.name}</div>
-        <div style={{ display: "flex", gap: 9, alignItems: "center", marginTop: 1, minWidth: 0 }}>
-          <span style={{
-            // 12px, one under the theme floor, and deliberate. At 13 the two
-            // HomeworkTubes rows truncate on a 375px phone, which is a common
-            // one. The floor exists because the old app had 224 things at 10px
-            // or smaller; one secondary label at 12 is not that.
-            fontFamily: FD, fontWeight: 600, fontSize: 12, letterSpacing: "0.02em",
-            textTransform: "uppercase", color: V.text3, minWidth: 0,
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-          }}>{row.teamName || "No team"}</span>
-          <Trophies row={row} />
-        </div>
+        <div style={{
+          // Full team names run to 28 characters, so this line takes the size
+          // that keeps all but the longest of them whole on a 375px phone.
+          fontFamily: FD, fontWeight: 600, fontSize: 12, letterSpacing: "0.01em",
+          textTransform: "uppercase", color: V.text3, marginTop: 1, minWidth: 0,
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        }}>{row.teamName || "No team"}</div>
+        <TrophyCase row={row} />
       </div>
-      <div style={{ flexShrink: 0, textAlign: "right" }}>
+      {/* Fixed width and centred, so 45.1 and 9.0 sit on the same axis instead
+          of each row hanging its number from a different place. */}
+      <div style={{ flexShrink: 0, width: 62, textAlign: "center" }}>
         <div style={numeric("stat", { fontSize: 28, color: V.text, ...textGlow(V.blue, 0.7) })}>{row.avg.toFixed(1)}</div>
         {row.last != null && (
           <div style={{

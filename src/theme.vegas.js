@@ -112,12 +112,13 @@ export const marquee = (text, extra = {}) => {
 // Monoton runs about 0.74px wide per character per point of type, measured off
 // a rendered element rather than a specimen: measuring a standalone span said
 // 0.62 and the first title ran 49px off the page. So the size that fits is
-// (viewport - 32) / (0.74 * characters), with a little slack so it is not flush
-// to the edge. Passing the text means a longer title gets a smaller size on its
+// (viewport - 32) / (0.74 * characters), with enough slack that it is not flush
+// to the edge: measured-to-the-pixel filled the line exactly and read as too
+// big on a real phone. Passing the text means a longer title gets a smaller size on its
 // own, instead of every page inheriting a number tuned for one of them.
 export const titleFit = (text, { min = 22, max = 40, pad = 32 } = {}) => {
   const n = Math.max(1, (text || "").length);
-  const per = 0.775 * n;          // px of width per point of type, plus slack
+  const per = 0.83 * n;           // px of width per point of type, plus slack
   return `clamp(${min}px, calc(${(100 / per).toFixed(2)}vw - ${(pad / per).toFixed(2)}px), ${max}px)`;
 };
 
