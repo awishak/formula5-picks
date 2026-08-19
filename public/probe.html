@@ -1,0 +1,25 @@
+<meta charset="utf-8"><style>body{margin:0;font:12px monospace;background:#111;color:#eee}#o{padding:8px;white-space:pre}iframe{border:0;position:absolute;left:-9999px}</style>
+<div id="o">…</div><iframe id="f"></iframe>
+<script>
+const q=new URLSearchParams(location.search);
+const f=document.getElementById("f"); const out=[];
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{
+  for (const [path,txt] of [["/teams","TEAM STANDINGS"],["/players","PLAYER STANDINGS"]]) {
+    for (const w of [1240,900,430,393,375]) {
+      f.style.width=w+"px"; f.style.height="800px";
+      f.src=path+"?player=Andrew%20Ishak&t="+w;
+      await new Promise(r=>f.onload=r); await wait(2600);
+      const d=f.contentDocument;
+      const el=[...d.querySelectorAll("div")].filter(e=>(e.textContent||"").trim()===txt).pop();
+      if(!el){out.push(path+" @"+w+"  NOT FOUND");continue;}
+      const r=el.getBoundingClientRect(), cs=getComputedStyle(el);
+      // Real ink width: measure the text, not the block.
+      const rng=d.createRange(); rng.selectNodeContents(el);
+      const ink=Math.round(rng.getBoundingClientRect().width);
+      out.push(`${path} @${w}  font ${parseFloat(cs.fontSize).toFixed(1)}px  text ${ink}px  page ${w}px  = ${Math.round(ink/w*100)}% of the width`);
+    }
+  }
+  document.getElementById("o").textContent=out.join("\n");
+})();
+</script>

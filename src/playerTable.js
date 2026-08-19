@@ -9,6 +9,19 @@ const totalOf = s =>
   (s.top_pick_pts || 0) + (s.midfield_pts || 0) + (s.order_bonus || 0) +
   (s.best_finish_bonus || 0) + (s.pit_individual_pts || 0) + (s.weekly_bonus_pts || 0);
 
+// What to call a race in one word. Rounds 7 and 14 are both the Spanish Grand
+// Prix, so the label comes from the round rather than the name.
+export const RACE_LABEL = {
+  1: "Australia", 2: "China", 3: "Japan", 4: "Miami", 5: "Canada", 6: "Monaco",
+  7: "Spain", 8: "Austria", 9: "Britain", 10: "Belgium", 11: "Hungary",
+  12: "Netherlands", 13: "Italy", 14: "Madrid", 15: "Azerbaijan", 16: "Bahrain",
+  17: "Singapore", 18: "USA", 19: "Mexico", 20: "S\u00e3o Paulo",
+  21: "Las Vegas", 22: "Qatar", 23: "Abu Dhabi",
+};
+
+// How many races "recent form" covers.
+export const FORM_RACES = 5;
+
 /**
  * Individual standings across every scored race. The individual game runs all
  * 23 rounds and does not reset at the half, so there is no round window here.
@@ -39,8 +52,11 @@ export function buildPlayerTable(db) {
       pts: 0, races: 0, avg: 0,
       // Where they finished among all 48 that week.
       p1: 0, p2: 0, p3: 0, top10: 0,
-      last: null, lastRound: null,
-      byRace: {},
+      last: null, lastRound: null, lastPlace: null,
+      // Every top ten, in the order they happened, for the trophy case.
+      finishes: [],
+      formAvg: 0, formRank: null,
+      byRace: {}, placeByRace: {},
     };
   });
   const byId = Object.fromEntries(rows.map(r => [r.id, r]));
@@ -70,19 +86,41 @@ export function buildPlayerTable(db) {
       .sort((a, b) => (b.score - a.score) || a.r.name.localeCompare(b.r.name));
     week.forEach(({ r }, i) => {
       const place = i + 1;
+      r.placeByRace[raceId] = place;
       if (place === 1) r.p1++;
       else if (place === 2) r.p2++;
       else if (place === 3) r.p3++;
       else if (place <= 10) r.top10++;
+      if (place <= 10) {
+        r.finishes.push({
+          round: roundOf[raceId], place,
+          where: RACE_LABEL[roundOf[raceId]] || `Round ${roundOf[raceId]}`,
+          score: r.byRace[raceId],
+        });
+      }
     });
   });
 
   const lastRace = scoredRaces[scoredRaces.length - 1];
+  // Recent form: the last five scored races, or all of them if fewer.
+  const form = scoredRaces.slice(-FORM_RACES);
   rows.forEach(r => {
     r.avg = r.races ? Math.round((r.pts / r.races) * 10) / 10 : 0;
     r.last = lastRace != null && r.byRace[lastRace] != null ? r.byRace[lastRace] : null;
     r.lastRound = lastRace != null ? roundOf[lastRace] : null;
+    r.lastPlace = lastRace != null ? (r.placeByRace[lastRace] ?? null) : null;
+    r.finishes.sort((a, b) => a.round - b.round);
+    const got = form.filter(id => r.byRace[id] != null);
+    r.formAvg = got.length
+      ? Math.round((got.reduce((a, id) => a + r.byRace[id], 0) / got.length) * 10) / 10
+      : 0;
+    r.formRaces = got.length;
   });
+  // Rank on recent form, across everyone, the same way the season rank works.
+  [...rows].sort((a, b) => b.formAvg - a.formAvg || a.name.localeCompare(b.name))
+    .forEach((r, i, arr) => {
+      r.formRank = (i > 0 && arr[i - 1].formAvg === r.formAvg) ? arr[i - 1].formRank : i + 1;
+    });
 
   // Ranked on scoring average, because that is the number the page leads with.
   // Everyone has played every race so far, so this is the same order as total

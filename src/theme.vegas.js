@@ -107,23 +107,28 @@ export const marquee = (text, extra = {}) => {
   return { fontFamily: FM, fontWeight: 400, fontSize, lineHeight: 1.25, letterSpacing: "0.02em", ...extra };
 };
 
-// A Monoton page title, sized to fill the column at any width.
+// A Monoton page title, sized to fill the column it is in.
+//
+// Sized in cqw, not vw. vw is the browser window, and .app-wrap caps the content
+// at 480px: on a desktop window the title was sized for 1240px and drawn into
+// 480, so the last letter ran off the edge. Phone testing never showed it,
+// because there the window and the column are the same width. The caller wraps
+// the title in an element with container-type: inline-size, and 1cqw is then 1%
+// of the column no matter how wide the window is.
 //
 // Monoton runs about 0.74px wide per character per point of type, measured off
-// a rendered element rather than a specimen: measuring a standalone span said
-// 0.62 and the first title ran 49px off the page. So the size that fits is
-// (viewport - 32) / (0.74 * characters), with enough slack that it is not flush
-// to the edge: measured-to-the-pixel filled the line exactly and read as too
-// big on a real phone. Passing the text means a longer title gets a smaller size on its
-// own, instead of every page inheriting a number tuned for one of them.
-export const titleFit = (text, { min = 22, max = 40, pad = 32, fill = 1 } = {}) => {
+// a rendered element rather than a specimen. 0.83 leaves slack on top of that.
+//
+// fill is how much of the column the title should take. A long title sized to
+// span the full width reads stretched even when it fits.
+export const titleFit = (text, { min = 15, max = 40, fill = 1 } = {}) => {
   const n = Math.max(1, (text || "").length);
-  // fill is how much of the column the title should take. A long title sized to
-  // span the full width reads stretched even when it technically fits, so a
-  // page with a longer title passes something under 1.
   const per = (0.83 * n) / fill;
-  return `clamp(${min}px, calc(${(100 / per).toFixed(2)}vw - ${(pad / per).toFixed(2)}px), ${max}px)`;
+  return `clamp(${min}px, ${(100 / per).toFixed(2)}cqw, ${max}px)`;
 };
+
+// The wrapper that makes cqw mean the column rather than the window.
+export const titleBox = (extra = {}) => ({ containerType: "inline-size", ...extra });
 
 // Neon text: three stacked shadows. The tight one gives the tube, the wide one
 // gives the bloom on the wall behind it.

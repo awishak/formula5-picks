@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "./supabaseClient";
-import { V, FM, FD, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit } from "./theme.vegas";
+import { V, FM, FD, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { ordinal } from "./teamTable";
 
@@ -21,7 +21,7 @@ const NAME_SIZE = "clamp(15px, calc(9.55vw - 22.0px), 19px)";
 
 function Title() {
   return (
-    <div style={{ padding: "14px 0 18px" }}>
+    <div style={titleBox({ padding: "14px 0 18px" })}>
       <div style={{
         fontFamily: FM, fontWeight: 400, fontSize: TITLE_SIZE,
         lineHeight: 1.15, letterSpacing: "0.02em", whiteSpace: "nowrap",
@@ -54,19 +54,60 @@ function Face({ name, photo, size }) {
   );
 }
 
-function YouAre({ row, place }) {
+// The mark a finish earns. Anything in the top ten is worth showing; only the
+// first three get metal.
+const markFor = place =>
+  place === 1 ? "\u{1F3C6}" : place === 2 ? "\u{1F948}" : place === 3 ? "\u{1F949}" : null;
+
+function YouAre({ row, place, total }) {
   if (!row) return null;
   return (
     <div style={{ ...card({ padding: 16, marginBottom: 20 }), ...edgeGlow(V.blue, 0.8) }}>
-      <div style={label({ color: V.blue, marginBottom: 8 })}>You</div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Face name={row.name} photo={row.photo} size={42} />
-        <div style={{ minWidth: 0 }}>
-          <div style={display("h3", { lineHeight: 1.35, color: V.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.name}</div>
-          <div style={body("bodySm", { color: V.text2, marginTop: 3 })}>
-            <strong style={{ color: V.text }}>{ordinal(place)}</strong> of 48, scoring <strong style={{ color: V.text }}>{row.avg.toFixed(1)}</strong> a race.
+      <div style={label({ color: V.blue, marginBottom: 10 })}>Your season</div>
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+        <Face name={row.name} photo={row.photo} size={44} />
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={display("h3", {
+            lineHeight: 1.3, color: V.text,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          })}>{row.name}</div>
+          <div style={body("bodySm", { fontSize: 13, color: V.text2, marginTop: 4, lineHeight: 1.55, whiteSpace: "nowrap" })}>
+            You&rsquo;re <strong style={{ color: V.text }}>{ordinal(place)}</strong> of {total} overall
           </div>
+          {row.last != null && (
+            <div style={body("bodySm", { fontSize: 13, color: V.text2, lineHeight: 1.55, whiteSpace: "nowrap" })}>
+              Last race: <strong style={{ color: V.text }}>{row.last}</strong>
+              {row.lastPlace ? ` (P${row.lastPlace})` : ""}
+            </div>
+          )}
+          {row.formRaces > 0 && (
+            <div style={body("bodySm", { fontSize: 13, color: V.text2, lineHeight: 1.55, whiteSpace: "nowrap" })}>
+              Last {row.formRaces}: <strong style={{ color: V.text }}>{row.formAvg.toFixed(1)}</strong>
+              {row.formRank ? ` (P${row.formRank})` : ""}
+            </div>
+          )}
         </div>
+
+        {/* The trophy case, in the order the finishes happened. */}
+        {row.finishes.length > 0 && (
+          <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+            {row.finishes.map((f, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}>
+                {markFor(f.place)
+                  ? <span style={{ fontSize: 14, lineHeight: 1.2 }}>{markFor(f.place)}</span>
+                  : <span style={{ width: 8, height: 8, borderRadius: "50%", background: V.text2 }} />}
+                <span style={{
+                  fontFamily: FD, fontWeight: 700, fontSize: 13, color: V.text,
+                  minWidth: 22,
+                }}>P{f.place}</span>
+                <span style={{
+                  fontFamily: FD, fontWeight: 600, fontSize: 13, color: V.text2,
+                }}>{f.where}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -155,7 +196,7 @@ export default function PlayersPage({ currentUser }) {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&display=swap');`}</style>
       <div style={WRAP}>
         <Title />
-        <YouAre row={me} place={me ? place[me.id] : 0} />
+        <YouAre row={me} place={me ? place[me.id] : 0} total={rows.length} />
 
         {rows.map(r => (
           <Row key={r.id} row={r} place={place[r.id]} mine={me && r.id === me.id}

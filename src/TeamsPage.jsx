@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "./supabaseClient";
-import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit } from "./theme.vegas";
+import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { displayOf } from "./teams";
 
@@ -26,7 +26,7 @@ const TITLE_SIZE = titleFit("TEAM STANDINGS");
 
 function Title() {
   return (
-    <div style={{ padding: "14px 0 18px" }}>
+    <div style={titleBox({ padding: "14px 0 18px" })}>
       <div style={{
         fontFamily: FM, fontWeight: 400, fontSize: TITLE_SIZE,
         lineHeight: 1.15, letterSpacing: "0.02em", whiteSpace: "nowrap",
