@@ -3,19 +3,11 @@
 //   node scripts/pools.mjs 12                 draw for round 12
 //   node scripts/pools.mjs 12 --seed 7        reproduce a draw
 //
-// The standings order is the input this does not have: OpenF1 has no standings
-// endpoint and driver_pts only records drivers who were in a pool, so it is not
-// a championship table. STANDINGS below is a placeholder until that is settled.
+// The championship order comes from our own results, which hold all 22
+// finishers per round.
 import { drawPools, seededRandom, recentlyUsed } from "../src/pools.js";
-
-// PLACEHOLDER. Championship order, best first, top 15. Replace with the real
-// thing before this draws a pool anyone plays.
-const STANDINGS = [
-  "Lando Norris", "Oscar Piastri", "George Russell", "Andrea Kimi Antonelli",
-  "Max Verstappen", "Charles Leclerc", "Lewis Hamilton", "Isack Hadjar",
-  "Liam Lawson", "Pierre Gasly", "Arvid Lindblad", "Franco Colapinto",
-  "Oliver Bearman", "Nico Hulkenberg", "Gabriel Bortoleto",
-];
+import { driverStandings } from "../src/standings.js";
+import { canonicalName } from "../src/drivers.js";
 
 const round = Number(process.argv[2] || 12);
 const seedArg = process.argv.indexOf("--seed");
@@ -29,11 +21,27 @@ if (url && key) {
   avoid = recentlyUsed(races, round, 2);
 }
 
-const pools = drawPools(STANDINGS, { rand, avoid });
+if (!url || !key) throw new Error("set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY");
+const H = { headers: { apikey: key, Authorization: `Bearer ${key}` } };
+const [results, scores, allRaces] = await Promise.all([
+  fetch(`${url}/rest/v1/results?select=race_id,finishing_order&limit=5000`, H).then(r => r.json()),
+  fetch(`${url}/rest/v1/scores?select=race_id,driver_pts&limit=5000`, H).then(r => r.json()),
+  fetch(`${url}/rest/v1/races?select=id,round&limit=5000`, H).then(r => r.json()),
+]);
+const table = driverStandings({ results, scores, races: allRaces }, canonicalName);
+const pools = drawPools(table.map(d => d.name), { rand, avoid });
+
 console.log(`Round ${round}`);
+console.log(`  standings: ${table.length} drivers over ${results.length} rounds, leader ${table[0].name} on ${table[0].points}`);
 console.log(`  avoiding ${avoid.length} from the last two rounds`);
+console.log(`\n  CHAMPIONSHIP, top 15`);
+table.slice(0, 15).forEach((d, i) => {
+  const band = i < 5 ? "1-5" : i < 10 ? "6-10" : "11-15";
+  const inPool = pools.top.includes(d.name) || pools.mid.includes(d.name);
+  console.log(`    ${String(i + 1).padStart(2)} ${d.name.padEnd(24)} ${String(d.points).padStart(4)}  ${band.padEnd(6)} ${inPool ? "DRAWN" : ""}`);
+});
 console.log(`\n  TOP (3, from positions 1-5)`);
 pools.top.forEach(d => console.log(`    ${d}`));
 console.log(`\n  MIDFIELD (7: 4 from 6-10, 3 from 11-15)`);
 pools.mid.forEach(d => console.log(`    ${d}`));
-console.log(`\nNothing was written. STANDINGS in this file is a placeholder.`);
+console.log(`\nNothing was written.`);

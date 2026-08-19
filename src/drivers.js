@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { F1_TEAM_COLORS } from "./theme";
+import { F1_TEAM_COLORS } from "./theme.js";
 
 // ── Canonical driver identity ───────────────────────────
 // Single source of truth for driver names, teams, and headshots.
