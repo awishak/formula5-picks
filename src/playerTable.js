@@ -1,7 +1,7 @@
 // The individual game, computed. Pure, no Supabase and no React, for the same
 // reason teamTable.js is: two pages rendering a standings row from two copies of
 // the rules is how they end up disagreeing by a point.
-import { codeOf } from "./teams.js";
+import { codeOf, displayOf } from "./teams.js";
 
 // A player's score for a race. Wider than the team score, which leaves out the
 // needle and the weekly bonus: those are the individual game.
@@ -32,8 +32,9 @@ export function buildPlayerTable(db) {
     return {
       id: p.id, name: p.name, photo: p.photo_url || null,
       teamId: t ? t.id : null,
-      // The full name, not the short one. This line has it to itself.
-      teamName: t ? t.name : null,
+      // Full names. Two teams carry a shorter display name in teams.js because
+      // they are the only ones that will not fit written out.
+      teamName: t ? displayOf(t.name) : null,
       teamCode: t ? codeOf(t.name) : null,
       pts: 0, races: 0, avg: 0,
       // Where they finished among all 48 that week.

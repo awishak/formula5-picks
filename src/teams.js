@@ -7,6 +7,9 @@
 //   short  for tight spots: the promotion board, the division list, fixtures.
 //   code   three letters, for URLs (/teams/CAR) and anywhere a name cannot fit.
 //
+// Two teams also carry a display name, used where the full name is written out
+// in a row. Those two are the only ones long enough to need it.
+//
 // Codes were set by Andrew on 2026-08-18. They are part of the URL scheme now,
 // so changing one breaks a link somebody has.
 export const TEAMS = [
@@ -28,12 +31,12 @@ export const TEAMS = [
   { code: "WLD", name: "Wildcat Motors", short: "Wildcat" },
   { code: "TJP", name: "TJ Premium", short: "TJ Premium" },
   { code: "BRO", name: "Bronco SCUderia", short: "Bronco" },
-  { code: "SHO", name: "Shoey Time! w/ Max and Danny", short: "Shoey Time!" },
+  { code: "SHO", name: "Shoey Time! w/ Max and Danny", short: "Shoey Time!", display: "Shoey Time!" },
   { code: "MKR", name: "Magic Kingdom Racing", short: "Magic Kingdom" },
   { code: "LUX", name: "Luxor Motorsport", short: "Luxor" },
   { code: "PRS", name: "Prestissimo Veloce", short: "Prestissimo" },
   { code: "AGS", name: "Aggie Slipstream", short: "AgSlipstream" },
-  { code: "ISK", name: "Scuderia Iskandaraya", short: "Iskandaraya" },
+  { code: "ISK", name: "Scuderia Iskandaraya", short: "Iskandaraya", display: "Scud. Iskandaraya" },
 ];
 
 export const TEAM_BY_CODE = Object.fromEntries(TEAMS.map(t => [t.code, t]));
@@ -41,4 +44,9 @@ export const TEAM_BY_NAME = Object.fromEntries(TEAMS.map(t => [t.name, t]));
 
 export const codeOf = (name) => (TEAM_BY_NAME[name] || {}).code || null;
 export const shortOf = (name) => (TEAM_BY_NAME[name] || {}).short || name;
+// The full name, unless it is one of the two that will not fit written out.
+export const displayOf = (name) => {
+  const t = TEAM_BY_NAME[name];
+  return t ? (t.display || t.name) : name;
+};
 export const nameOfCode = (code) => (TEAM_BY_CODE[String(code || "").toUpperCase()] || {}).name || null;

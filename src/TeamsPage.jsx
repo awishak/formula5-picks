@@ -87,7 +87,7 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank, innerRef }) {
           <span style={body("body", { color: V.text2, fontVariantNumeric: "tabular-nums", flexShrink: 0 })}>{record}</span>
         </div>
         {nextOpp && (
-          <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, letterSpacing: "0.04em", color: V.text3, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, letterSpacing: "0.04em", color: V.text2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {/* Both ranks are on scoring average across all 24 teams, never
                 within a division. A place in this table is noise while
                 everybody is level on nought. */}
@@ -154,8 +154,8 @@ export default function TeamsPage({ currentUser }) {
     return () => clearTimeout(t);
   }, [state.loading]);
 
-  if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text3 }) }}>Loading</div>;
-  if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text3 }) }}>Standings did not load.</div>;
+  if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
+  if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Standings did not load.</div>;
 
   const { rows, seasonOf, avgRankOf, fixtures, myTeamId } = state;
   const byId = Object.fromEntries(rows.map(r => [r.id, r]));
@@ -219,13 +219,13 @@ export default function TeamsPage({ currentUser }) {
         })}
 
         {rows.every(r => r.played === 0) && (
-          <div style={body("bodySm", { color: V.text3, textAlign: "center", padding: "2px 0 10px" })}>
+          <div style={body("bodySm", { color: V.text2, textAlign: "center", padding: "2px 0 10px" })}>
             No second-half race scored yet, so everyone is level and the order is scoring average.
           </div>
         )}
 
         {fixtures.race && (
-          <div style={body("bodySm", { color: V.text3, textAlign: "center", padding: "0 0 8px" })}>
+          <div style={body("bodySm", { color: V.text2, textAlign: "center", padding: "0 0 8px" })}>
             Next up: round {fixtures.race.round}, {fixtures.race.race_name}.
           </div>
         )}

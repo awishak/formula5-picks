@@ -13,10 +13,11 @@ const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 // Two characters longer than the team page's title, so it takes less of
 // the width rather than stretching to the same edges.
 const TITLE_SIZE = titleFit("PLAYER STANDINGS", { fill: 0.86 });
+const TEAM_SIZE = "clamp(13px, 3.3vw, 13px)";
 // Real names are longer than team short names, and 48 of them set the budget:
 // at 19px two of them run past the column and at 21px ten do. Measured across
 // all 48 rather than eyeballed off the top of the table.
-const NAME_SIZE = "clamp(15px, calc(9.7vw - 22.0px), 19px)";
+const NAME_SIZE = "clamp(15px, calc(9.55vw - 22.0px), 19px)";
 
 function Title() {
   return (
@@ -57,11 +58,9 @@ function Face({ name, photo, size }) {
 // trophy for a win, a silver for a second, a bronze for a third, and a dot for
 // a top ten that was not a podium, so nothing is marked twice.
 //
-// It lives in the right column under the average, not on a row of its own and
-// not beside the team name. Sharing the team line cut most of the full names in
-// half; a row of its own made the card three deep. Under the number it is
-// stacked with the other things about how the player is doing, and it wraps
-// inside its own column rather than pushing anything.
+// Its own column at the end of the row. Sharing the team line cut most of the
+// full names in half, and stacking it under the average made that column three
+// deep. On its own it wraps inside its width and pushes nothing.
 function TrophyCase({ row }) {
   const marks = [
     ...Array(row.p1).fill("\u{1F3C6}"),
@@ -71,15 +70,14 @@ function TrophyCase({ row }) {
   if (!marks.length && !row.top10) return null;
   return (
     <div style={{
-      display: "flex", alignItems: "center", justifyContent: "center",
-      flexWrap: "wrap", gap: 3, marginTop: 2,
+      display: "flex", alignItems: "center", flexWrap: "wrap", gap: 3,
     }}>
       {marks.map((m, i) => (
-        <span key={i} style={{ fontSize: 15, lineHeight: 1.2, flexShrink: 0 }}>{m}</span>
+        <span key={i} style={{ fontSize: 13, lineHeight: 1.15, flexShrink: 0 }}>{m}</span>
       ))}
       {Array.from({ length: row.top10 }).map((_, i) => (
         <span key={`d${i}`} style={{
-          width: 8, height: 8, borderRadius: "50%", background: V.text2, flexShrink: 0,
+          width: 7, height: 7, borderRadius: "50%", background: V.text2, flexShrink: 0,
         }} />
       ))}
     </div>
@@ -92,7 +90,7 @@ function YouAre({ row, place }) {
     <div style={{ ...card({ padding: 16, marginBottom: 20 }), ...edgeGlow(V.blue, 0.8) }}>
       <div style={label({ color: V.blue, marginBottom: 8 })}>You</div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Face name={row.name} photo={row.photo} size={42} />
+        <Face name={row.name} photo={row.photo} size={34} />
         <div style={{ minWidth: 0 }}>
           <div style={display("h3", { lineHeight: 1.35, color: V.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.name}</div>
           <div style={body("bodySm", { color: V.text2, marginTop: 3 })}>
@@ -107,38 +105,41 @@ function YouAre({ row, place }) {
 function Row({ row, place, mine, innerRef }) {
   return (
     <div ref={innerRef} style={{
-      display: "flex", alignItems: "center", gap: 9,
-      padding: "8px 11px", borderRadius: 14, marginBottom: 6,
+      display: "flex", alignItems: "center", gap: 8,
+      padding: "8px 10px", borderRadius: 14, marginBottom: 6,
       background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
       border: `1px solid ${mine ? V.blue : V.border}`,
     }}>
-      <div style={numeric("stat", { fontSize: 22, color: V.text2, flexShrink: 0 })}>P{place}</div>
-      <Face name={row.name} photo={row.photo} size={44} />
+      <div style={numeric("stat", { fontSize: 21, color: V.text2, flexShrink: 0 })}>P{place}</div>
+      <Face name={row.name} photo={row.photo} size={42} />
+
+      {/* Who they are. */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        {/* The name owns the whole line. Everything else is on the second one
-            or in the right column, because 48 real names need the room. */}
         <div style={display("h3", {
           fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text,
           letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
         })}>{row.name}</div>
         <div style={{
-          fontFamily: FD, fontWeight: 600, fontSize: "clamp(13px, 3.45vw, 13.5px)",
-          letterSpacing: "0.01em",
+          fontFamily: FD, fontWeight: 600, fontSize: TEAM_SIZE, letterSpacing: "-0.005em",
           textTransform: "uppercase", color: V.text2, marginTop: 1, minWidth: 0,
           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
         }}>{row.teamName || "No team"}</div>
       </div>
-      {/* Fixed width and centred, so 45.1 and 9.0 sit on the same axis instead
-          of each row hanging its number from a different place. */}
-      <div style={{ flexShrink: 0, width: 66, textAlign: "center" }}>
-        <div style={numeric("stat", { fontSize: 28, color: V.text, ...textGlow(V.blue, 0.7) })}>{row.avg.toFixed(1)}</div>
-        <TrophyCase row={row} />
+
+      {/* How they are scoring. */}
+      <div style={{ flexShrink: 0, width: 48, textAlign: "center" }}>
+        <div style={numeric("stat", { fontSize: 26, color: V.text, ...textGlow(V.blue, 0.7) })}>{row.avg.toFixed(1)}</div>
         {row.last != null && (
           <div style={{
-            fontFamily: FD, fontWeight: 600, fontSize: 12, letterSpacing: "0.06em",
-            textTransform: "uppercase", color: V.text3, marginTop: 2, whiteSpace: "nowrap",
+            fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.04em",
+            textTransform: "uppercase", color: V.text2, marginTop: 1, whiteSpace: "nowrap",
           }}>Last {row.last}</div>
         )}
+      </div>
+
+      {/* What they have won. Its own column, so nothing here is ever a third row. */}
+      <div style={{ flexShrink: 0, width: 30 }}>
+        <TrophyCase row={row} />
       </div>
     </div>
   );
@@ -177,8 +178,8 @@ export default function PlayersPage({ currentUser }) {
     return () => clearTimeout(t);
   }, [state.loading]);
 
-  if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text3 }) }}>Loading</div>;
-  if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text3 }) }}>Standings did not load.</div>;
+  if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
+  if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Standings did not load.</div>;
 
   const { rows, place } = state;
   const me = rows.find(r => r.name === currentUser);
@@ -190,20 +191,12 @@ export default function PlayersPage({ currentUser }) {
         <Title />
         <YouAre row={me} place={me ? place[me.id] : 0} />
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 2px 12px" }}>
-          <span style={{ width: 13, height: 13, borderRadius: 7, background: V.blue, flexShrink: 0 }} />
-          <span style={{
-            fontFamily: FD, fontWeight: 700, fontSize: 22, lineHeight: 1.3,
-            letterSpacing: "0.05em", textTransform: "uppercase", color: V.blue,
-          }}>All 48</span>
-        </div>
-
         {rows.map(r => (
           <Row key={r.id} row={r} place={place[r.id]} mine={me && r.id === me.id}
                innerRef={me && r.id === me.id ? mineRef : null} />
         ))}
 
-        <div style={body("bodySm", { color: V.text3, textAlign: "center", padding: "6px 0 0" })}>
+        <div style={body("bodySm", { color: V.text2, textAlign: "center", padding: "6px 0 0" })}>
           Ranked on points a race. The individual game runs all 23 rounds and does not reset at the half.
         </div>
       </div>
