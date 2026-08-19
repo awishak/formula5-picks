@@ -52,7 +52,10 @@ function YourTeam({ row, place, avgRank, played }) {
   );
 }
 
-function Row({ row, pos, mine, record, nextOpp, nextOppRank }) {
+// A record with no draws does not need a third number. 6-5 says what 6-5-0 says.
+const rec = s => (s.d > 0 ? `${s.w}-${s.l}-${s.d}` : `${s.w}-${s.l}`);
+
+function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 9,
@@ -62,21 +65,21 @@ function Row({ row, pos, mine, record, nextOpp, nextOppRank }) {
     }}>
       <div style={numeric("stat", { fontSize: 22, color: V.text2, flexShrink: 0 })}>P{pos}</div>
       {row.logo
-        ? <img src={row.logo} alt="" style={{ width: 46, height: 46, objectFit: "contain", flexShrink: 0 }} />
-        : <div style={{ width: 46, height: 46, flexShrink: 0 }} />}
+        ? <img src={row.logo} alt="" style={{ width: 58, height: 58, objectFit: "contain", flexShrink: 0 }} />
+        : <div style={{ width: 58, height: 58, flexShrink: 0 }} />}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", gap: 7, alignItems: "baseline" }}>
-          <span style={display("h3", { fontSize: 26, color: mine ? V.blue : V.text, letterSpacing: "0.05em" })}>{row.code}</span>
+          <span style={display("h3", { fontSize: 21, color: mine ? V.blue : V.text, letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" })}>{row.short}</span>
           {/* Season record, not the half. The team game's points reset at the
               break; what a team has won across the year does not. */}
-          <span style={body("bodySm", { color: V.text2, fontVariantNumeric: "tabular-nums" })}>{record}</span>
+          <span style={body("body", { color: V.text2, fontVariantNumeric: "tabular-nums", flexShrink: 0 })}>{record}</span>
         </div>
         {nextOpp && (
-          <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.06em", color: V.text3, marginTop: 1 }}>
-            {/* The opponent's rank is on scoring average across all 24 teams,
-                never within a division. Their place in this table is noise
-                while everybody is level on nought. */}
-            VS {nextOppRank ? `#${nextOppRank} ` : ""}{nextOpp}
+          <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, letterSpacing: "0.04em", color: V.text3, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {/* Both ranks are on scoring average across all 24 teams, never
+                within a division. A place in this table is noise while
+                everybody is level on nought. */}
+            <span style={{ color: V.text2 }}>#{rank}</span> VS {nextOppRank ? `#${nextOppRank} ` : ""}{nextOpp}
           </div>
         )}
       </div>
@@ -177,7 +180,8 @@ export default function TeamsPage({ currentUser }) {
                 return (
                   <Row
                     key={r.id} row={r} pos={posOf[r.id]} mine={r.id === myTeamId}
-                    record={(() => { const s = seasonOf[r.id]; return `${s.w}-${s.l}-${s.d}`; })()}
+                    record={rec(seasonOf[r.id])}
+                    rank={avgRankOf[r.id]}
                     nextOpp={opp ? opp.code : null}
                     nextOppRank={opp ? avgRankOf[opp.id] : null}
                   />
