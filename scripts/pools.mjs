@@ -1,7 +1,8 @@
 // Draw the driver pools for a round and print them. Writes nothing.
 //
-//   node scripts/pools.mjs 12                 draw for round 12
+//   node scripts/pools.mjs 12                 draw for round 12, print only
 //   node scripts/pools.mjs 12 --seed 7        reproduce a draw
+//   node scripts/pools.mjs 12 --seed 7 --write   write it to the race
 //
 // The championship order comes from our own results, which hold all 22
 // finishers per round.
@@ -50,4 +51,21 @@ console.log(`\n  TOP (3, from positions 1-5)`);
 pools.top.forEach(d => console.log(`    ${d}`));
 console.log(`\n  MIDFIELD (7: 4 from 6-10, 3 from 11-15)`);
 pools.mid.forEach(d => console.log(`    ${d}`));
-console.log(`\nNothing was written.`);
+if (process.argv.includes("--write")) {
+  const H = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json",
+              Prefer: "return=representation" };
+  const races = await (await fetch(`${url}/rest/v1/races?select=id,round,race_name&round=eq.${round}`, { headers: H })).json();
+  if (!races.length) throw new Error(`no race at round ${round}`);
+  // .select() on the way back, because a policy mismatch swallows a write here
+  // with no error at all.
+  const back = await (await fetch(`${url}/rest/v1/races?id=eq.${races[0].id}`, {
+    method: "PATCH", headers: H,
+    body: JSON.stringify({ top_drivers: pools.top, mid_drivers: pools.mid }),
+  })).json();
+  if (!back.length) throw new Error("the write came back with nothing: check the RLS policy");
+  console.log(`\nWritten to round ${round}, ${races[0].race_name}.`);
+  console.log(`  top: ${back[0].top_drivers.join(", ")}`);
+  console.log(`  mid: ${back[0].mid_drivers.join(", ")}`);
+} else {
+  console.log(`\nNothing was written. Add --write to save it.`);
+}
