@@ -13,10 +13,12 @@ import { V, FD } from "./theme.vegas";
 //   picks in       green
 //   picks not in   pink, and it pulses
 //   any other tab  blue when you are on it, grey when you are not
+//
+// The middle tab is Home: the week's page, where the picks get made.
 const TABS = [
   { id: "home", label: "More" },
   { id: "player-standings", label: "Players" },
-  { id: "picks", label: "Picks", middle: true },
+  { id: "vegas", label: "Home", middle: true },
   { id: "team-standings", label: "Teams" },
   { id: "schedule", label: "Schedule" },
 ];

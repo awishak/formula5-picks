@@ -844,7 +844,7 @@ const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 // Pages rebuilt on the Vegas look. They set their own ground and their own
 // header, so the light shell's logo bar and background have to get out of the
 // way or a dark page opens under a white block.
-const VEGAS_PAGES = new Set(["home", "team-standings", "player-standings"]);
+const VEGAS_PAGES = new Set(["home", "vegas", "team-standings", "player-standings"]);
 
 // A path in, a page and any parameter out.
 function readPath(pathname) {
@@ -944,34 +944,6 @@ export default function App() {
     checkPicks();
   }, [currentUser, activePage]);
 
-  // The Vegas mockup renders outside .app-wrap so the light theme's background,
-  // width cap and bottom nav don't fight it. Reachable at /newui, ?vegas or #vegas.
-  //
-  // Ahead of the WelcomeScreen check on purpose: it runs on a hardcoded snapshot
-  // and needs no signed-in player, so ?vegas opens the mockup on a fresh browser
-  // instead of a name picker.
-  if (activePage === "vegas") return (
-    <>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: #07070c; }`}</style>
-      <VegasHome
-        // Back to the root, not the current path: leaving from /newui has to drop
-        // the path or the next load reopens the mockup.
-        onNavigate={(p) => { window.history.replaceState(null, "", "/"); navigateTo(p); }}
-        {...(() => {
-          // ?vegas&state=final&lap=1&tab=kit deep-links a state, so a screenshot
-          // or a shared link can land on one without clicking the mock controls.
-          const q = new URLSearchParams(window.location.search);
-          const state = q.get("state"), tab = q.get("tab"), lap = q.get("lap");
-          return {
-            ...(["open", "submitted", "locked", "live", "final"].includes(state) ? { initialState: state } : {}),
-            ...(["home", "kit"].includes(tab) ? { initialTab: tab } : {}),
-            ...(lap === "0" || lap === "1" ? { initialLap: Number(lap) } : {}),
-          };
-        })()}
-      />
-    </>
-  );
-
   // The recap deck renders outside .app-wrap for the same reason the Vegas mockup
   // does: it sets its own ground and turns dark halfway, so the light theme's
   // background and bottom nav must not be underneath it.
@@ -1019,6 +991,25 @@ export default function App() {
           <img src={LOGO_B64} alt="Formula 5" style={{ height: 40, maxWidth: "36%", objectFit: "contain", objectPosition: "left", flexShrink: 1, minWidth: 0 }} />
           <ViewingAs currentUser={currentUser} onSelect={handleSelectName} />
         </div>
+        {/* The Home tab. It used to render outside .app-wrap as a standalone
+            mockup; now it is a tab, so it sits in the shell with the nav under
+            it like every other page. */}
+        {activePage === "vegas" && (
+          <VegasHome
+            onNavigate={navigateTo}
+            {...(() => {
+              // ?state=final&lap=1&tab=kit deep-links a state, so a screenshot
+              // or a shared link can land on one without clicking the controls.
+              const q = new URLSearchParams(window.location.search);
+              const state = q.get("state"), tab = q.get("tab"), lap = q.get("lap");
+              return {
+                ...(["open", "submitted", "locked", "live", "final"].includes(state) ? { initialState: state } : {}),
+                ...(["home", "kit"].includes(tab) ? { initialTab: tab } : {}),
+                ...(lap === "0" || lap === "1" ? { initialLap: Number(lap) } : {}),
+              };
+            })()}
+          />
+        )}
         {activePage === "home" && <MorePage onNavigate={navigateTo} />}
         {/* The old home page: next race, season summary, week by week and the
             league news. Unrouted while the second half is being built. */}
