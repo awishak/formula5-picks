@@ -10,6 +10,7 @@
 // result, which is deliberately outside an individual's total.
 
 import { readFileSync, writeFileSync } from "fs";
+import { shortOf, codeOf, TEAM_BY_NAME } from "../../src/teams.js";
 
 const SP = import.meta.url;
 const D = JSON.parse(readFileSync(process.env.F5_DATA, "utf8"));
@@ -78,42 +79,13 @@ const destOf = t => (t.div === "champ" ? (t.moved === "down" ? "second" : "champ
 
 const avgOf = Object.fromEntries([...C.c1.champ, ...C.c1.second].map(t => [t.name, t.avg]));
 
-// Short forms, agreed with Andrew 2026-08-17. Nobody's team is renamed: the full
-// name is used everywhere it fits, and this is only for the promotion board and
-// the division grid, where a row gives a name about 120px at 13px DM Sans.
-// Six names genuinely overflowed; the rest are here so the board reads evenly.
-const SHORT = {
-  "XLIX Racing Team": "XLIX Racing",
-  "Van City Corsa": "Van City",
-  "Juicero Silicon Valley": "Juicero SV",
-  "Drivetex": "Drivetex",
-  "Cougar Autosport": "Cougar Auto",
-  "East Bay Racing": "East Bay",
-  "Cascadia Motorsport": "Cascadia",
-  "Meatballs": "Meatballs",
-  "HomeworkTubes.Com": "HomeworkTubes",
-  "TNT Roku F5 Team": "TNT Roku",
-  "Cal Aggie Racing": "Cal Aggie",
-  "Peloton Aubergine": "Peloton",
-  "Garra Dynamics": "Garra",
-  "El Camino Rapido": "El Camino",
-  "Stalloni 1851": "Stalloni",
-  "Bronco SCUderia": "Bronco",
-  "Wildcat Motors": "Wildcat",
-  "Luxor Motorsport": "Luxor",
-  "Magic Kingdom Racing": "Magic Kingdom",
-  "Shoey Time! w/ Max and Danny": "Shoey Time!",
-  "TJ Premium": "TJ Premium",
-  "Prestissimo Veloce": "Prestissimo",
-  "Aggie Slipstream": "AgSlipstream",
-  "Scuderia Iskandaraya": "Iskandaraya",
-};
-const shortOf = n => SHORT[n] || n;
+// Short forms and three-letter codes live in src/teams.js, which is the single
+// source of truth for anything team-shaped. Defined twice is defined wrong.
 
-// Every team must have one, or the board silently falls back to a name that
-// does not fit.
-const missing = teams.map(t => t.name).filter(n => !SHORT[n]);
-if (missing.length) throw new Error(`no short name for: ${missing.join(", ")}`);
+// Every team must be in src/teams.js, or the board silently falls back to a
+// name that does not fit and there is no code for its URL.
+const missing = teams.map(t => t.name).filter(n => !TEAM_BY_NAME[n]);
+if (missing.length) throw new Error(`not in src/teams.js: ${missing.join(", ")}`);
 
 // oldDiv/oldPos are where the team ended the first half, before the swap. The
 // board animates from that layout to the new one, so both have to travel with
@@ -122,7 +94,7 @@ const ptsOf = Object.fromEntries([...C.c1.champ, ...C.c1.second].map(t => [t.nam
 
 const newDiv = { champ: [], second: [] };
 teams.forEach(t => newDiv[destOf(t)].push({
-  name: t.name, short: shortOf(t.name), logo: t.logo, avg: avgOf[t.name], moved: t.moved,
+  name: t.name, short: shortOf(t.name), code: codeOf(t.name), logo: t.logo, avg: avgOf[t.name], moved: t.moved,
   pts: ptsOf[t.name],
   oldDiv: t.div, oldPos: t.posAfter,
   p1: t.p1, p2: t.p2, photo1: t.photo1, photo2: t.photo2,
@@ -696,7 +668,7 @@ ladder.forEach(p => {
     ppr: +p.ppr.toFixed(1), rank: p.rank, total: p.total,
     bestRound: { round: p.best.round, pts: p.best.pts, race: p.best.race },
     team: {
-      name: t.name, short: shortOf(t.name), logo: t.logo, div: t.div, dest: destOf(t), moved: t.moved,
+      name: t.name, short: shortOf(t.name), code: codeOf(t.name), logo: t.logo, div: t.div, dest: destOf(t), moved: t.moved,
       mate, matePhoto: photoOf[mate] || null,
       posBefore: t.posBefore, posAfter: t.posAfter,
       opp: t.opp, oppLogo: t.oppLogo, score: t.score, oppScore: t.oppScore, won: t.won,
