@@ -26,7 +26,8 @@ F1Calendar.jsx: race calendar with UTC start times, sprint/Saturday round flags.
 Players.jsx: all players & team rosters, seasons-played descriptors, avatars.
 App.jsx: app shell, routing, F1 starting-light bottom nav, player switcher on HomePage.
 VegasHome.jsx: the Second Half Vegas Refresh mockup. Neon kit plus the state-driven Home and rooting board. Hardcoded round-11 snapshot, touches no Supabase.
-theme.vegas.js: Vegas tokens. Type scale with a 13px floor, palette, neon glow helpers, motion CSS. Vegas components take color and type from here, never inline hex.
+theme.vegas.js: Vegas tokens. Type scale with a 13px floor, palette, neon glow helpers, motion CSS. Vegas components take color and type from here, never inline hex. FD is Encode Sans Semi Condensed, chosen 2026-08-18 with a live picker on /teams after fifteen faces in the real team names; FN is Chakra Petch for glowing numbers only.
+ViewingAs.jsx: who you are looking at the app as. Top right of every page, rendered by the app shell. Used to live inside HomePage, so switching player meant going home first.
 Recap.jsx: the 18-card first-half recap deck. Live at /deck.
 scripts/smoke.jsx: renders every VegasHome branch through react-dom/server and exits non-zero on a runtime error. Run with npm run smoke.
 scripts/smoke-recap.jsx: 864 renders of the deck, and checks each card differs across players by content hash. npm run smoke:recap.

@@ -16,6 +16,7 @@ import PracticePicks from "./PracticePicks.jsx";
 import PickIntel from "./PickIntel.jsx";
 import Recaps from "./Recaps.jsx";
 import VegasHome from "./VegasHome.jsx";
+import ViewingAs from "./ViewingAs.jsx";
 import Recap from "./Recap.jsx";
 import { NEWS } from "./news";
 
@@ -481,69 +482,8 @@ function HomePage({ currentUser, onNavigate, onChangeName, onSelectName }) {
 
   return (
     <div style={{ padding: "20px 20px 100px" }}>
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <img src={LOGO_B64} alt="Formula 5" style={{ height: 42, objectFit: "contain", flexShrink: 0 }} />
-          <button onClick={() => { setShowChooser(!showChooser); setChooserSearch(""); }} style={{ flex: 1, minWidth: 0, padding: "8px 12px", borderRadius: 14, border: `2px solid ${BLUE}`, background: `${BLUE}08`, display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-            {playerPhoto ? (
-              <img src={playerPhoto} alt={currentUser} style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-            ) : (
-              <div style={{ width: 34, height: 34, borderRadius: "50%", background: avatarBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 13, color: "#fff" }}>{initials}</div>
-            )}
-            <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-              <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 300, fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", color: TEXT2, margin: "0 0 1px" }}>Viewing as</p>
-              <p style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 900, fontSize: 14, color: DARK, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser}</p>
-            </div>
-            <span style={{ fontSize: 11, color: TEXT2, flexShrink: 0, transition: "transform 0.2s", transform: showChooser ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
-          </button>
-        </div>
-        {showChooser && (
-          <div style={{ border: `2px solid ${BLUE}`, borderRadius: 14, background: "#fff", padding: "12px 14px 16px", marginTop: 8 }}>
-            <input
-              placeholder="Search..."
-              value={chooserSearch}
-              onChange={e => setChooserSearch(e.target.value)}
-              autoFocus
-              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${BORDER}`, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: TEXT, marginBottom: 12, outline: "none", boxSizing: "border-box" }}
-            />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, maxHeight: 320, overflowY: "auto" }}>
-              {(allPlayers.length > 0 ? allPlayers : ALL_PLAYERS.map(n => ({ name: n, photo_url: null })))
-                .filter(p => p.name.toLowerCase().includes(chooserSearch.toLowerCase()))
-                .map(p => {
-                  const isActive = p.name === currentUser;
-                  const color = avatarColor(p.name);
-                  const pInitials = getInitials(p.name);
-                  const firstName = p.name.split(" ")[0];
-                  const lastName = p.name.split(" ").slice(1).join(" ");
-                  return (
-                    <button key={p.name} onClick={() => { onSelectName(p.name); setShowChooser(false); }} style={{
-                      padding: "10px 4px 8px", borderRadius: 10,
-                      border: isActive ? `2px solid ${BLUE}` : `1px solid ${BORDER}`,
-                      background: isActive ? `${BLUE}08` : "#fff",
-                      cursor: "pointer", textAlign: "center",
-                      display: "flex", flexDirection: "column", alignItems: "center", gap: 3
-                    }}>
-                      <div style={{
-                        width: 36, height: 36, borderRadius: "50%", overflow: "hidden",
-                        background: p.photo_url ? "#eee" : `${color}20`,
-                        border: `2px solid ${p.photo_url ? `${color}40` : `${color}50`}`,
-                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
-                      }}>
-                        {p.photo_url ? (
-                          <img src={p.photo_url} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 12, color }}>{pInitials}</span>
-                        )}
-                      </div>
-                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 400, fontSize: 10, color: TEXT2, lineHeight: 1.2 }}>{firstName}</span>
-                      <span style={{ fontFamily: "'Geologica', sans-serif", fontWeight: 700, fontSize: 11, color: TEXT, lineHeight: 1.2 }}>{lastName}</span>
-                    </button>
-                  );
-                })}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* The logo and the viewing-as picker moved into the app shell, so they
+          are on every page rather than only on this one. */}
       {lastUpdated && (
         <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, color: TEXT2, textAlign: "center", marginBottom: 10 }}>
           Last updated {new Date(lastUpdated).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
@@ -1009,7 +949,7 @@ export default function App() {
   // instead of a name picker.
   if (activePage === "vegas") return (
     <>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Titillium+Web:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: #07070c; }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: #07070c; }`}</style>
       <VegasHome
         // Back to the root, not the current path: leaving from /newui has to drop
         // the path or the next load reopens the mockup.
@@ -1066,11 +1006,16 @@ export default function App() {
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: ${BG}; } .app-wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; background: ${BG}; padding-bottom: 80px; }`}</style>
       <div className="app-wrap" style={onVegas ? { background: "#07070c" } : undefined}>
-        {activePage !== "home" && !onVegas && (
-          <div style={{ padding: "14px 20px 10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src={LOGO_B64} alt="Formula 5" style={{ height: 85, objectFit: "contain" }} />
-          </div>
-        )}
+        {/* One header for every page: logo left, who you are looking as right.
+            The picker used to be inside HomePage, which made switching player
+            something you could only do by going home first. */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 12, padding: "12px 16px 8px",
+        }}>
+          <img src={LOGO_B64} alt="Formula 5" style={{ height: 40, maxWidth: "42%", objectFit: "contain", objectPosition: "left", flexShrink: 1, minWidth: 0 }} />
+          <ViewingAs currentUser={currentUser} onSelect={handleSelectName} />
+        </div>
         {activePage === "home" && <HomePage currentUser={currentUser} onNavigate={navigateTo} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
         {activePage === "player-standings" && <PlayerStandings currentUser={currentUser} />}
         {activePage === "picks" && <MyPicksPage currentUser={currentUser} onNavigate={navigateTo} />}

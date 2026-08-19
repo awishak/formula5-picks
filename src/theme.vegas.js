@@ -47,15 +47,17 @@ export const V = {
 //                    so never set 700/900 on it or the browser fakes a bold.
 //   FB  DM Sans      body copy, anything in real sentences or mixed case.
 export const FM = "'Monoton', cursive";
-// Two display faces, settled 2026-08-18 after comparing Bebas, Titillium,
-// Archivo, Chakra Petch and Saira in the real screens.
+// Two display faces, settled 2026-08-18. Bebas, Titillium, Archivo, Chakra
+// Petch, Saira, Oswald, Rajdhani and eight more were run through a live picker
+// on the standings page, set in the real team names at the real size.
 //
-//   FD  Titillium Web   titles, headings, labels, chips. What F1 used for years,
-//                       and wide enough to stay legible at label size, which
-//                       Bebas Neue was not.
-//   FN  Chakra Petch    the big glowing numbers ONLY. Squared terminals read as
-//                       motorsport instrumentation, which is what a stat is.
-export const FD = "'Titillium Web', sans-serif";
+//   FD  Encode Sans      titles, headings, labels, chips. Semi-condensed, so the
+//       Semi Condensed   longest team name clears the column on a 360px phone,
+//                        and it still reads at 15px uppercase, which is where
+//                        Bebas Neue and Oswald both fall down.
+//   FN  Chakra Petch     the big glowing numbers ONLY. Squared terminals read as
+//                        motorsport instrumentation, which is what a stat is.
+export const FD = "'Encode Sans Semi Condensed', sans-serif";
 export const FN = "'Chakra Petch', sans-serif";
 export const FB = "'DM Sans', sans-serif";
 
