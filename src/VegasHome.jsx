@@ -10,6 +10,7 @@
 import { useState, useRef, useEffect , createContext, useContext } from "react";
 import { V, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
 import { useLeague } from "./useLeague";
+import { ordinal } from "./teamTable";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
 
@@ -367,10 +368,12 @@ function TeamBadge({ name, size = 28, ring }) {
 
 // A player, ringed green with a check once their picks are in. Sits in the
 // marquee so "am I done" is answered by the same box that names the race.
-function PlayerBadge({ name, picked, size = 38 }) {
+function PlayerBadge({ name, picked, size = 38, photo: given, dim = !picked, ring }) {
   const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-  const c = picked ? V.green : V.text3;
-  const photo = PLAYER_PHOTOS[name];
+  const c = ring || (picked ? V.green : V.text3);
+  // A photo can be handed in now that the page has real players; the map is
+  // the fallback for the ones it does not carry.
+  const photo = given || PLAYER_PHOTOS[name];
   return (
     <div style={{ position: "relative", flexShrink: 0 }}>
       <div style={{
@@ -382,7 +385,7 @@ function PlayerBadge({ name, picked, size = 38 }) {
         ...display("chip"), color: c,
         // A photo that has not loaded should still show the ring, so the badge
         // never reads as an empty hole.
-        filter: picked ? "none" : "grayscale(0.7) brightness(0.75)",
+        filter: dim ? "grayscale(0.7) brightness(0.75)" : "none",
       }}>{photo ? "" : initials}</div>
       {picked && (
         <span style={{
@@ -412,7 +415,8 @@ function Marquee({ race, status, players = [] }) {
     }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
         <div style={{ paddingTop: 4 }}>
-          <Chip color={V.blue}>Round {race.round} of 23</Chip>
+          {/* Just the round. Whether there are 22 or 23 is up to the FIA. */}
+          <Chip color={V.blue}>Round {race.round}</Chip>
         </div>
         {players.length > 0 && (
           <div style={{ marginLeft: "auto", textAlign: "right", flexShrink: 0 }}>
@@ -434,14 +438,15 @@ function Marquee({ race, status, players = [] }) {
       </div>
 
       <p style={{
-        ...marquee(shortRace(race.name)), ...textGlow(V.blue), textAlign: "center",
+        ...marquee(shortRace(race.name)), ...textGlow(V.pink), textAlign: "center",
         textTransform: "uppercase", margin: "6px 0 0",
       }}>{shortRace(race.name)}</p>
-      <p style={{ ...labelType(), color: V.text2, textAlign: "center", margin: "10px 0 0" }}>Grand Prix</p>
-      <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${V.blue}55, transparent)`, margin: "16px 0 12px" }} />
-      <p style={{ ...display("h3"), color: status.color, textAlign: "center", margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-        {status.text}
-      </p>
+      {/* On the same face as the race name and two thirds its size, so the two
+          lines read as one sign rather than a title and a caption. */}
+      <p style={{
+        ...marquee("Grand Prix"), fontSize: `calc(${marquee(shortRace(race.name)).fontSize}px * 0.62)`,
+        ...textGlow(V.blue), textAlign: "center", textTransform: "uppercase", margin: "8px 0 0",
+      }}>Grand Prix</p>
     </div>
   );
 }
@@ -466,6 +471,7 @@ function eventStatus({ settled, live, lapInfo, race, closesAt }) {
 function HomeOpen({ onNav, submitted = false }) {
   const week = useWeek();
   const { race, track, myTeam, opp, pools } = week;
+  const status = eventStatus({ settled: false, live: false, lapInfo: null, race, closesAt: race.deadline });
   const [editing, setEditing] = useState(false);
   const showPicker = !submitted || editing;
   // The real deadline, which is the whole point of the clock.
@@ -473,7 +479,7 @@ function HomeOpen({ onNav, submitted = false }) {
     <>
       <Marquee
         race={race}
-        status={eventStatus({ settled: false, live: false, lapInfo: null, race, closesAt: race.deadline })}
+        status={status}
         players={[
           { name: week.me, picked: submitted },
           { name: week.teammate, picked: submitted },
@@ -482,7 +488,7 @@ function HomeOpen({ onNav, submitted = false }) {
 
       {showPicker ? (
         <>
-          <PickSign />
+          <PickSign status={status} />
           <PickFlow />
         </>
       ) : (
@@ -520,7 +526,7 @@ function HomeOpen({ onNav, submitted = false }) {
 
 // A neon sign that points down at the thing it is talking about, because on this
 // screen the picker is right underneath it rather than a page away.
-function PickSign() {
+function PickSign({ status }) {
   return (
     <div style={{ textAlign: "center", marginBottom: 18 }}>
       <div className="v-flicker" style={{
@@ -530,6 +536,13 @@ function PickSign() {
         <p style={{ ...display("h2"), ...textGlow(V.blue), margin: 0, textTransform: "uppercase" }}>
           Make your picks
         </p>
+        {/* The deadline belongs to the thing it is a deadline for. */}
+        {status && (
+          <p style={{
+            ...display("h3"), fontSize: 17, ...textGlow(V.pink), margin: "8px 0 0",
+            textTransform: "uppercase", letterSpacing: "0.05em",
+          }}>{status.text}</p>
+        )}
       </div>
       <div style={{ display: "flex", justifyContent: "center", marginTop: -2 }}>
         <svg width="34" height="30" viewBox="0 0 34 30" aria-hidden style={{ overflow: "visible" }}>
@@ -1185,53 +1198,73 @@ function HomeSubmitted({ onEdit }) {
 // The big number is the opponent's scoring-average rank out of all 24 teams
 // while the second half has no rounds on the board. Once it does, divRank takes
 // over and the label under it changes to match.
+// The opponent, in the same shape as "your team's season so far" on the team
+// standings: logo and name, where they stand, how they score, ten weeks of
+// form. Both of their players sit where your teammate does on your own card,
+// because on this page they are the two people you are playing.
 function OpponentCard() {
-  const { opp } = useWeek();
-  const usingDiv = opp.divRank != null;
-  const big = usingDiv ? opp.divRank : opp.avgRank;
-  const bigLabel = usingDiv ? "Division rank" : "Scoring average rank";
+  const { opp, oppWeeks = [] } = useWeek();
+  if (!opp) return null;
+  const DIV = { championship: "Championship Division", second: "Second Division" };
+  const last = oppWeeks.slice(-10);
   return (
-    <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }), borderColor: `${V.pink}2a` }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
-        <TeamBadge name={opp.name} size={44} ring={V.pink} />
-        <p style={{ ...display("h2"), color: V.text, margin: 0 }}>{opp.name}</p>
-      </div>
-
-      <div style={{ textAlign: "center", marginBottom: 18 }}>
-        <p style={{ ...display("stat"), ...textGlow(V.pink, 0.85), margin: 0, fontSize: 66, lineHeight: 1 }}>
-          {ordinal(big)}
-        </p>
-        <Label color={V.text2} style={{ marginTop: 6 }}>{bigLabel}</Label>
-      </div>
-
-      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
-        <StatTile label="Championship points" value={opp.champPts} />
-        <StatTile label="Record" value={opp.record} />
-      </div>
-
-      <div style={{ display: "flex", gap: 10 }}>
-        {opp.players.map(pl => (
-          <div key={pl.name} style={{
-            flex: 1, minWidth: 0, textAlign: "center", padding: "12px 8px",
-            borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}`,
-          }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-              <Face name={pl.name} size={44} />
-            </div>
-            <p style={{ ...body("bodySm"), color: V.text, margin: "0 0 4px",
-              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{pl.name}</p>
-            <p style={{ ...display("h3"), ...textGlow(V.pink, 0.5), margin: 0 }}>{ordinal(pl.rank)}</p>
-            <Label color={V.text3} style={{ marginTop: 2 }}>Scoring average</Label>
+    <div style={{ ...card({ padding: 16, marginBottom: 22 }), borderColor: `${V.pink}2a` }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {opp.logo
+              ? <img src={opp.logo} alt="" style={{ width: 42, height: 42, objectFit: "contain", flexShrink: 0 }} />
+              : <TeamBadge name={opp.name} size={42} ring={V.pink} />}
+            <p style={{
+              ...display("h3"), fontSize: "clamp(17px, 5.1vw, 23px)", lineHeight: 1.3,
+              color: V.text, margin: 0,
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            }}>{opp.name}</p>
           </div>
-        ))}
+          <p style={{ ...body("bodySm"), fontSize: 15, color: V.text2, lineHeight: 1.55, margin: "8px 0 0", whiteSpace: "nowrap" }}>
+            Overall: <strong style={{ color: V.text }}>P{opp.place}</strong> in {DIV[opp.division] || "the league"}
+          </p>
+          <p style={{ ...body("bodySm"), fontSize: 15, color: V.text2, lineHeight: 1.55, margin: 0, whiteSpace: "nowrap" }}>
+            Scoring average: <strong style={{ color: V.text }}>{ordinal(opp.avgRank)}</strong> ({opp.avg.toFixed(1)})
+          </p>
+          {last.length > 0 && (
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10 }}>
+              {last.map((w, i) => {
+                const letter = w.won === true ? "W" : w.won === false ? "L" : "D";
+                const color = w.won === true ? V.blue : w.won === false ? V.pink : V.silver;
+                return (
+                  <div key={i} title={`Round ${w.round}`} style={{
+                    width: 26, height: 26, borderRadius: 7,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    border: `1.5px solid ${w.decidedByBoxBox ? color : "transparent"}`,
+                    background: w.decidedByBoxBox ? `${color}18` : "transparent",
+                    ...display("chip"), fontSize: 15, ...textGlow(color, 0.5),
+                  }}>{letter}</div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div style={{ flexShrink: 0, width: 92 }}>
+          <Label color={V.pink} style={{ marginBottom: 6, textAlign: "center" }}>Their two</Label>
+          {opp.players.map(pl => (
+            <div key={pl.name} style={{ textAlign: "center", marginBottom: 8 }}>
+              <PlayerBadge name={pl.name} picked={false} dim={false} ring={V.pink} photo={pl.photo} />
+              <p style={{ ...display("chip"), fontSize: 13, color: V.text2, margin: "4px 0 0", lineHeight: 1.25 }}>
+                {pl.name.split(" ")[0]}
+              </p>
+              <p style={{ ...numeric("chip"), fontSize: 15, ...textGlow(V.pink, 0.5), margin: "1px 0 0" }}>
+                {(pl.avg ?? 0).toFixed(1)}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-const ordinal = (n) => n + (["th", "st", "nd", "rd"][(n % 100 - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
-
-// ── Shared: the matchup card ─────────────────────────────
 function MatchupCard({ compact = false }) {
   const { myTeam, opp, me, teammate } = useWeek();
   const Side = ({ name, rank, pts, record, p1, p2, mine }) => (

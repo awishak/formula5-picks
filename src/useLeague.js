@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { buildTeamTable, rankByAverage, FIRST_H2_ROUND } from "./teamTable";
+import { buildPlayerTable } from "./playerTable";
 import { displayOf, shortOf } from "./teams";
 
 // The week, for real. Everything the Home page needs about the next race, who
@@ -53,8 +54,20 @@ export function useLeague(currentUser) {
         const season = buildTeamTable(db, { fromRound: 1, toRound: 99 });
         const half = buildTeamTable(db, { fromRound: FIRST_H2_ROUND, toRound: 99 });
         const avgRank = Object.fromEntries(rankByAverage(season).map(r => [r.id, r.avgRank]));
+        // Each player's own scoring average, for the two names on a team card.
+        const byPlayer = Object.fromEntries(
+          buildPlayerTable({ players, teams, races, scores }).map(r => [r.id, r]));
         const seasonOf = Object.fromEntries(season.map(r => [r.id, r]));
         const halfOf = Object.fromEntries(half.map(r => [r.id, r]));
+        // Places share on level points, the same as the team standings page,
+        // so the two never disagree. Everybody on nought is everybody in first.
+        const placeOf = {};
+        ["championship", "second"].forEach(div => {
+          const list = half.filter(r => r.division === div);
+          list.forEach((r, i) => {
+            placeOf[r.id] = (i > 0 && list[i - 1].pts === r.pts) ? placeOf[list[i - 1].id] : i + 1;
+          });
+        });
 
         const fixture = myTeamRow
           ? schedule.find(m => m.race_id === race.id &&
@@ -75,11 +88,15 @@ export function useLeague(currentUser) {
             short: shortOf(row.name),
             division: row.division_h2 || row.division,
             champPts: h ? h.pts : 0,
+            place: placeOf[row.id] || null,
             record: s ? (s.d > 0 ? `${s.w}-${s.l}-${s.d}` : `${s.w}-${s.l}`) : "0-0",
             avg: s ? s.avg : 0,
             avgRank: avgRank[row.id] || null,
             logo: row.logo_url || null,
-            players: [p1, p2].filter(Boolean).map(p => ({ name: p.name, photo: p.photo_url || null })),
+            players: [p1, p2].filter(Boolean).map(p => ({
+              name: p.name, photo: p.photo_url || null,
+              avg: byPlayer[p.id] ? byPlayer[p.id].avg : 0,
+            })),
           };
         };
 
@@ -95,6 +112,8 @@ export function useLeague(currentUser) {
           loading: false,
           me: currentUser,
           myTeam: teamShape(myTeamRow),
+          // Ten weeks of form for the opponent card, oldest first.
+          oppWeeks: oppRow && seasonOf[oppRow.id] ? seasonOf[oppRow.id].weeks : [],
           teammate: teammate ? teammate.name : null,
           opp: teamShape(oppRow),
           side: fixture && myTeamRow ? sideOf(fixture, myTeamRow.id) : null,

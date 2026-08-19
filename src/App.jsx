@@ -978,6 +978,10 @@ export default function App() {
 
   const onVegas = VEGAS_PAGES.has(activePage);
 
+  // Every page starts at the top. Without this the browser keeps the previous
+  // page's scroll position, which drops you into the middle of Home.
+  useEffect(() => { window.scrollTo(0, 0); }, [activePage]);
+
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: ${BG}; } .app-wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; background: ${BG}; padding-bottom: 80px; }`}</style>

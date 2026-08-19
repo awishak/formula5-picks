@@ -48,7 +48,7 @@
         f.style.width = w + "px"; f.style.height = "900px";
         f.src = `${path}?player=${encodeURIComponent(player)}&t=${w}`;
         await new Promise(r => f.onload = r);
-        await wait(2600);                        // fonts, logos, avatars
+        await wait(4200);                        // fonts, logos, avatars
         const { over, cut } = scan(f.contentDocument, w);
         out.push(`${path} @${w}  over ${over.length}  cut ${cut.length}` +
                  (over.length ? `\n    OVER ${over.slice(0,3).join(" | ")}` : "") +
