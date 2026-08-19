@@ -1,4 +1,4 @@
-import { V, FM, FD, FB, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
+import { V, FM, FD, FB, label, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 
 // The fifth tab. Everything that does not have a page of its own yet ends up
 // here, so for now it is a holding page with the one link that has to work.
@@ -24,10 +24,7 @@ export default function MorePage({ onNavigate }) {
         </div>
 
         <div style={{ ...card({ padding: 18, marginBottom: 14 }), ...edgeGlow(V.blue, 0.6) }}>
-          <div style={label({ color: V.blue, fontSize: 15, marginBottom: 8 })}>Coming soon</div>
-          <div style={body("body", { color: V.text2 })}>
-            The rest of the app lands here: results, the rules, the calendar and the rest of the second half.
-          </div>
+          <div style={label({ color: V.blue, fontSize: 15 })}>Coming soon</div>
         </div>
 
         <button onClick={() => onNavigate("admin")} style={{
