@@ -773,11 +773,16 @@ function NeedleExplainer({ side }) {
       </button>
 
       <div style={{
-        maxHeight: open ? 620 : 0, opacity: open ? 1 : 0, overflow: "hidden",
+        maxHeight: open ? 1200 : 0, opacity: open ? 1 : 0, overflow: "hidden",
         transition: "max-height .4s ease, opacity .3s ease",
       }}>
         <div style={{ paddingTop: 8 }}>
-          <Label color={V.blue} style={{ marginBottom: 8 }}>For you</Label>
+          {/* The two side panels live in here now. They were the loudest thing
+              on a card whose job is to set one number, and this is the part of
+              the page that exists to explain the scoring. */}
+          <NeedleSides side={side} />
+          <NeedleYou />
+          <Label color={V.blue} style={{ marginBottom: 8, marginTop: 14 }}>For you</Label>
           <p style={{ ...body("body"), color: V.text2, margin: "0 0 10px" }}>
             You score on how close your guess lands, and it counts toward your individual
             score only. It never touches the matchup.
@@ -812,6 +817,8 @@ function NeedleExplainer({ side }) {
 // Everything read back before it goes anywhere: the five in order, where the
 // best one lands, and the Needle guess with the side it affects.
 function PickReview({ order, finish, needle, sent, onBack, onSubmit }) {
+  // It reads boxBox.side. Reaching for it without this is what threw on submit.
+  const { boxBox } = useWeek();
   return (
     <div
       onClick={onBack}
@@ -1055,8 +1062,6 @@ function PickFlow() {
           <Wheel options={NEEDLE_OPTIONS} value={needle} onChange={setNeedle}
             format={v => v.toFixed(1)} accent={V.purple}
             tone={v => ((v > needle) === (boxBox.side === "OVER") ? "win" : "lose")} />
-          <NeedleSides side={boxBox.side} />
-          <NeedleYou />
           <NeedleExplainer side={boxBox.side} />
         </div>
 

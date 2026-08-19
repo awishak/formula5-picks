@@ -22,7 +22,16 @@
   const tick = () => {
     if (left-- <= 0) return;
     const d = f.contentDocument;
-    const all = [...d.querySelectorAll("button, [role=button]")].filter(live);
+    // Never the bottom nav, and never anything that writes. This harness once
+    // clicked its way from Home into More, into Admin, and saved a changed
+    // driver pool over a real race. It walks a flow; it does not administer.
+    const DANGER = /save|delete|clear|generate|remove|reset|admin|confirm|randomi/i;
+    const all = [...d.querySelectorAll("button, [role=button]")].filter(el => {
+      if (!live(el)) return false;
+      if (el.closest(".vnav")) return false;
+      const t = (el.textContent || "").trim();
+      return !(DANGER.test(t) && !nextLabel.includes(t.toLowerCase()));
+    });
     const txt = el => (el.textContent || "").trim().toLowerCase();
     // Reached the step we came for: stop pressing things.
     if (stop && d.body.innerText.toLowerCase().includes(stop)) {
