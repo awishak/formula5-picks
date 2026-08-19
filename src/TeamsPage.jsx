@@ -19,18 +19,20 @@ const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 // phone almost nobody in the league is carrying.
 const NAME_SIZE = "clamp(17px, calc(13.2vw - 28.8px), 23px)";
 
-// Monoton is the marquee face and gets wide fast, so the title sets one word
-// per line rather than wrapping mid-word at phone width.
+// One line, one size, sized to fill the column. Monoton runs 10.3px wide per
+// point of type with the tracking on, measured off the rendered element rather
+// than a specimen: a standalone span said 8.7 and the title ran 49px off the
+// page. So the size that fits is (viewport - 32) / 10.3.
+const TITLE_SIZE = "clamp(24px, calc(9.2vw - 3.2px), 40px)";
+
 function Title() {
   return (
     <div style={{ padding: "14px 0 18px" }}>
-      {["TEAM", "STANDINGS"].map((word, i) => (
-        <div key={word} style={{
-          fontFamily: FM, fontWeight: 400, lineHeight: 1.12,
-          fontSize: i === 0 ? 42 : 34, letterSpacing: "0.02em",
-          ...textGlow(i === 0 ? V.blue : V.pink),
-        }}>{word}</div>
-      ))}
+      <div style={{
+        fontFamily: FM, fontWeight: 400, fontSize: TITLE_SIZE,
+        lineHeight: 1.15, letterSpacing: "0.02em", whiteSpace: "nowrap",
+        ...textGlow(V.blue),
+      }}>TEAM STANDINGS</div>
     </div>
   );
 }
@@ -182,9 +184,12 @@ export default function TeamsPage({ currentUser }) {
           });
           return (
             <div key={g.key} style={{ marginBottom: 26 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 2px 10px" }}>
-                <span style={{ width: 10, height: 10, borderRadius: 5, background: g.color, flexShrink: 0 }} />
-                <span style={label({ color: g.color })}>{g.name}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 2px 12px" }}>
+                <span style={{ width: 13, height: 13, borderRadius: 7, background: g.color, flexShrink: 0 }} />
+                <span style={{
+                  fontFamily: FD, fontWeight: 700, fontSize: 22, lineHeight: 1.3,
+                  letterSpacing: "0.05em", textTransform: "uppercase", color: g.color,
+                }}>{g.name}</span>
               </div>
               {list.map((r, i) => {
                 const oppId = fixtures.opponentOf[r.id];

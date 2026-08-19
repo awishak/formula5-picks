@@ -17,6 +17,7 @@ import PickIntel from "./PickIntel.jsx";
 import Recaps from "./Recaps.jsx";
 import VegasHome from "./VegasHome.jsx";
 import ViewingAs from "./ViewingAs.jsx";
+import VegasNav from "./VegasNav.jsx";
 import Recap from "./Recap.jsx";
 import { NEWS } from "./news";
 
@@ -1013,7 +1014,7 @@ export default function App() {
           display: "flex", alignItems: "center", justifyContent: "space-between",
           gap: 12, padding: "12px 16px 8px",
         }}>
-          <img src={LOGO_B64} alt="Formula 5" style={{ height: 40, maxWidth: "42%", objectFit: "contain", objectPosition: "left", flexShrink: 1, minWidth: 0 }} />
+          <img src={LOGO_B64} alt="Formula 5" style={{ height: 40, maxWidth: "36%", objectFit: "contain", objectPosition: "left", flexShrink: 1, minWidth: 0 }} />
           <ViewingAs currentUser={currentUser} onSelect={handleSelectName} />
         </div>
         {activePage === "home" && <HomePage currentUser={currentUser} onNavigate={navigateTo} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
@@ -1047,7 +1048,7 @@ export default function App() {
         {activePage === "season-preview" && <SeasonPreview />}
         {activePage === "recaps" && <Recaps />}
       </div>
-      <BottomNav active={activePage} onChange={navigateTo} hasSubmittedPicks={hasSubmittedPicks} />
+      <VegasNav active={activePage} onChange={navigateTo} hasSubmittedPicks={hasSubmittedPicks} />
     </>
   );
 }

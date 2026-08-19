@@ -57,22 +57,22 @@ export default function ViewingAs({ currentUser, onSelect }) {
   return (
     <>
       <button onClick={() => { setOpen(!open); setQ(""); }} style={{
-        display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
-        padding: "6px 10px 6px 6px", borderRadius: 100,
+        display: "flex", alignItems: "center", gap: 9, cursor: "pointer",
+        padding: "7px 12px 7px 7px", borderRadius: 100,
         background: V.bg3, border: `1px solid ${open ? V.blue : V.border2}`,
         // Shrinkable, or it pushes past the edge next to the logo on a 320px
         // phone. The name inside already ellipsises.
-        maxWidth: "min(190px, 54vw)", minWidth: 0, flexShrink: 1,
+        maxWidth: "min(232px, 64vw)", minWidth: 0, flexShrink: 1,
       }}>
-        <Avatar name={currentUser} photo={me && me.photo_url} size={30} />
+        <Avatar name={currentUser} photo={me && me.photo_url} size={38} />
         <div style={{ minWidth: 0, textAlign: "left" }}>
-          <div style={label({ color: V.text3, fontSize: 9, letterSpacing: "0.14em", lineHeight: 1.2 })}>Viewing as</div>
+          <div style={label({ color: V.text3, fontSize: 11, letterSpacing: "0.12em", lineHeight: 1.25 })}>Viewing as</div>
           <div style={{
-            fontFamily: FD, fontWeight: 600, fontSize: 14, lineHeight: 1.35, color: V.text,
+            fontFamily: FD, fontWeight: 600, fontSize: 17, lineHeight: 1.35, color: V.text,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           }}>{currentUser || "Pick a name"}</div>
         </div>
-        <span style={{ color: V.text3, fontSize: 10, flexShrink: 0 }}>{open ? "▲" : "▼"}</span>
+        <span style={{ color: V.text3, fontSize: 11, flexShrink: 0 }}>{open ? "▲" : "▼"}</span>
       </button>
 
       {open && (
@@ -96,26 +96,22 @@ export default function ViewingAs({ currentUser, onSelect }) {
                 fontFamily: FB, fontSize: 15, marginBottom: 10, boxSizing: "border-box",
               }}
             />
-            <div style={{
-              display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6,
-              overflowY: "auto", minHeight: 0,
-            }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, overflowY: "auto", minHeight: 0 }}>
               {shown.map(p => {
                 const on = p.name === currentUser;
-                const [first, ...rest] = p.name.split(" ");
                 return (
                   <button key={p.id} onClick={() => { onSelect(p.name); setOpen(false); }} style={{
-                    display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-                    padding: "10px 4px 8px", borderRadius: 12, cursor: "pointer",
-                    background: on ? "rgba(0,217,255,0.10)" : V.bg3,
-                    border: `1px solid ${on ? V.blue : V.border}`,
+                    display: "flex", alignItems: "center", gap: 11, width: "100%",
+                    padding: "8px 12px", borderRadius: 12, cursor: "pointer", textAlign: "left",
+                    background: on ? "rgba(0,217,255,0.10)" : "transparent",
+                    border: `1px solid ${on ? V.blue : "transparent"}`,
                   }}>
-                    <Avatar name={p.name} photo={p.photo_url} size={38} />
-                    <span style={body("bodySm", { color: V.text3, fontSize: 13, lineHeight: 1.25 })}>{first}</span>
+                    <Avatar name={p.name} photo={p.photo_url} size={36} />
                     <span style={{
-                      fontFamily: FD, fontWeight: 600, fontSize: 13, lineHeight: 1.25,
-                      color: on ? V.blue : V.text, textAlign: "center",
-                    }}>{rest.join(" ")}</span>
+                      fontFamily: FD, fontWeight: 600, fontSize: 18, lineHeight: 1.35,
+                      color: on ? V.blue : V.text,
+                      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                    }}>{p.name}</span>
                   </button>
                 );
               })}
