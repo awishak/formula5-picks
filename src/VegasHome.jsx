@@ -8,7 +8,7 @@
 // Nothing here touches Supabase. It is a design surface, reachable at #vegas.
 
 import { useState, useRef, useEffect , createContext, useContext } from "react";
-import { V, FD, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
+import { V, FD, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, titleFit, titleBox, VEGAS_CSS } from "./theme.vegas";
 import { supabase } from "./supabaseClient";
 import { useLeague } from "./useLeague";
 import { lockedDemo } from "./lockedDemo";
@@ -1691,15 +1691,18 @@ function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under }) {
     <div style={{
       flex: 1, minWidth: 0, textAlign: "center", padding: "14px 10px",
       borderRadius: 14, background: V.bg3, border: `2px solid ${c}`,
-      ...(won ? edgeGlow(c, 0.9) : {}),
+      ...titleBox(), ...(won ? edgeGlow(c, 0.9) : {}),
     }}>
       {t && t.logo
         ? <img src={t.logo} alt="" style={{ width: 46, height: 46, objectFit: "contain" }} />
         : <div style={{ width: 46, height: 46, borderRadius: 10, margin: "0 auto",
                         background: V.bg2, border: `2px solid ${c}` }} />}
+      {/* A team name shrinks to fit rather than losing its end. Half the grid
+          is longer than "Cal Aggie Racing" and an ellipsis here reads as the
+          team having a shorter name than it does. */}
       <div style={{
-        ...display("h3"), fontSize: 16, color: V.text, marginTop: 6, lineHeight: 1.25,
-        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        ...display("h3"), fontSize: titleFit(t ? t.name : "", { min: 10, max: 16 }),
+        color: V.text, marginTop: 6, lineHeight: 1.25, whiteSpace: "nowrap",
       }}>{t ? t.name : "\u2014"}</div>
       <div style={{ ...display("chip"), fontSize: 11, color: c, marginTop: 2 }}>{side}</div>
       <div style={{ ...numeric("hero"), fontSize: 44, color: c, marginTop: 6,
@@ -1732,7 +1735,9 @@ function RootingCard({ seats, boxBox }) {
   const against = Object.keys(theirsHas).filter(d => (theirsHas[d] || 0) > (mineHas[d] || 0));
 
   const Strip = ({ names, c }) => (
-    <div className="v-scroll" style={{ display: "flex", gap: 8, overflowX: "auto", padding: "2px 0" }}>
+    // Wraps rather than scrolls. A third face off the right edge is a rooting
+    // interest nobody knows they have.
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, rowGap: 10, padding: "2px 0" }}>
       {names.length === 0
         ? <span style={{ ...body("bodySm"), color: V.text2 }}>Nobody</span>
         : names.map(n => (
@@ -1763,7 +1768,7 @@ function RootingCard({ seats, boxBox }) {
         <Label color={MINE}>Rooting interests</Label>
       </button>
       <div style={{
-        maxHeight: open ? 520 : 0, opacity: open ? 1 : 0, overflow: "hidden",
+        maxHeight: open ? 900 : 0, opacity: open ? 1 : 0, overflow: "hidden",
         transition: "max-height .4s ease, opacity .3s ease",
       }}>
         <div style={{ paddingTop: 12, display: "flex", gap: 12 }}>

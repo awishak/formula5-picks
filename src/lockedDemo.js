@@ -11,9 +11,19 @@ const other = ["Lando Norris", "Isack Hadjar", "Carlos Sainz", "Franco Colapinto
 const themA = ["George Russell", "Max Verstappen", "Liam Lawson", "Carlos Sainz", "Oliver Bearman"];
 const themB = ["George Russell", "Max Verstappen", "Pierre Gasly", "Arvid Lindblad", "Gabriel Bortoleto"];
 
+// Round 9's two rosters, so the faces on this screen are real faces. The week
+// itself is still made up; only the people and the crests are borrowed.
+const PIC = "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/";
+const ROSTER = {
+  me:   { name: "Andrew Ishak",  photo: PIC + "74e68847-70fe-4eaf-9075-f4cfaa642cdd.png?t=1772682494867" },
+  mate: { name: "Kevin Coolidge", photo: PIC + "719da11a-6cd8-42f4-aba5-a3bd95742a1a.png?t=1772503404813" },
+  a:    { name: "Sam Bottoms",   photo: PIC + "e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" },
+  b:    { name: "Grant Wong",    photo: PIC + "061ca7b2-411b-4405-b425-13c6aebfbb51.png?t=1772503464761" },
+};
+
 const LOGO = {
   cal: "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/f3eab88a-5d25-4e3b-b7fc-2aa7a9ea4385.png?t=1772417213026",
-  xlix: "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/579bad3e-bbc9-42f2-9371-22abd9da04d4.png?t=1772469411331",
+  tubes: "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/fc7843e9-bf07-493f-a9bf-59c6ce2f3a21.png?t=1772436034485",
 };
 
 const pick = (order, best, guess) => ({ topPick: order[0], order, bestFinish: best, pitGuess: guess });
@@ -22,9 +32,10 @@ const pick = (order, best, guess) => ({ topPick: order[0], order, bestFinish: be
 // the total is their sum, so the columns add up to the number above them.
 const score = (top, mid, best, order) => ({ top, mid, best, order, total: top + mid + best + order });
 
-const seat = (name, ours, mine, picked, p, sc) => ({
-  id: name, name, photo: null, ours, mine, picked, pick: picked ? p : null,
-  team: ours ? "Your team" : "Them", score: picked ? sc : null,
+const seat = (who, ours, mine, picked, p, sc) => ({
+  id: who.name, name: who.name, photo: who.photo, ours, mine, picked,
+  pick: picked ? p : null,
+  team: ours ? "Cal Aggie Racing" : "HomeworkTubes.Com", score: picked ? sc : null,
 });
 
 // case: everyone in / someone missing / you missed it
@@ -37,8 +48,8 @@ export function lockedDemo(kind = "all") {
 
   return {
     loading: false,
-    me: "You",
-    teammate: "Your teammate",
+    me: ROSTER.me.name,
+    teammate: ROSTER.mate.name,
     locked: true,
     race: {
       round: 12, name: "Dutch Grand Prix",
@@ -52,18 +63,19 @@ export function lockedDemo(kind = "all") {
     // where the logo goes is the difference between checking this screen and
     // guessing at it.
     myTeam: { name: "Cal Aggie Racing", logo: LOGO.cal },
-    opp: { name: "XLIX Racing Team", logo: LOGO.xlix, division: "championship", place: 3, avgRank: 6, avg: 77.4,
-           players: [{ name: "Their one", photo: null, rank: 11 }, { name: "Their two", photo: null, rank: 23 }] },
+    opp: { name: "HomeworkTubes.Com", logo: LOGO.tubes, division: "championship", place: 3, avgRank: 6, avg: 77.4,
+           players: [{ name: ROSTER.a.name, photo: ROSTER.a.photo, rank: 11 },
+                     { name: ROSTER.b.name, photo: ROSTER.b.photo, rank: 23 }] },
     oppWeeks: [],
     side: "UNDER",
     picksIn: { me: youPicked, mate: matePicked },
     myPick: youPicked ? pick(drivers, "P3", 2.1) : null,
     matePick: matePicked ? pick(other, "P2", 3.4) : null,
     seats: [
-      seat("You", true, true, youPicked, pick(drivers, "P3", 2.1), score(15, 26, 0, 6)),
-      seat("Your teammate", true, false, matePicked, pick(other, "P2", 3.4), score(15, 21, 3, 6)),
-      seat("Their one", false, false, true, pick(themA, "P1", 2.8), score(25, 16, 0, 0)),
-      seat("Their two", false, false, true, pick(themB, "P5", 1.9), score(18, 24, 3, 0)),
+      seat(ROSTER.me, true, true, youPicked, pick(drivers, "P3", 2.1), score(15, 26, 0, 6)),
+      seat(ROSTER.mate, true, false, matePicked, pick(other, "P2", 3.4), score(15, 21, 3, 6)),
+      seat(ROSTER.a, false, false, true, pick(themA, "P1", 2.8), score(25, 16, 0, 0)),
+      seat(ROSTER.b, false, false, true, pick(themB, "P5", 1.9), score(18, 24, 3, 0)),
     ],
     boxBox: {
       side: "UNDER",
