@@ -96,16 +96,17 @@ function DriverRows({ cols, pts }) {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 6, padding: "0 0 8px" }}>
-        <div style={{ width: 116 }} />
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 4, padding: "0 0 8px" }}>
+        <div style={{ width: 96 }} />
         {cols.map(h => (
           <div key={h.name} style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
-            <div style={{ ...display("chip"), fontSize: 12,
-              color: h.ours ? MINE : THEIRS, whiteSpace: "nowrap",
-              overflow: "hidden", textOverflow: "ellipsis" }}>{h.first}</div>
+            {/* No ellipsis. A first name spills a couple of pixels into the
+                empty space beside it rather than losing letters. */}
+            <div style={{ ...display("chip"), fontSize: 11, letterSpacing: "0.02em",
+              color: h.ours ? MINE : THEIRS, whiteSpace: "nowrap" }}>{h.first}</div>
           </div>
         ))}
-        <div style={{ width: 62, textAlign: "center", ...display("chip"),
+        <div style={{ width: 56, textAlign: "center", ...display("chip"),
                       fontSize: 11, color: V.blue }}>WORTH</div>
       </div>
 
@@ -116,7 +117,7 @@ function DriverRows({ cols, pts }) {
             display: "flex", alignItems: "center", gap: 6, padding: "5px 0",
             borderTop: `1px solid ${V.border}`,
           }}>
-            <div style={{ width: 116, display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+            <div style={{ width: 96, display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
               <Ring name={r.name} size={34} idea={7} force={tone} shares={[]} />
               <span style={{
                 fontFamily: FD, fontWeight: 700, fontSize: 13, color: V.text,
@@ -142,7 +143,7 @@ function DriverRows({ cols, pts }) {
                 </div>
               );
             })}
-            <div style={{ width: 62, textAlign: "center" }}>
+            <div style={{ width: 56, textAlign: "center" }}>
               <span style={{ ...numeric("chip"), fontSize: 14, color: tone }}>
                 {r.forUs}&ndash;{r.forThem}
               </span>
