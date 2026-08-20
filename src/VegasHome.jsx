@@ -1711,7 +1711,14 @@ function RootingBoard({ order, live, lapInfo, settled = false }) {
             {g.list.length === 0 ? (
               <p style={{ ...body("bodySm"), color: V.text3, textAlign: "center", margin: 0 }}>Nobody</p>
             ) : (
-              <div style={{ display: "flex", justifyContent: "center", gap: 9 }}>
+              // Five or six faces in half a phone's width runs off the edge. It
+              // scrolls sideways rather than shrinking them: these are the
+              // drivers the week turns on and they have to stay recognisable.
+              <div className="v-scroll" style={{
+                display: "flex", justifyContent: "flex-start", gap: 9,
+                overflowX: "auto", padding: "0 2px",
+                scrollbarWidth: "none",
+              }}>
                 {g.list.map(r => (
                   <div key={r.name} style={{ textAlign: "center" }}>
                     <Face name={r.name} size={46} ring={g.c} glow={g.good ? 1.7 : 1} drained={!g.good} />
