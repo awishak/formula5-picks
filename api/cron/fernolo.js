@@ -68,6 +68,9 @@ export default async function handler(req, res) {
         // The dial runs 1.5 to 4.5 in tenths.
         pit_guess: Math.round((1.5 + Math.random() * 3.0) * 10) / 10,
         submitted_at: new Date().toISOString(),
+        // Marks the row as Fernolo's, so a box score can say which weeks
+        // somebody actually played.
+        auto: true,
       };
     });
 
@@ -83,7 +86,7 @@ export default async function handler(req, res) {
     // Insert only, never update: someone who picked is not overwritten, and the
     // unique key on (race_id, player_id) is a second guard on the same thing.
     // .select() so a policy failure surfaces rather than returning nothing.
-    const r = await fetch(`${process.env.VITE_SUPABASE_URL}/rest/v1/picks`, {
+    const post = async (body) => fetch(`${process.env.VITE_SUPABASE_URL}/rest/v1/picks`, {
       method: "POST",
       headers: {
         apikey: process.env.VITE_SUPABASE_ANON_KEY,
@@ -91,14 +94,24 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
         Prefer: "return=representation",
       },
-      body: JSON.stringify(rows),
+      body: JSON.stringify(body),
     });
+
+    // The auto column may not exist yet. Filling somebody's picks matters more
+    // than labelling them, so a missing column drops the label rather than the
+    // week: better an unmarked pick than no pick at all on a Friday night.
+    let r = await post(rows);
+    let labelled = true;
+    if (!r.ok && /auto/.test(await r.clone().text())) {
+      labelled = false;
+      r = await post(rows.map(({ auto, ...rest }) => rest));
+    }
     if (!r.ok) throw new Error(`insert -> ${r.status} ${await r.text()}`);
     const back = await r.json();
 
     return res.status(200).json({
       ok: true, round: race.round, race: race.race_name,
-      filled: back.length, names: missing.map(p => p.name),
+      filled: back.length, labelled, names: missing.map(p => p.name),
     });
   } catch (e) {
     return res.status(500).json({ error: String(e.message || e) });

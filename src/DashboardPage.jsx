@@ -26,15 +26,34 @@ const Panel = ({ title, accent = V.blue, children, style }) => (
   </section>
 );
 
-const Face = ({ name, photo, size = 30 }) => {
-  const s = { width: size, height: size, borderRadius: "50%", flexShrink: 0 };
-  if (photo) return <img src={photo} alt="" style={{ ...s, objectFit: "cover" }} />;
+// picked: a green ring and a tick. auto: the same, in amber, because Fernolo
+// filled them in and that is not the same as turning up.
+const Face = ({ name, photo, size = 30, picked = null, auto = false }) => {
+  const ring = picked == null ? null : auto ? V.amber : picked ? V.green : V.text2;
+  const inner = { width: size, height: size, borderRadius: "50%", flexShrink: 0,
+    ...(ring ? { border: `2px solid ${ring}`, boxSizing: "border-box" } : {}),
+    ...(picked === false ? { filter: "grayscale(0.8) brightness(0.7)" } : {}) };
   let h = 0;
   for (let i = 0; i < (name || "").length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  return <div style={{ ...s, background: `hsl(${h % 360} 62% 52%)`, display: "flex",
-    alignItems: "center", justifyContent: "center", fontFamily: FD, fontWeight: 700,
-    fontSize: size * 0.38, color: "#fff" }}>
-    {(name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}</div>;
+  const body = photo
+    ? <img src={photo} alt="" style={{ ...inner, objectFit: "cover" }} />
+    : <div style={{ ...inner, background: `hsl(${h % 360} 62% 52%)`, display: "flex",
+        alignItems: "center", justifyContent: "center", fontFamily: FD, fontWeight: 700,
+        fontSize: size * 0.38, color: "#fff" }}>
+        {(name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}</div>;
+  if (picked !== true && !auto) return body;
+  return (
+    <span style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+      {body}
+      <span style={{
+        position: "absolute", right: -3, bottom: -3, width: 14, height: 14, borderRadius: "50%",
+        background: auto ? V.amber : V.green, color: V.bg,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontFamily: FD, fontWeight: 700, fontSize: 10, lineHeight: 1,
+        border: `1.5px solid ${V.bg2}`,
+      }}>{auto ? "F" : "\u2713"}</span>
+    </span>
+  );
 };
 
 // ── tables ───────────────────────────────────────────────
@@ -70,7 +89,7 @@ function TeamTable({ rows, posOf, myTeamId, avgRank, fixtures, byId }) {
   );
 }
 
-function PlayerTable({ rows, place, meId, limit }) {
+function PlayerTable({ rows, place, meId, limit, pickState = {} }) {
   const shown = limit ? rows.slice(0, limit) : rows;
   return (
     <div style={{ display: "grid", gap: 4 }}>
@@ -83,7 +102,9 @@ function PlayerTable({ rows, place, meId, limit }) {
             border: `1px solid ${mine ? V.blue : "transparent"}`,
           }}>
             <span style={{ ...numeric("chip"), fontSize: 15, color: V.text2, width: 30 }}>P{place[r.id]}</span>
-            <Face name={r.name} photo={r.photo} size={26} />
+            <Face name={r.name} photo={r.photo} size={26}
+                  picked={pickState[r.id] ? true : pickState[r.id] === undefined ? false : false}
+                  auto={Boolean(pickState[r.id] && pickState[r.id].auto)} />
             <span style={{ flex: 1, minWidth: 0, fontFamily: FD, fontWeight: 600, fontSize: 15,
               color: mine ? V.blue : V.text, whiteSpace: "nowrap", overflow: "hidden",
               textOverflow: "ellipsis" }}>{r.name}</span>
@@ -137,13 +158,20 @@ export default function DashboardPage({ currentUser, onNavigate }) {
           .eq("race_id", race.id).in("player_id", ids)).data || [] : [];
         const has = new Set(picks.map(p => p.player_id));
 
+        // Every player's status for this round, for the admin view of who has
+        // and has not turned up. auto is selected separately so the page still
+        // works before that column exists.
+        let all = (await supabase.from("picks").select("player_id,auto").eq("race_id", race.id)).data;
+        if (!all) all = (await supabase.from("picks").select("player_id").eq("race_id", race.id)).data || [];
+        const pickState = Object.fromEntries(all.map(p => [p.player_id, { auto: Boolean(p.auto) }]));
+
         const pt = buildPlayerTable({ players, teams, races, scores });
 
         setS({
           loading: false, half, season, avgRank, fixtures,
           byId: Object.fromEntries(half.map(r => [r.id, r])),
           myTeamId: myTeam ? myTeam.id : null,
-          players: pt, place: placesBy(pt, r => r.avg), meId: me ? me.id : null,
+          players: pt, place: placesBy(pt, r => r.avg), meId: me ? me.id : null, pickState,
           week: {
             me: currentUser, teammate: mateId ? (players.find(p => p.id === mateId) || {}).name : null,
             race: { round: race.round, name: race.race_name, deadline: race.pick_deadline,
@@ -199,8 +227,8 @@ export default function DashboardPage({ currentUser, onNavigate }) {
             <VegasHome currentUser={currentUser} onNavigate={onNavigate} />
           </div>
           <div style={{ display: "grid", gap: 14 }}>{teamPanels}</div>
-          <Panel title="Players" accent={V.blue}>
-            <PlayerTable rows={s.players} place={s.place} meId={s.meId} limit={22} />
+          <Panel title={`Players — ${Object.keys(s.pickState).length} of ${s.players.length} in`} accent={V.blue}>
+            <PlayerTable rows={s.players} place={s.place} meId={s.meId} pickState={s.pickState} />
           </Panel>
         </div>
 
