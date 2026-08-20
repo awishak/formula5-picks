@@ -1013,6 +1013,22 @@ export default function App() {
     picksChecked && !picksChecked.has && !deckSeen &&
     (!deckKey || localStorage.getItem(deckKey) !== "1");
 
+  // The gate returns the deck rather than laying it over the app. A fixed
+  // overlay meant the window scrolled underneath it while the deck stayed put,
+  // so the cards that scroll could not be scrolled. This is how /deck renders
+  // too, so it behaves identically.
+  if (showDeckGate) return (
+    <Recap
+      playerName={currentUser}
+      initialCard={0}
+      onChangeName={handleChangeName}
+      onExit={() => {
+        if (deckKey) { try { localStorage.setItem(deckKey, "1"); } catch (e) {} }
+        setDeckSeen(true);
+      }}
+    />
+  );
+
   const onVegas = VEGAS_PAGES.has(activePage);
 
 
@@ -1020,19 +1036,6 @@ export default function App() {
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: ${BG}; } .app-wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; background: ${BG}; padding-bottom: 80px; }`}</style>
-      {showDeckGate && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 500, background: "#07070c" }}>
-          <Recap
-            playerName={currentUser}
-            initialCard={0}
-            onChangeName={handleChangeName}
-            onExit={() => {
-              if (deckKey) { try { localStorage.setItem(deckKey, "1"); } catch (e) {} }
-              setDeckSeen(true);
-            }}
-          />
-        </div>
-      )}
       <div className="app-wrap" style={onVegas ? { background: "#07070c" } : undefined}>
         {/* One header for every page: logo left, who you are looking as right.
             The picker used to be inside HomePage, which made switching player
