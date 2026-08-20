@@ -448,6 +448,19 @@ function Marquee({ race, status, players = [] }) {
         ...marquee("Grand Prix"), fontSize: `calc(${marquee(shortRace(race.name)).fontSize}px * 0.62)`,
         ...textGlow(V.blue), textAlign: "center", textTransform: "uppercase", margin: "8px 0 0",
       }}>Grand Prix</p>
+
+      {/* Only when the make-your-picks sign is not up, since that carries the
+          deadline itself. With the picks in, this is the only place left that
+          says how long you have to change them. */}
+      {status && (
+        <>
+          <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${V.blue}55, transparent)`, margin: "16px 0 12px" }} />
+          <p style={{
+            ...display("h3"), color: status.color, textAlign: "center", margin: 0,
+            textTransform: "uppercase", letterSpacing: "0.06em",
+          }}>{status.text}</p>
+        </>
+      )}
     </div>
   );
 }
@@ -480,10 +493,10 @@ function HomeOpen({ onNav, submitted = false }) {
     <>
       <Marquee
         race={race}
-        status={status}
+        status={showPicker ? null : status}
         players={[
-          { name: week.me, picked: submitted },
-          { name: week.teammate, picked: submitted },
+          { name: week.me, picked: week.picksIn.me },
+          { name: week.teammate, picked: week.picksIn.mate },
         ]}
       />
 
@@ -1151,8 +1164,10 @@ function PickFlow() {
 function HomeSubmitted({ onEdit }) {
   const { myPick, matePick, teammate, race, boxBox } = useWeek();
   const [compare, setCompare] = useState(false);
-  const mate1 = teammate.split(" ")[0];
-  const same = myPick.order.every((d, i) => matePick.order[i] === d);
+  // A teammate who has not picked yet is the normal case for most of the week,
+  // and there is no pick of theirs to read until they do.
+  const mate1 = teammate ? teammate.split(" ")[0] : "your teammate";
+  const same = matePick ? myPick.order.every((d, i) => matePick.order[i] === d) : false;
 
   const Row = ({ n, name }) => (
     <div style={{
@@ -1199,6 +1214,8 @@ function HomeSubmitted({ onEdit }) {
 
       {/* Quiet by design. You two already coordinate; the app just saves a text. */}
       <div style={{ ...card({ padding: "16px 18px", marginBottom: 22 }) }}>
+        {matePick ? (
+        <>
         <button onClick={() => setCompare(c => !c)} style={{
           display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
           background: "transparent", border: "none", padding: 0, width: "100%",
@@ -1241,6 +1258,12 @@ function HomeSubmitted({ onEdit }) {
             </p>
           </div>
         </div>
+        </>
+        ) : (
+          <p style={{ ...body("body"), color: V.text2, margin: 0 }}>
+            {mate1} has not picked yet.
+          </p>
+        )}
       </div>
     </>
   );

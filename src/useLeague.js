@@ -110,6 +110,15 @@ export function useLeague(currentUser) {
           ? (await supabase.from("picks").select("*").eq("race_id", race.id).in("player_id", teamIds)).data || []
           : [];
         const pickOf = Object.fromEntries(picks.map(p => [p.player_id, p]));
+        // A picks row is stored as top_pick / finishing_order / best_finish /
+        // pit_guess; the page was written against the snapshot's shape. Map it
+        // once here rather than teach every component both names.
+        const asPick = (row) => row && ({
+          topPick: row.top_pick,
+          order: row.finishing_order || [],
+          bestFinish: row.best_finish,
+          pitGuess: Number(row.pit_guess),
+        });
 
         if (!alive) return;
         setState({
@@ -131,8 +140,8 @@ export function useLeague(currentUser) {
             top: race.top_drivers || [],
             mid: race.mid_drivers || [],
           },
-          myPick: me ? pickOf[me.id] || null : null,
-          matePick: mateId ? pickOf[mateId] || null : null,
+          myPick: me ? asPick(pickOf[me.id]) || null : null,
+          matePick: mateId ? asPick(pickOf[mateId]) || null : null,
           picksIn: {
             me: Boolean(me && pickOf[me.id]),
             mate: Boolean(mateId && pickOf[mateId]),
