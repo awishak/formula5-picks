@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { buildTeamTable, rankByAverage, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
-import { displayOf, shortOf } from "./teams";
+import { displayOf, shortOf, codeOf } from "./teams";
 
 // The week, for real. Everything the Home page needs about the next race, who
 // you are playing, and whether the picks are in.
@@ -95,6 +95,7 @@ export function useLeague(currentUser, { round = null } = {}) {
             id: row.id,
             name: displayOf(row.name),
             short: shortOf(row.name),
+            code: codeOf(row.name),
             division: row.division_h2 || row.division,
             champPts: h ? h.pts : 0,
             place: placeOf[row.id] || null,
@@ -192,6 +193,19 @@ export function useLeague(currentUser, { round = null } = {}) {
             mate: Boolean(mateId && pickOf[mateId]),
           },
           f1Points: Object.fromEntries(standings.map(d => [d.driver, d.points])),
+          // What each driver paid this round. driver_pts is written per player
+          // but a driver is worth the same to everyone who has him, so the four
+          // cards merge into one map. Stored as a JSON string, so it is parsed
+          // before use.
+          driverPts: (() => {
+            const out = {};
+            scores.filter(x => x.race_id === race.id).forEach(x => {
+              let d = x.driver_pts;
+              if (typeof d === "string") { try { d = JSON.parse(d); } catch { d = null; } }
+              if (d) Object.entries(d).forEach(([k, v]) => { out[k] = v; });
+            });
+            return out;
+          })(),
           // The order the rooting board reads down. Before a race there is no
           // grid to use, because nothing here has qualifying, so it is the
           // championship: the nearest thing to a form guide the app has.

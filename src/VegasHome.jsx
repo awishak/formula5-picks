@@ -12,6 +12,7 @@ import { V, FD, display, numeric, body, label as labelType, marquee, textGlow, e
 import { supabase } from "./supabaseClient";
 import { useLeague } from "./useLeague";
 import { lockedDemo } from "./lockedDemo";
+import { raceTimePT } from "./raceTimes";
 import { ordinal } from "./teamTable";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
@@ -64,6 +65,8 @@ const SNAP = {
   // and OpenF1 has no standings endpoint, which is the same blocker holding up
   // automated pools. Consistent with the pools: the top three sit inside
   // positions 1-5 and the seven midfielders inside 6-15.
+  teamBoxBox: { mine: 5, theirs: -1 },
+  driverPts: {},
   f1Points: {
     "Lando Norris": 241, "Oscar Piastri": 219, "George Russell": 198,
     "Lewis Hamilton": 176, "Charles Leclerc": 165, "Andrea Kimi Antonelli": 149,
@@ -248,7 +251,10 @@ function Chip({ children, color = V.blue, solid = false }) {
   );
 }
 
-function Face({ name, size = 40, ring, glow = 1, drained = false, edge = 2 }) {
+// blank: something is going to be printed on top of this face, so a driver with
+// no headshot shows an empty disc rather than initials fighting the number.
+// Lindblad's AL behind a 6 read as ".6.".
+function Face({ name, size = 40, ring, glow = 1, drained = false, edge = 2, blank = false }) {
   const [bad, setBad] = useState(false);
   const c = ring || dColor(name);
   const url = DRIVER_HEADSHOTS[name] || PLAYER_PHOTOS[name];
@@ -262,7 +268,7 @@ function Face({ name, size = 40, ring, glow = 1, drained = false, edge = 2 }) {
         boxShadow: glow ? `0 0 ${12 * glow}px ${c}66` : "none",
         display: "flex", alignItems: "center", justifyContent: "center",
         ...display("chip"), color: c,
-      }}>{PLAYER_PHOTOS[name] !== undefined || !DRIVER_HEADSHOTS[name]
+      }}>{blank ? "" : PLAYER_PHOTOS[name] !== undefined || !DRIVER_HEADSHOTS[name]
         ? name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
         : lastName(name).slice(0, 3).toUpperCase()}</div>
     );
@@ -1697,6 +1703,43 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
 // is readable without reading a word.
 const MINE = V.green, THEIRS = V.pink, DIVIDE = V.blue;
 
+// Where the BOX BOX points went. It is six of swing and it is already inside
+// the two numbers above, so the only question this answers is which team took
+// it, and the box is that team's colour.
+function BoxBoxScore({ myTeam, opp, bb, under }) {
+  if (!bb || (bb.mine === 0 && bb.theirs === 0)) return null;
+  const mineWon = bb.mine > bb.theirs;
+  const c = mineWon ? MINE : THEIRS;
+  const left = under === "mine" ? { t: myTeam, v: bb.mine, won: mineWon }
+                                : { t: opp, v: bb.theirs, won: !mineWon };
+  const right = under === "mine" ? { t: opp, v: bb.theirs, won: !mineWon }
+                                 : { t: myTeam, v: bb.mine, won: mineWon };
+  const Side = ({ t, v, won, align }) => (
+    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 7,
+                  justifyContent: align, minWidth: 0 }}>
+      <span style={{ ...display("chip"), fontSize: 13, color: V.text2 }}>
+        {t ? (t.code || t.short || t.name) : "\u2014"}
+      </span>
+      <span style={{ ...numeric("chip"), fontSize: 22, color: won ? c : V.text2,
+                     ...(won ? textGlow(c, 0.9) : {}) }}>
+        {v > 0 ? `+${v}` : v < 0 ? `\u2212${Math.abs(v)}` : v}
+      </span>
+    </div>
+  );
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", padding: "9px 14px", marginBottom: 14,
+      borderRadius: 14, background: `${c}14`, border: `2px solid ${c}`,
+    }}>
+      <Side {...left} align="flex-start" />
+      <span style={{ ...display("chip"), fontSize: 12, color: c, letterSpacing: "0.06em" }}>
+        Box box
+      </span>
+      <Side {...right} align="flex-end" />
+    </div>
+  );
+}
+
 // The two teams and where the week stands.
 function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under }) {
   // Only the team in front glows. Green on its own is the resting state, so a
@@ -1820,7 +1863,7 @@ function RootingCard({ seats, boxBox }) {
 // read against the number on the right without a legend.
 //
 // UNDER on the left, OVER on the right, always.
-function HandsColumns({ seats, under }) {
+function HandsColumns({ seats, under, driverPts = {} }) {
   const wrap = useRef(null);
   const [w, setW] = useState(0);
   useEffect(() => {
@@ -1913,13 +1956,29 @@ function HandsColumns({ seats, under }) {
       {cols.flatMap((h, c) => (h.pick ? h.pick.order : []).slice(0, 5).map((name, r) => {
         const t = toneAt({ r, c, ours: h.ours });
         if (which === "level" ? t !== "level" : t === "level") return null;
+        // Once the week is scored, what he paid goes on his face. Same size as
+        // the totals underneath and the colour of his ring, so a column reads
+        // down as five numbers and across as the same driver twice.
+        const pts = h.score ? driverPts[name] : undefined;
         return (
           <div key={`${c}-${r}`} style={{
             position: "absolute", left: cx(c) - FACE / 2, top: cy(r) - FACE / 2,
             width: FACE, textAlign: "center",
           }}>
-            <Face name={name} size={FACE} ring={COLOR[t]} edge={3}
-                  glow={t === "theirs" ? 1.1 : 0} drained={t === "level"} />
+            <div style={{ position: "relative", height: FACE }}>
+              <Face name={name} size={FACE} ring={COLOR[t]} edge={3} blank={pts != null}
+                    glow={t === "theirs" ? 1.1 : 0} drained={t === "level"} />
+              {pts != null && (
+                <div style={{
+                  position: "absolute", inset: 0, display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  ...numeric("chip"), fontSize: 20, color: COLOR[t],
+                  // No plate behind it. The face is a photograph and the number
+                  // has to sit on any part of one, so it carries its own dark.
+                  textShadow: "0 0 3px #000, 0 0 6px #000, 0 1px 3px #000",
+                }}>{pts}</div>
+              )}
+            </div>
             <Plate text={lastName(name)} c={COLOR[t]} dim={t === "level"} />
           </div>
         );
@@ -2232,7 +2291,9 @@ function HomeLocked() {
     <>
       <Marquee
         race={race}
-        status={{ text: "Picks are locked", color: V.gold }}
+        // Locked is already said twice above: the chips read PICKS IN and the
+        // lights are green. What nobody knows yet is when the thing runs.
+        status={{ text: raceTimePT(race.round) || "Picks are locked", color: V.gold }}
         players={mine.map(s => ({ name: s.name, picked: s.picked }))}
       />
 
@@ -2256,7 +2317,8 @@ function HomeLocked() {
           <>
             <Scoreboard myTeam={myTeam} opp={opp} under={under}
                         mineTotal={tot(true)} theirTotal={tot(false)} />
-            <HandsColumns seats={seats} under={under} />
+            <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under} />
+            <HandsColumns seats={seats} under={under} driverPts={week.driverPts || {}} />
             <BoxBoxLine seats={seats} boxBox={boxBox} myTeam={myTeam} opp={opp} />
             <RootingCard seats={seats} boxBox={boxBox} />
           </>

@@ -64,8 +64,8 @@ export function lockedDemo(kind = "all") {
     // Real logos. The demo already names two real teams, and an empty square
     // where the logo goes is the difference between checking this screen and
     // guessing at it.
-    myTeam: { name: "Cal Aggie Racing", short: "Cal Aggie", logo: LOGO.cal },
-    opp: { name: "HomeworkTubes.Com", short: "HomeworkTubes", logo: LOGO.tubes, division: "championship", place: 3, avgRank: 6, avg: 77.4,
+    myTeam: { name: "Cal Aggie Racing", short: "Cal Aggie", code: "CAR", logo: LOGO.cal },
+    opp: { name: "HomeworkTubes.Com", short: "HomeworkTubes", code: "HWT", logo: LOGO.tubes, division: "championship", place: 3, avgRank: 6, avg: 77.4,
            players: [{ name: ROSTER.a.name, photo: ROSTER.a.photo, rank: 11 },
                      { name: ROSTER.b.name, photo: ROSTER.b.photo, rank: 23 }] },
     oppWeeks: [],
@@ -90,6 +90,16 @@ export function lockedDemo(kind = "all") {
       // survive, since the line only runs to 4.5.
       stop: 10,
       guesses: {},
+    },
+    // Cal Aggie had the over and the stop came in at ten seconds, so BOX BOX
+    // went their way: five to the winner, one off the loser.
+    teamBoxBox: { mine: 5, theirs: -1 },
+    // What each driver paid at Silverstone. Same for everybody: a driver is
+    // worth what he finished, and who picked him only decides who collects.
+    driverPts: {
+      "George Russell": 18, "Lewis Hamilton": 15, "Isack Hadjar": 10,
+      "Arvid Lindblad": 6, "Franco Colapinto": 2, "Pierre Gasly": 1,
+      "Oliver Bearman": 0, "Carlos Sainz": 0, "Alex Albon": -1,
     },
     f1Points: {},
     playerId: "demo",

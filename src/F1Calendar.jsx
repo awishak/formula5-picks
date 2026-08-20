@@ -3,48 +3,12 @@ import { supabase } from "./supabaseClient";
 
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, FD, FB } from "./theme";
+import { RACE_UTC } from "./raceTimes";
 
 // Sepang joins as round 16, so Singapore's sprint and the Las Vegas Saturday
 // each move up one. Sepang runs three practices and no sprint.
 const SPRINT_ROUNDS = [2, 4, 5, 9, 12, 17];
 const SATURDAY_ROUNDS = [15, 21];
-
-// Race start times in UTC (from official FIA announcements)
-// Local times → UTC: Australia 3pm AEDT (UTC+11)=04:00, China 3pm CST (UTC+8)=07:00,
-// Japan 2pm JST (UTC+9)=05:00, Bahrain 6pm AST (UTC+3)=15:00, Saudi 8pm AST (UTC+3)=17:00,
-// Miami 4pm EDT (UTC-4)=20:00, Canada 4pm EDT (UTC-4)=20:00, Monaco 3pm CEST (UTC+2)=13:00,
-// Barcelona 3pm CEST=13:00, Austria 3pm CEST=13:00, Britain 3pm BST (UTC+1)=14:00,
-// Belgium 3pm CEST=13:00, Hungary 3pm CEST=13:00, Netherlands 3pm CEST=13:00,
-// Italy 3pm CEST=13:00, Spain/Madrid 3pm CEST=13:00, Azerbaijan 3pm AZT (UTC+4)=11:00,
-// Singapore 8pm SGT (UTC+8)=12:00, USA/Austin 3pm CDT (UTC-5)=20:00,
-// Mexico 2pm CDT (UTC-5)=19:00, Brazil 2pm BRT (UTC-3)=17:00,
-// Las Vegas 8pm PST (UTC-8)=04:00(+1day), Qatar 7pm AST (UTC+3)=16:00,
-// Abu Dhabi 5pm GST (UTC+4)=13:00
-const RACE_UTC = {
-  1:  "2026-03-08T04:00:00Z",
-  2:  "2026-03-15T07:00:00Z",
-  3:  "2026-03-29T05:00:00Z",
-  4:  "2026-05-03T20:00:00Z",
-  5:  "2026-05-24T20:00:00Z",
-  6:  "2026-06-07T13:00:00Z",
-  7:  "2026-06-14T13:00:00Z",
-  8:  "2026-06-28T13:00:00Z",
-  9:  "2026-07-05T14:00:00Z",
-  10: "2026-07-19T13:00:00Z",
-  11: "2026-07-26T13:00:00Z",
-  12: "2026-08-23T13:00:00Z",
-  13: "2026-09-06T13:00:00Z",
-  14: "2026-09-13T13:00:00Z",
-  15: "2026-09-26T11:00:00Z",  // Saturday
-  16: "2026-10-04T07:00:00Z",
-  17: "2026-10-11T12:00:00Z",
-  18: "2026-10-25T20:00:00Z",
-  19: "2026-11-01T19:00:00Z",
-  20: "2026-11-08T17:00:00Z",
-  21: "2026-11-22T04:00:00Z",  // Saturday night, technically Sunday UTC
-  22: "2026-11-29T16:00:00Z",
-  23: "2026-12-06T13:00:00Z"
-};
 
 const CIRCUITS = {
   1:  { city: "Melbourne",   country: "\u{1F1E6}\u{1F1FA}", circuit: "Albert Park" },
