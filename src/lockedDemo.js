@@ -9,7 +9,7 @@ const other = ["Lando Norris", "Isack Hadjar", "Carlos Sainz", "Franco Colapinto
 // The other team picks differently, or every row ties and the board says
 // "nobody" on both sides, which is the one thing it must never say by accident.
 const themA = ["George Russell", "Max Verstappen", "Liam Lawson", "Carlos Sainz", "Oliver Bearman"];
-const themB = ["George Russell", "Oscar Piastri", "Pierre Gasly", "Arvid Lindblad", "Gabriel Bortoleto"];
+const themB = ["George Russell", "Max Verstappen", "Pierre Gasly", "Arvid Lindblad", "Gabriel Bortoleto"];
 
 const pick = (order, best, guess) => ({ topPick: order[0], order, bestFinish: best, pitGuess: guess });
 

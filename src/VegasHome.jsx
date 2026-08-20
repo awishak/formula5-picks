@@ -1815,21 +1815,46 @@ function HandsColumns({ seats, under }) {
   const spots = {};
   cols.forEach((h, c) => (h.pick ? h.pick.order : []).slice(0, 5)
     .forEach((name, r) => { (spots[name] ||= []).push({ r, c, ours: h.ours }); }));
-  const tone = (name) => {
-    const at = spots[name] || [];
-    const mine = at.filter(p => p.ours).length;
-    return mine > at.length - mine ? "mine" : at.length - mine > mine ? "theirs" : "level";
-  };
   const COLOR = { mine: MINE, theirs: THEIRS, level: V.text2 };
-  const lines = Object.entries(spots).filter(([, at]) => at.length > 1).map(([name, at]) => ({
-    name, t: tone(name),
-    d: at.slice().sort((a, b) => a.c - b.c).map(p => `${cx(p.c)},${cy(p.r)}`).join(" "),
-  }));
+
+  // A driver cancels copy for copy, not driver for driver. Two of theirs
+  // against one of ours is one pair that goes grey and one copy left over that
+  // still counts, so pair them off and light only what is left. A driver both
+  // teams hold evenly pairs out completely and the whole row goes quiet, which
+  // is the same rule, not a special case.
+  const cancelled = {};
+  const pairs = [], surplus = [];
+  Object.entries(spots).forEach(([name, at]) => {
+    const free = at.filter(p => p.ours), open = at.filter(p => !p.ours);
+    while (free.length && open.length) {
+      // Pair the closest two, so the grey line is the short one and the copy
+      // left over is not stranded across the board.
+      let bi = 0, bj = 0, best = Infinity;
+      open.forEach((o, j) => free.forEach((f, i) => {
+        const d = Math.abs(o.c - f.c);
+        if (d < best) { best = d; bi = i; bj = j; }
+      }));
+      const [f] = free.splice(bi, 1), [o] = open.splice(bj, 1);
+      cancelled[`${f.c}-${f.r}`] = cancelled[`${o.c}-${o.r}`] = true;
+      pairs.push({ key: `${name}-${f.c}-${o.c}`, at: [f, o] });
+    }
+    // Two copies left on one side are both live and both scoring, so they get
+    // a lit line. One on its own has nothing to join.
+    const left = [...free, ...open];
+    if (left.length > 1) surplus.push({ key: name, ours: left[0].ours, at: left });
+  });
+  const toneAt = (p) => cancelled[`${p.c}-${p.r}`] ? "level" : p.ours ? "mine" : "theirs";
+  const LINES = {
+    level: pairs,
+    mine: surplus.filter(s => s.ours),
+    theirs: surplus.filter(s => !s.ours),
+  };
 
   const Layer = ({ which, z }) => (
     <svg width="100%" height={boardH} style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
-      {lines.filter(l => l.t === which).map(l => (
-        <polyline key={l.name} points={l.d} fill="none" stroke={COLOR[which]}
+      {LINES[which].map(l => (
+        <polyline key={l.key} fill="none" stroke={COLOR[which]}
+          points={l.at.slice().sort((a, b) => a.c - b.c).map(p => `${cx(p.c)},${cy(p.r)}`).join(" ")}
           strokeWidth={which === "level" ? 3.5 : 5} strokeLinecap="round" strokeLinejoin="round"
           opacity={which === "level" ? 0.5 : 1}
           style={which === "theirs" ? { filter: `drop-shadow(0 0 6px ${COLOR[which]})` } : undefined} />
@@ -1853,7 +1878,7 @@ function HandsColumns({ seats, under }) {
   const Drivers = ({ which, z }) => (
     <div style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
       {cols.flatMap((h, c) => (h.pick ? h.pick.order : []).slice(0, 5).map((name, r) => {
-        const t = tone(name);
+        const t = toneAt({ r, c, ours: h.ours });
         if (which === "level" ? t !== "level" : t === "level") return null;
         return (
           <div key={`${c}-${r}`} style={{
