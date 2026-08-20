@@ -1460,7 +1460,10 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
   const span = Math.max(0, w - PAD * 2);
   const x = (v) => PAD + ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * span;
 
-  const FACE = 42, GAP = 4;
+  // The plate under a face is wider than the face, so the packing step is the
+  // plate: at 42px apart "Michaelsen" and "Dillon" would sit on top of one
+  // another even though their faces did not.
+  const FACE = 42, GAP = 4, STEP = 82;
   const guessed = seats.filter(s => s.pick && typeof s.pick.pitGuess === "number");
 
   // One lane, always. Two guesses at the same tenth sit shoulder to shoulder
@@ -1469,7 +1472,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
   const packed = (() => {
     const a = guessed.map(s => ({ s, want: x(s.pick.pitGuess), px: x(s.pick.pitGuess) }))
       .sort((p, q) => p.want - q.want);
-    const step = FACE + GAP;
+    const step = STEP;
     for (let i = 1; i < a.length; i++) a[i].px = Math.max(a[i].px, a[i - 1].px + step);
     const over = a.length ? a[a.length - 1].px - (w - FACE / 2) : 0;
     if (over > 0) {
@@ -1800,12 +1803,13 @@ function HandsColumns({ seats, under }) {
   const Plate = ({ text, c, dim, size = 12, top = -7 }) => (
     <div style={{
       marginTop: top, display: "inline-block", position: "relative",
-      maxWidth: Math.max(58, colW + 12),
+      // No max width and no ellipsis. A surname is never cut: the plate is the
+      // top layer, so a wide one sits over its neighbour rather than losing
+      // letters, and a name you cannot read is worse than one that overlaps.
       padding: "2px 5px", borderRadius: 7, background: "#000",
       border: `1px solid ${dim ? V.border : c}`,
       fontFamily: FD, fontWeight: 700, fontSize: size, lineHeight: 1.35,
-      color: dim ? V.text2 : "#fff",
-      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+      color: dim ? V.text2 : "#fff", whiteSpace: "nowrap",
     }}>{text}</div>
   );
 
