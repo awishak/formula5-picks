@@ -2161,20 +2161,6 @@ function HomeLocked() {
         );
       })()}
 
-      {order.length > 0 && (
-        <>
-          <div style={{ height: 6 }} />
-          <SectionHead accent={V.green} sub={
-            orderIs === "championship"
-              ? "In championship order until the grid is set"
-              : undefined
-          }>Who to root for</SectionHead>
-          <RootingBoard order={order} live={false} lapInfo={null} />
-        </>
-      )}
-
-      <div style={{ height: 14 }} />
-      <OpponentCard />
     </>
   );
 }
