@@ -89,7 +89,8 @@ export function buildTeamTable(db, { fromRound = 1, toRound = 99, seed = null } 
       const oppScore = oppDrivers + (o1.pit_matchup_pts || 0);
       const won = score > oppScore ? true : score < oppScore ? false : null;
 
-      // BOX BOX decided it when the drivers alone would not have. Its full swing
+      // The week turned on BOX BOX when the drivers alone did not separate them.
+      // Its full swing
       // is 6 (winner +5, loser -1), so any driver margin inside 6 was live.
       const decidedByBoxBox = Math.abs(drivers - oppDrivers) <= 6;
 
@@ -120,7 +121,7 @@ export function buildTeamTable(db, { fromRound = 1, toRound = 99, seed = null } 
       weeks, played, w, l, d,
       pts: 0,
       avg: played ? Math.round((weeks.reduce((a, x) => a + x.score, 0) / played) * 10) / 10 : 0,
-      // Q4, answered: the BOX BOX line is a record in the matchups it decided,
+      // Q4, answered: the BOX BOX line is a record in the matchups that turned on it,
       // not a count of pit guesses that landed.
       bbW: bb.filter(x => x.won === true).length,
       bbL: bb.filter(x => x.won === false).length,

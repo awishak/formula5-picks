@@ -5,7 +5,7 @@ import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } 
 import { displayOf } from "./teams";
 
 // The team standings, second half. Deliberately thin: position, who you are,
-// your record, who you play next, and the number that decides the title.
+// your record, who you play next, and the number the title is won on.
 // Everything else that used to be on this page moved to the team page, which
 // does not exist yet.
 
@@ -64,8 +64,8 @@ function Face({ name, photo, size }) {
 }
 
 // Form: the last five weeks, oldest first. A won week is blue, a lost one pink,
-// a draw grey. A box around the letter means BOX BOX decided it: the drivers
-// alone were within its six points of swing, so the pit call settled the week.
+// a draw grey. A box around the letter means the week turned on BOX BOX: the
+// drivers alone were within its six points of swing.
 //
 // Five rather than ten because ten wrapped onto a second line beside the
 // teammate, and a run of results that wraps stops reading as a run.
@@ -139,7 +139,7 @@ function YourTeam({ row, season, place, avgRank, teammate }) {
   );
 }
 
-// A record with no draws does not need a third number. 6-5 says what 6-5-0 says.
+// A record with no draws does not need a third number. 6-5 carries the same as 6-5-0.
 const rec = s => (s.d > 0 ? `${s.w}-${s.l}-${s.d}` : `${s.w}-${s.l}`);
 
 function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {

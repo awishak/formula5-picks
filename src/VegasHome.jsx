@@ -86,7 +86,7 @@ const SNAP = {
     bestFinish: "P3",
     pitGuess: 1.5,
   },
-  // team is the F1 constructor whose stop settles the week, from race.pitQuestion.
+  // team is the F1 constructor the stop belongs to, from race.pitQuestion.
   boxBox: { side: "OVER", line: 2.48, waitingOn: 0, team: "Alpine", guesses: { "Andrew Ishak": 1.5, "Kevin Coolidge": 1.5, "Brett Dillon": 3.5, "Stacy Michaelsen": 3.4 } },
   picksIn: { me: true, teammate: true, mate: true },
   // The four seats in the matchup, the shape useLeague returns.
@@ -189,7 +189,7 @@ const lastName = (n) => (n || "").split(" ").slice(-1)[0];
 // First three of the surname matches the real F1 acronym for every driver on the
 // 2026 grid, so no lookup table is needed here.
 const code3 = (n) => lastName(n).slice(0, 3).toUpperCase();
-// The marquee says the place, not the words "Grand Prix", which sit on the line below.
+// The marquee carries the place, not the words "Grand Prix", which sit on the line below.
 const shortRace = (n) => (n || "").replace(/\s*Grand Prix\s*/i, "").trim();
 
 // ── Primitives ───────────────────────────────────────────
@@ -1351,7 +1351,7 @@ function OpponentCard() {
           )}
 
           {/* The two people you are playing, under the run of results rather
-              than beside the results, and ranked rather than averaged: a rank says where
+              than beside the results, and ranked rather than averaged: in a rank you can see where
               they sit without you having to know what a good average is. */}
           <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
             {opp.players.map(pl => (
@@ -1441,7 +1441,7 @@ function BoxBoxCard() {
 //
 // Three ways a week arrives here, and the screen has to say which:
 //   you did not pick        nothing of yours to show, and nothing to be done
-//   someone else is missing the line is an average, so it is not settled
+//   someone else is missing the line is an average, so the number can still move
 //   all four are in         the line is final and the week is set
 function HomeLocked() {
   const { race, seats = [], boxBox, myTeam, opp } = useWeek();
@@ -1522,10 +1522,11 @@ function HomeLocked() {
           </span>
         </div>
         <p style={{ ...body("body"), color: V.text2, margin: "10px 0 0" }}>
-          {race.pitQuestion || "The pit stop"} settles the week. Your team scores{" "}
+          {race.pitQuestion || "The pit stop"}. Your team scores{" "}
           <span style={{ color: V.green }}>+5</span> if the stop lands{" "}
-          {boxBox.side === "OVER" ? "above" : "below"} the line, and{" "}
-          <span style={{ color: V.pink }}>&minus;1</span> if it does not.
+          {boxBox.side === "OVER" ? "above" : "below"}{" "}
+          {boxBox.line != null ? `${boxBox.line.toFixed(2)}s` : "the line"}, and{" "}
+          <span style={{ color: V.pink }}>&minus;1</span> if the stop lands the other side.
         </p>
         {waiting > 0 && (
           <p style={{ ...body("bodySm"), fontSize: 14, color: V.pink, margin: "10px 0 0" }}>
@@ -1554,7 +1555,7 @@ function HomeLocked() {
 function RootingBoard({ order, live, lapInfo, settled = false }) {
   const { myTeam, opp, boxBox } = useWeek();
   const boxSide = boxBox.side;
-  // Before lights out nothing has pitted; during the race the snapshot says.
+  // Before lights out nothing has pitted; during the race the snapshot has it.
   const pitted = settled ? true : live ? lapInfo.alpineStopped : false;
   const { rows, totalMine, totalTheirs } = readBoard(order);
   const winning = totalMine > totalTheirs;

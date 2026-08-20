@@ -112,7 +112,7 @@ export async function driverStandings(year = 2026, canonical = (n) => n, { cache
     .map(([name, pts]) => ({ name, points: pts, rounds: rounds[name] }))
     // Ties break on name, so the order is the same on every run. Two drivers
     // level would otherwise swap between draws, and which band they land in
-    // decides whether they can be picked at all.
+    // is what makes them pickable at all.
     .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
   table.sessions = sessions.length - skipped.length;
   table.skipped = skipped;
