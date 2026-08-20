@@ -1501,8 +1501,6 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
 
   return (
     <div style={{ ...card({ padding: "16px 14px 16px", marginBottom: 18 }), borderColor: `${V.gold}33` }}>
-      <Label color={V.gold} style={{ marginBottom: 10 }}>The BOX BOX line</Label>
-
       <div ref={wrap} style={{ position: "relative", height: HEIGHT, minWidth: 0 }}>
         {w > 0 && (
           <>
@@ -1558,46 +1556,64 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
         )}
       </div>
 
-      {/* The number sits under the line it labels, with each team beside it
-          pointing at the side they win on. */}
-      {w > 0 && line != null && (
-        <div style={{ position: "relative", height: 52, marginTop: 2 }}>
-          <div style={{
-            position: "absolute", top: 0,
-            left: Math.min(Math.max(x(line) - 103, 0), Math.max(0, w - 206)),
-            width: 206, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-          }}>
-            <div style={{ textAlign: "center", width: 42 }}>
-              {under && under.logo
-                ? <img src={under.logo} alt="" style={{ width: 26, height: 26, objectFit: "contain" }} />
-                : <div style={{ width: 26, height: 26, borderRadius: 6, margin: "0 auto",
-                                background: V.bg3, border: `2px solid ${ours === "left" ? V.blue : V.pink}` }} />}
-              <div style={{ ...display("chip"), fontSize: 11,
-                            color: ours === "left" ? V.blue : V.pink, marginTop: 2 }}>UNDER</div>
-            </div>
-            <Marker dir="left" color={ours === "left" ? V.blue : V.pink} />
-            <div style={{ ...numeric("h1"), fontSize: 30, ...textGlow(V.gold, 0.8), lineHeight: 1 }}>
-              {line.toFixed(2)}
-            </div>
-            <Marker dir="right" color={ours === "right" ? V.blue : V.pink} />
-            <div style={{ textAlign: "center", width: 42 }}>
-              {over && over.logo
-                ? <img src={over.logo} alt="" style={{ width: 26, height: 26, objectFit: "contain" }} />
-                : <div style={{ width: 26, height: 26, borderRadius: 6, margin: "0 auto",
-                                background: V.bg3, border: `2px solid ${ours === "right" ? V.blue : V.pink}` }} />}
-              <div style={{ ...display("chip"), fontSize: 11,
-                            color: ours === "right" ? V.blue : V.pink, marginTop: 2 }}>OVER</div>
+      {/* The number under the line it labels, the two teams either side of it,
+          and the arrows outside them running to the ends of the range: your
+          side wins anywhere in that direction. */}
+      {w > 0 && line != null && (() => {
+        const GW = 172, GAP = 8;
+        const gl = Math.min(Math.max(x(line) - GW / 2, PAD), Math.max(PAD, w - PAD - GW));
+        const Side = ({ t, mine, word }) => (
+          <div style={{ textAlign: "center", width: 40 }}>
+            {t && t.logo
+              ? <img src={t.logo} alt="" style={{ width: 28, height: 28, objectFit: "contain" }} />
+              : <div style={{ width: 28, height: 28, borderRadius: 6, margin: "0 auto",
+                              background: V.bg3, border: `2px solid ${mine ? V.blue : V.pink}` }} />}
+            <div style={{ ...display("chip"), fontSize: 11, color: mine ? V.blue : V.pink, marginTop: 2 }}>
+              {word}
             </div>
           </div>
-        </div>
-      )}
+        );
+        const arrows = [
+          { dir: "left", c: ours === "left" ? V.blue : V.pink, from: gl - GAP, to: PAD },
+          { dir: "right", c: ours === "right" ? V.blue : V.pink, from: gl + GW + GAP, to: w - PAD },
+        ];
+        return (
+          <div style={{ position: "relative", height: 56, marginTop: 2 }}>
+            <svg width="100%" height="56" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+              {arrows.map(a => (
+                <g key={a.dir}>
+                  <line x1={a.from} y1="16" x2={a.dir === "left" ? a.to + 11 : a.to - 11} y2="16"
+                        stroke={a.c} strokeWidth="5" strokeLinecap="round"
+                        style={{ filter: `drop-shadow(0 0 5px ${a.c})` }} />
+                  <path d={a.dir === "left"
+                    ? `M ${a.to} 16 L ${a.to + 12} 9 L ${a.to + 12} 23 z`
+                    : `M ${a.to} 16 L ${a.to - 12} 9 L ${a.to - 12} 23 z`}
+                    fill={a.c} style={{ filter: `drop-shadow(0 0 5px ${a.c})` }} />
+                </g>
+              ))}
+            </svg>
+            <div style={{
+              position: "absolute", top: 0, left: gl, width: GW,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+            }}>
+              <Side t={under} mine={ours === "left"} word="UNDER" />
+              <div style={{ textAlign: "center" }}>
+                <div style={{ ...numeric("h1"), fontSize: 26, ...textGlow(V.gold, 0.8), lineHeight: 1 }}>
+                  {line.toFixed(2)}
+                </div>
+                <div style={{ ...display("chip"), fontSize: 10, color: V.gold, marginTop: 3,
+                              letterSpacing: "0.12em" }}>BOX BOX LINE</div>
+              </div>
+              <Side t={over} mine={ours === "right"} word="OVER" />
+            </div>
+          </div>
+        );
+      })()}
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 4 }}>
-        {/* No constructor logos in the app, so the mark is that team's colour. */}
-        <span style={{ width: 12, height: 12, borderRadius: 3, background: cColor,
-                       boxShadow: `0 0 8px ${cColor}` }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 6 }}>
         <span style={{ ...body("bodyMd"), fontSize: 15, color: V.text2 }}>
-          {/* Mercedes', Williams', Haas'. Everyone else takes 's. */}
+          {/* Mercedes', Williams', Haas'. Everyone else takes 's. No colour
+              swatch: a blue mark beside a blue team reads as ownership. */}
           {boxBox.team
             ? `${boxBox.team}${boxBox.team.endsWith("s") ? "\u2019" : "\u2019s"} first pit stop`
             : "The first pit stop"}
@@ -1607,6 +1623,119 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
   );
 }
 
+
+
+// The same board turned on its side: the four players across the top, their
+// five picks down. A driver on more than one card is still joined by a line,
+// same colours and same layering.
+function HandsColumns({ seats }) {
+  const wrap = useRef(null);
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    const read = () => setW(el.clientWidth);
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const hands = seats.slice(0, 4);
+  const HEAD = 46, ROW = 74, FACE = 40;
+  const colW = w > 0 ? w / hands.length : 0;
+  const cx = (c) => colW * (c + 0.5);
+  const cy = (r) => HEAD + ROW * r + ROW / 2 - 8;
+  const height = HEAD + ROW * 5;
+
+  const spots = {};
+  hands.forEach((h, c) => {
+    (h.pick ? h.pick.order : []).slice(0, 5).forEach((name, r) => {
+      (spots[name] ||= []).push({ r, c, ours: h.ours });
+    });
+  });
+  const tone = (name) => {
+    const at = spots[name] || [];
+    const mine = at.filter(p => p.ours).length;
+    return mine > at.length - mine ? "mine" : at.length - mine > mine ? "theirs" : "level";
+  };
+  const COLOR = { mine: V.blue, theirs: V.pink, level: V.text2 };
+  const lines = Object.entries(spots).filter(([, at]) => at.length > 1).map(([name, at]) => ({
+    name, t: tone(name),
+    d: at.slice().sort((a, b) => a.c - b.c).map(p => `${cx(p.c)},${cy(p.r)}`).join(" "),
+  }));
+
+  const Layer = ({ which, z }) => (
+    <svg width="100%" height={height} style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
+      {lines.filter(l => l.t === which).map(l => (
+        <polyline key={l.name} points={l.d} fill="none" stroke={COLOR[which]}
+          strokeWidth={which === "level" ? 3.5 : 5} strokeLinecap="round" strokeLinejoin="round"
+          opacity={which === "level" ? 0.5 : 1}
+          style={which === "level" ? undefined : { filter: `drop-shadow(0 0 6px ${COLOR[which]})` }} />
+      ))}
+    </svg>
+  );
+
+  const Drivers = ({ which, z }) => (
+    <div style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
+      {hands.flatMap((h, c) => (h.pick ? h.pick.order : []).slice(0, 5).map((name, r) => {
+        const t = tone(name);
+        if (which === "level" ? t !== "level" : t === "level") return null;
+        return (
+          <div key={`${c}-${r}`} style={{
+            position: "absolute", left: cx(c) - FACE / 2, top: cy(r) - FACE / 2,
+            width: FACE, textAlign: "center",
+          }}>
+            <Face name={name} size={FACE} ring={COLOR[t]} edge={3}
+                  glow={t === "level" ? 0 : 1.1} drained={t === "level"} />
+            <div style={{
+              marginTop: -6, display: "inline-block", position: "relative",
+              maxWidth: Math.max(56, colW - 2),
+              padding: "2px 5px", borderRadius: 7, background: "#000",
+              border: `1px solid ${t === "level" ? V.border : COLOR[t]}`,
+              fontFamily: FD, fontWeight: 700, fontSize: 10, lineHeight: 1.35,
+              color: t === "level" ? V.text2 : "#fff",
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            }}>{lastName(name)}</div>
+          </div>
+        );
+      }))}
+    </div>
+  );
+
+  return (
+    <div style={{ ...card({ padding: "14px 10px", marginBottom: 18 }) }}>
+      <Label color={V.blue} style={{ marginBottom: 10 }}>The four hands</Label>
+      <div ref={wrap} style={{ position: "relative", height, minWidth: 0 }}>
+        <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+          {hands.map((h, c) => (
+            <div key={h.id} style={{
+              position: "absolute", left: cx(c) - colW / 2, top: 0, width: colW, textAlign: "center",
+            }}>
+              <div style={{
+                ...display("chip"), fontSize: 13, lineHeight: 1.2,
+                color: h.mine ? V.blue : h.ours ? V.text : V.pink,
+                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px",
+              }}>{h.mine ? "You" : h.name.split(" ")[0]}</div>
+              <div style={{ ...body("bodySm"), fontSize: 11, color: V.text2 }}>
+                {h.pick ? `${h.pick.bestFinish} · ${h.pick.pitGuess.toFixed(1)}s` : "no picks"}
+              </div>
+            </div>
+          ))}
+        </div>
+        {w > 0 && (
+          <>
+            <Layer which="level" z={1} />
+            <Drivers which="level" z={2} />
+            <Layer which="theirs" z={3} />
+            <Layer which="mine" z={4} />
+            <Drivers which="owned" z={5} />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // Four hands, five drivers each, in the order that player put them.
 //
@@ -1622,6 +1751,11 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
 // blue and pink drivers on top. So a contested driver is never buried under a
 // line for a driver nobody is fighting over.
 function HandsBoard({ seats }) {
+  // ?hands=cols turns the board on its side: players across the top, the five
+  // slots down. A mockup to compare against, not a setting.
+  const cols4 = typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("hands") === "cols";
+  if (cols4) return <HandsColumns seats={seats} />;
   const wrap = useRef(null);
   const [w, setW] = useState(0);
   useEffect(() => {
