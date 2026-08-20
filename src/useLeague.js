@@ -169,6 +169,9 @@ export function useLeague(currentUser, { round = null } = {}) {
           // The four seats in this matchup, in team order. Picks are only
           // filled in once the deadline has gone: before that nobody outside
           // your own team can see them, which is the same rule PickIntel uses.
+          // Whether Admin has run this race yet. Everything that used to ask
+          // "is there a score on this seat" now asks this once.
+          scored: scores.some(x => x.race_id === race.id),
           teamBoxBox: {
             mine: myTeamRow && scoreOf[myTeamRow.player1_id] ? scoreOf[myTeamRow.player1_id].boxBox : 0,
             theirs: oppRow && scoreOf[oppRow.player1_id] ? scoreOf[oppRow.player1_id].boxBox : 0,

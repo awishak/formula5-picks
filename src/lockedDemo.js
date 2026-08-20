@@ -34,22 +34,29 @@ const pick = (order, best, guess) => ({ topPick: order[0], order, bestFinish: be
 // the total is their sum, so the columns add up to the number above them.
 const score = (top, mid, best, order) => ({ top, mid, best, order, total: top + mid + best + order });
 
-const seat = (who, ours, mine, picked, p, sc) => ({
+const seat = (who, ours, mine, picked, p, sc, scored = true) => ({
   id: who.name, name: who.name, photo: who.photo, ours, mine, picked,
   pick: picked ? p : null,
-  team: ours ? "Cal Aggie Racing" : "HomeworkTubes.Com", score: picked ? sc : null,
+  team: ours ? "Cal Aggie Racing" : "HomeworkTubes.Com",
+  score: picked && scored ? sc : null,
 });
 
-// case: everyone in / someone missing / you missed it
+// case: everyone in / someone missing / you missed it / not scored yet
+//
+// "pending" is the same week between the deadline going and Admin scoring it:
+// every pick visible, no points anywhere. Nobody had ever looked at that screen,
+// and it is the one 48 people get for a few hours every Sunday.
 export function lockedDemo(kind = "all") {
   const youPicked = kind !== "missed";
   const matePicked = kind !== "waiting";
+  const scored = kind !== "pending";
   const guesses = [
     youPicked ? 2 : null, matePicked ? 2 : null, 3.3, 2.3,
   ].filter(v => v != null);
 
   return {
     loading: false,
+    scored,
     me: ROSTER.me.name,
     teammate: ROSTER.mate.name,
     locked: true,
@@ -74,10 +81,10 @@ export function lockedDemo(kind = "all") {
     myPick: youPicked ? pick(drivers, "P1", 2) : null,
     matePick: matePicked ? pick(other, "P1", 2) : null,
     seats: [
-      seat(ROSTER.me, true, true, youPicked, pick(drivers, "P1", 2), score(15, 17, 0, 0)),
-      seat(ROSTER.mate, true, false, matePicked, pick(other, "P1", 2), score(18, 10, 0, 0)),
-      seat(ROSTER.a, false, false, true, pick(themA, "P2", 3.3), score(15, 18, 0, 6)),
-      seat(ROSTER.b, false, false, true, pick(themB, "P1", 2.3), score(18, 17, 0, 0)),
+      seat(ROSTER.me, true, true, youPicked, pick(drivers, "P1", 2), score(15, 17, 0, 0), scored),
+      seat(ROSTER.mate, true, false, matePicked, pick(other, "P1", 2), score(18, 10, 0, 0), scored),
+      seat(ROSTER.a, false, false, true, pick(themA, "P2", 3.3), score(15, 18, 0, 6), scored),
+      seat(ROSTER.b, false, false, true, pick(themB, "P1", 2.3), score(18, 17, 0, 0), scored),
     ],
     boxBox: {
       side: "OVER",
@@ -88,12 +95,12 @@ export function lockedDemo(kind = "all") {
       // recap flagged as either a disaster or a typo, and it is left alone
       // here: it is what the row says, and it is the case the scale has to
       // survive, since the line only runs to 4.5.
-      stop: 10,
+      stop: scored ? 10 : null,
       guesses: {},
     },
     // Cal Aggie had the over and the stop came in at ten seconds, so BOX BOX
     // went their way: five to the winner, one off the loser.
-    teamBoxBox: { mine: 5, theirs: -1 },
+    teamBoxBox: scored ? { mine: 5, theirs: -1 } : { mine: 0, theirs: 0 },
     // What each driver paid at Silverstone. Same for everybody: a driver is
     // worth what he finished, and who picked him only decides who collects.
     driverPts: {

@@ -66,7 +66,9 @@ const SNAP = {
   // automated pools. Consistent with the pools: the top three sit inside
   // positions 1-5 and the seven midfielders inside 6-15.
   teamBoxBox: { mine: 5, theirs: -1 },
-  driverPts: {},
+  driverPts: { "Lewis Hamilton": 15, "Max Verstappen": 10, "Isack Hadjar": 6,
+    "Liam Lawson": 2, "Arvid Lindblad": 0, "Lando Norris": 18, "Pierre Gasly": 1,
+    "Oliver Bearman": -1 },
   f1Points: {
     "Lando Norris": 241, "Oscar Piastri": 219, "George Russell": 198,
     "Lewis Hamilton": 176, "Charles Leclerc": 165, "Andrea Kimi Antonelli": 149,
@@ -95,12 +97,16 @@ const SNAP = {
   // The four seats in the matchup, the shape useLeague returns.
   seats: [
     { id: "a", name: "Andrew Ishak", photo: null, ours: true, mine: true, picked: true,
+      score: { top: 15, mid: 17, best: 0, order: 0, total: 32 },
       pick: { topPick: "Lewis Hamilton", order: ["Lewis Hamilton", "Max Verstappen", "Isack Hadjar", "Liam Lawson", "Arvid Lindblad"], bestFinish: "P3", pitGuess: 1.5 } },
     { id: "b", name: "Kevin Coolidge", photo: null, ours: true, mine: false, picked: true,
+      score: { top: 18, mid: 10, best: 0, order: 0, total: 28 },
       pick: { topPick: "Lewis Hamilton", order: ["Lewis Hamilton", "Max Verstappen", "Isack Hadjar", "Liam Lawson", "Arvid Lindblad"], bestFinish: "P3", pitGuess: 1.5 } },
     { id: "c", name: "Brett Dillon", photo: null, ours: false, mine: false, picked: true,
+      score: { top: 15, mid: 18, best: 0, order: 6, total: 39 },
       pick: { topPick: "Lando Norris", order: ["Lando Norris", "Isack Hadjar", "Liam Lawson", "Pierre Gasly", "Oliver Bearman"], bestFinish: "P1", pitGuess: 3.5 } },
     { id: "d", name: "Stacy Michaelsen", photo: null, ours: false, mine: false, picked: true,
+      score: { top: 18, mid: 17, best: 3, order: 0, total: 38 },
       pick: { topPick: "Lando Norris", order: ["Lando Norris", "Isack Hadjar", "Liam Lawson", "Pierre Gasly", "Oliver Bearman"], bestFinish: "P2", pitGuess: 3.4 } },
   ],
   // Real qualifying result, session_key 11338.
@@ -1781,7 +1787,7 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox }) {
 }
 
 // The two teams and where the week stands.
-function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under }) {
+function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under, scored = true }) {
   // Only the team in front glows. Green on its own is the resting state, so a
   // lit card means something happened rather than "this one is yours".
   const Card = ({ t, total, c, side, won }) => (
@@ -1803,11 +1809,14 @@ function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under }) {
         lineHeight: 1.25, whiteSpace: "nowrap",
       }}>{!t ? "\u2014" : t.name.length > 16 && t.short ? t.short : t.name}</div>
       <div style={{ ...display("chip"), fontSize: 11, color: c, marginTop: 2 }}>{side}</div>
-      <div style={{ ...numeric("hero"), fontSize: 44, color: c, marginTop: 6,
-                    ...(won ? textGlow(c, 0.9) : {}) }}>{total}</div>
+      <div style={{ ...numeric("hero"), fontSize: 44, color: scored ? c : V.text3,
+                    marginTop: 6, ...(won ? textGlow(c, 0.9) : {}) }}>
+        {scored ? total : "\u2013"}
+      </div>
     </div>
   );
-  const mineWon = mineTotal > theirTotal, theirsWon = theirTotal > mineTotal;
+  // Nothing is won before it is scored, so nothing lights up.
+  const mineWon = scored && mineTotal > theirTotal, theirsWon = scored && theirTotal > mineTotal;
   const left = under === "mine"
     ? { t: myTeam, total: mineTotal, c: MINE, side: "UNDER", won: mineWon }
     : { t: opp, total: theirTotal, c: THEIRS, side: "UNDER", won: theirsWon };
@@ -1903,7 +1912,7 @@ function RootingCard({ seats, boxBox }) {
 // read against the number on the right without a legend.
 //
 // UNDER on the left, OVER on the right, always.
-function HandsColumns({ seats, under, driverPts = {} }) {
+function HandsColumns({ seats, under, driverPts = {}, scored = true }) {
   const wrap = useRef(null);
   const [w, setW] = useState(0);
   useEffect(() => {
@@ -1999,7 +2008,7 @@ function HandsColumns({ seats, under, driverPts = {} }) {
         // Once the week is scored, what he paid goes on his face. Same size as
         // the totals underneath and the colour of his ring, so a column reads
         // down as five numbers and across as the same driver twice.
-        const pts = h.score ? driverPts[name] : undefined;
+        const pts = scored ? driverPts[name] : undefined;
         return (
           <div key={`${c}-${r}`} style={{
             position: "absolute", left: cx(c) - FACE / 2, top: cy(r) - FACE / 2,
@@ -2058,9 +2067,11 @@ function HandsColumns({ seats, under, driverPts = {} }) {
                 <PlayerBadge name={h.name} picked={false} dim={false} ring={col}
                              photo={h.photo} size={54} />
                 <Plate text={h.mine ? "You" : lastName(h.name)} c={col} size={13} top={-8} />
-                <div style={{ ...numeric("h3"), fontSize: 22, color: col, marginTop: 4 }}>
-                  {h.score ? h.score.total : "\u2014"}
-                </div>
+                {scored && (
+                  <div style={{ ...numeric("h3"), fontSize: 22, color: col, marginTop: 4 }}>
+                    {h.score ? h.score.total : "\u2014"}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -2076,7 +2087,31 @@ function HandsColumns({ seats, under, driverPts = {} }) {
         )}
       </div>
 
-      {w > 0 && (
+      {/* Before the race there are no components to compare, but the best
+          finish each player called is a pick and not a score, so that one line
+          stays and the other three wait. */}
+      {w > 0 && !scored && (
+        <div style={{ marginTop: 6, display: "flex", alignItems: "center", padding: "5px 0",
+                      borderTop: `1px solid ${V.border}` }}>
+          {cols.map((h, c) => {
+            const cell = (
+              <div key={h.id} style={{ width: colW, textAlign: "center" }}>
+                <div style={{ ...display("chip"), fontSize: 15, color: h.ours ? MINE : THEIRS }}>
+                  {h.pick ? h.pick.bestFinish : "\u2014"}
+                </div>
+              </div>
+            );
+            return c === 2
+              ? [<div key="lab" style={{
+                  width: MID, textAlign: "center", ...display("chip"), fontSize: 13,
+                  color: DIVIDE, letterSpacing: "0.04em", lineHeight: 1.15,
+                }}><div>Best</div><div>finish</div></div>, cell]
+              : cell;
+          })}
+        </div>
+      )}
+
+      {w > 0 && scored && (
         <div style={{ marginTop: 6 }}>
           {ROWS.map(row => (
             <div key={row.k} style={{ display: "flex", alignItems: "center", padding: "5px 0",
@@ -2285,7 +2320,7 @@ function HandsBoard({ seats }) {
 //   you did not pick        nothing of yours to show, and nothing to be done
 //   someone else is missing the line is an average, so the number can still move
 //   all four are in         the line is final and the week is set
-function HomeLocked() {
+function HomeLocked({ scored: scoredWeek = true }) {
   const week = useWeek();
   const { race, seats = [], boxBox, myTeam, opp } = week;
   const mine = seats.filter(s => s.ours);
@@ -2357,6 +2392,11 @@ function HomeLocked() {
       )}
 
       {(() => {
+        // Scored is one fact about the week, asked once. It used to be worked
+        // out seven times over from whether some piece of data happened to be
+        // there, and one of those decided whether the race had run by checking
+        // whether a points value was zero.
+        const scored = scoredWeek;
         const bb = week.teamBoxBox || { mine: 0, theirs: 0 };
         const tot = (ours) => seats.filter(s => s.ours === ours)
           .reduce((a, s) => a + (s.score ? s.score.total : 0), 0)
@@ -2364,10 +2404,11 @@ function HomeLocked() {
         const under = boxBox.side === "UNDER" ? "mine" : "theirs";
         return (
           <>
-            <Scoreboard myTeam={myTeam} opp={opp} under={under}
+            <Scoreboard myTeam={myTeam} opp={opp} under={under} scored={scored}
                         mineTotal={tot(true)} theirTotal={tot(false)} />
-            <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under} boxBox={boxBox} />
-            <HandsColumns seats={seats} under={under} driverPts={week.driverPts || {}} />
+            {scored && <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under} boxBox={boxBox} />}
+            <HandsColumns seats={seats} under={under} scored={scored}
+                          driverPts={week.driverPts || {}} />
             <BoxBoxLine seats={seats} boxBox={boxBox} myTeam={myTeam} opp={opp} />
             <RootingCard seats={seats} boxBox={boxBox} />
           </>
@@ -2796,7 +2837,7 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
   // ?demo=r11 is the same screen on a week that actually happened: real logos,
   // real faces, the picks people made and the points they scored.
   const pinned = /^r\d+$/.test(kind || "") ? Number((kind || "").slice(1)) : null;
-  const demo = ["all", "waiting", "missed"].includes(kind) ? lockedDemo(kind) : null;
+  const demo = ["all", "waiting", "missed", "pending"].includes(kind) ? lockedDemo(kind) : null;
   const loaded = useLeague(given || demo ? null : currentUser, { round: pinned });
   const week = given || demo || loaded;
 
@@ -2812,8 +2853,13 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
   // The state is the week, not a control. Before the deadline it is whether the
   // picks are in; after the deadline, they are locked. Live and final need a running
   // order, which has no source yet, so nothing reaches them.
+  // locked is the deadline having gone; final is the race having been run and
+  // scored. They render the same screen, because they are the same week at two
+  // moments, but they are not the same state and the screen asks which.
+  const locked = pinned || week.locked;
   const state = initialState
-    || (pinned ? "locked" : week.locked ? "locked" : week.picksIn && week.picksIn.me ? "submitted" : "open");
+    || (locked ? (week.scored ? "final" : "locked")
+      : week.picksIn && week.picksIn.me ? "submitted" : "open");
   const nav = onNavigate || (() => {});
 
   const Toggle = ({ opts, val, set }) => (
@@ -2851,7 +2897,7 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
         {tab === "kit" ? <NeonKit /> : (
           state === "open" || state === "submitted"
             ? <HomeOpen onNav={nav} submitted={state === "submitted"} />
-            : <HomeLocked />
+            : <HomeLocked scored={state === "final"} />
         )}
       </div>
     </div>
