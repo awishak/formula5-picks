@@ -1714,47 +1714,50 @@ const MINE = V.green, THEIRS = V.pink, DIVIDE = V.blue;
 // Where the BOX BOX points went. It is six of swing and it is already inside
 // the two numbers above, so the only question this answers is which team took
 // it, and the box is that team's colour.
-function BoxBoxScore({ myTeam, opp, bb, under, boxBox }) {
-  if (!bb || (bb.mine === 0 && bb.theirs === 0)) return null;
+function BoxBoxScore({ myTeam, opp, bb, under, boxBox, scored = true }) {
+  const line = boxBox && boxBox.line, stop = boxBox && boxBox.stop;
+  if (line == null) return null;
+  // Undecided is blue, the same blue as the line, because blue is the divider
+  // and nothing has fallen either side of it yet.
+  const decided = scored && (bb.mine !== 0 || bb.theirs !== 0);
   const mineWon = bb.mine > bb.theirs;
-  const c = mineWon ? MINE : THEIRS;
-  const left = under === "mine" ? { t: myTeam, v: bb.mine, won: mineWon }
-                                : { t: opp, v: bb.theirs, won: !mineWon };
-  const right = under === "mine" ? { t: opp, v: bb.theirs, won: !mineWon }
-                                 : { t: myTeam, v: bb.mine, won: mineWon };
+  const c = !decided ? DIVIDE : mineWon ? MINE : THEIRS;
+  const left = under === "mine" ? { t: myTeam, v: bb.mine, won: decided && mineWon }
+                                : { t: opp, v: bb.theirs, won: decided && !mineWon };
+  const right = under === "mine" ? { t: opp, v: bb.theirs, won: decided && !mineWon }
+                                 : { t: myTeam, v: bb.mine, won: decided && mineWon };
   const Side = ({ t, v, won, align }) => (
     <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 7,
                   justifyContent: align, minWidth: 0 }}>
       <span style={{ ...display("chip"), fontSize: 13, color: V.text2 }}>
         {t ? (t.code || t.short || t.name) : "\u2014"}
       </span>
-      <span style={{ ...numeric("chip"), fontSize: 22, color: won ? c : V.text2,
+      <span style={{ ...numeric("chip"), fontSize: 22,
+                     color: won ? c : decided ? V.text2 : V.text3,
                      ...(won ? textGlow(c, 0.9) : {}) }}>
-        {v > 0 ? `+${v}` : v < 0 ? `\u2212${Math.abs(v)}` : v}
+        {!decided ? "\u2013" : v > 0 ? `+${v}` : v < 0 ? `\u2212${Math.abs(v)}` : v}
       </span>
     </div>
   );
-  // The line and the stop, on the scale they were called against. Nothing else
-  // goes in here: the full card lower down is where the guesses and the teams
-  // live, and this is only the two numbers that decided it.
+
   const MIN = 1.5, MAX = 4.5;
   const pct = (v) => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
   const TICKS = [1.5, 2, 2.5, 3, 3.5, 4, 4.5];
-  const line = boxBox && boxBox.line, stop = boxBox && boxBox.stop;
+  const AXIS = 26;
   const Tick = ({ v, color, wide }) => (
     <div style={{
-      position: "absolute", left: `${pct(v)}%`, top: wide ? 0 : 4,
+      position: "absolute", left: `${pct(v)}%`, top: AXIS + (wide ? -7 : -3),
       width: wide ? 4 : 2, height: wide ? 16 : 8, marginLeft: wide ? -2 : -1,
       borderRadius: 2, background: color,
       ...(wide ? { boxShadow: `0 0 6px ${color}` } : {}),
     }} />
   );
   // Clamped, so a stop out on the 4.5 end keeps its number inside the box.
+  const at = (v, w) => `clamp(0px, calc(${pct(v)}% - ${w / 2}px), calc(100% - ${w}px))`;
   const Value = ({ v, text, color }) => (
     <div style={{
-      position: "absolute", top: 18, width: 44, textAlign: "center",
-      left: `clamp(0px, calc(${pct(v)}% - 22px), calc(100% - 44px))`,
-      ...numeric("chip"), fontSize: 12, color,
+      position: "absolute", top: AXIS + 13, width: 44, textAlign: "center",
+      left: at(v, 44), ...numeric("chip"), fontSize: 12, color,
     }}>{text}</div>
   );
 
@@ -1765,23 +1768,27 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox }) {
     }}>
       <div style={{ display: "flex", alignItems: "center" }}>
         <Side {...left} align="flex-start" />
-        <span style={{ ...display("chip"), fontSize: 12, color: c,
-                       letterSpacing: "0.06em", textTransform: "uppercase" }}>
-          Box box
-        </span>
         <Side {...right} align="flex-end" />
       </div>
-      {line != null && stop != null && (
-        <div style={{ position: "relative", height: 32, margin: "8px 4px 0" }}>
-          <div style={{ position: "absolute", left: 0, right: 0, top: 7,
-                        height: 2, borderRadius: 2, background: V.border2 }} />
-          {TICKS.map(t => <Tick key={t} v={t} color={V.border2} />)}
-          <Tick v={line} color={DIVIDE} wide />
-          <Tick v={stop} color={c} wide />
-          <Value v={line} text={line.toFixed(2)} color={DIVIDE} />
-          <Value v={stop} text={stop.toFixed(2)} color={c} />
-        </div>
-      )}
+      <div style={{ position: "relative", height: AXIS + 30, margin: "6px 4px 0" }}>
+        {/* The label sits on the line it names, on a plate like the drivers
+            wear, so it reads as a marker on the scale rather than a heading
+            for the box. */}
+        <div style={{
+          position: "absolute", top: 0, width: 78, textAlign: "center", left: at(line, 78),
+          padding: "2px 5px", borderRadius: 7, background: "#000",
+          border: `1px solid ${DIVIDE}`, boxSizing: "border-box",
+          fontFamily: FD, fontWeight: 700, fontSize: 11, lineHeight: 1.35,
+          letterSpacing: "0.04em", color: DIVIDE, whiteSpace: "nowrap",
+        }}>BOX BOX</div>
+        <div style={{ position: "absolute", left: 0, right: 0, top: AXIS,
+                      height: 2, borderRadius: 2, background: V.border2 }} />
+        {TICKS.map(t => <Tick key={t} v={t} color={V.border2} />)}
+        <Tick v={line} color={DIVIDE} wide />
+        <Value v={line} text={line.toFixed(2)} color={DIVIDE} />
+        {stop != null && <Tick v={stop} color={c} wide />}
+        {stop != null && <Value v={stop} text={stop.toFixed(2)} color={c} />}
+      </div>
     </div>
   );
 }
@@ -2406,7 +2413,8 @@ function HomeLocked({ scored: scoredWeek = true }) {
           <>
             <Scoreboard myTeam={myTeam} opp={opp} under={under} scored={scored}
                         mineTotal={tot(true)} theirTotal={tot(false)} />
-            {scored && <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under} boxBox={boxBox} />}
+            <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under}
+                         boxBox={boxBox} scored={scored} />
             <HandsColumns seats={seats} under={under} scored={scored}
                           driverPts={week.driverPts || {}} />
             <BoxBoxLine seats={seats} boxBox={boxBox} myTeam={myTeam} opp={opp} />
