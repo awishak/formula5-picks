@@ -103,7 +103,7 @@ export const label = (extra = {}) => ({
 // size steps down as the race name gets longer rather than wrapping mid-word.
 export const marquee = (text, extra = {}) => {
   const n = (text || "").length;
-  const fontSize = n <= 7 ? 40 : n <= 10 ? 33 : n <= 14 ? 26 : 21;
+  const fontSize = n <= 7 ? 45 : n <= 10 ? 37 : n <= 14 ? 29 : 23;
   return { fontFamily: FM, fontWeight: 400, fontSize, lineHeight: 1.25, letterSpacing: "0.02em", ...extra };
 };
 

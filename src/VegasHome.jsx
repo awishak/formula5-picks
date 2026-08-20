@@ -451,10 +451,7 @@ function Marquee({ race, status, time }) {
       background: `radial-gradient(120% 100% at 50% 0%, ${V.blue}14 0%, ${V.bg2} 60%)`,
       borderColor: `${V.blue}33`,
     }}>
-      <div style={{ marginBottom: 6 }}>
-        {/* Just the round. Whether there are 22 or 23 is up to the FIA. */}
-        <Chip color={V.blue}>Round {race.round}</Chip>
-      </div>
+
 
       <p style={{
         ...marquee(shortRace(race.name)), lineHeight: 1.02, ...textGlow(V.pink),
@@ -1761,6 +1758,12 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, scored = true }) {
   const pct = (v) => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
   const TICKS = [1.5, 2, 2.5, 3, 3.5, 4, 4.5];
   const AXIS = 26;
+  // Which way you want it to go. Over the line is your side in an over week and
+  // theirs in an under one, so the green is on the right or the left depending
+  // on the seat, never on a fixed side.
+  const cColor = F1_TEAM_COLORS[boxBox.team] || DIVIDE;
+  const oursRight = boxBox.side === "OVER";
+  const rightC = oursRight ? MINE : THEIRS, leftC = oursRight ? THEIRS : MINE;
   const Tick = ({ v, color, wide }) => (
     <div style={{
       position: "absolute", left: `${pct(v)}%`, top: AXIS + (wide ? -7 : -3),
@@ -1783,11 +1786,19 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, scored = true }) {
       padding: "9px 14px 10px", marginBottom: 14,
       borderRadius: 14, background: `${c}14`, border: `2px solid ${c}`,
     }}>
-      <div style={{ display: "flex", alignItems: "center" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <Side {...left} align="flex-start" />
+        {boxBox.team && (
+          <div style={{
+            padding: "2px 7px", borderRadius: 7, background: "#000", flexShrink: 0,
+            border: `1px solid ${cColor}`, fontFamily: FD, fontWeight: 700,
+            fontSize: 11, lineHeight: 1.35, letterSpacing: "0.04em",
+            color: cColor, whiteSpace: "nowrap",
+          }}>This week: {boxBox.team}</div>
+        )}
         <Side {...right} align="flex-end" />
       </div>
-      <div style={{ position: "relative", height: AXIS + 30, margin: "6px 4px 0" }}>
+      <div style={{ position: "relative", height: AXIS + 44, margin: "6px 4px 0" }}>
         {/* The label sits on the line it names, on a plate like the drivers
             wear, so it reads as a marker on the scale rather than a heading
             for the box. */}
@@ -1798,6 +1809,18 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, scored = true }) {
           fontFamily: FD, fontWeight: 700, fontSize: 11, lineHeight: 1.35,
           letterSpacing: "0.04em", color: DIVIDE, whiteSpace: "nowrap",
         }}>BOX BOX</div>
+        {/* Colour spreading out of the line, brightest against it and gone by
+            the ends: everything this side of it is the result you want. */}
+        <div style={{
+          position: "absolute", left: 0, width: `${pct(line)}%`, top: AXIS - 7,
+          height: 16, borderRadius: "8px 0 0 8px",
+          background: `linear-gradient(to left, ${leftC}4d, transparent)`,
+        }} />
+        <div style={{
+          position: "absolute", left: `${pct(line)}%`, right: 0, top: AXIS - 7,
+          height: 16, borderRadius: "0 8px 8px 0",
+          background: `linear-gradient(to right, ${rightC}4d, transparent)`,
+        }} />
         <div style={{ position: "absolute", left: 0, right: 0, top: AXIS,
                       height: 2, borderRadius: 2, background: V.border2 }} />
         {TICKS.map(t => <Tick key={t} v={t} color={V.border2} />)}
@@ -1805,6 +1828,19 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, scored = true }) {
         <Value v={line} text={line.toFixed(2)} color={DIVIDE} />
         {stop != null && <Tick v={stop} color={c} wide />}
         {stop != null && <Value v={stop} text={stop.toFixed(2)} color={c} />}
+
+        {/* Its own line rather than the one the numbers are on. A stop can land
+            exactly where the words would go, and this week it does: ten seconds
+            clamps to the right edge. */}
+        <div style={{ position: "absolute", left: 0, right: 0, top: AXIS + 29,
+                      display: "flex", justifyContent: "space-between" }}>
+          <span style={{ ...display("chip"), fontSize: 10, color: leftC, opacity: 0.75 }}>
+            {leftC === MINE ? "Good for you" : "Good for them"}
+          </span>
+          <span style={{ ...display("chip"), fontSize: 10, color: rightC, opacity: 0.75 }}>
+            {rightC === MINE ? "Good for you" : "Good for them"}
+          </span>
+        </div>
       </div>
     </div>
   );
