@@ -1456,72 +1456,99 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
     return () => ro.disconnect();
   }, []);
 
-  const MIN = 1.5, MAX = 4.5;
-  const PAD = 26;
+  const MIN = 1.5, MAX = 4.5, PAD = 22;
   const span = Math.max(0, w - PAD * 2);
   const x = (v) => PAD + ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * span;
 
+  const FACE = 34, GAP = 3;
   const guessed = seats.filter(s => s.pick && typeof s.pick.pitGuess === "number");
-  // Two rows, so two guesses a tenth apart do not sit on top of each other.
-  const placed = guessed
-    .map(s => ({ s, px: x(s.pick.pitGuess) }))
-    .sort((a, b) => a.px - b.px)
-    .map((p, i, arr) => ({ ...p, row: i > 0 && p.px - arr[i - 1].px < 62 ? 1 - (arr[i - 1].row || 0) : 0 }));
+
+  // One lane, always. Two guesses at the same tenth sit shoulder to shoulder
+  // rather than one dropping behind the other: pack right, then push back left
+  // off the far edge, which settles a cluster around where it actually is.
+  const packed = (() => {
+    const a = guessed.map(s => ({ s, want: x(s.pick.pitGuess), px: x(s.pick.pitGuess) }))
+      .sort((p, q) => p.want - q.want);
+    const step = FACE + GAP;
+    for (let i = 1; i < a.length; i++) a[i].px = Math.max(a[i].px, a[i - 1].px + step);
+    const over = a.length ? a[a.length - 1].px - (w - FACE / 2) : 0;
+    if (over > 0) {
+      for (let i = a.length - 1; i >= 0; i--) a[i].px -= over;
+      for (let i = 1; i < a.length; i++) a[i].px = Math.max(a[i].px, a[i - 1].px + step);
+    }
+    a.forEach(p => { p.px = Math.max(FACE / 2, p.px); });
+    return a;
+  })();
 
   const line = boxBox.line;
   const ours = boxBox.side === "UNDER" ? "left" : "right";
   const cColor = F1_TEAM_COLORS[boxBox.team] || V.purple;
-  const FACE = 34, LANE = 62;
-  const top = LANE * 2 + 8;
+  const TICKS = [1.5, 2, 2.5, 3, 3.5, 4, 4.5];
+  const LANE = 76, AXIS = LANE + 6, HEIGHT = AXIS + 26;
 
-  const Arrow = ({ color, from, to, y }) => (
-    <svg width="100%" height="22" style={{ position: "absolute", left: 0, top: y, pointerEvents: "none" }}>
-      <defs>
-        <marker id={`h-${color.slice(1)}`} viewBox="0 0 10 10" refX="8" refY="5"
-                markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
-        </marker>
-      </defs>
-      <line x1={from} y1="11" x2={to} y2="11" stroke={color} strokeWidth="6"
-            strokeLinecap="round" markerEnd={`url(#h-${color.slice(1)})`}
-            style={{ filter: `drop-shadow(0 0 6px ${color})` }} />
+  const Marker = ({ dir, color }) => (
+    <svg width="40" height="16" style={{ display: "block", overflow: "visible" }}>
+      <line x1={dir === "left" ? 38 : 2} y1="8" x2={dir === "left" ? 13 : 27} y2="8"
+            stroke={color} strokeWidth="5" strokeLinecap="round"
+            style={{ filter: `drop-shadow(0 0 5px ${color})` }} />
+      <path d={dir === "left" ? "M 2 8 L 13 2 L 13 14 z" : "M 38 8 L 27 2 L 27 14 z"} fill={color}
+            style={{ filter: `drop-shadow(0 0 5px ${color})` }} />
     </svg>
   );
 
-  return (
-    <div style={{ ...card({ padding: "16px 14px 18px", marginBottom: 18 }), borderColor: `${V.gold}33` }}>
-      <Label color={V.gold} style={{ marginBottom: 12 }}>The BOX BOX line</Label>
+  const under = ours === "left" ? myTeam : opp;
+  const over = ours === "left" ? opp : myTeam;
 
-      <div ref={wrap} style={{ position: "relative", height: top, minWidth: 0 }}>
+  return (
+    <div style={{ ...card({ padding: "16px 14px 16px", marginBottom: 18 }), borderColor: `${V.gold}33` }}>
+      <Label color={V.gold} style={{ marginBottom: 10 }}>The BOX BOX line</Label>
+
+      <div ref={wrap} style={{ position: "relative", height: HEIGHT, minWidth: 0 }}>
         {w > 0 && (
           <>
-            {/* The range, and the line itself standing on it. */}
-            <svg width="100%" height={top} style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-              <line x1={PAD} y1={top - 10} x2={w - PAD} y2={top - 10}
+            <svg width="100%" height={HEIGHT} style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+              {/* The scale, so a position on it means something. */}
+              <line x1={PAD} y1={AXIS} x2={w - PAD} y2={AXIS}
                     stroke={V.border2} strokeWidth="3" strokeLinecap="round" />
+              {TICKS.map(t => (
+                <line key={t} x1={x(t)} y1={AXIS - 5} x2={x(t)} y2={AXIS + 5}
+                      stroke={V.border2} strokeWidth="2" strokeLinecap="round" />
+              ))}
+              {/* A guess is joined to the point on the scale it belongs to,
+                  since packing moves the face off its own value. */}
+              {packed.map(p => (
+                <line key={p.s.id} x1={p.px} y1={LANE - 8} x2={p.want} y2={AXIS - 5}
+                      stroke={p.s.ours ? V.blue : V.pink} strokeWidth="2" opacity="0.7" />
+              ))}
               {line != null && (
-                <line x1={x(line)} y1={12} x2={x(line)} y2={top - 4}
+                <line x1={x(line)} y1={AXIS - 16} x2={x(line)} y2={AXIS + 16}
                       stroke={V.gold} strokeWidth="4" strokeLinecap="round"
                       style={{ filter: `drop-shadow(0 0 8px ${V.gold})` }} />
               )}
             </svg>
 
-            {placed.map(({ s, px, row }) => {
+            {TICKS.map(t => (
+              <div key={t} style={{
+                position: "absolute", left: x(t) - 16, top: AXIS + 8, width: 32,
+                textAlign: "center", ...numeric("chip"), fontSize: 11, color: V.text2,
+              }}>{t.toFixed(1)}</div>
+            ))}
+
+            {packed.map(({ s, px }) => {
               const c = s.ours ? V.blue : V.pink;
               return (
                 <div key={s.id} style={{
-                  position: "absolute", left: px - FACE / 2, top: row * LANE,
-                  width: FACE, textAlign: "center",
+                  position: "absolute", left: px - FACE / 2, top: 0, width: FACE, textAlign: "center",
                 }}>
                   <PlayerBadge name={s.name} picked={false} dim={false} ring={c}
                                photo={s.photo} size={FACE} />
                   <div style={{
                     marginTop: -6, display: "inline-block", position: "relative",
-                    padding: "2px 5px", borderRadius: 7, background: "#000",
+                    padding: "1px 4px", borderRadius: 6, background: "#000",
                     border: `1px solid ${c}`, fontFamily: FD, fontWeight: 700,
-                    fontSize: 10, lineHeight: 1.35, color: "#fff", whiteSpace: "nowrap",
+                    fontSize: 10, lineHeight: 1.3, color: "#fff", whiteSpace: "nowrap",
                   }}>{lastName(s.name)}</div>
-                  <div style={{ ...numeric("chip"), fontSize: 12, color: c, marginTop: 2 }}>
+                  <div style={{ ...numeric("chip"), fontSize: 11, color: c, marginTop: 1 }}>
                     {s.pick.pitGuess.toFixed(1)}
                   </div>
                 </div>
@@ -1531,59 +1558,55 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
         )}
       </div>
 
-      {/* The number, and whose stop it is about. */}
-      <div style={{ textAlign: "center", marginTop: 4 }}>
-        <div style={{ ...numeric("hero"), fontSize: 54, ...textGlow(V.gold, 0.85) }}>
-          {line != null ? line.toFixed(2) : "\u2014"}
-        </div>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-          {/* No constructor logos in the app, so the mark is the team colour. */}
-          <span style={{ width: 14, height: 14, borderRadius: 4, background: cColor,
-                         boxShadow: `0 0 8px ${cColor}` }} />
-          <span style={{ ...display("h3"), fontSize: 19, color: V.text }}>
-            {boxBox.team || "The constructor"}
-          </span>
-        </div>
-        <div style={{ ...body("bodySm"), fontSize: 14, color: V.text2, marginTop: 2 }}>first pit stop</div>
-      </div>
-
-      {/* Each team on its side, pointing at the boundary rather than at the
-          middle: the boundary is where the line actually fell. */}
+      {/* The number sits under the line it labels, with each team beside it
+          pointing at the side they win on. */}
       {w > 0 && line != null && (
-        <div style={{ position: "relative", height: 62, marginTop: 10 }}>
-          <Arrow color={V.blue}
-                 from={ours === "left" ? 44 : w - 44}
-                 to={ours === "left" ? x(line) - 8 : x(line) + 8} y={2} />
-          <Arrow color={V.pink}
-                 from={ours === "left" ? w - 44 : 44}
-                 to={ours === "left" ? x(line) + 8 : x(line) - 8} y={2} />
-          {[{ side: "left", word: "UNDER" }, { side: "right", word: "OVER" }].map(g => {
-            const oursHere = (g.side === "left") === (ours === "left");
-            const t = oursHere ? myTeam : opp;
-            const c = oursHere ? V.blue : V.pink;
-            return (
-              <div key={g.side} style={{
-                position: "absolute", top: 0, [g.side]: 0, width: 78, textAlign: "center",
-              }}>
-                {t && t.logo
-                  ? <img src={t.logo} alt="" style={{ width: 34, height: 34, objectFit: "contain" }} />
-                  : <div style={{
-                      width: 34, height: 34, borderRadius: 8, margin: "0 auto",
-                      background: V.bg3, border: `2px solid ${c}`,
-                    }} />}
-                <div style={{ ...display("chip"), fontSize: 13, color: c, marginTop: 4 }}>{g.word}</div>
-                <div style={{
-                  ...body("bodySm"), fontSize: 11, color: V.text2, marginTop: 1,
-                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                }}>{t ? t.name : ""}</div>
-              </div>
-            );
-          })}
+        <div style={{ position: "relative", height: 52, marginTop: 2 }}>
+          <div style={{
+            position: "absolute", top: 0,
+            left: Math.min(Math.max(x(line) - 103, 0), Math.max(0, w - 206)),
+            width: 206, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+          }}>
+            <div style={{ textAlign: "center", width: 42 }}>
+              {under && under.logo
+                ? <img src={under.logo} alt="" style={{ width: 26, height: 26, objectFit: "contain" }} />
+                : <div style={{ width: 26, height: 26, borderRadius: 6, margin: "0 auto",
+                                background: V.bg3, border: `2px solid ${ours === "left" ? V.blue : V.pink}` }} />}
+              <div style={{ ...display("chip"), fontSize: 11,
+                            color: ours === "left" ? V.blue : V.pink, marginTop: 2 }}>UNDER</div>
+            </div>
+            <Marker dir="left" color={ours === "left" ? V.blue : V.pink} />
+            <div style={{ ...numeric("h1"), fontSize: 30, ...textGlow(V.gold, 0.8), lineHeight: 1 }}>
+              {line.toFixed(2)}
+            </div>
+            <Marker dir="right" color={ours === "right" ? V.blue : V.pink} />
+            <div style={{ textAlign: "center", width: 42 }}>
+              {over && over.logo
+                ? <img src={over.logo} alt="" style={{ width: 26, height: 26, objectFit: "contain" }} />
+                : <div style={{ width: 26, height: 26, borderRadius: 6, margin: "0 auto",
+                                background: V.bg3, border: `2px solid ${ours === "right" ? V.blue : V.pink}` }} />}
+              <div style={{ ...display("chip"), fontSize: 11,
+                            color: ours === "right" ? V.blue : V.pink, marginTop: 2 }}>OVER</div>
+            </div>
+          </div>
         </div>
       )}
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 4 }}>
+        {/* No constructor logos in the app, so the mark is that team's colour. */}
+        <span style={{ width: 12, height: 12, borderRadius: 3, background: cColor,
+                       boxShadow: `0 0 8px ${cColor}` }} />
+        <span style={{ ...body("bodyMd"), fontSize: 15, color: V.text2 }}>
+          {/* Mercedes', Williams', Haas'. Everyone else takes 's. */}
+          {boxBox.team
+            ? `${boxBox.team}${boxBox.team.endsWith("s") ? "\u2019" : "\u2019s"} first pit stop`
+            : "The first pit stop"}
+        </span>
+      </div>
     </div>
   );
 }
+
 
 // Four hands, five drivers each, in the order that player put them.
 //
