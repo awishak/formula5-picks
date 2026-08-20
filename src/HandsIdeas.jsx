@@ -30,6 +30,9 @@ const IDEAS = [
   { n: 4, name: "Split ring",
     line: "Each ring is divided into arcs, one per holder. Two green arcs and one pink means two of yours and one of theirs.",
     why: "Puts the whole picture on every node. You never have to trace a line to know a driver is contested, because his ring already says so wherever you look at him. The cost is a smaller, busier mark." },
+  { n: 7, name: "One row per driver",
+    line: "A row is a driver, not a pick slot. His circle says whether you want him to score; the four cells say who has him and where they ranked him.",
+    why: "Two different facts stopped fighting over one colour. Rooting is a net: you want Hamilton to score even though they have one of him, so his circle is green wherever he appears. Holding is a fact about a card, so it lives in the cells. And a row is a driver rather than a pick position, which is the only way the board survives two people ranking the same driver differently: no diagonals, no crossings, and a name appears exactly once." },
   { n: 6, name: "Gradient line",
     line: "Faces are just drivers. The line joining them runs green where you hold him and pink where they do, and the middle column says what he was worth.",
     why: "Puts the split on the thing that is actually shared. A face is a person and never a claim, so nothing on your opponent's row can look like yours; the line is the only thing that spans both teams, so it is the only thing that should be two colours. And because every copy scores, the number is the real one: two of yours at 25 and one of theirs is 50 against 25, which the middle column says outright instead of leaving you to work out." },
@@ -76,6 +79,79 @@ function Ring({ name, size, shares, idea, force }) {
         display: "flex", alignItems: "center", justifyContent: "center",
         fontFamily: FD, fontWeight: 700, fontSize: size * 0.3, color: ring || tone }}>
         {lastName(name).slice(0, 3).toUpperCase()}</span>;
+}
+
+
+// One row per driver. Columns are the four players, a cell says whether that
+// player has him and where they put him.
+function DriverRows({ cols, pts }) {
+  const names = [...new Set(cols.flatMap(h => h.order))];
+  const rows = names.map(name => {
+    const at = cols.map((h, c) => ({ c, ours: h.ours, at: h.order.indexOf(name) }))
+      .filter(z => z.at >= 0);
+    const p = pts[name] ?? 0;
+    const mine = at.filter(z => z.ours).length, th = at.length - mine;
+    return { name, at, p, forUs: mine * p, forThem: th * p, net: (mine - th) * p };
+  }).sort((a, b) => b.net - a.net || b.p - a.p);
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 6, padding: "0 0 8px" }}>
+        <div style={{ width: 116 }} />
+        {cols.map(h => (
+          <div key={h.name} style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
+            <div style={{ ...display("chip"), fontSize: 12,
+              color: h.ours ? MINE : THEIRS, whiteSpace: "nowrap",
+              overflow: "hidden", textOverflow: "ellipsis" }}>{h.first}</div>
+          </div>
+        ))}
+        <div style={{ width: 62, textAlign: "center", ...display("chip"),
+                      fontSize: 11, color: V.blue }}>WORTH</div>
+      </div>
+
+      {rows.map(r => {
+        const tone = r.net > 0 ? MINE : r.net < 0 ? THEIRS : LEVEL;
+        return (
+          <div key={r.name} style={{
+            display: "flex", alignItems: "center", gap: 6, padding: "5px 0",
+            borderTop: `1px solid ${V.border}`,
+          }}>
+            <div style={{ width: 116, display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+              <Ring name={r.name} size={34} idea={7} force={tone} shares={[]} />
+              <span style={{
+                fontFamily: FD, fontWeight: 700, fontSize: 13, color: V.text,
+                whiteSpace: "nowrap",
+              }}>{lastName(r.name)}</span>
+            </div>
+            {cols.map(h => {
+              const z = r.at.find(y => y.c === cols.indexOf(h));
+              return (
+                <div key={h.name} style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
+                  {z ? (
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", justifyContent: "center",
+                      width: 26, height: 26, borderRadius: 8,
+                      background: h.ours ? `${MINE}22` : `${THEIRS}22`,
+                      border: `1.5px solid ${h.ours ? MINE : THEIRS}`,
+                      ...numeric("chip"), fontSize: 13, color: h.ours ? MINE : THEIRS,
+                    }}>{z.at + 1}</span>
+                  ) : (
+                    <span style={{ display: "inline-block", width: 26, height: 3,
+                                   borderRadius: 2, background: V.bg3 }} />
+                  )}
+                </div>
+              );
+            })}
+            <div style={{ width: 62, textAlign: "center" }}>
+              <span style={{ ...numeric("chip"), fontSize: 14, color: tone }}>
+                {r.forUs}&ndash;{r.forThem}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function Board({ idea, cols, spots, pts }) {
@@ -310,13 +386,15 @@ export default function HandsIdeas({ idea = 1 }) {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');`}</style>
       <div style={wrap}>
         <div style={{ ...labelType(), color: V.text2, marginBottom: 6 }}>
-          Idea {meta.n} of 5 &middot; round 11
+          Idea {meta.n} of {IDEAS.length} &middot; round 11
         </div>
         <h1 style={{ ...display("h2"), color: V.text, margin: "0 0 6px" }}>{meta.name}</h1>
         <p style={{ ...body("body"), color: V.text2, margin: "0 0 16px" }}>{meta.line}</p>
 
-        <div style={{ ...card({ padding: "14px 10px", marginBottom: 16 }) }}>
-          <Board idea={meta.n} cols={s.cols} spots={s.spots} pts={s.pts} />
+        <div style={{ ...card({ padding: "14px 12px", marginBottom: 16 }) }}>
+          {meta.n === 7
+            ? <DriverRows cols={s.cols} pts={s.pts} />
+            : <Board idea={meta.n} cols={s.cols} spots={s.spots} pts={s.pts} />}
         </div>
 
         <div style={{ ...card({ padding: 16, marginBottom: 18 }) }}>
