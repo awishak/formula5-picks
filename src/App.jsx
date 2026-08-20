@@ -19,6 +19,7 @@ import Recaps from "./Recaps.jsx";
 import VegasHome from "./VegasHome.jsx";
 import ViewingAs from "./ViewingAs.jsx";
 import MorePage from "./MorePage.jsx";
+import ComingSoon from "./ComingSoon.jsx";
 import VegasNav from "./VegasNav.jsx";
 import Recap from "./Recap.jsx";
 import { NEWS } from "./news";
@@ -813,7 +814,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 // the pages that have no path of their own yet.
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
-  "home-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
+  "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
   "f1-calendar", "season-preview", "recaps", "admin",
 ]);
 
@@ -845,7 +846,7 @@ const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 // Pages rebuilt on the Vegas look. They set their own ground and their own
 // header, so the light shell's logo bar and background have to get out of the
 // way or a dark page opens under a white block.
-const VEGAS_PAGES = new Set(["home", "vegas", "team-standings", "player-standings"]);
+const VEGAS_PAGES = new Set(["home", "vegas", "schedule", "team-standings", "player-standings"]);
 
 // A path in, a page and any parameter out.
 function readPath(pathname) {
@@ -1042,7 +1043,9 @@ export default function App() {
             is still thin. It is the only place the 1-11 standings render. */}
         {activePage === "team-standings-v1" && <TeamStandings currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "division-trends" && <DivisionTrends currentUser={currentUser} onNavigate={navigateTo} />}
-        {activePage === "schedule" && <Schedule currentUser={currentUser} onNavigate={navigateTo} initialView={scheduleInitialView} />}
+        {activePage === "schedule" && <ComingSoon title="Schedule" />}
+        {/* The first-half schedule page, unrouted. */}
+        {activePage === "schedule-v1" && <Schedule currentUser={currentUser} onNavigate={navigateTo} initialView={scheduleInitialView} />}
         {activePage === "rules" && <Rules />}
         {activePage === "admin" && (adminUnlocked ? <Admin /> : (
           <div style={{ padding: "60px 20px", textAlign: "center" }}>
