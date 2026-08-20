@@ -1444,7 +1444,7 @@ function BoxBoxCard() {
 //   someone else is missing the line is an average, so the number can still move
 //   all four are in         the line is final and the week is set
 function HomeLocked() {
-  const { race, seats = [], boxBox, myTeam, opp } = useWeek();
+  const { race, seats = [], boxBox, myTeam, opp, order = [], orderIs } = useWeek();
   const mine = seats.filter(s => s.ours);
   const theirs = seats.filter(s => !s.ours);
   const you = seats.find(s => s.mine);
@@ -1545,6 +1545,18 @@ function HomeLocked() {
         ? theirs.map(s => <Pick key={s.id} seat={s} />)
         : <p style={{ ...body("body"), color: V.text2 }}>No opponent for this round.</p>}
 
+      {order.length > 0 && (
+        <>
+          <div style={{ height: 6 }} />
+          <SectionHead accent={V.green} sub={
+            orderIs === "championship"
+              ? "In championship order until the grid is set"
+              : undefined
+          }>Who to root for</SectionHead>
+          <RootingBoard order={order} live={false} lapInfo={null} />
+        </>
+      )}
+
       <div style={{ height: 14 }} />
       <OpponentCard />
     </>
@@ -1627,12 +1639,12 @@ function RootingBoard({ order, live, lapInfo, settled = false }) {
         <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12 }}>
           {live && <span className="v-pulse" style={{ width: 10, height: 10, borderRadius: "50%", background: V.pink, boxShadow: `0 0 12px ${V.pink}` }} />}
           <Label color={settled ? usColor : live ? V.pink : V.blue}>
-            {settled ? "Final" : live ? `Live · lap ${lapInfo.lap} of ${SNAP.totalLaps}` : "Starting grid"}
+            {settled ? "Final" : live ? `Live · lap ${lapInfo.lap} of ${SNAP.totalLaps}` : "Championship order"}
           </Label>
           {(live || settled) && <span style={{ marginLeft: "auto" }}><Chip color={V.amber}>Mock</Chip></span>}
         </div>
 
-        <Label color={V.text3}>{settled ? "Result" : live ? "If this holds" : "On the grid"}</Label>
+        <Label color={V.text3}>{settled ? "Result" : live ? "If this holds" : "If the season order holds"}</Label>
 
         {/* Box Box on the left, team totals on the right, sitting over the same
             two columns the driver values run down. */}
@@ -1678,7 +1690,9 @@ function RootingBoard({ order, live, lapInfo, settled = false }) {
       {/* The answer, side by side, before anyone reads a table. Three-letter codes
           rather than surnames: Colapinto truncates at a third of a phone width. */}
       <p style={{ ...body("bodySm"), color: V.text3, margin: 0, padding: "12px 16px 0" }}>
-        {settled ? "Below are your driver's finishing positions." : "Below are your driver's most recent positions."}
+        {settled
+          ? "Below are the finishing positions."
+          : "Below is the championship as it stands. The grid replaces it once qualifying is in."}
       </p>
       <div style={{ display: "flex", borderBottom: `1px solid ${V.border}` }}>
         {[

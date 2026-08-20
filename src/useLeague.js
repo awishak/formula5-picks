@@ -166,6 +166,22 @@ export function useLeague(currentUser) {
             mate: Boolean(mateId && pickOf[mateId]),
           },
           f1Points: Object.fromEntries(standings.map(d => [d.driver, d.points])),
+          // The order the rooting board reads down. Before a race there is no
+          // grid to use, because nothing here has qualifying, so it is the
+          // championship: the nearest thing to a form guide the app has.
+          order: standings.map(d => d.driver),
+          orderIs: "championship",
+          // How many of each side picked each driver. Two means both teammates
+          // have him and he scores twice for that team. Only meaningful once
+          // the deadline has gone and the other side's picks are visible.
+          counts: (() => {
+            const mine = {}, theirs = {};
+            const add = (bag, pick) => (pick ? pick.finishing_order || [] : [])
+              .forEach(d => { bag[d] = (bag[d] || 0) + 1; });
+            if (myTeamRow) [myTeamRow.player1_id, myTeamRow.player2_id].forEach(id => add(mine, pickOf[id]));
+            if (oppRow && locked) [oppRow.player1_id, oppRow.player2_id].forEach(id => add(theirs, pickOf[id]));
+            return { mine, theirs };
+          })(),
           // The needle. The constructor comes out of the question itself, which
           // is the only place it is written down.
           boxBox: {

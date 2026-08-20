@@ -6,6 +6,10 @@
 // the whole point of the deadline is that nobody sees them until it goes.
 const drivers = ["Lewis Hamilton", "Max Verstappen", "Oscar Piastri", "Liam Lawson", "Pierre Gasly"];
 const other = ["Lando Norris", "Isack Hadjar", "Carlos Sainz", "Franco Colapinto", "Gabriel Bortoleto"];
+// The other team picks differently, or every row ties and the board says
+// "nobody" on both sides, which is the one thing it must never say by accident.
+const themA = ["George Russell", "Max Verstappen", "Liam Lawson", "Carlos Sainz", "Oliver Bearman"];
+const themB = ["George Russell", "Oscar Piastri", "Pierre Gasly", "Arvid Lindblad", "Gabriel Bortoleto"];
 
 const pick = (order, best, guess) => ({ topPick: order[0], order, bestFinish: best, pitGuess: guess });
 
@@ -31,7 +35,9 @@ export function lockedDemo(kind = "all") {
       deadline: new Date(Date.now() - 3600e3).toISOString(),
       pitQuestion: "Williams' first pit stop",
     },
-    pools: { top: [], mid: [] },
+    pools: { top: ["Lewis Hamilton", "Lando Norris", "George Russell"],
+             mid: ["Pierre Gasly", "Liam Lawson", "Max Verstappen", "Oscar Piastri",
+                   "Carlos Sainz", "Franco Colapinto", "Gabriel Bortoleto"] },
     myTeam: { name: "Your team", logo: null },
     opp: { name: "Their team", logo: null, division: "championship", place: 3, avgRank: 6, avg: 77.4,
            players: [{ name: "Their one", photo: null, rank: 11 }, { name: "Their two", photo: null, rank: 23 }] },
@@ -43,8 +49,8 @@ export function lockedDemo(kind = "all") {
     seats: [
       seat("You", true, true, youPicked, pick(drivers, "P3", 2.1)),
       seat("Your teammate", true, false, matePicked, pick(other, "P2", 3.4)),
-      seat("Their one", false, false, true, pick(other, "P1", 2.8)),
-      seat("Their two", false, false, true, pick(drivers, "P5", 1.9)),
+      seat("Their one", false, false, true, pick(themA, "P1", 2.8)),
+      seat("Their two", false, false, true, pick(themB, "P5", 1.9)),
     ],
     boxBox: {
       side: "UNDER",
@@ -55,5 +61,25 @@ export function lockedDemo(kind = "all") {
     },
     f1Points: {},
     playerId: "demo",
+    // The board reads down this order and needs all 22, since the twelve
+    // outside the pool are the context lines.
+    order: [
+      "Andrea Kimi Antonelli", "Lewis Hamilton", "George Russell", "Charles Leclerc",
+      "Lando Norris", "Max Verstappen", "Oscar Piastri", "Isack Hadjar",
+      "Liam Lawson", "Pierre Gasly", "Arvid Lindblad", "Franco Colapinto",
+      "Oliver Bearman", "Gabriel Bortoleto", "Carlos Sainz", "Alex Albon",
+      "Nico Hulkenberg", "Esteban Ocon", "Fernando Alonso", "Lance Stroll",
+      "Valtteri Bottas", "Sergio Perez",
+    ],
+    orderIs: "championship",
+    counts: (() => {
+      const mine = {}, theirs = {};
+      const add = (bag, list) => list.forEach(d => { bag[d] = (bag[d] || 0) + 1; });
+      if (youPicked) add(mine, drivers);
+      if (matePicked) add(mine, other);
+      add(theirs, themA);
+      add(theirs, themB);
+      return { mine, theirs };
+    })(),
   };
 }
