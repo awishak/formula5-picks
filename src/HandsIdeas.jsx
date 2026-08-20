@@ -30,6 +30,9 @@ const IDEAS = [
   { n: 4, name: "Split ring",
     line: "Each ring is divided into arcs, one per holder. Two green arcs and one pink means two of yours and one of theirs.",
     why: "Puts the whole picture on every node. You never have to trace a line to know a driver is contested, because his ring already says so wherever you look at him. The cost is a smaller, busier mark." },
+  { n: 6, name: "Gradient line",
+    line: "Faces are just drivers. The line joining them runs green where you hold him and pink where they do, and the middle column says what he was worth.",
+    why: "Puts the split on the thing that is actually shared. A face is a person and never a claim, so nothing on your opponent's row can look like yours; the line is the only thing that spans both teams, so it is the only thing that should be two colours. And because every copy scores, the number is the real one: two of yours at 25 and one of theirs is 50 against 25, which the middle column says outright instead of leaving you to work out." },
   { n: 5, name: "Possession strip",
     line: "Faces stay neutral. A four-cell strip under each row shows who holds him, in column order.",
     why: "Separates identity from ownership entirely. A face is a driver, never a claim, and the strip is a tally you read like a scoreboard. It survives any number of hands, where colouring the face stops working past two teams." },
@@ -75,7 +78,7 @@ function Ring({ name, size, shares, idea, force }) {
         {lastName(name).slice(0, 3).toUpperCase()}</span>;
 }
 
-function Board({ idea, cols, spots }) {
+function Board({ idea, cols, spots, pts }) {
   const wrap = useRef(null);
   const [w, setW] = useState(0);
   useEffect(() => {
@@ -86,8 +89,11 @@ function Board({ idea, cols, spots }) {
     return () => ro.disconnect();
   }, []);
 
-  const colW = w ? w / 4 : 0;
-  const cx = (c) => colW * (c + 0.5);
+  // A gutter down the middle, so the per-driver number has somewhere to live
+  // that is not on top of a face.
+  const GUT = idea === 6 ? 62 : 0;
+  const colW = w ? (w - GUT) / 4 : 0;
+  const cx = (c) => (c < 2 ? colW * (c + 0.5) : GUT + colW * (c + 0.5));
   const FACE = 44, HEAD = 62, ROW = 78;
   const cy = (r) => HEAD + ROW * r + ROW / 2 - 10;
   const H = HEAD + ROW * 5;
@@ -108,17 +114,42 @@ function Board({ idea, cols, spots }) {
     });
   }
 
+  // Every copy scores, so a driver in two of your hands pays twice. This is the
+  // real difference he made, not a count of who holds more.
+  const worth = (g) => {
+    const p = pts[g.name];
+    if (p == null) return null;
+    const mine = g.at.filter(z => z.ours).length, th = g.at.length - mine;
+    return { mine: mine * p, theirs: th * p, net: (mine - th) * p };
+  };
+
   const seen = new Set();
   return (
     <div ref={wrap} style={{ position: "relative", height: H }}>
       {w > 0 && (
         <svg width="100%" height={H} style={{ position: "absolute", inset: 0, zIndex: 1 }}>
+          <defs>
+            {groups.filter(g => g.at.length > 1).map(g => {
+              const at = g.at.slice().sort((a, b) => a.c - b.c);
+              const x1 = cx(at[0].c), x2 = cx(at[at.length - 1].c);
+              return (
+                <linearGradient key={g.name} id={`grad-${g.name.replace(/\W/g, "")}`}
+                  gradientUnits="userSpaceOnUse" x1={x1} y1="0" x2={x2} y2="0">
+                  {at.map((p, i) => (
+                    <stop key={i} offset={x2 === x1 ? 0 : (cx(p.c) - x1) / (x2 - x1)}
+                          stopColor={p.ours ? MINE : THEIRS} />
+                  ))}
+                </linearGradient>
+              );
+            })}
+          </defs>
           {groups.filter(g => g.at.length > 1).map(g => {
             const pts = g.at.slice().sort((a, b) => a.c - b.c)
               .map(p => `${cx(p.c)},${cy(p.r)}`).join(" ");
             const grey = idea === 3 ? g.net === 0 : idea === 1 ? g.net === 0 : false;
-            const col = idea === 2 ? V.border2 : idea === 5 ? V.border2 : (grey ? LEVEL : g.tone);
-            const width = idea === 3 ? (g.net === 0 ? 2 : 3 + Math.abs(g.net) * 2) : 4;
+            const col = idea === 6 ? `url(#grad-${g.name.replace(/\W/g, "")})`
+              : idea === 2 ? V.border2 : idea === 5 ? V.border2 : (grey ? LEVEL : g.tone);
+            const width = idea === 3 ? (g.net === 0 ? 2 : 3 + Math.abs(g.net) * 2) : idea === 6 ? 6 : 4;
             return <polyline key={g.name} points={pts} fill="none" stroke={col}
               strokeWidth={width} strokeLinecap="round" strokeLinejoin="round"
               opacity={col === V.border2 || col === LEVEL ? 0.6 : 1} />;
@@ -138,6 +169,26 @@ function Board({ idea, cols, spots }) {
               color: h.ours ? MINE : THEIRS }}>{h.total}</div>
           </div>
         ))}
+        {idea === 6 && groups.map(g => {
+          const wv = worth(g);
+          if (!wv || g.at.length < 2) return null;
+          const r = g.at[0].r;
+          return (
+            // Centred on its own row and on the gutter between the two teams,
+            // which is where the line it labels crosses.
+            <div key={`w-${g.name}`} style={{
+              position: "absolute", left: 0, right: 0, top: cy(r) - 11,
+              textAlign: "center", pointerEvents: "none", zIndex: 3,
+            }}>
+              <span style={{
+                ...numeric("chip"), fontSize: 14,
+                color: wv.net > 0 ? MINE : wv.net < 0 ? THEIRS : LEVEL,
+                background: "#000", borderRadius: 7, padding: "3px 8px",
+                border: `1px solid ${wv.net > 0 ? MINE : wv.net < 0 ? THEIRS : V.border}`,
+              }}>{wv.mine}&ndash;{wv.theirs}</span>
+            </div>
+          );
+        })}
         {cols.flatMap((h, c) => h.order.map((name, r) => {
           const g = groups.find(x => x.name === name);
           const key = `${name}-${c}`;
@@ -151,7 +202,8 @@ function Board({ idea, cols, spots }) {
             }}>
               <span style={{ position: "relative", display: "inline-block" }}>
                 <Ring name={name} size={FACE} idea={idea}
-                      force={dim ? LEVEL : (idea === 2 || idea === 3) ? (h.ours ? MINE : THEIRS) : undefined}
+                      force={dim ? LEVEL : idea === 6 ? V.border2
+                        : (idea === 2 || idea === 3) ? (h.ours ? MINE : THEIRS) : undefined}
                       shares={idea === 2 || idea === 3 ? [h.ours] : shares} />
                 {dim && <span style={{
                   position: "absolute", inset: 0, borderRadius: "50%",
@@ -161,8 +213,9 @@ function Board({ idea, cols, spots }) {
               <div style={{
                 marginTop: -7, display: "inline-block", position: "relative",
                 padding: "2px 5px", borderRadius: 7, background: "#000",
-                border: `1px solid ${dim ? V.border : (idea === 2 || idea === 3)
-                  ? (h.ours ? MINE : THEIRS) : idea === 5 ? V.border2 : g.tone}`,
+                border: `1px solid ${dim ? V.border : idea === 6 ? V.border2
+                  : (idea === 2 || idea === 3) ? (h.ours ? MINE : THEIRS)
+                  : idea === 5 ? V.border2 : g.tone}`,
                 fontFamily: FD, fontWeight: 700, fontSize: 11, lineHeight: 1.35,
                 color: dim ? V.text2 : "#fff", whiteSpace: "nowrap",
               }}>{lastName(name)}</div>
@@ -228,9 +281,19 @@ export default function HandsIdeas({ idea = 1 }) {
           };
         });
         const cols = [...seatOf(myTeam, true), ...seatOf(opp, false)];
+        // What each driver scored this round, which is the same for everyone
+        // who picked him.
+        const pts = {};
+        const anyScore = scores.find(x => x.race_id === race.id && x.driver_pts);
+        if (anyScore) {
+          scores.filter(x => x.race_id === race.id).forEach(x => {
+            try { Object.entries(JSON.parse(x.driver_pts || "{}"))
+              .forEach(([d, v]) => { pts[d] = v; }); } catch (e) {}
+          });
+        }
         const spots = {};
         cols.forEach((h, c) => h.order.forEach((n, r) => { (spots[n] ||= []).push({ r, c, ours: h.ours }); }));
-        setS({ loading: false, cols, spots, race, myTeam, opp });
+        setS({ loading: false, cols, spots, pts, race, myTeam, opp });
       } catch (e) { console.error(e); setS({ loading: false, error: true }); }
     })();
   }, []);
@@ -253,7 +316,7 @@ export default function HandsIdeas({ idea = 1 }) {
         <p style={{ ...body("body"), color: V.text2, margin: "0 0 16px" }}>{meta.line}</p>
 
         <div style={{ ...card({ padding: "14px 10px", marginBottom: 16 }) }}>
-          <Board idea={meta.n} cols={s.cols} spots={s.spots} />
+          <Board idea={meta.n} cols={s.cols} spots={s.spots} pts={s.pts} />
         </div>
 
         <div style={{ ...card({ padding: 16, marginBottom: 18 }) }}>
@@ -262,7 +325,7 @@ export default function HandsIdeas({ idea = 1 }) {
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {IDEAS.map(i => (
+          {[...IDEAS].sort((a, b) => a.n - b.n).map(i => (
             <a key={i.n} href={`/hands/${i.n}`} style={{
               padding: "8px 12px", borderRadius: 10, textDecoration: "none",
               background: i.n === meta.n ? "rgba(47,255,155,0.12)" : V.bg3,
