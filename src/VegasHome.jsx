@@ -456,7 +456,7 @@ function Marquee({ race, status, players = [] }) {
         <>
           <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${V.blue}55, transparent)`, margin: "16px 0 12px" }} />
           <p style={{
-            ...display("h3"), color: status.color, textAlign: "center", margin: 0,
+            ...display("h3"), fontSize: 18, color: status.color, textAlign: "center", margin: 0,
             textTransform: "uppercase", letterSpacing: "0.06em",
           }}>{status.text}</p>
         </>
@@ -553,7 +553,7 @@ function PickSign({ status }) {
         {/* The deadline belongs to the thing it is a deadline for. */}
         {status && (
           <p style={{
-            ...display("h3"), fontSize: 17, ...textGlow(V.pink), margin: "8px 0 0",
+            ...display("h3"), fontSize: 15, ...textGlow(V.pink), margin: "8px 0 0",
             textTransform: "uppercase", letterSpacing: "0.05em",
           }}>{status.text}</p>
         )}
@@ -593,9 +593,9 @@ function DriverPickRow({ name, picked, muted, onTap }) {
         textAlign: "left",
       }}
     >
-      <Face name={name} size={44} ring={picked ? V.green : c} glow={picked ? 1.4 : 0.6} />
+      <Face name={name} size={52} ring={picked ? V.green : c} glow={picked ? 1.4 : 0.6} />
       <div style={{ flex: "1 1 0", minWidth: 0 }}>
-        <p style={{ ...body("bodyMd"), fontSize: 17, color: V.text, margin: 0,
+        <p style={{ ...body("bodyMd"), fontSize: 19, color: V.text, margin: 0,
           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</p>
         <p style={{ ...body("bodySm"), color: c, margin: "1px 0 0" }}>{dTeam(name)}</p>
       </div>
@@ -1051,8 +1051,24 @@ function PickFlow() {
         <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }) }}>
           <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 6px" }}>Order your drivers</p>
           <p style={{ ...body("body"), fontSize: 16, color: V.text2, margin: "0 0 16px" }}>
-            Tap a driver to put them in order, and tap the order to move the driver back out.
+            Tap a driver to put them in order, and tap them again in the order to take them back out.
           </p>
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {unplaced.map(d => (
+              <button key={d} onClick={() => place(d)} style={{
+                display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
+                padding: "8px 12px 8px 8px", borderRadius: 999,
+                background: V.bg3, border: `1px solid ${dColor(d)}55`,
+              }}>
+                <Face name={d} size={28} ring={dColor(d)} glow={0} />
+                <span style={{ ...body("bodySm"), fontSize: 15, color: V.text }}>{lastName(d)}</span>
+              </button>
+            ))}
+            {unplaced.length === 0 && (
+              <p style={{ ...body("bodySm"), color: V.green, margin: 0 }}>That's your order.</p>
+            )}
+          </div>
 
           <div style={{ display: "grid", gap: 8, marginBottom: 16 }}>
             {[0, 1, 2, 3, 4].map(i => {
@@ -1079,28 +1095,13 @@ function PickFlow() {
                       <span style={{ ...body("bodyMd"), fontSize: 16, color: V.text }}>{name}</span>
                     </button>
                   ) : (
-                    <span style={{ ...body("bodySm"), color: V.text3 }}>Tap a driver below</span>
+                    <span style={{ ...body("bodySm"), color: V.text3 }}>Tap a driver above</span>
                   )}
                 </div>
               );
             })}
           </div>
 
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {unplaced.map(d => (
-              <button key={d} onClick={() => place(d)} style={{
-                display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
-                padding: "8px 12px 8px 8px", borderRadius: 999,
-                background: V.bg3, border: `1px solid ${dColor(d)}55`,
-              }}>
-                <Face name={d} size={28} ring={dColor(d)} glow={0} />
-                <span style={{ ...body("bodySm"), fontSize: 15, color: V.text }}>{lastName(d)}</span>
-              </button>
-            ))}
-            {unplaced.length === 0 && (
-              <p style={{ ...body("bodySm"), color: V.green, margin: 0 }}>That's your order.</p>
-            )}
-          </div>
         </div>
 
         <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }) }}>

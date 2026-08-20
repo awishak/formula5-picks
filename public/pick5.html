@@ -1,0 +1,28 @@
+<!-- Dev harness. Picks five drivers so the ordering step opens, then holds so
+     it can be photographed. Selection is read off the row's border colour,
+     which is what the DOM actually says. -->
+<meta charset="utf-8" /><style>body{margin:0;background:#07070c}iframe{border:0}</style>
+<iframe id="f"></iframe>
+<script>
+  const q = new URLSearchParams(location.search);
+  const f = document.getElementById("f");
+  f.style.width = (q.get("w") || 393) + "px"; f.style.height = (q.get("h") || 880) + "px";
+  f.src = `/?player=${encodeURIComponent(q.get("player") || "Kevin Coolidge")}`;
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  (async () => {
+    await new Promise(r => f.onload = r);
+    await wait(6000);
+    const d = () => f.contentDocument;
+    const rows = () => [...d().querySelectorAll("button")].filter(b =>
+      b.getBoundingClientRect().height > 0 && !b.disabled &&
+      !b.closest(".vnav") && /pts$/.test((b.textContent || "").trim().toLowerCase()));
+    for (let i = 0; i < 12; i++) {
+      const next = rows().find(b => !/47, 255, 155|2fff9b/i.test(f.contentWindow.getComputedStyle(b).borderColor));
+      if (!next) break;
+      next.click();
+      await wait(220);
+    }
+    await wait(1200);
+    f.contentWindow.scrollTo(0, +(q.get("y") || 0));
+  })();
+</script>
