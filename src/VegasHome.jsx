@@ -441,23 +441,19 @@ function Marquee({ race, status, players = [] }) {
           {/* Just the round. Whether there are 22 or 23 is up to the FIA. */}
           <Chip color={V.blue}>Round {race.round}</Chip>
         </div>
+        {/* No names. It is your own team, two people, and their faces are right
+            there; the ring and the tick say which of them is in. */}
         {players.length > 0 && (
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "flex-start",
-                        gap: 10, flexShrink: 0 }}>
-            {allIn && (
-              <p style={{ ...labelType(), color: V.green, margin: 0, paddingTop: 9,
-                          textAlign: "right" }}>Picks in</p>
-            )}
-            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+          <div style={{ marginLeft: "auto", flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               {players.map(p => (
-                <div key={p.name} style={{ textAlign: "center" }}>
-                  <PlayerBadge name={p.name} picked={p.picked} />
-                  <p style={{ ...display("chip"), fontSize: 13, color: p.picked ? V.green : V.text3, margin: "5px 0 0" }}>
-                    {p.name.split(" ")[0]}
-                  </p>
-                </div>
+                <PlayerBadge key={p.name} name={p.name} picked={p.picked} />
               ))}
             </div>
+            {allIn && (
+              <p style={{ ...labelType(), color: V.green, margin: "6px 0 0",
+                          textAlign: "center" }}>Picks in</p>
+            )}
           </div>
         )}
       </div>
