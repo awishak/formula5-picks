@@ -8,7 +8,7 @@
 // Nothing here touches Supabase. It is a design surface, reachable at #vegas.
 
 import { useState, useRef, useEffect , createContext, useContext } from "react";
-import { V, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
+import { V, FD, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
 import { supabase } from "./supabaseClient";
 import { useLeague } from "./useLeague";
 import { lockedDemo } from "./lockedDemo";
@@ -248,7 +248,7 @@ function Chip({ children, color = V.blue, solid = false }) {
   );
 }
 
-function Face({ name, size = 40, ring, glow = 1, drained = false }) {
+function Face({ name, size = 40, ring, glow = 1, drained = false, edge = 2 }) {
   const [bad, setBad] = useState(false);
   const c = ring || dColor(name);
   const url = DRIVER_HEADSHOTS[name] || PLAYER_PHOTOS[name];
@@ -256,7 +256,7 @@ function Face({ name, size = 40, ring, glow = 1, drained = false }) {
     return (
       <div style={{
         width: size, height: size, borderRadius: "50%", flexShrink: 0,
-        background: `${c}22`, border: `2px solid ${c}`,
+        background: `${c}22`, border: `${edge}px solid ${c}`,
         boxShadow: glow ? `0 0 ${12 * glow}px ${c}66` : "none",
         display: "flex", alignItems: "center", justifyContent: "center",
         ...display("chip"), color: c,
@@ -268,7 +268,7 @@ function Face({ name, size = 40, ring, glow = 1, drained = false }) {
   return (
     <img src={url} alt={name} onError={() => setBad(true)} style={{
       width: size, height: size, borderRadius: "50%", objectFit: "cover", objectPosition: "top",
-      flexShrink: 0, background: V.bg3, border: `2px solid ${c}`,
+      flexShrink: 0, background: V.bg3, border: `${edge}px solid ${c}`,
       boxShadow: glow ? `0 0 ${12 * glow}px ${c}${glow > 1 ? "aa" : "55"}` : "none",
       // Draining the color is what makes a driver you are rooting against read as
       // bad rather than merely as theirs. Faces are the loudest thing in the row.
@@ -1461,7 +1461,7 @@ function HandsBoard({ seats }) {
   }, []);
 
   const hands = seats.slice(0, 4);
-  const LABEL = 64, ROW = 62, FACE = 38;
+  const LABEL = 58, ROW = 76, FACE = 40;
   const cols = 5;
   const cellW = w > LABEL ? (w - LABEL) / cols : 0;
   const cx = (c) => LABEL + cellW * (c + 0.5);
@@ -1495,7 +1495,7 @@ function HandsBoard({ seats }) {
     <svg width="100%" height={height} style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
       {lines.filter(l => l.t === which).map(l => (
         <polyline key={l.name} points={l.d} fill="none"
-          stroke={COLOR[which]} strokeWidth={which === "level" ? 2 : 3}
+          stroke={COLOR[which]} strokeWidth={which === "level" ? 3.5 : 5}
           strokeLinecap="round" strokeLinejoin="round"
           opacity={which === "level" ? 0.5 : 1}
           style={which === "level" ? undefined : { filter: `drop-shadow(0 0 6px ${COLOR[which]})` }} />
@@ -1512,10 +1512,28 @@ function HandsBoard({ seats }) {
           if (which === "level" ? t !== "level" : t === "level") return null;
           return (
             <div key={`${r}-${c}`} style={{
-              position: "absolute", left: cx(c) - FACE / 2, top: cy(r) - FACE / 2,
+              position: "absolute", left: cx(c) - FACE / 2, top: cy(r) - FACE / 2 - 7,
               width: FACE, height: FACE,
             }}>
-              <Face name={name} size={FACE} ring={COLOR[t]} glow={t === "level" ? 0 : 0.9} />
+              {/* Level drivers are drained: nobody is fighting over them, and a
+                  full-colour face says the opposite. */}
+              <Face name={name} size={FACE} ring={COLOR[t]} edge={3}
+                    glow={t === "level" ? 0 : 1.1} drained={t === "level"} />
+              {/* The name plate is the top layer, so it is never crossed by a
+                  line. Black behind it for the same reason. */}
+              <div style={{
+                position: "absolute", left: "50%", top: FACE - 5, transform: "translateX(-50%)",
+                // A plate may run a little wider than its cell. It is the top
+                // layer, so a name is never sitting under a neighbour, and
+                // "Verstappen" whole beats "Verst..." tidy.
+                maxWidth: Math.max(56, cellW + 13),
+                padding: "2px 5px", borderRadius: 7, background: "#000",
+                border: `1px solid ${t === "level" ? V.border : COLOR[t]}`,
+                fontFamily: FD, fontWeight: 700, fontSize: 10, lineHeight: 1.35,
+                color: t === "level" ? V.text2 : "#fff",
+                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                textAlign: "center",
+              }}>{lastName(name)}</div>
             </div>
           );
         });
