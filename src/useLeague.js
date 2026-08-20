@@ -32,6 +32,9 @@ export function useLeague(currentUser, { round = null } = {}) {
           supabase.from("schedule").select("*"),
         ]).then(rs => rs.map(r => r.data || []));
 
+        // The stop itself, once it has happened.
+        const results = (await supabase.from("results").select("race_id,pit_stop_time")).data || [];
+
         // The championship, refreshed by the Monday cron. Empty is fine: the
         // driver cards fall back to a dash rather than a made-up number.
         const standings = (await supabase.from("driver_standings")
@@ -220,6 +223,13 @@ export function useLeague(currentUser, { round = null } = {}) {
             waitingOn: [myTeamRow, oppRow].filter(Boolean)
               .flatMap(t => [t.player1_id, t.player2_id])
               .filter(id => id && !pickOf[id]).length,
+            // The real stop, when there is one. Anything past the dial's top
+            // end is pinned there: 8.2 seconds is still just "way over".
+            stop: (() => {
+              const r = results.find(x => x.race_id === race.id);
+              const t = r && r.pit_stop_time != null ? Number(r.pit_stop_time) : null;
+              return t == null || Number.isNaN(t) ? null : t;
+            })(),
             side: fixture && myTeamRow ? sideOf(fixture, myTeamRow.id) : null,
             team: (race.pit_stop_question || "").replace(/['\u2019]s?\s+first pit stop.*$/i, "") || null,
             guesses: {},

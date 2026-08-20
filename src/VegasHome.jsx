@@ -256,7 +256,9 @@ function Face({ name, size = 40, ring, glow = 1, drained = false, edge = 2 }) {
     return (
       <div style={{
         width: size, height: size, borderRadius: "50%", flexShrink: 0,
-        background: `${c}22`, border: `${edge}px solid ${c}`,
+        // Opaque. A translucent disc let the connecting lines run through the
+        // face of any driver without a headshot.
+        background: V.bg2, border: `${edge}px solid ${c}`,
         boxShadow: glow ? `0 0 ${12 * glow}px ${c}66` : "none",
         display: "flex", alignItems: "center", justifyContent: "center",
         ...display("chip"), color: c,
@@ -1460,10 +1462,10 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
   const span = Math.max(0, w - PAD * 2);
   const x = (v) => PAD + ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * span;
 
-  // The plate under a face is wider than the face, so the packing step is the
-  // plate: at 42px apart "Michaelsen" and "Dillon" would sit on top of one
-  // another even though their faces did not.
-  const FACE = 42, GAP = 4, STEP = 82;
+  // Faces pack to the face, so two guesses at the same tenth end up almost
+  // touching, which is the truth about them. The plates are what would collide,
+  // so they drop a step instead of pushing the faces apart.
+  const FACE = 42, GAP = 3, STEP = 45;
   const guessed = seats.filter(s => s.pick && typeof s.pick.pitGuess === "number");
 
   // One lane, always. Two guesses at the same tenth sit shoulder to shoulder
@@ -1483,8 +1485,20 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
     return a;
   })();
 
+  // A plate wider than its slot drops to a second line rather than shoving the
+  // face off the value it belongs to.
+  const PLATE_W = 84;
+  const staggered = packed.map((p, i) => ({
+    ...p, low: i > 0 && p.px - packed[i - 1].px < PLATE_W && !packed[i - 1].low,
+  }));
+
   const line = boxBox.line;
   const ours = boxBox.side === "UNDER" ? "left" : "right";
+  // Which side the stop actually landed, which is the whole result.
+  const stop = boxBox.stop != null ? Math.min(MAX, Math.max(MIN, boxBox.stop)) : null;
+  const wonBox = stop != null && line != null &&
+    ((stop > line) === (boxBox.side === "OVER"));
+  const stopColor = wonBox ? MINE : THEIRS;
   const cColor = F1_TEAM_COLORS[boxBox.team] || V.purple;
   const TICKS = [1.5, 2, 2.5, 3, 3.5, 4, 4.5];
   const LANE = 88, AXIS = LANE + 6, HEIGHT = AXIS + 26;
@@ -1517,10 +1531,19 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
               ))}
               {/* A guess is joined to the point on the scale it belongs to,
                   since packing moves the face off its own value. */}
-              {packed.map(p => (
+              {staggered.map(p => (
                 <line key={p.s.id} x1={p.px} y1={LANE - 6} x2={p.want} y2={AXIS - 5}
                       stroke={p.s.ours ? MINE : THEIRS} strokeWidth="2" opacity="0.7" />
               ))}
+              {stop != null && line != null && (
+                <g>
+                  <line x1={x(stop)} y1={AXIS - 22} x2={x(stop)} y2={AXIS + 8}
+                        stroke={stopColor} strokeWidth="4" strokeLinecap="round"
+                        style={{ filter: `drop-shadow(0 0 7px ${stopColor})` }} />
+                  <circle cx={x(stop)} cy={AXIS - 26} r="6" fill={stopColor}
+                          style={{ filter: `drop-shadow(0 0 7px ${stopColor})` }} />
+                </g>
+              )}
               {line != null && (
                 <line x1={x(line)} y1={AXIS - 16} x2={x(line)} y2={AXIS + 16}
                       stroke={DIVIDE} strokeWidth="5" strokeLinecap="round"
@@ -1535,11 +1558,12 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
               }}>{t.toFixed(1)}</div>
             ))}
 
-            {packed.map(({ s, px }) => {
+            {staggered.map(({ s, px, low }) => {
               const c = s.ours ? MINE : THEIRS;
               return (
                 <div key={s.id} style={{
-                  position: "absolute", left: px - FACE / 2, top: 0, width: FACE, textAlign: "center",
+                  position: "absolute", left: px - FACE / 2, top: low ? 22 : 0,
+                  width: FACE, textAlign: "center",
                 }}>
                   <PlayerBadge name={s.name} picked={false} dim={false} ring={c}
                                photo={s.photo} size={FACE} />
@@ -1601,10 +1625,10 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
             }}>
               <Side t={under} mine={ours === "left"} word="UNDER" />
               <div style={{ textAlign: "center" }}>
-                <div style={{ ...numeric("h1"), fontSize: 26, ...textGlow(V.gold, 0.8), lineHeight: 1 }}>
+                <div style={{ ...numeric("h1"), fontSize: 26, ...textGlow(DIVIDE, 0.8), lineHeight: 1 }}>
                   {line.toFixed(2)}
                 </div>
-                <div style={{ ...display("chip"), fontSize: 10, color: V.gold, marginTop: 3,
+                <div style={{ ...display("chip"), fontSize: 10, color: DIVIDE, marginTop: 3,
                               letterSpacing: "0.12em" }}>BOX BOX LINE</div>
               </div>
               <Side t={over} mine={ours === "right"} word="OVER" />
@@ -1622,6 +1646,11 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
             : "The first pit stop"}
         </span>
       </div>
+      {stop != null && (
+        <p style={{ ...body("bodyMd"), fontSize: 15, color: stopColor, textAlign: "center", margin: "6px 0 0" }}>
+          Stopped at {boxBox.stop.toFixed(2)}s. {wonBox ? "Your side." : "Theirs."}
+        </p>
+      )}
     </div>
   );
 }
@@ -1724,11 +1753,19 @@ function RootingCard({ seats, boxBox }) {
         maxHeight: open ? 520 : 0, opacity: open ? 1 : 0, overflow: "hidden",
         transition: "max-height .4s ease, opacity .3s ease",
       }}>
-        <div style={{ paddingTop: 12 }}>
-          <Label color={MINE} style={{ fontSize: 11, marginBottom: 6 }}>Root for</Label>
-          <Strip names={forUs} c={MINE} />
-          <Label color={THEIRS} style={{ fontSize: 11, margin: "12px 0 6px" }}>Root against</Label>
-          <Strip names={against} c={THEIRS} />
+        <div style={{ paddingTop: 12, display: "flex", gap: 12 }}>
+          {/* Your side on the left, theirs on the right, the same way every
+              other card on this screen is arranged. */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Label color={MINE} style={{ fontSize: 11, marginBottom: 6 }}>Root for</Label>
+            <Strip names={forUs} c={MINE} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Label color={THEIRS} style={{ fontSize: 11, marginBottom: 6 }}>Root against</Label>
+            <Strip names={against} c={THEIRS} />
+          </div>
+        </div>
+        <div>
           {boxBox.line != null && (
             <p style={{ ...body("body"), color: V.text, margin: "14px 0 0" }}>
               And you want the stop{" "}
@@ -1767,7 +1804,7 @@ function HandsColumns({ seats, under }) {
   const ours = seats.filter(s => s.ours), theirs = seats.filter(s => !s.ours);
   const cols = under === "mine" ? [...ours, ...theirs] : [...theirs, ...ours];
 
-  const MID = 56;
+  const MID = 62;
   const colW = w > 0 ? (w - MID) / 4 : 0;
   // Columns 0 and 1 sit left of the label strip, 2 and 3 right of it.
   const cx = (c) => (c < 2 ? colW * (c + 0.5) : MID + colW * (c + 0.5));
@@ -1836,7 +1873,7 @@ function HandsColumns({ seats, under }) {
   const ROWS = [
     { k: "Top", get: s => (s.score ? s.score.top : null) },
     { k: "Mid", get: s => (s.score ? s.score.mid : null) },
-    { k: "Best", get: s => (s.score ? s.score.best : null),
+    { k: "Best\nfinish", get: s => (s.score ? s.score.best : null),
       sub: s => (s.pick ? s.pick.bestFinish : null) },
     { k: "Order", get: s => (s.score ? s.score.order : null) },
   ];
@@ -1883,11 +1920,11 @@ function HandsColumns({ seats, under }) {
                 const v = row.get(h);
                 const cell = (
                   <div key={h.id} style={{ width: colW, textAlign: "center" }}>
-                    <div style={{ ...numeric("chip"), fontSize: 16, color: v ? col : V.text2 }}>
+                    <div style={{ ...numeric("chip"), fontSize: 20, color: v ? col : V.text2 }}>
                       {v == null ? "\u2014" : v === 0 ? "\u2715" : v}
                     </div>
                     {row.sub && (
-                      <div style={{ ...display("chip"), fontSize: 11, color: V.text2, marginTop: 1 }}>
+                      <div style={{ ...display("chip"), fontSize: 13, color: V.text2, marginTop: 1 }}>
                         {row.sub(h) || ""}
                       </div>
                     )}
@@ -1896,9 +1933,9 @@ function HandsColumns({ seats, under }) {
                 // The label sits between the two pairs.
                 return c === 2
                   ? [<div key="lab" style={{
-                      width: MID, textAlign: "center", ...display("chip"), fontSize: 12,
-                      color: DIVIDE, letterSpacing: "0.06em",
-                    }}>{row.k}</div>, cell]
+                      width: MID, textAlign: "center", ...display("chip"), fontSize: 13,
+                      color: DIVIDE, letterSpacing: "0.04em", lineHeight: 1.15,
+                    }}>{row.k.split("\n").map(t => <div key={t}>{t}</div>)}</div>, cell]
                   : cell;
               })}
             </div>
