@@ -30,6 +30,9 @@ const IDEAS = [
   { n: 4, name: "Split ring",
     line: "Each ring is divided into arcs, one per holder. Two green arcs and one pink means two of yours and one of theirs.",
     why: "Puts the whole picture on every node. You never have to trace a line to know a driver is contested, because his ring already says so wherever you look at him. The cost is a smaller, busier mark." },
+  { n: 8, name: "Tint the surplus",
+    line: "Picks in the order each player made them. Pair one of yours against one of theirs and both go plain; whatever is left over is ringed and tinted in the colour of whoever gained it.",
+    why: "Keeps the board people read, which is the five in the order they chose them, and colours only the part of it that changes the result. Two of yours against one of theirs is one pair that cancels and one copy that does not, so exactly one face lights up and the rest stay as drivers. Tinting the face rather than only the ring means the advantage carries at a glance, and because a cancelled copy is left plain, nothing on the other side ever wears your colour." },
   { n: 7, name: "One row per driver",
     line: "A row is a driver, not a pick slot. His circle says whether you want him to score; the four cells say who has him and where they ranked him.",
     why: "Two different facts stopped fighting over one colour. Rooting is a net: you want Hamilton to score even though they have one of him, so his circle is green wherever he appears. Holding is a fact about a card, so it lives in the cells. And a row is a driver rather than a pick position, which is the only way the board survives two people ranking the same driver differently: no diagonals, no crossings, and a name appears exactly once." },
@@ -41,7 +44,7 @@ const IDEAS = [
     why: "Separates identity from ownership entirely. A face is a driver, never a claim, and the strip is a tally you read like a scoreboard. It survives any number of hands, where colouring the face stops working past two teams." },
 ];
 
-function Ring({ name, size, shares, idea, force }) {
+function Ring({ name, size, shares, idea, force, tint }) {
   const url = DRIVER_HEADSHOTS[name];
   const mine = shares.filter(Boolean).length, theirs = shares.length - mine;
   const net = mine - theirs;
@@ -73,6 +76,17 @@ function Ring({ name, size, shares, idea, force }) {
   // force wins: idea 1 needs a cancelled cell grey even though the group nets
   // somebody a point, which is the whole point of cancelling it.
   const ring = force || (idea === 5 ? V.border2 : undefined);
+  // A tinted face carries the advantage further than a ring does. mix-blend
+  // keeps the photo's shading and only moves its colour.
+  if (tint && url) return (
+    <span style={{ position: "relative", display: "inline-block", width: size, height: size,
+                   borderRadius: "50%", overflow: "hidden", border: `3px solid ${tint}`,
+                   boxSizing: "border-box" }}>
+      <img src={url} alt="" style={{ ...solid, border: "none" }} />
+      <span style={{ position: "absolute", inset: 0, background: tint,
+                     mixBlendMode: "color", opacity: 0.85 }} />
+    </span>
+  );
   return url
     ? <img src={url} alt="" style={{ ...solid, border: `3px solid ${ring || tone}` }} />
     : <span style={{ ...solid, border: `3px solid ${ring || tone}`,
@@ -182,7 +196,7 @@ function Board({ idea, cols, spots, pts }) {
 
   // Idea 1: pair one of yours with one of theirs and grey both off.
   const cancelled = {};
-  if (idea === 1) {
+  if (idea === 1 || idea === 8) {
     groups.forEach(g => {
       const ours = g.at.filter(p => p.ours), th = g.at.filter(p => !p.ours);
       const pairs = Math.min(ours.length, th.length);
@@ -223,9 +237,11 @@ function Board({ idea, cols, spots, pts }) {
           {groups.filter(g => g.at.length > 1).map(g => {
             const pts = g.at.slice().sort((a, b) => a.c - b.c)
               .map(p => `${cx(p.c)},${cy(p.r)}`).join(" ");
-            const grey = idea === 3 ? g.net === 0 : idea === 1 ? g.net === 0 : false;
+            const grey = (idea === 3 || idea === 1 || idea === 8) ? g.net === 0 : false;
             const col = idea === 6 ? `url(#grad-${g.name.replace(/\W/g, "")})`
-              : idea === 2 ? V.border2 : idea === 5 ? V.border2 : (grey ? LEVEL : g.tone);
+              : idea === 2 ? V.border2 : idea === 5 ? V.border2
+              : idea === 8 ? (grey ? V.border2 : g.tone)
+              : (grey ? LEVEL : g.tone);
             const width = idea === 3 ? (g.net === 0 ? 2 : 3 + Math.abs(g.net) * 2) : idea === 6 ? 6 : 4;
             return <polyline key={g.name} points={pts} fill="none" stroke={col}
               strokeWidth={width} strokeLinecap="round" strokeLinejoin="round"
@@ -269,7 +285,7 @@ function Board({ idea, cols, spots, pts }) {
         {cols.flatMap((h, c) => h.order.map((name, r) => {
           const g = groups.find(x => x.name === name);
           const key = `${name}-${c}`;
-          const dim = idea === 1 && cancelled[key];
+          const dim = (idea === 1 || idea === 8) && cancelled[key];
           const shares = g.at.map(p => p.ours);
           const badge = idea === 2 && g.at.length > 1 && !seen.has(name) && (seen.add(name), true);
           return (
@@ -279,10 +295,11 @@ function Board({ idea, cols, spots, pts }) {
             }}>
               <span style={{ position: "relative", display: "inline-block" }}>
                 <Ring name={name} size={FACE} idea={idea}
-                      force={dim ? LEVEL : idea === 6 ? V.border2
+                      tint={idea === 8 && !dim && g.net !== 0 ? g.tone : undefined}
+                      force={dim ? (idea === 8 ? V.border2 : LEVEL) : idea === 6 ? V.border2
                         : (idea === 2 || idea === 3) ? (h.ours ? MINE : THEIRS) : undefined}
                       shares={idea === 2 || idea === 3 ? [h.ours] : shares} />
-                {dim && <span style={{
+                {dim && idea !== 8 && <span style={{
                   position: "absolute", inset: 0, borderRadius: "50%",
                   background: "rgba(7,7,12,0.45)",
                 }} />}
@@ -290,7 +307,8 @@ function Board({ idea, cols, spots, pts }) {
               <div style={{
                 marginTop: -7, display: "inline-block", position: "relative",
                 padding: "2px 5px", borderRadius: 7, background: "#000",
-                border: `1px solid ${dim ? V.border : idea === 6 ? V.border2
+                border: `1px solid ${dim ? V.border : idea === 8 ? (g.net === 0 ? V.border2 : g.tone)
+                  : idea === 6 ? V.border2
                   : (idea === 2 || idea === 3) ? (h.ours ? MINE : THEIRS)
                   : idea === 5 ? V.border2 : g.tone}`,
                 fontFamily: FD, fontWeight: 700, fontSize: 11, lineHeight: 1.35,

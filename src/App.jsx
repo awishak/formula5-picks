@@ -816,7 +816,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 // the pages that have no path of their own yet.
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
-  "dashboard", "hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
+  "dashboard", "hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
   "f1-calendar", "season-preview", "recaps", "admin",
 ]);
 
@@ -840,6 +840,7 @@ const ROUTES = [
   { path: "/hands/5", page: "hands5" },
   { path: "/hands/6", page: "hands6" },
   { path: "/hands/7", page: "hands7" },
+  { path: "/hands/8", page: "hands8" },
 
   { path: "/picks", page: "picks" },
   { path: "/teams", page: "team-standings" },
@@ -857,7 +858,7 @@ const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 // Pages rebuilt on the Vegas look. They set their own ground and their own
 // header, so the light shell's logo bar and background have to get out of the
 // way or a dark page opens under a white block.
-const VEGAS_PAGES = new Set(["hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "home", "vegas", "dashboard", "schedule", "team-standings", "player-standings"]);
+const VEGAS_PAGES = new Set(["hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home", "vegas", "dashboard", "schedule", "team-standings", "player-standings"]);
 
 // A path in, a page and any parameter out.
 function readPath(pathname) {
@@ -1011,7 +1012,7 @@ export default function App() {
 
   // The idea pages run on one fixed round and need no signed-in player, so they
   // render ahead of the name picker rather than behind it.
-  const ideaN = /^hands([1-7])$/.exec(activePage);
+  const ideaN = /^hands([1-8])$/.exec(activePage);
   if (ideaN) return <HandsIdeas idea={Number(ideaN[1])} />;
 
   if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
