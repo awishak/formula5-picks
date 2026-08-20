@@ -429,39 +429,31 @@ function PlayerBadge({ name, picked, size = 38, photo: given, dim = !picked, rin
   );
 }
 
+// Whether your two are in. It moves around the page: before the deadline it
+// belongs to whichever card is asking you to pick, and after it there is nothing
+// left to say, because the board shows both hands.
+function PickBadges({ players }) {
+  return (
+    <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+      {players.map(p => <PlayerBadge key={p.name} name={p.name} picked={p.picked} />)}
+    </div>
+  );
+}
+
 // ── Race marquee. The one piece of pure Vegas on every state. ──
 // Carries the round, the race, who has picked, and what the event is doing right
 // now. The circuit name used to sit at the bottom; event status is what people
 // actually open the app for.
-function Marquee({ race, status, players = [] }) {
-  const inCount = players.filter(p => p.picked).length;
-  const allIn = players.length > 0 && inCount === players.length;
+function Marquee({ race, status, time }) {
   return (
     <div style={{
       ...card({ padding: "18px 20px 20px", marginBottom: 18, position: "relative", overflow: "hidden" }),
       background: `radial-gradient(120% 100% at 50% 0%, ${V.blue}14 0%, ${V.bg2} 60%)`,
       borderColor: `${V.blue}33`,
     }}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
-        <div style={{ paddingTop: 4 }}>
-          {/* Just the round. Whether there are 22 or 23 is up to the FIA. */}
-          <Chip color={V.blue}>Round {race.round}</Chip>
-        </div>
-        {/* No names. It is your own team, two people, and their faces are right
-            there; the ring and the tick say which of them is in. */}
-        {players.length > 0 && (
-          <div style={{ marginLeft: "auto", flexShrink: 0 }}>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              {players.map(p => (
-                <PlayerBadge key={p.name} name={p.name} picked={p.picked} />
-              ))}
-            </div>
-            {allIn && (
-              <p style={{ ...labelType(), color: V.green, margin: "6px 0 0",
-                          textAlign: "center" }}>Picks in</p>
-            )}
-          </div>
-        )}
+      <div style={{ marginBottom: 6 }}>
+        {/* Just the round. Whether there are 22 or 23 is up to the FIA. */}
+        <Chip color={V.blue}>Round {race.round}</Chip>
       </div>
 
       <p style={{
@@ -476,6 +468,16 @@ function Marquee({ race, status, players = [] }) {
         lineHeight: 1.02, ...textGlow(V.blue), textAlign: "center",
         textTransform: "uppercase", margin: "2px 0 0",
       }}>Grand Prix</p>
+      {/* Small, under the sign. Before the deadline the loud line is the clock,
+          and the start time is the thing you plan around. */}
+      {time && (
+        <p style={{
+          ...display("chip"), fontSize: 13, color: V.gold, textAlign: "center",
+          // Same fact and same gold as the line states 3 and 4 carry, so it is
+          // set the same way and only the size says it is the quieter one.
+          textTransform: "uppercase", letterSpacing: "0.06em", margin: "8px 0 0",
+        }}>{time}</p>
+      )}
 
       {/* Only when the make-your-picks sign is not up, since that carries the
           deadline itself. With the picks in, this is the only place left that
@@ -519,14 +521,8 @@ function HomeOpen({ onNav, submitted = false }) {
   // The real deadline, which is the whole point of the clock.
   return (
     <>
-      <Marquee
-        race={race}
-        status={showPicker ? null : status}
-        players={[
-          { name: week.me, picked: week.picksIn.me },
-          { name: week.teammate, picked: week.picksIn.mate },
-        ]}
-      />
+      <Marquee race={race} status={showPicker ? null : status}
+               time={raceTimePT(race.round)} />
 
       {showPicker ? (
         <>
@@ -973,7 +969,8 @@ const FINISH_OPTIONS = Array.from({ length: 20 }, (_, i) => `P${i + 1}`);
 const NEEDLE_OPTIONS = Array.from({ length: 31 }, (_, i) => +(1.5 + i * 0.1).toFixed(1));
 
 function PickFlow() {
-  const { pools, f1Points, boxBox, race, playerId } = useWeek();
+  const week = useWeek();
+  const { pools, f1Points, boxBox, race, playerId } = week;
   const [picked, setPicked] = useState([]);
   const [order, setOrder] = useState([]);
   const [finish, setFinish] = useState("P5");
@@ -1079,9 +1076,14 @@ function PickFlow() {
   return (
     <>
       <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }) }}>
-        <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: "0 0 18px" }}>
-          This week's driver pool
-        </p>
+        {/* The heading said what the two lists underneath already say. The
+            badges take the line instead, next to the thing they are waiting on. */}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+          <PickBadges players={[
+            { name: week.me, picked: week.picksIn.me },
+            { name: week.teammate, picked: week.picksIn.mate },
+          ]} />
+        </div>
         <Group title="Top drivers" cap={TOP_PICKS} chosen={topPicked} accent={V.gold} names={pools.top} inTop />
         <Group title="Midfield drivers" cap={MID_PICKS} chosen={midPicked} accent={V.silver} names={pools.mid} />
       </div>
@@ -1207,7 +1209,8 @@ function PickFlow() {
 // picks, and nobody outside your team can see them. PickIntel.jsx:110 gates
 // picks on the deadline, so there is nothing of theirs to show yet.
 function HomeSubmitted({ onEdit }) {
-  const { myPick, matePick, teammate, race, boxBox } = useWeek();
+  const week = useWeek();
+  const { myPick, matePick, teammate, race, boxBox } = week;
   const [compare, setCompare] = useState(false);
   // A teammate who has not picked yet is the normal case for most of the week,
   // and there is no pick of theirs to read until they do.
@@ -1228,11 +1231,18 @@ function HomeSubmitted({ onEdit }) {
   return (
     <>
       <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }), borderColor: `${V.green}33` }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
           <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: 0 }}>Your picks are in</p>
+          <div style={{ marginLeft: "auto" }}>
+            <PickBadges players={[
+              { name: week.me, picked: week.picksIn.me },
+              { name: week.teammate, picked: week.picksIn.mate },
+            ]} />
+          </div>
         </div>
-        <p style={{ ...body("body"), fontSize: 16, color: V.text2, margin: "0 0 18px" }}>
-          Nobody outside your team sees them until the deadline. You can change them until then.
+        <p style={{ ...body("body"), fontSize: 16, lineHeight: 1.3, color: V.text2,
+                    margin: "0 0 18px" }}>
+          Only your team can see your picks until after the deadline.
         </p>
 
         <div style={{ display: "grid", gap: 6, marginBottom: 16 }}>
@@ -2382,10 +2392,10 @@ function HomeLocked({ scored: scoredWeek = true }) {
     <>
       <Marquee
         race={race}
-        // Locked is already said twice above: the chips read PICKS IN and the
-        // lights are green. What nobody knows yet is when the thing runs.
-        status={{ text: raceTimePT(race.round) || "Picks are locked", color: V.gold }}
-        players={mine.map(s => ({ name: s.name, picked: s.picked }))}
+        // Before the race, when it runs. After it, that it is over: the time is
+        // something you plan around, and there is nothing left to plan.
+        status={{ text: scoredWeek ? "Final" : (raceTimePT(race.round) || "Picks are locked"),
+                  color: V.gold }}
       />
 
       {missed && (
