@@ -31,8 +31,8 @@ const IDEAS = [
     line: "Each ring is divided into arcs, one per holder. Two green arcs and one pink means two of yours and one of theirs.",
     why: "Puts the whole picture on every node. You never have to trace a line to know a driver is contested, because his ring already says so wherever you look at him. The cost is a smaller, busier mark." },
   { n: 8, name: "Tint the surplus",
-    line: "Picks in the order each player made them. Every circle is the colour of whoever holds him, a shared driver's line fades between the two, and the one copy that is not cancelled out is tinted.",
-    why: "Three facts, three channels, and none of them fighting. The ring says who holds him, so it is green on your rows and pink on theirs and never the other way round. The line says he is contested and fades from your end to theirs. The tint says who actually gained: two of yours against one of theirs is one pair that cancels and one copy that does not, so exactly one face fills with colour and the rest stay photographs." },
+    line: "Picks in the order each player made them. A driver held evenly is grey. Otherwise the circles take the colour of whoever holds him, the line fades between the two, and the one copy that is not cancelled out is tinted.",
+    why: "Three facts, three channels, and none of them fighting. A driver both teams hold evenly is grey outright, because two each is a lot of points and no advantage, and colour on a board should mean something is at stake. Where something is, the ring says who holds him, green down your columns and pink down theirs and never the other way round. The line fades from your end to theirs. And the tint says who actually gained: one of yours cancels against one of theirs and both stay photographs, so exactly one face fills with colour." },
   { n: 7, name: "One row per driver",
     line: "A row is a driver, not a pick slot. His circle says whether you want him to score; the four cells say who has him and where they ranked him.",
     why: "Two different facts stopped fighting over one colour. Rooting is a net: you want Hamilton to score even though they have one of him, so his circle is green wherever he appears. Holding is a fact about a card, so it lives in the cells. And a row is a driver rather than a pick position, which is the only way the board survives two people ranking the same driver differently: no diagonals, no crossings, and a name appears exactly once." },
@@ -240,7 +240,8 @@ function Board({ idea, cols, spots, pts }) {
             const grey = (idea === 3 || idea === 1 || idea === 8) ? g.net === 0 : false;
             // A shared driver is held at both ends, so the line says so: green
             // where you have him, pink where they do.
-            const col = (idea === 6 || idea === 8) ? `url(#grad-${g.name.replace(/\W/g, "")})`
+            const col = idea === 8 && g.net === 0 ? V.border2
+              : (idea === 6 || idea === 8) ? `url(#grad-${g.name.replace(/\W/g, "")})`
               : idea === 2 ? V.border2 : idea === 5 ? V.border2
               : (grey ? LEVEL : g.tone);
             const width = idea === 3 ? (g.net === 0 ? 2 : 3 + Math.abs(g.net) * 2)
@@ -298,7 +299,7 @@ function Board({ idea, cols, spots, pts }) {
               <span style={{ position: "relative", display: "inline-block" }}>
                 <Ring name={name} size={FACE} idea={idea}
                       tint={idea === 8 && !dim && g.net !== 0 ? g.tone : undefined}
-                      force={idea === 8 ? (h.ours ? MINE : THEIRS)
+                      force={idea === 8 ? (g.net === 0 ? V.border2 : (h.ours ? MINE : THEIRS))
                         : dim ? LEVEL : idea === 6 ? V.border2
                         : (idea === 2 || idea === 3) ? (h.ours ? MINE : THEIRS) : undefined}
                       shares={idea === 2 || idea === 3 ? [h.ours] : shares} />
@@ -310,7 +311,7 @@ function Board({ idea, cols, spots, pts }) {
               <div style={{
                 marginTop: -7, display: "inline-block", position: "relative",
                 padding: "2px 5px", borderRadius: 7, background: "#000",
-                border: `1px solid ${idea === 8 ? (h.ours ? MINE : THEIRS)
+                border: `1px solid ${idea === 8 ? (g.net === 0 ? V.border2 : (h.ours ? MINE : THEIRS))
                   : dim ? V.border
                   : idea === 6 ? V.border2
                   : (idea === 2 || idea === 3) ? (h.ours ? MINE : THEIRS)
