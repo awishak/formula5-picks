@@ -1433,6 +1433,142 @@ function BoxBoxCard() {
 }
 
 // ── States B, C and D: locked pre-race, race live, race final ────
+
+// Four hands, five drivers each, in the order that player put them.
+//
+// Row one is you, row two your teammate, rows three and four the other team.
+// A driver on more than one card is joined by a line through every place he
+// appears, and the colour is who owns him:
+//
+//   your side has more   blue, lit
+//   their side has more  pink, lit
+//   level                grey, and it sits behind everything
+//
+// Back to front: grey lines, grey drivers, pink lines, blue lines, then the
+// blue and pink drivers on top. So a contested driver is never buried under a
+// line for a driver nobody is fighting over.
+function HandsBoard({ seats }) {
+  const wrap = useRef(null);
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    const read = () => setW(el.clientWidth);
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const hands = seats.slice(0, 4);
+  const LABEL = 64, ROW = 62, FACE = 38;
+  const cols = 5;
+  const cellW = w > LABEL ? (w - LABEL) / cols : 0;
+  const cx = (c) => LABEL + cellW * (c + 0.5);
+  const cy = (r) => ROW * r + ROW / 2;
+  const height = ROW * hands.length;
+
+  // Where each driver sits, and who owns him.
+  const spots = {};
+  hands.forEach((h, r) => {
+    const order = h.pick ? h.pick.order : [];
+    order.slice(0, cols).forEach((name, c) => {
+      (spots[name] ||= []).push({ r, c, ours: h.ours });
+    });
+  });
+  const tone = (name) => {
+    const at = spots[name] || [];
+    const mine = at.filter(p => p.ours).length;
+    const theirs = at.length - mine;
+    return mine > theirs ? "mine" : theirs > mine ? "theirs" : "level";
+  };
+  const COLOR = { mine: V.blue, theirs: V.pink, level: V.text2 };
+
+  const lines = Object.entries(spots)
+    .filter(([, at]) => at.length > 1)
+    .map(([name, at]) => ({
+      name, t: tone(name),
+      d: at.slice().sort((a, b) => a.r - b.r).map(p => `${cx(p.c)},${cy(p.r)}`).join(" "),
+    }));
+
+  const Layer = ({ which, z }) => (
+    <svg width="100%" height={height} style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
+      {lines.filter(l => l.t === which).map(l => (
+        <polyline key={l.name} points={l.d} fill="none"
+          stroke={COLOR[which]} strokeWidth={which === "level" ? 2 : 3}
+          strokeLinecap="round" strokeLinejoin="round"
+          opacity={which === "level" ? 0.5 : 1}
+          style={which === "level" ? undefined : { filter: `drop-shadow(0 0 6px ${COLOR[which]})` }} />
+      ))}
+    </svg>
+  );
+
+  const Drivers = ({ which, z }) => (
+    <div style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
+      {hands.flatMap((h, r) => {
+        const order = h.pick ? h.pick.order : [];
+        return order.slice(0, cols).map((name, c) => {
+          const t = tone(name);
+          if (which === "level" ? t !== "level" : t === "level") return null;
+          return (
+            <div key={`${r}-${c}`} style={{
+              position: "absolute", left: cx(c) - FACE / 2, top: cy(r) - FACE / 2,
+              width: FACE, height: FACE,
+            }}>
+              <Face name={name} size={FACE} ring={COLOR[t]} glow={t === "level" ? 0 : 0.9} />
+            </div>
+          );
+        });
+      })}
+    </div>
+  );
+
+  return (
+    <div style={{ ...card({ padding: "14px 12px", marginBottom: 18 }) }}>
+      <Label color={V.blue} style={{ marginBottom: 10 }}>The four hands</Label>
+      <div ref={wrap} style={{ position: "relative", height, minWidth: 0 }}>
+        {/* Row labels sit under everything and never move. */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+          {hands.map((h, r) => (
+            <div key={h.id} style={{
+              position: "absolute", left: 0, top: cy(r) - 16, width: LABEL - 8,
+              display: "flex", flexDirection: "column", justifyContent: "center",
+            }}>
+              <span style={{
+                ...display("chip"), fontSize: 13, lineHeight: 1.2,
+                color: h.mine ? V.blue : h.ours ? V.text : V.text2,
+                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+              }}>{h.mine ? "You" : h.name.split(" ")[0]}</span>
+              <span style={{ ...body("bodySm"), fontSize: 11, color: V.text2, whiteSpace: "nowrap" }}>
+                {h.pick ? `${h.pick.bestFinish} · ${h.pick.pitGuess.toFixed(1)}s` : "no picks"}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {w > 0 && (
+          <>
+            <Layer which="level" z={1} />
+            <Drivers which="level" z={2} />
+            <Layer which="theirs" z={3} />
+            <Layer which="mine" z={4} />
+            <Drivers which="owned" z={5} />
+          </>
+        )}
+      </div>
+
+      <div style={{ display: "flex", gap: 14, marginTop: 12, flexWrap: "wrap" }}>
+        {[["You have more", V.blue], ["They have more", V.pink], ["Level", V.text2]].map(([t, c]) => (
+          <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <span style={{ width: 16, height: 3, borderRadius: 2, background: c }} />
+            <span style={{ ...body("bodySm"), fontSize: 13, color: V.text2 }}>{t}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Locked: the deadline has gone and the race has not run.
 //
 // Everything on it exists without a running order, which is the point: this is
@@ -1535,6 +1671,12 @@ function HomeLocked() {
           </p>
         )}
       </div>
+
+      <SectionHead accent={V.blue}
+        sub={`${myTeam ? myTeam.name : "You"} on top, ${opp ? opp.name : "them"} below`}>
+        Who has who
+      </SectionHead>
+      <HandsBoard seats={[...mine, ...theirs]} />
 
       <SectionHead accent={V.blue}>{myTeam ? myTeam.name : "Your team"}</SectionHead>
       {mine.map(s => <Pick key={s.id} seat={s} />)}
