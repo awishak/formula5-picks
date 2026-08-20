@@ -717,9 +717,12 @@ function DivisionGrid({ teams, meTeam, T }) {
             border: `1px solid ${mine ? T.good : T.line}`,
             ...(mine ? edgeGlow(V.blue, 0.5) : {}),
           }}>
-            <div style={{ fontFamily: T.fd, fontSize: T.micro - 3, width: 92, flexShrink: 0,
-              whiteSpace: "nowrap", textAlign: "left",
-              color: mine ? T.good : T.faint }}>Ranked #{t.avgRank}</div>
+            {/* Just the number. "Ranked #12" needed 92px and still ran under
+                the logo beside it; the word was doing no work the column
+                heading does not already do. */}
+            <div style={{ fontFamily: T.fd, fontSize: T.micro - 2, width: 30, flexShrink: 0,
+              whiteSpace: "nowrap", textAlign: "right",
+              color: mine ? T.good : T.faint }}>#{t.avgRank}</div>
             <Logo src={t.logo} name={t.name} size={24} T={T} />
             <div style={{ flex: "1 1 0", minWidth: 0, textAlign: "left",
               fontFamily: T.fb, fontSize: T.micro, fontWeight: mine ? 700 : 400,
