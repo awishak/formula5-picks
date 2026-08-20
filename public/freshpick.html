@@ -1,0 +1,30 @@
+<!-- Dev harness. Reproduces a first visit: no stored name, pick someone in the
+     welcome screen, and see what you land on. -->
+<meta charset="utf-8" /><style>body{margin:0;background:#222}iframe{border:0;display:block}</style>
+<iframe id="f"></iframe>
+<script>
+  const q = new URLSearchParams(location.search);
+  const who = q.get("who") || "Alicia";
+  const f = document.getElementById("f");
+  f.style.width = (q.get("w") || 393) + "px"; f.style.height = (q.get("h") || 720) + "px";
+  f.src = "/";
+  (async () => {
+    await new Promise(r => f.onload = r);
+    try { f.contentWindow.localStorage.removeItem("f1_user"); } catch (e) {}
+    f.src = "/";                       // reload with no stored name
+    await new Promise(r => f.onload = r);
+    await new Promise(r => setTimeout(r, 3500));
+    const d = f.contentDocument;
+    const btn = [...d.querySelectorAll("button")]
+      .find(b => (b.textContent || "").includes(who));
+    if (btn) btn.click();
+    await new Promise(r => setTimeout(r, 5000));
+    // And back out again, which is the whole point of the link.
+    if (q.get("back")) {
+      const nb = [...f.contentDocument.querySelectorAll("button")]
+        .find(b => (b.textContent || "").trim() === "Not you?");
+      if (nb) nb.click();
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  })();
+</script>

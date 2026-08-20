@@ -856,7 +856,7 @@ function Fixtures({ deck, T }) {
 
 // initialCard exists for scripts/smoke-recap.jsx, which has to reach every card
 // without being able to click.
-export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) {
+export default function Recap({ playerName, onExit, onPicks, onChangeName, initialCard = 0 }) {
   const [i, setI] = useState(initialCard);
   const [phase, setPhase] = useState(0);          // card 6's play-out stages
   const [boardMode, setBoardMode] = useState("before");
@@ -915,6 +915,16 @@ export default function Recap({ playerName, onExit, onPicks, initialCard = 0 }) 
               color: T.band[1] }}>{n}</div>
           ))}
         </div>
+        {/* The deck opens on whoever the app thinks you are, and on a shared
+            phone or a fresh browser that is a guess. Quiet enough to ignore if
+            it guessed right. */}
+        {onChangeName && (
+          <button onClick={onChangeName} style={{
+            background: "none", border: "none", padding: "2px 0 0", cursor: "pointer",
+            fontFamily: T.fb, fontSize: T.small, color: T.dim,
+            textDecoration: "underline", textUnderlineOffset: 3,
+          }}>Not you?</button>
+        )}
       </Card>
     ),
     // 2 ─────────────────────────────────────────────────── you, and the field

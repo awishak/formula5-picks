@@ -973,29 +973,13 @@ export default function App() {
       <Recap
         playerName={who}
         initialCard={card}
+        onChangeName={handleChangeName}
         // Back to the root, not to the current path: leaving the deck from
         // /deck has to drop the path or it reopens on the next load.
         onExit={() => { window.history.replaceState(null, "", "/"); navigateTo("home"); }}
       />
     );
   }
-
-  if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
-
-  // The deck, as a gate. Anyone who has not put picks in for the next race gets
-  // it over the app once, and closing it is remembered for that round.
-  //
-  // Remembered in localStorage rather than a column on players: a seen flag in
-  // Supabase is a migration and a write, and this is a per-person, per-round
-  // "you have watched it" that costs nothing to lose. The worst case is that a
-  // new device shows it again.
-  const deckKey = picksChecked ? `f5_deck_seen_r${picksChecked.round}_${currentUser}` : null;
-  const showDeckGate =
-    activePage !== "recap" &&
-    picksChecked && !picksChecked.has && !deckSeen &&
-    (!deckKey || localStorage.getItem(deckKey) !== "1");
-
-  const onVegas = VEGAS_PAGES.has(activePage);
 
   // Every page starts at the top.
   //
@@ -1014,6 +998,25 @@ export default function App() {
     return () => cancelAnimationFrame(r);
   }, [activePage]);
 
+  if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
+
+  // The deck, as a gate. Anyone who has not put picks in for the next race gets
+  // it over the app once, and closing it is remembered for that round.
+  //
+  // Remembered in localStorage rather than a column on players: a seen flag in
+  // Supabase is a migration and a write, and this is a per-person, per-round
+  // "you have watched it" that costs nothing to lose. The worst case is that a
+  // new device shows it again.
+  const deckKey = picksChecked ? `f5_deck_seen_r${picksChecked.round}_${currentUser}` : null;
+  const showDeckGate =
+    activePage !== "recap" &&
+    picksChecked && !picksChecked.has && !deckSeen &&
+    (!deckKey || localStorage.getItem(deckKey) !== "1");
+
+  const onVegas = VEGAS_PAGES.has(activePage);
+
+
+
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: ${BG}; } .app-wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; background: ${BG}; padding-bottom: 80px; }`}</style>
@@ -1022,6 +1025,7 @@ export default function App() {
           <Recap
             playerName={currentUser}
             initialCard={0}
+            onChangeName={handleChangeName}
             onExit={() => {
               if (deckKey) { try { localStorage.setItem(deckKey, "1"); } catch (e) {} }
               setDeckSeen(true);
