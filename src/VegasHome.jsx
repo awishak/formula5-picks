@@ -1461,7 +1461,15 @@ function HandsBoard({ seats }) {
   }, []);
 
   const hands = seats.slice(0, 4);
-  const LABEL = 58, ROW = 76, FACE = 40;
+  // Everything scales off the measured width. On a phone the column is the
+  // phone; on anything wider there is room for bigger faces and a bigger name,
+  // and shrinking them to match the narrowest case wastes it.
+  const big = w >= 430;
+  const LABEL = big ? 66 : 58;
+  const FACE = big ? 50 : 42;
+  const ROW = big ? 90 : 78;
+  const PLATE = big ? 12 : 10;
+  const EDGE = big ? 4 : 3;
   const cols = 5;
   const cellW = w > LABEL ? (w - LABEL) / cols : 0;
   const cx = (c) => LABEL + cellW * (c + 0.5);
@@ -1495,7 +1503,7 @@ function HandsBoard({ seats }) {
     <svg width="100%" height={height} style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
       {lines.filter(l => l.t === which).map(l => (
         <polyline key={l.name} points={l.d} fill="none"
-          stroke={COLOR[which]} strokeWidth={which === "level" ? 3.5 : 5}
+          stroke={COLOR[which]} strokeWidth={which === "level" ? (big ? 4 : 3.5) : (big ? 6 : 5)}
           strokeLinecap="round" strokeLinejoin="round"
           opacity={which === "level" ? 0.5 : 1}
           style={which === "level" ? undefined : { filter: `drop-shadow(0 0 6px ${COLOR[which]})` }} />
@@ -1517,7 +1525,7 @@ function HandsBoard({ seats }) {
             }}>
               {/* Level drivers are drained: nobody is fighting over them, and a
                   full-colour face says the opposite. */}
-              <Face name={name} size={FACE} ring={COLOR[t]} edge={3}
+              <Face name={name} size={FACE} ring={COLOR[t]} edge={EDGE}
                     glow={t === "level" ? 0 : 1.1} drained={t === "level"} />
               {/* The name plate is the top layer, so it is never crossed by a
                   line. Black behind it for the same reason. */}
@@ -1527,9 +1535,9 @@ function HandsBoard({ seats }) {
                 // layer, so a name is never sitting under a neighbour, and
                 // "Verstappen" whole beats "Verst..." tidy.
                 maxWidth: Math.max(56, cellW + 13),
-                padding: "2px 5px", borderRadius: 7, background: "#000",
+                padding: big ? "3px 7px" : "2px 5px", borderRadius: 7, background: "#000",
                 border: `1px solid ${t === "level" ? V.border : COLOR[t]}`,
-                fontFamily: FD, fontWeight: 700, fontSize: 10, lineHeight: 1.35,
+                fontFamily: FD, fontWeight: 700, fontSize: PLATE, lineHeight: 1.35,
                 color: t === "level" ? V.text2 : "#fff",
                 whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                 textAlign: "center",
@@ -1553,7 +1561,7 @@ function HandsBoard({ seats }) {
               display: "flex", flexDirection: "column", justifyContent: "center",
             }}>
               <span style={{
-                ...display("chip"), fontSize: 13, lineHeight: 1.2,
+                ...display("chip"), fontSize: big ? 15 : 13, lineHeight: 1.2,
                 color: h.mine ? V.blue : h.ours ? V.text : V.text2,
                 whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
               }}>{h.mine ? "You" : h.name.split(" ")[0]}</span>
