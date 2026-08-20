@@ -596,6 +596,13 @@ function PickSign({ status }) {
 // One driver, one row. Tapping picks them; tapping again puts them back. When a
 // pool is full the rest of that pool goes quiet rather than disappearing, so you
 // can still see who you passed on.
+// One size for a driver in a list, wherever the list is. The pool rows were
+// 72px tall with a 52px face and the picks-are-in rows were 46 with a 30, so
+// the same driver was two different sizes two cards apart. Bigger face, shorter
+// row: the pool loses 18px a row over ten rows, and the picks list gains 8 over
+// five.
+const ROW_FACE = 44, ROW_NAME = 17, ROW_PAD = "5px 12px";
+
 function DriverPickRow({ name, picked, muted, onTap }) {
   // Championship points, from the standings the Monday cron writes. A dash
   // when that table is empty, rather than a number nobody earned.
@@ -607,7 +614,7 @@ function DriverPickRow({ name, picked, muted, onTap }) {
       disabled={muted}
       style={{
         width: "100%", display: "flex", alignItems: "center", gap: 12,
-        padding: "10px 12px", borderRadius: 12, cursor: muted ? "default" : "pointer",
+        padding: ROW_PAD, borderRadius: 12, cursor: muted ? "default" : "pointer",
         background: picked ? `${V.green}14` : V.bg3,
         border: `1px solid ${picked ? V.green : V.border}`,
         opacity: muted ? 0.32 : 1,
@@ -617,9 +624,9 @@ function DriverPickRow({ name, picked, muted, onTap }) {
         textAlign: "left",
       }}
     >
-      <Face name={name} size={52} ring={picked ? V.green : c} glow={picked ? 1.4 : 0.6} />
+      <Face name={name} size={ROW_FACE} ring={picked ? V.green : c} glow={picked ? 1.4 : 0.6} />
       <div style={{ flex: "1 1 0", minWidth: 0 }}>
-        <p style={{ ...body("bodyMd"), fontSize: 19, color: V.text, margin: 0,
+        <p style={{ ...body("bodyMd"), fontSize: ROW_NAME, color: V.text, margin: 0,
           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</p>
         <p style={{ ...body("bodySm"), color: c, margin: "1px 0 0" }}>{dTeam(name)}</p>
       </div>
@@ -1219,12 +1226,12 @@ function HomeSubmitted({ onEdit }) {
 
   const Row = ({ n, name }) => (
     <div style={{
-      display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-      borderRadius: 10, background: V.bg3, border: `1px solid ${V.border}`,
+      display: "flex", alignItems: "center", gap: 10, padding: ROW_PAD,
+      borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}`,
     }}>
       <span style={{ ...numeric("h3"), color: V.blue, width: 46, flexShrink: 0 }}>{ordinal(n)}</span>
-      <Face name={name} size={30} ring={dColor(name)} glow={0} />
-      <span style={{ ...body("bodyMd"), fontSize: 16, color: V.text }}>{name}</span>
+      <Face name={name} size={ROW_FACE} ring={dColor(name)} glow={0} />
+      <span style={{ ...body("bodyMd"), fontSize: ROW_NAME, color: V.text }}>{name}</span>
     </div>
   );
 
