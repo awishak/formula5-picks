@@ -49,7 +49,10 @@ const seat = (who, ours, mine, picked, p, sc, scored = true) => ({
 export function lockedDemo(kind = "all") {
   const youPicked = kind !== "missed";
   const matePicked = kind !== "waiting";
-  const scored = kind !== "pending";
+  // Before the deadline the week is not locked and nothing is scored, which is
+  // the same round 9 at two earlier moments.
+  const open = kind === "open" || kind === "submitted";
+  const scored = !open && kind !== "pending";
   const guesses = [
     youPicked ? 2 : null, matePicked ? 2 : null, 3.3, 2.3,
   ].filter(v => v != null);
@@ -59,10 +62,10 @@ export function lockedDemo(kind = "all") {
     scored,
     me: ROSTER.me.name,
     teammate: ROSTER.mate.name,
-    locked: true,
+    locked: !open,
     race: {
       round: 9, name: "British Grand Prix",
-      deadline: new Date(Date.now() - 3600e3).toISOString(),
+      deadline: new Date(Date.now() + (open ? 39 * 3600e3 : -3600e3)).toISOString(),
       pitQuestion: "Williams' first pit stop",
     },
     pools: { top: ["George Russell", "Lewis Hamilton", "Lando Norris"],
@@ -77,7 +80,9 @@ export function lockedDemo(kind = "all") {
                      { name: ROSTER.b.name, photo: ROSTER.b.photo, rank: 23 }] },
     oppWeeks: [],
     side: "OVER",
-    picksIn: { me: youPicked, mate: matePicked },
+    picksIn: kind === "open" ? { me: false, mate: false }
+      : kind === "submitted" ? { me: true, mate: true }
+      : { me: youPicked, mate: matePicked },
     myPick: youPicked ? pick(drivers, "P1", 2) : null,
     matePick: matePicked ? pick(other, "P1", 2) : null,
     seats: [

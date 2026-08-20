@@ -2845,7 +2845,8 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
   // ?demo=r11 is the same screen on a week that actually happened: real logos,
   // real faces, the picks people made and the points they scored.
   const pinned = /^r\d+$/.test(kind || "") ? Number((kind || "").slice(1)) : null;
-  const demo = ["all", "waiting", "missed", "pending"].includes(kind) ? lockedDemo(kind) : null;
+  const demo = ["all", "waiting", "missed", "pending", "open", "submitted"].includes(kind)
+    ? lockedDemo(kind) : null;
   const loaded = useLeague(given || demo ? null : currentUser, { round: pinned });
   const week = given || demo || loaded;
 

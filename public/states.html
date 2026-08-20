@@ -1,0 +1,36 @@
+<!-- Dev harness. Every state of the home page, side by side, on the same week.
+     Same iframe trick as fit.html: macOS Chrome clamps its own window to about
+     500px, so a row of phones cannot be screenshotted any other way.
+     Usage: /states.html?w=393&h=1500 -->
+<meta charset="utf-8" />
+<title>F5 home states</title>
+<style>
+  body { margin: 0; background: #07070c; font-family: ui-sans-serif, system-ui; }
+  .row { display: flex; gap: 14px; padding: 14px; align-items: flex-start; }
+  .col { flex: 0 0 auto; }
+  .cap { color: #7ee787; font: 700 13px/1.5 ui-monospace, monospace;
+         letter-spacing: .08em; padding: 6px 2px 8px; }
+  .cap span { color: #6b7280; font-weight: 400; letter-spacing: 0; }
+  iframe { border: 1px solid #1e2430; border-radius: 10px; display: block; background: #07070c; }
+</style>
+<div class="row" id="r"></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const w = +(q.get("w") || 393), h = +(q.get("h") || 1500);
+  const player = q.get("player") || "Andrew Ishak";
+  // The order a week actually goes through, then the two ways it goes wrong.
+  const STATES = [
+    ["open",      "no picks yet"],
+    ["submitted", "picks in, deadline ahead"],
+    ["pending",   "locked, not scored"],
+    ["all",       "final"],
+    ["waiting",   "final, teammate missed"],
+    ["missed",    "final, you missed"],
+  ];
+  document.getElementById("r").innerHTML = STATES.map(([k, note]) => `
+    <div class="col">
+      <div class="cap">${k.toUpperCase()} <span>— ${note}</span></div>
+      <iframe width="${w}" height="${h}"
+        src="/?demo=${k}&player=${encodeURIComponent(player)}"></iframe>
+    </div>`).join("");
+</script>
