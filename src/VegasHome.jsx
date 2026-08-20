@@ -8,7 +8,7 @@
 // Nothing here touches Supabase. It is a design surface, reachable at #vegas.
 
 import { useState, useRef, useEffect , createContext, useContext } from "react";
-import { V, FD, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, titleFit, titleBox, VEGAS_CSS } from "./theme.vegas";
+import { V, FD, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
 import { supabase } from "./supabaseClient";
 import { useLeague } from "./useLeague";
 import { lockedDemo } from "./lockedDemo";
@@ -1485,12 +1485,24 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
     return a;
   })();
 
-  // A plate wider than its slot drops to a second line rather than shoving the
-  // face off the value it belongs to.
-  const PLATE_W = 84;
-  const staggered = packed.map((p, i) => ({
-    ...p, low: i > 0 && p.px - packed[i - 1].px < PLATE_W && !packed[i - 1].low,
-  }));
+  // A plate wider than its slot drops a line rather than shoving the face off
+  // the value it belongs to. Each one takes the highest line it fits on, so a
+  // run of three in a row alternates instead of piling onto the same step:
+  // the old rule asked whether the previous plate had dropped by reading a
+  // field that did not exist yet, so the answer was always no and Coolidge and
+  // Wong were printed on top of each other.
+  const plateW = (s) => Math.max(38, lastName(s.name).length * 6.4 + 16);
+  const staggered = (() => {
+    const rightOf = [];
+    return packed.map(p => {
+      const half = plateW(p.s) / 2;
+      let lvl = 0;
+      while (rightOf[lvl] != null && p.px - half < rightOf[lvl] + 4) lvl++;
+      rightOf[lvl] = p.px + half;
+      return { ...p, lvl };
+    });
+  })();
+  const levels = staggered.reduce((n, p) => Math.max(n, p.lvl), 0);
 
   const line = boxBox.line;
   const ours = boxBox.side === "UNDER" ? "left" : "right";
@@ -1501,7 +1513,9 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
   const stopColor = wonBox ? MINE : THEIRS;
   const cColor = F1_TEAM_COLORS[boxBox.team] || V.purple;
   const TICKS = [1.5, 2, 2.5, 3, 3.5, 4, 4.5];
-  const LANE = 88, AXIS = LANE + 18, HEIGHT = AXIS + 50;
+  // The lane grows with the deepest plate, so a crowded week pushes the scale
+  // down rather than printing a name over it.
+  const LANE = 84 + levels * 20, AXIS = LANE + 18, HEIGHT = AXIS + 50;
 
   const Marker = ({ dir, color }) => (
     <svg width="40" height="16" style={{ display: "block", overflow: "visible" }}>
@@ -1544,7 +1558,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
               }}>{t.toFixed(1)}</div>
             ))}
 
-            {staggered.map(({ s, px, low }) => {
+            {staggered.map(({ s, px, lvl }) => {
               const c = s.ours ? MINE : THEIRS;
               return (
                 <div key={s.id} style={{
@@ -1557,7 +1571,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
                     // The faces stay on one level and the plate is what steps
                     // down, so the row reads as four people at four guesses
                     // rather than two rows of two.
-                    marginTop: low ? 16 : -6, display: "inline-block", position: "relative",
+                    marginTop: -6 + lvl * 20, display: "inline-block", position: "relative",
                     padding: "2px 5px", borderRadius: 7, background: "#000",
                     border: `1px solid ${c}`, fontFamily: FD, fontWeight: 700,
                     fontSize: 11, lineHeight: 1.35, color: "#fff", whiteSpace: "nowrap",
@@ -1691,19 +1705,20 @@ function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under }) {
     <div style={{
       flex: 1, minWidth: 0, textAlign: "center", padding: "14px 10px",
       borderRadius: 14, background: V.bg3, border: `2px solid ${c}`,
-      ...titleBox(), ...(won ? edgeGlow(c, 0.9) : {}),
+      ...(won ? edgeGlow(c, 0.9) : {}),
     }}>
       {t && t.logo
         ? <img src={t.logo} alt="" style={{ width: 46, height: 46, objectFit: "contain" }} />
         : <div style={{ width: 46, height: 46, borderRadius: 10, margin: "0 auto",
                         background: V.bg2, border: `2px solid ${c}` }} />}
-      {/* A team name shrinks to fit rather than losing its end. Half the grid
-          is longer than "Cal Aggie Racing" and an ellipsis here reads as the
-          team having a shorter name than it does. */}
+      {/* The type stays put and the name gives way. Anything longer than
+          "Cal Aggie Racing" drops to the short name teams.js already keeps for
+          tight spots, which is a name the team answers to rather than a
+          truncation or a size nobody else on the screen is set in. */}
       <div style={{
-        ...display("h3"), fontSize: titleFit(t ? t.name : "", { min: 10, max: 16 }),
-        color: V.text, marginTop: 6, lineHeight: 1.25, whiteSpace: "nowrap",
-      }}>{t ? t.name : "\u2014"}</div>
+        ...display("h3"), fontSize: 16, color: V.text, marginTop: 6,
+        lineHeight: 1.25, whiteSpace: "nowrap",
+      }}>{!t ? "\u2014" : t.name.length > 16 && t.short ? t.short : t.name}</div>
       <div style={{ ...display("chip"), fontSize: 11, color: c, marginTop: 2 }}>{side}</div>
       <div style={{ ...numeric("hero"), fontSize: 44, color: c, marginTop: 6,
                     ...(won ? textGlow(c, 0.9) : {}) }}>{total}</div>

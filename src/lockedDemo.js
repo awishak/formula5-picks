@@ -1,18 +1,20 @@
-// Synthetic locked weeks, for checking that screen before a real deadline has
-// passed.
+// Round 9, for checking the locked screen against a week that happened.
 //
-// Made up on purpose. The alternative was a URL parameter that treats the week
-// as locked, and that would show everyone their opponents' picks days early:
-// the whole point of the deadline is that nobody sees them until it goes.
-const drivers = ["Lewis Hamilton", "Max Verstappen", "Oscar Piastri", "Liam Lawson", "Pierre Gasly"];
-const other = ["Lando Norris", "Isack Hadjar", "Carlos Sainz", "Franco Colapinto", "Gabriel Bortoleto"];
-// The other team picks differently, or every row ties and the board says
-// "nobody" on both sides, which is the one thing it must never say by accident.
-const themA = ["George Russell", "Max Verstappen", "Liam Lawson", "Carlos Sainz", "Oliver Bearman"];
-const themB = ["George Russell", "Max Verstappen", "Pierre Gasly", "Arvid Lindblad", "Gabriel Bortoleto"];
+// The picks, the scores, the guesses and the stop are what four people actually
+// did at Silverstone. What is invented is only who submitted: ?demo=waiting
+// takes a card back off the table and ?demo=missed takes yours, because a week
+// that is locked and scored can no longer show either.
+//
+// It stands in for a made-up week because a made-up one could not cover the
+// board. Round 9 carries every shared-driver case on its own: Gasly two to one,
+// Lindblad one to two, Hadjar two each, Sainz two of ours and none of theirs,
+// Bearman the reverse. And Andrew and Coolidge both guessed 2.0, which is the
+// pair of faces that have to sit shoulder to shoulder on the line.
+const drivers = ["Lewis Hamilton", "Isack Hadjar", "Pierre Gasly", "Arvid Lindblad", "Carlos Sainz"];
+const other = ["George Russell", "Pierre Gasly", "Alex Albon", "Carlos Sainz", "Isack Hadjar"];
+const themA = ["Lewis Hamilton", "Isack Hadjar", "Arvid Lindblad", "Franco Colapinto", "Oliver Bearman"];
+const themB = ["George Russell", "Arvid Lindblad", "Oliver Bearman", "Isack Hadjar", "Pierre Gasly"];
 
-// Round 9's two rosters, so the faces on this screen are real faces. The week
-// itself is still made up; only the people and the crests are borrowed.
 const PIC = "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/";
 const ROSTER = {
   me:   { name: "Andrew Ishak",  photo: PIC + "74e68847-70fe-4eaf-9075-f4cfaa642cdd.png?t=1772682494867" },
@@ -43,7 +45,7 @@ export function lockedDemo(kind = "all") {
   const youPicked = kind !== "missed";
   const matePicked = kind !== "waiting";
   const guesses = [
-    youPicked ? 2.1 : null, matePicked ? 3.4 : null, 2.8, 1.9,
+    youPicked ? 2 : null, matePicked ? 2 : null, 3.3, 2.3,
   ].filter(v => v != null);
 
   return {
@@ -52,41 +54,41 @@ export function lockedDemo(kind = "all") {
     teammate: ROSTER.mate.name,
     locked: true,
     race: {
-      round: 12, name: "Dutch Grand Prix",
+      round: 9, name: "British Grand Prix",
       deadline: new Date(Date.now() - 3600e3).toISOString(),
       pitQuestion: "Williams' first pit stop",
     },
-    pools: { top: ["Lewis Hamilton", "Lando Norris", "George Russell"],
-             mid: ["Pierre Gasly", "Liam Lawson", "Max Verstappen", "Oscar Piastri",
-                   "Carlos Sainz", "Franco Colapinto", "Gabriel Bortoleto"] },
+    pools: { top: ["George Russell", "Lewis Hamilton", "Lando Norris"],
+             mid: ["Arvid Lindblad", "Oliver Bearman", "Isack Hadjar", "Pierre Gasly",
+                   "Franco Colapinto", "Carlos Sainz", "Alex Albon"] },
     // Real logos. The demo already names two real teams, and an empty square
     // where the logo goes is the difference between checking this screen and
     // guessing at it.
-    myTeam: { name: "Cal Aggie Racing", logo: LOGO.cal },
-    opp: { name: "HomeworkTubes.Com", logo: LOGO.tubes, division: "championship", place: 3, avgRank: 6, avg: 77.4,
+    myTeam: { name: "Cal Aggie Racing", short: "Cal Aggie", logo: LOGO.cal },
+    opp: { name: "HomeworkTubes.Com", short: "HomeworkTubes", logo: LOGO.tubes, division: "championship", place: 3, avgRank: 6, avg: 77.4,
            players: [{ name: ROSTER.a.name, photo: ROSTER.a.photo, rank: 11 },
                      { name: ROSTER.b.name, photo: ROSTER.b.photo, rank: 23 }] },
     oppWeeks: [],
-    side: "UNDER",
+    side: "OVER",
     picksIn: { me: youPicked, mate: matePicked },
-    myPick: youPicked ? pick(drivers, "P3", 2.1) : null,
-    matePick: matePicked ? pick(other, "P2", 3.4) : null,
+    myPick: youPicked ? pick(drivers, "P1", 2) : null,
+    matePick: matePicked ? pick(other, "P1", 2) : null,
     seats: [
-      seat(ROSTER.me, true, true, youPicked, pick(drivers, "P3", 2.1), score(15, 26, 0, 6)),
-      seat(ROSTER.mate, true, false, matePicked, pick(other, "P2", 3.4), score(15, 21, 3, 6)),
-      seat(ROSTER.a, false, false, true, pick(themA, "P1", 2.8), score(25, 16, 0, 0)),
-      seat(ROSTER.b, false, false, true, pick(themB, "P5", 1.9), score(18, 24, 3, 0)),
+      seat(ROSTER.me, true, true, youPicked, pick(drivers, "P1", 2), score(15, 17, 0, 0)),
+      seat(ROSTER.mate, true, false, matePicked, pick(other, "P1", 2), score(18, 10, 0, 0)),
+      seat(ROSTER.a, false, false, true, pick(themA, "P2", 3.3), score(15, 18, 0, 6)),
+      seat(ROSTER.b, false, false, true, pick(themB, "P1", 2.3), score(18, 17, 0, 0)),
     ],
     boxBox: {
-      side: "UNDER",
+      side: "OVER",
       team: "Williams",
       line: Math.round((guesses.reduce((a, b) => a + b, 0) / guesses.length) * 100) / 100,
       waitingOn: 4 - guesses.length,
-      // The stop landed. Without it the card is only half the mechanic: the
-      // guesses and the line, and no result, so the pin and the verdict below
-      // never render and the screen cannot be checked in the state that
-      // matters.
-      stop: 2.31,
+      // What round 9 recorded. Ten seconds is one of the two pit times the
+      // recap flagged as either a disaster or a typo, and it is left alone
+      // here: it is what the row says, and it is the case the scale has to
+      // survive, since the line only runs to 4.5.
+      stop: 10,
       guesses: {},
     },
     f1Points: {},
