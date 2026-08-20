@@ -21,6 +21,7 @@ import ViewingAs from "./ViewingAs.jsx";
 import MorePage from "./MorePage.jsx";
 import ComingSoon from "./ComingSoon.jsx";
 import DashboardPage from "./DashboardPage.jsx";
+import HandsIdeas from "./HandsIdeas.jsx";
 import VegasNav from "./VegasNav.jsx";
 import Recap from "./Recap.jsx";
 import { NEWS } from "./news";
@@ -815,7 +816,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 // the pages that have no path of their own yet.
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
-  "dashboard", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
+  "dashboard", "hands1", "hands2", "hands3", "hands4", "hands5", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
   "f1-calendar", "season-preview", "recaps", "admin",
 ]);
 
@@ -832,6 +833,12 @@ const ROUTES = [
   { path: "/", page: "vegas" },
   { path: "/more", page: "home" },
   { path: "/dashboard", page: "dashboard" },
+  { path: "/hands/1", page: "hands1" },
+  { path: "/hands/2", page: "hands2" },
+  { path: "/hands/3", page: "hands3" },
+  { path: "/hands/4", page: "hands4" },
+  { path: "/hands/5", page: "hands5" },
+
   { path: "/picks", page: "picks" },
   { path: "/teams", page: "team-standings" },
   { path: "/players", page: "player-standings" },
@@ -848,7 +855,7 @@ const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 // Pages rebuilt on the Vegas look. They set their own ground and their own
 // header, so the light shell's logo bar and background have to get out of the
 // way or a dark page opens under a white block.
-const VEGAS_PAGES = new Set(["home", "vegas", "dashboard", "schedule", "team-standings", "player-standings"]);
+const VEGAS_PAGES = new Set(["hands1", "hands2", "hands3", "hands4", "hands5", "home", "vegas", "dashboard", "schedule", "team-standings", "player-standings"]);
 
 // A path in, a page and any parameter out.
 function readPath(pathname) {
@@ -1000,6 +1007,11 @@ export default function App() {
     return () => cancelAnimationFrame(r);
   }, [activePage]);
 
+  // The idea pages run on one fixed round and need no signed-in player, so they
+  // render ahead of the name picker rather than behind it.
+  const ideaN = /^hands([1-5])$/.exec(activePage);
+  if (ideaN) return <HandsIdeas idea={Number(ideaN[1])} />;
+
   if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
 
   // The deck, as a gate. Anyone who has not put picks in for the next race gets
@@ -1088,6 +1100,7 @@ export default function App() {
         {activePage === "team-standings-v1" && <TeamStandings currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "division-trends" && <DivisionTrends currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "dashboard" && <DashboardPage currentUser={currentUser} onNavigate={navigateTo} />}
+
         {activePage === "schedule" && <ComingSoon title="Schedule" />}
         {/* The first-half schedule page, unrouted. */}
         {activePage === "schedule-v1" && <Schedule currentUser={currentUser} onNavigate={navigateTo} initialView={scheduleInitialView} />}
