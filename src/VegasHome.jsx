@@ -967,9 +967,7 @@ function PickFlow() {
     }
     setSaving(true);
     try {
-      // .select() so a policy or deadline failure surfaces instead of coming
-      // back as zero rows and looking like success.
-      const { data, error } = await supabase.from("picks").insert({
+      const row = {
         player_id: playerId,
         race_id: race.id,
         top_pick: order[0],
@@ -977,9 +975,27 @@ function PickFlow() {
         best_finish: finish,
         pit_guess: needle,
         submitted_at: new Date().toISOString(),
-      }).select();
+      };
+
+      // picks has a unique key on (race_id, player_id), so a second insert for
+      // the same race is a constraint violation rather than an edit. Upsert is
+      // refused outright by the policy, so this looks first and then updates or
+      // inserts accordingly.
+      const { data: existing } = await supabase.from("picks")
+        .select("id").eq("player_id", playerId).eq("race_id", race.id).maybeSingle();
+
+      // .select() on both, because an update that the policy does not match
+      // returns 200 with an empty body: no error, and nothing saved.
+      const { data, error } = existing
+        ? await supabase.from("picks").update(row).eq("id", existing.id).select()
+        : await supabase.from("picks").insert(row).select();
+
       if (error) throw error;
-      if (!data || !data.length) throw new Error("Your picks did not save. Try again.");
+      if (!data || !data.length) {
+        throw new Error(existing
+          ? "Changing picks is not enabled yet. Your original picks are still in."
+          : "Your picks did not save. Try again.");
+      }
       setSent(true);
     } catch (e) {
       // The picks stay on screen, so a retry costs nothing.
