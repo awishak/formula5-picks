@@ -1798,7 +1798,7 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, scored = true }) {
         )}
         <Side {...right} align="flex-end" />
       </div>
-      <div style={{ position: "relative", height: AXIS + 44, margin: "6px 4px 0" }}>
+      <div style={{ position: "relative", height: AXIS + 48, margin: "6px 4px 0" }}>
         {/* The label sits on the line it names, on a plate like the drivers
             wear, so it reads as a marker on the scale rather than a heading
             for the box. */}
@@ -1832,14 +1832,15 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, scored = true }) {
         {/* Its own line rather than the one the numbers are on. A stop can land
             exactly where the words would go, and this week it does: ten seconds
             clamps to the right edge. */}
-        <div style={{ position: "absolute", left: 0, right: 0, top: AXIS + 29,
+        <div style={{ position: "absolute", left: 0, right: 0, top: AXIS + 27,
                       display: "flex", justifyContent: "space-between" }}>
-          <span style={{ ...display("chip"), fontSize: 10, color: leftC, opacity: 0.75 }}>
-            {leftC === MINE ? "Good for you" : "Good for them"}
-          </span>
-          <span style={{ ...display("chip"), fontSize: 10, color: rightC, opacity: 0.75 }}>
-            {rightC === MINE ? "Good for you" : "Good for them"}
-          </span>
+          {[leftC, rightC].map((col, i) => (
+            <span key={i} style={{
+              padding: "2px 6px", borderRadius: 7, background: "#000",
+              border: `1px solid ${col}`, ...display("chip"), fontSize: 11,
+              letterSpacing: "0.04em", color: col,
+            }}>{col === MINE ? "Good for you" : "Good for them"}</span>
+          ))}
         </div>
       </div>
     </div>
@@ -2470,7 +2471,6 @@ function HomeLocked({ scored: scoredWeek = true }) {
                          boxBox={boxBox} scored={scored} />
             <HandsColumns seats={seats} under={under} scored={scored}
                           driverPts={week.driverPts || {}} />
-            <BoxBoxLine seats={seats} boxBox={boxBox} myTeam={myTeam} opp={opp} />
             <RootingCard seats={seats} boxBox={boxBox} />
           </>
         );
