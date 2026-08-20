@@ -923,6 +923,10 @@ export default function App() {
     }
   }
   const [hasSubmittedPicks, setHasSubmittedPicks] = useState(false);
+  // null until the check has run, so the deck does not flash up for someone who
+  // has already picked.
+  const [picksChecked, setPicksChecked] = useState(null);
+  const [deckSeen, setDeckSeen] = useState(false);
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [adminCode, setAdminCode] = useState("");
   const handleSelectName = (name) => { localStorage.setItem("f1_user", name); setCurrentUser(name); };
@@ -935,12 +939,13 @@ export default function App() {
     async function checkPicks() {
       try {
         const today = new Date().toISOString().split("T")[0];
-        const { data: race } = await supabase.from("races").select("id").gte("race_date", today).order("race_date", { ascending: true }).limit(1).maybeSingle();
+        const { data: race } = await supabase.from("races").select("id,round").gte("race_date", today).order("race_date", { ascending: true }).limit(1).maybeSingle();
         if (!race) return;
         const { data: player } = await supabase.from("players").select("id").eq("name", currentUser).maybeSingle();
         if (!player) return;
         const { data: existing } = await supabase.from("picks").select("id").eq("player_id", player.id).eq("race_id", race.id).maybeSingle();
         setHasSubmittedPicks(!!existing);
+        setPicksChecked({ round: race.round, has: !!existing });
       } catch (e) { /* silent */ }
     }
     checkPicks();
@@ -977,6 +982,19 @@ export default function App() {
 
   if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
 
+  // The deck, as a gate. Anyone who has not put picks in for the next race gets
+  // it over the app once, and closing it is remembered for that round.
+  //
+  // Remembered in localStorage rather than a column on players: a seen flag in
+  // Supabase is a migration and a write, and this is a per-person, per-round
+  // "you have watched it" that costs nothing to lose. The worst case is that a
+  // new device shows it again.
+  const deckKey = picksChecked ? `f5_deck_seen_r${picksChecked.round}_${currentUser}` : null;
+  const showDeckGate =
+    activePage !== "recap" &&
+    picksChecked && !picksChecked.has && !deckSeen &&
+    (!deckKey || localStorage.getItem(deckKey) !== "1");
+
   const onVegas = VEGAS_PAGES.has(activePage);
 
   // Every page starts at the top.
@@ -999,6 +1017,18 @@ export default function App() {
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: ${BG}; } .app-wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; background: ${BG}; padding-bottom: 80px; }`}</style>
+      {showDeckGate && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 500, background: "#07070c" }}>
+          <Recap
+            playerName={currentUser}
+            initialCard={0}
+            onExit={() => {
+              if (deckKey) { try { localStorage.setItem(deckKey, "1"); } catch (e) {} }
+              setDeckSeen(true);
+            }}
+          />
+        </div>
+      )}
       <div className="app-wrap" style={onVegas ? { background: "#07070c" } : undefined}>
         {/* One header for every page: logo left, who you are looking as right.
             The picker used to be inside HomePage, which made switching player
