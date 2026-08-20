@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
@@ -142,9 +142,9 @@ function YourTeam({ row, season, place, avgRank, teammate }) {
 // A record with no draws does not need a third number. 6-5 says what 6-5-0 says.
 const rec = s => (s.d > 0 ? `${s.w}-${s.l}-${s.d}` : `${s.w}-${s.l}`);
 
-function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank, innerRef }) {
+function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {
   return (
-    <div ref={innerRef} style={{
+    <div style={{
       display: "flex", alignItems: "center", gap: 8,
       padding: "8px 10px", borderRadius: 14, marginBottom: 6,
       background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
@@ -189,7 +189,6 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank, innerRef }) {
 
 export default function TeamsPage({ currentUser }) {
   const [state, setState] = useState({ loading: true });
-  const mineRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -234,15 +233,7 @@ export default function TeamsPage({ currentUser }) {
     })();
   }, [currentUser]);
 
-  // Land on your own row. Two divisions of twelve puts most teams below the
-  // fold, and the one you came to look at is yours.
-  useEffect(() => {
-    if (state.loading || !mineRef.current) return;
-    const t = setTimeout(() => {
-      mineRef.current && mineRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
-    }, 260);
-    return () => clearTimeout(t);
-  }, [state.loading]);
+  // No auto scroll. The page opens at the top and stays there.
 
   if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
   if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Standings did not load.</div>;
@@ -300,7 +291,6 @@ export default function TeamsPage({ currentUser }) {
                 return (
                   <Row
                     key={r.id} row={r} pos={posOf[r.id]} mine={r.id === myTeamId}
-                    innerRef={r.id === myTeamId ? mineRef : null}
                     record={rec(seasonOf[r.id])}
                     rank={avgRankOf[r.id]}
                     nextOpp={opp ? opp.code : null}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { V, FM, FD, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildPlayerTable, placesBy } from "./playerTable";
@@ -125,9 +125,9 @@ function YouAre({ row, place, total }) {
   );
 }
 
-function Row({ row, place, mine, innerRef }) {
+function Row({ row, place, mine }) {
   return (
-    <div ref={innerRef} style={{
+    <div style={{
       display: "flex", alignItems: "center", gap: 8,
       padding: "8px 10px", borderRadius: 14, marginBottom: 6,
       background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
@@ -166,7 +166,6 @@ function Row({ row, place, mine, innerRef }) {
 
 export default function PlayersPage({ currentUser }) {
   const [state, setState] = useState({ loading: true });
-  const mineRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -187,15 +186,7 @@ export default function PlayersPage({ currentUser }) {
     })();
   }, []);
 
-  // Land on your own row. In a list of 48 the thing you came to look at is
-  // yourself, and it is usually below the fold.
-  useEffect(() => {
-    if (state.loading || !mineRef.current) return;
-    const t = setTimeout(() => {
-      mineRef.current && mineRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
-    }, 260);
-    return () => clearTimeout(t);
-  }, [state.loading]);
+  // No auto scroll. The page opens at the top and stays there.
 
   if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
   if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Standings did not load.</div>;
@@ -211,8 +202,7 @@ export default function PlayersPage({ currentUser }) {
         <YouAre row={me} place={me ? place[me.id] : 0} total={rows.length} />
 
         {rows.map(r => (
-          <Row key={r.id} row={r} place={place[r.id]} mine={me && r.id === me.id}
-               innerRef={me && r.id === me.id ? mineRef : null} />
+          <Row key={r.id} row={r} place={place[r.id]} mine={me && r.id === me.id} />
         ))}
 
         <div style={body("bodySm", { color: V.text2, textAlign: "center", padding: "6px 0 0" })}>
