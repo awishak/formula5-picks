@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
-import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow } from "./theme.vegas";
+import { V, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow } from "./theme.vegas";
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { displayOf } from "./teams";
@@ -212,10 +212,6 @@ export default function DashboardPage({ currentUser, onNavigate }) {
     <div style={{ background: V.bg, minHeight: "100vh" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');`}</style>
       <div style={wrap}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 18, flexWrap: "wrap" }}>
-          <div style={{ fontFamily: FM, fontSize: 26, ...textGlow(V.blue) }}>FORMULA 5</div>
-        </div>
-
         <div style={{
           display: "grid",
           gridTemplateColumns: "minmax(340px, 0.95fr) minmax(340px, 1.1fr) minmax(340px, 1.1fr)",

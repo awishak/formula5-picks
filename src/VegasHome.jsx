@@ -442,7 +442,12 @@ function Marquee({ race, status, players = [] }) {
           <Chip color={V.blue}>Round {race.round}</Chip>
         </div>
         {players.length > 0 && (
-          <div style={{ marginLeft: "auto", textAlign: "right", flexShrink: 0 }}>
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "flex-start",
+                        gap: 10, flexShrink: 0 }}>
+            {allIn && (
+              <p style={{ ...labelType(), color: V.green, margin: 0, paddingTop: 9,
+                          textAlign: "right" }}>Picks in</p>
+            )}
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
               {players.map(p => (
                 <div key={p.name} style={{ textAlign: "center" }}>
@@ -453,22 +458,21 @@ function Marquee({ race, status, players = [] }) {
                 </div>
               ))}
             </div>
-            {allIn && (
-              <p style={{ ...labelType(), color: V.green, margin: "6px 0 0" }}>Picks in</p>
-            )}
           </div>
         )}
       </div>
 
       <p style={{
-        ...marquee(shortRace(race.name)), ...textGlow(V.pink), textAlign: "center",
-        textTransform: "uppercase", margin: "6px 0 0",
+        ...marquee(shortRace(race.name)), lineHeight: 1.02, ...textGlow(V.pink),
+        textAlign: "center", textTransform: "uppercase", margin: "6px 0 0",
       }}>{shortRace(race.name)}</p>
-      {/* On the same face as the race name and two thirds its size, so the two
-          lines read as one sign rather than a title and a caption. */}
+      {/* On the same face as the race name and two thirds its size, set tight
+          under it, so the two lines read as one sign rather than a title and a
+          caption with air between them. */}
       <p style={{
         ...marquee("Grand Prix"), fontSize: `calc(${marquee(shortRace(race.name)).fontSize}px * 0.62)`,
-        ...textGlow(V.blue), textAlign: "center", textTransform: "uppercase", margin: "8px 0 0",
+        lineHeight: 1.02, ...textGlow(V.blue), textAlign: "center",
+        textTransform: "uppercase", margin: "2px 0 0",
       }}>Grand Prix</p>
 
       {/* Only when the make-your-picks sign is not up, since that carries the
