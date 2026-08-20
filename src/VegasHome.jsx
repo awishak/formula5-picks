@@ -1708,7 +1708,7 @@ const MINE = V.green, THEIRS = V.pink, DIVIDE = V.blue;
 // Where the BOX BOX points went. It is six of swing and it is already inside
 // the two numbers above, so the only question this answers is which team took
 // it, and the box is that team's colour.
-function BoxBoxScore({ myTeam, opp, bb, under }) {
+function BoxBoxScore({ myTeam, opp, bb, under, boxBox }) {
   if (!bb || (bb.mine === 0 && bb.theirs === 0)) return null;
   const mineWon = bb.mine > bb.theirs;
   const c = mineWon ? MINE : THEIRS;
@@ -1728,16 +1728,54 @@ function BoxBoxScore({ myTeam, opp, bb, under }) {
       </span>
     </div>
   );
+  // The line and the stop, on the scale they were called against. Nothing else
+  // goes in here: the full card lower down is where the guesses and the teams
+  // live, and this is only the two numbers that decided it.
+  const MIN = 1.5, MAX = 4.5;
+  const pct = (v) => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
+  const TICKS = [1.5, 2, 2.5, 3, 3.5, 4, 4.5];
+  const line = boxBox && boxBox.line, stop = boxBox && boxBox.stop;
+  const Tick = ({ v, color, wide }) => (
+    <div style={{
+      position: "absolute", left: `${pct(v)}%`, top: wide ? 0 : 4,
+      width: wide ? 4 : 2, height: wide ? 16 : 8, marginLeft: wide ? -2 : -1,
+      borderRadius: 2, background: color,
+      ...(wide ? { boxShadow: `0 0 6px ${color}` } : {}),
+    }} />
+  );
+  // Clamped, so a stop out on the 4.5 end keeps its number inside the box.
+  const Value = ({ v, text, color }) => (
+    <div style={{
+      position: "absolute", top: 18, width: 44, textAlign: "center",
+      left: `clamp(0px, calc(${pct(v)}% - 22px), calc(100% - 44px))`,
+      ...numeric("chip"), fontSize: 12, color,
+    }}>{text}</div>
+  );
+
   return (
     <div style={{
-      display: "flex", alignItems: "center", padding: "9px 14px", marginBottom: 14,
+      padding: "9px 14px 10px", marginBottom: 14,
       borderRadius: 14, background: `${c}14`, border: `2px solid ${c}`,
     }}>
-      <Side {...left} align="flex-start" />
-      <span style={{ ...display("chip"), fontSize: 12, color: c, letterSpacing: "0.06em" }}>
-        Box box
-      </span>
-      <Side {...right} align="flex-end" />
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <Side {...left} align="flex-start" />
+        <span style={{ ...display("chip"), fontSize: 12, color: c,
+                       letterSpacing: "0.06em", textTransform: "uppercase" }}>
+          Box box
+        </span>
+        <Side {...right} align="flex-end" />
+      </div>
+      {line != null && stop != null && (
+        <div style={{ position: "relative", height: 32, margin: "8px 4px 0" }}>
+          <div style={{ position: "absolute", left: 0, right: 0, top: 7,
+                        height: 2, borderRadius: 2, background: V.border2 }} />
+          {TICKS.map(t => <Tick key={t} v={t} color={V.border2} />)}
+          <Tick v={line} color={DIVIDE} wide />
+          <Tick v={stop} color={c} wide />
+          <Value v={line} text={line.toFixed(2)} color={DIVIDE} />
+          <Value v={stop} text={stop.toFixed(2)} color={c} />
+        </div>
+      )}
     </div>
   );
 }
@@ -2328,7 +2366,7 @@ function HomeLocked() {
           <>
             <Scoreboard myTeam={myTeam} opp={opp} under={under}
                         mineTotal={tot(true)} theirTotal={tot(false)} />
-            <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under} />
+            <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under} boxBox={boxBox} />
             <HandsColumns seats={seats} under={under} driverPts={week.driverPts || {}} />
             <BoxBoxLine seats={seats} boxBox={boxBox} myTeam={myTeam} opp={opp} />
             <RootingCard seats={seats} boxBox={boxBox} />
