@@ -46,7 +46,11 @@
     for (const path of paths) {
       for (const w of widths) {
         f.style.width = w + "px"; f.style.height = "900px";
-        f.src = `${path}?player=${encodeURIComponent(player)}&t=${w}`;
+        // A path can already carry a query. Joining with "?" regardless made
+        // "/?demo=all?player=..." and the page fell through to the name picker,
+        // whose logo then reported as overflow on every run.
+        const sep = path.includes("?") ? "&" : "?";
+        f.src = `${path}${sep}player=${encodeURIComponent(player)}&t=${w}`;
         await new Promise(r => f.onload = r);
         await wait(4200);                        // fonts, logos, avatars
         const { over, cut } = scan(f.contentDocument, w);

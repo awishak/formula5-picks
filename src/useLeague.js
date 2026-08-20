@@ -120,6 +120,8 @@ export function useLeague(currentUser) {
           pitGuess: Number(row.pit_guess),
         });
 
+        const locked = race.pick_deadline ? race.pick_deadline <= now : false;
+
         if (!alive) return;
         setState({
           loading: false,
@@ -142,6 +144,23 @@ export function useLeague(currentUser) {
           },
           myPick: me ? asPick(pickOf[me.id]) || null : null,
           matePick: mateId ? asPick(pickOf[mateId]) || null : null,
+          // The four seats in this matchup, in team order. Picks are only
+          // filled in once the deadline has gone: before that nobody outside
+          // your own team can see them, which is the same rule PickIntel uses.
+          seats: [myTeamRow, oppRow].filter(Boolean).flatMap(t =>
+            [t.player1_id, t.player2_id].filter(Boolean).map(id => {
+              const p = players.find(x => x.id === id);
+              const own = myTeamRow && t.id === myTeamRow.id;
+              const visible = own || locked;
+              return {
+                id, name: p ? p.name : "?", photo: p ? p.photo_url : null,
+                mine: Boolean(me && id === me.id),
+                ours: Boolean(own),
+                team: displayOf(t.name),
+                picked: Boolean(pickOf[id]),
+                pick: visible ? asPick(pickOf[id]) || null : null,
+              };
+            })),
           picksIn: {
             me: Boolean(me && pickOf[me.id]),
             mate: Boolean(mateId && pickOf[mateId]),
@@ -150,13 +169,25 @@ export function useLeague(currentUser) {
           // The needle. The constructor comes out of the question itself, which
           // is the only place it is written down.
           boxBox: {
+            line: (() => {
+              const g = [myTeamRow, oppRow].filter(Boolean)
+                .flatMap(t => [t.player1_id, t.player2_id])
+                .map(id => pickOf[id] && Number(pickOf[id].pit_guess))
+                .filter(v => typeof v === "number" && !Number.isNaN(v));
+              return g.length ? Math.round((g.reduce((a, b) => a + b, 0) / g.length) * 100) / 100 : null;
+            })(),
+            // How many of the four have not been entered. The line is an
+            // average, so it is not final while anyone is missing.
+            waitingOn: [myTeamRow, oppRow].filter(Boolean)
+              .flatMap(t => [t.player1_id, t.player2_id])
+              .filter(id => id && !pickOf[id]).length,
             side: fixture && myTeamRow ? sideOf(fixture, myTeamRow.id) : null,
             team: (race.pit_stop_question || "").replace(/['\u2019]s?\s+first pit stop.*$/i, "") || null,
-            line: null, guesses: {},
+            guesses: {},
           },
           // Before the deadline nobody's picks are public, so an opponent's
           // BOX BOX guesses cannot be shown. PickIntel gates on the same thing.
-          locked: race.pick_deadline ? race.pick_deadline <= now : false,
+          locked,
         });
       } catch (e) {
         console.error(e);

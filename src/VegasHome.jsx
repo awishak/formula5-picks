@@ -11,6 +11,7 @@ import { useState, useRef, useEffect , createContext, useContext } from "react";
 import { V, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
 import { supabase } from "./supabaseClient";
 import { useLeague } from "./useLeague";
+import { lockedDemo } from "./lockedDemo";
 import { ordinal } from "./teamTable";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
@@ -86,8 +87,19 @@ const SNAP = {
     pitGuess: 1.5,
   },
   // team is the F1 constructor whose stop settles it, from race.pitQuestion.
-  boxBox: { side: "OVER", line: 2.48, team: "Alpine", guesses: { "Andrew Ishak": 1.5, "Kevin Coolidge": 1.5, "Brett Dillon": 3.5, "Stacy Michaelsen": 3.4 } },
-  picksIn: { me: true, teammate: true },
+  boxBox: { side: "OVER", line: 2.48, waitingOn: 0, team: "Alpine", guesses: { "Andrew Ishak": 1.5, "Kevin Coolidge": 1.5, "Brett Dillon": 3.5, "Stacy Michaelsen": 3.4 } },
+  picksIn: { me: true, teammate: true, mate: true },
+  // The four seats in the matchup, the shape useLeague returns.
+  seats: [
+    { id: "a", name: "Andrew Ishak", photo: null, ours: true, mine: true, picked: true,
+      pick: { topPick: "Lewis Hamilton", order: ["Lewis Hamilton", "Max Verstappen", "Isack Hadjar", "Liam Lawson", "Arvid Lindblad"], bestFinish: "P3", pitGuess: 1.5 } },
+    { id: "b", name: "Kevin Coolidge", photo: null, ours: true, mine: false, picked: true,
+      pick: { topPick: "Lewis Hamilton", order: ["Lewis Hamilton", "Max Verstappen", "Isack Hadjar", "Liam Lawson", "Arvid Lindblad"], bestFinish: "P3", pitGuess: 1.5 } },
+    { id: "c", name: "Brett Dillon", photo: null, ours: false, mine: false, picked: true,
+      pick: { topPick: "Lando Norris", order: ["Lando Norris", "Isack Hadjar", "Liam Lawson", "Pierre Gasly", "Oliver Bearman"], bestFinish: "P1", pitGuess: 3.5 } },
+    { id: "d", name: "Stacy Michaelsen", photo: null, ours: false, mine: false, picked: true,
+      pick: { topPick: "Lando Norris", order: ["Lando Norris", "Isack Hadjar", "Liam Lawson", "Pierre Gasly", "Oliver Bearman"], bestFinish: "P2", pitGuess: 3.4 } },
+  ],
   // Real qualifying result, session_key 11338.
   grid: {
     "Lando Norris": 1, "Lewis Hamilton": 2, "Charles Leclerc": 3, "Andrea Kimi Antonelli": 4,
@@ -1421,69 +1433,124 @@ function BoxBoxCard() {
 }
 
 // ── States B, C and D: locked pre-race, race live, race final ────
-function HomeLocked({ live = false, settled = false, lapIdx = 0 }) {
-  const week = useWeek();
-  const { race, myPick, grid, standings, laps } = week;
-  const lapInfo = live ? laps[lapIdx] : null;
-  // Grid order before the race, running order during it, finishing order after.
-  // The two lap snapshots double as the two possible results, so the settled
-  // state needs no separate invented order.
-  const gridOrder = Object.entries(grid).sort((a, b) => a[1] - b[1]).map(([n]) => n);
-  const order = live || settled ? laps[lapIdx].order : gridOrder;
+// Locked: the deadline has gone and the race has not run.
+//
+// Everything on it exists without a running order, which is the point: this is
+// the state the app is in for two days every week, and it cannot depend on live
+// timing that may not be reachable.
+//
+// Three ways a week arrives here, and the screen has to say which:
+//   you did not pick        nothing of yours to show, and nothing to be done
+//   someone else is missing the line is an average, so it is not settled
+//   all four are in         the line is final and the week is set
+function HomeLocked() {
+  const { race, seats = [], boxBox, myTeam, opp } = useWeek();
+  const mine = seats.filter(s => s.ours);
+  const theirs = seats.filter(s => !s.ours);
+  const you = seats.find(s => s.mine);
+  const missed = you && !you.picked;
+  const waiting = boxBox.waitingOn;
+
+  const Pick = ({ seat }) => (
+    <div style={{
+      padding: "11px 13px", borderRadius: 12, marginBottom: 8,
+      background: seat.mine ? "rgba(0,217,255,0.07)" : V.bg3,
+      border: `1px solid ${seat.mine ? V.blue : V.border}`,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: seat.pick ? 9 : 0 }}>
+        <PlayerBadge name={seat.name} picked={seat.picked} dim={!seat.picked}
+                     photo={seat.photo} size={30} />
+        <span style={{ ...body("bodyMd"), fontSize: 16, color: seat.mine ? V.blue : V.text }}>
+          {seat.name}
+        </span>
+        {!seat.picked && (
+          <span style={{ ...display("chip"), fontSize: 13, color: V.pink, marginLeft: "auto" }}>
+            No picks
+          </span>
+        )}
+      </div>
+      {seat.pick && (
+        <>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            {seat.pick.order.map((d, i) => (
+              <span key={d} style={{
+                padding: "4px 8px", borderRadius: 100, background: V.bg2,
+                border: `1px solid ${i === 0 ? V.gold : V.border}`,
+                ...display("chip"), fontSize: 13, color: i === 0 ? V.gold : V.text2,
+              }}>{i + 1}. {d.split(" ").slice(-1)[0]}</span>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
+            <span style={{ ...body("bodySm"), fontSize: 14, color: V.text2 }}>
+              Best finish <strong style={{ color: V.text }}>{seat.pick.bestFinish}</strong>
+            </span>
+            <span style={{ ...body("bodySm"), fontSize: 14, color: V.text2 }}>
+              Needle <strong style={{ color: V.text }}>{seat.pick.pitGuess.toFixed(1)}s</strong>
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <>
       <Marquee
         race={race}
-        status={eventStatus({ settled, live, lapInfo, race })}
-        players={[
-          { name: week.me, picked: week.picksIn.me },
-          { name: week.teammate, picked: week.picksIn.mate },
-        ]}
+        status={{ text: "Picks are locked", color: V.gold }}
+        players={mine.map(s => ({ name: s.name, picked: s.picked }))}
       />
 
-      <RootingBoard order={order} live={live} lapInfo={lapInfo} settled={settled} />
-
-      <SectionHead accent={V.blue} sub={`Your points, not the matchup · P${standings.myRank} of ${standings.of}`}>
-        Your own card
-      </SectionHead>
-      <div style={{ ...card({ padding: "16px 18px", marginBottom: 22 }) }}>
-        <Label color={V.gold} style={{ marginBottom: 12 }}>Top pick · from the top pool</Label>
-        <DriverRow name={myPick.topPick} accent={V.gold} grid={grid[myPick.topPick]}
-          why={`Grid ${grid[myPick.topPick]} · ${F1_PTS[grid[myPick.topPick]]} pts`} />
-        <Label color={V.text3} style={{ margin: "18px 0 12px" }}>Then, in your order</Label>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {myPick.order.slice(1).map((d, i) => (
-            <div key={d} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 12px", background: V.bg3, borderRadius: 12 }}>
-              <p style={{ ...display("h3"), color: V.text3, margin: 0, width: 26 }}>{i + 2}</p>
-              <Face name={d} size={34} />
-              <p style={{ ...body("bodyMd"), color: V.text, margin: 0, flex: 1 }}>{d}</p>
-              <Chip color={V.text3}>Grid {grid[d]}</Chip>
-            </div>
-          ))}
+      {missed && (
+        <div style={{ ...card({ padding: 16, marginBottom: 18 }), ...edgeGlow(V.pink, 0.7) }}>
+          <p style={{ ...display("h3"), color: V.pink, margin: 0 }}>You did not get picks in</p>
+          <p style={{ ...body("body"), color: V.text2, margin: "8px 0 0" }}>
+            The deadline has gone, so this week scores you nothing. Everything below is
+            what the rest of the matchup is running.
+          </p>
         </div>
+      )}
+
+      <div style={{ ...card({ padding: 18, marginBottom: 18 }), borderColor: `${V.gold}33` }}>
+        <Label color={V.gold} style={{ marginBottom: 10 }}>The BOX BOX line</Label>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
+          <span style={{ ...numeric("hero"), fontSize: 54, ...textGlow(V.gold, 0.8) }}>
+            {boxBox.line != null ? boxBox.line.toFixed(2) : "—"}
+          </span>
+          <span style={{ ...display("h3"), color: V.gold }}>
+            you have the {boxBox.side || "—"}
+          </span>
+        </div>
+        <p style={{ ...body("body"), color: V.text2, margin: "10px 0 0" }}>
+          {race.pitQuestion || "The pit stop"} decides it. Your team scores{" "}
+          <span style={{ color: V.green }}>+5</span> if the stop lands{" "}
+          {boxBox.side === "OVER" ? "above" : "below"} the line, and{" "}
+          <span style={{ color: V.pink }}>&minus;1</span> if it does not.
+        </p>
+        {waiting > 0 && (
+          <p style={{ ...body("bodySm"), fontSize: 14, color: V.pink, margin: "10px 0 0" }}>
+            {waiting === 1 ? "One guess is missing" : `${waiting} guesses are missing`}, so the line
+            is an average of the rest. It moves if they are filled in.
+          </p>
+        )}
       </div>
 
-      <SectionHead accent={V.gold}>Box Box</SectionHead>
-      <BoxBoxCard />
+      <SectionHead accent={V.blue}>{myTeam ? myTeam.name : "Your team"}</SectionHead>
+      {mine.map(s => <Pick key={s.id} seat={s} />)}
 
-      <SectionHead accent={V.blue}>The matchup</SectionHead>
-      <MatchupCard />
+      <div style={{ height: 10 }} />
+      <SectionHead accent={V.pink}>{opp ? opp.name : "Your opponent"}</SectionHead>
+      {theirs.length
+        ? theirs.map(s => <Pick key={s.id} seat={s} />)
+        : <p style={{ ...body("body"), color: V.text2 }}>No opponent for this round.</p>}
+
+      <div style={{ height: 14 }} />
+      <OpponentCard />
     </>
   );
 }
 
-// ── The rooting board ────────────────────────────────────
-//
-// The whole race on one screen. Every driver in running order, two narrow
-// columns for the two teams, and in each column what that driver is currently
-// worth to that team. Values bunched near the top of the US column means you
-// are winning, and you read that without counting. The number matters as much
-// as the mark: a driver you are rooting against in P13 is worth zero, which a
-// plain dot cannot tell you.
-// `settled` means the race is over and the real numbers are in. Only then does
-// the board commit to a verdict in color. While a race is running nothing is
-// decided, so both sides keep their neutral ownership colors and the language
-// stays provisional: ahead and behind, not won and lost.
+
 function RootingBoard({ order, live, lapInfo, settled = false }) {
   const { myTeam, opp, boxBox } = useWeek();
   const boxSide = boxBox.side;
@@ -1882,8 +1949,18 @@ function NeonKit() {
 export default function VegasHome({ onNavigate, currentUser, week: given, initialTab = "home", initialState = null, initialLap = 0 }) {
   // A week can be handed in. scripts/smoke.jsx does that to render every state
   // server-side, which it cannot do against a database.
-  const loaded = useLeague(given ? null : currentUser);
-  const week = given || loaded;
+  // ?demo=locked|waiting|missed renders the locked screen on made-up data. It
+  // does not treat the real week as locked, because that would show everyone
+  // their opponents' picks before the deadline.
+  const demo = (() => {
+    // The smoke test renders this through react-dom/server, where there is no
+    // window at all.
+    if (typeof window === "undefined") return null;
+    const k = new URLSearchParams(window.location.search).get("demo");
+    return ["all", "waiting", "missed"].includes(k) ? lockedDemo(k) : null;
+  })();
+  const loaded = useLeague(given || demo ? null : currentUser);
+  const week = given || demo || loaded;
 
   // The page triples in height the moment the week arrives. Whatever the
   // scroll position was against the short version is meaningless against the
@@ -1936,7 +2013,7 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
         {tab === "kit" ? <NeonKit /> : (
           state === "open" || state === "submitted"
             ? <HomeOpen onNav={nav} submitted={state === "submitted"} />
-            : <HomeLocked live={state === "live"} settled={state === "final"} lapIdx={lapIdx} />
+            : <HomeLocked />
         )}
       </div>
     </div>
