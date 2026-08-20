@@ -4,16 +4,14 @@ import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeG
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { displayOf } from "./teams";
+import VegasHome from "./VegasHome.jsx";
 
 // Desktop mockup. Everything the phone spreads over five tabs, on one screen.
 //
-// Two layouts, switchable at the top:
-//   Pit wall   three columns. The week on the left, the two tables beside it.
-//              Nothing is more than a glance away and nothing is hero-sized.
-//   Broadcast  the week across the top at full width, tables underneath. Reads
-//              like a race graphic: one thing you are looking at, then detail.
-//
-// It runs on the same modules the phone does, so the numbers are the real ones.
+// Three columns. The left one IS the phone's home page, the same component
+// rendering the same states, so the week never has two implementations that
+// drift apart. The other two are the standings, side by side, which is the
+// thing a phone can never do.
 
 const MAX = 1360;
 
@@ -38,75 +36,6 @@ const Face = ({ name, photo, size = 30 }) => {
     fontSize: size * 0.38, color: "#fff" }}>
     {(name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}</div>;
 };
-
-// ── the week ─────────────────────────────────────────────
-function WeekPanel({ w, wide }) {
-  const { race, picksIn, myTeam, opp, side, pools } = w;
-  const closes = race.deadline ? new Date(race.deadline) - new Date() : null;
-  const hrs = closes != null ? Math.max(0, Math.floor(closes / 3600e3)) : null;
-  return (
-    <Panel title={`Round ${race.round}`} accent={V.pink} style={{ gap: 14 }}>
-      <div style={{ textAlign: wide ? "left" : "center" }}>
-        <div style={{ fontFamily: FM, fontSize: wide ? 52 : 38, lineHeight: 1.1,
-          ...textGlow(V.pink) }}>{race.name.replace(" Grand Prix", "").toUpperCase()}</div>
-        <div style={{ fontFamily: FM, fontSize: wide ? 30 : 22, lineHeight: 1.2, marginTop: 4,
-          ...textGlow(V.blue) }}>GRAND PRIX</div>
-      </div>
-
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        {[{ k: "Picks close", v: hrs != null ? `${hrs}h` : "—", c: V.pink },
-          { k: "Your side", v: side || "—", c: V.gold },
-          { k: "The needle", v: race.pitQuestion ? race.pitQuestion.split("'")[0] : "—", c: V.purple }]
-          .map(s => (
-          <div key={s.k} style={{ flex: "1 1 120px", padding: "10px 12px", borderRadius: 12,
-            background: V.bg3, border: `1px solid ${V.border}` }}>
-            <div style={label({ color: V.text2, fontSize: 11 })}>{s.k}</div>
-            <div style={{ fontFamily: FD, fontWeight: 700, fontSize: 18, color: s.c, marginTop: 3,
-              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.v}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 14px",
-        borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}` }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={label({ color: V.text2, fontSize: 11, marginBottom: 4 })}>You play</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {opp && opp.logo && <img src={opp.logo} alt="" style={{ width: 30, height: 30, objectFit: "contain" }} />}
-            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 17, color: V.text,
-              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{opp ? opp.name : "—"}</span>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          {[{ n: w.me, in: picksIn.me }, { n: w.teammate, in: picksIn.mate }].filter(p => p.n).map(p => (
-            <div key={p.n} style={{ textAlign: "center" }}>
-              <div style={{ width: 34, height: 34, borderRadius: "50%",
-                border: `2px solid ${p.in ? V.green : V.text2}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: FD, fontWeight: 700, fontSize: 13,
-                color: p.in ? V.green : V.text2 }}>{p.in ? "✓" : "·"}</div>
-              <div style={{ fontFamily: FD, fontSize: 12, color: p.in ? V.green : V.text2, marginTop: 3 }}>
-                {p.n.split(" ")[0]}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div style={label({ color: V.text2, fontSize: 11, marginBottom: 8 })}>This week&rsquo;s pool</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {[...pools.top, ...pools.mid].map((d, i) => (
-            <span key={d} style={{ padding: "5px 9px", borderRadius: 100,
-              background: V.bg3, border: `1px solid ${i < pools.top.length ? V.gold : V.border}`,
-              fontFamily: FD, fontWeight: 600, fontSize: 13,
-              color: i < pools.top.length ? V.gold : V.text2 }}>{d.split(" ").slice(-1)[0]}</span>
-          ))}
-        </div>
-      </div>
-    </Panel>
-  );
-}
 
 // ── tables ───────────────────────────────────────────────
 function TeamTable({ rows, posOf, myTeamId, avgRank, fixtures, byId }) {
@@ -174,11 +103,8 @@ function PlayerTable({ rows, place, meId, limit }) {
 }
 
 // ── page ─────────────────────────────────────────────────
-export default function DashboardPage({ currentUser }) {
+export default function DashboardPage({ currentUser, onNavigate }) {
   const [s, setS] = useState({ loading: true });
-  // ?lay=cast opens on the other one, so either can be sent as a link.
-  const [lay, setLay] = useState(() =>
-    new URLSearchParams(window.location.search).get("lay") === "cast" ? "cast" : "wall");
 
   useEffect(() => {
     (async () => {
@@ -246,7 +172,6 @@ export default function DashboardPage({ currentUser }) {
     list.forEach((r, i) => { posOf[r.id] = (i > 0 && list[i - 1].pts === r.pts) ? posOf[list[i - 1].id] : i + 1; });
   });
 
-  const wall = lay === "wall";
   const teamPanels = ["championship", "second"].map(d => (
     <Panel key={d} title={d === "championship" ? "Championship Division" : "Second Division"}
            accent={d === "championship" ? V.gold : V.silver}>
@@ -261,41 +186,26 @@ export default function DashboardPage({ currentUser }) {
       <div style={wrap}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 18, flexWrap: "wrap" }}>
           <div style={{ fontFamily: FM, fontSize: 26, ...textGlow(V.blue) }}>FORMULA 5</div>
-          <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
-            {[["wall", "Pit wall"], ["cast", "Broadcast"]].map(([id, t]) => (
-              <button key={id} onClick={() => setLay(id)} style={{
-                padding: "8px 14px", borderRadius: 10, cursor: "pointer",
-                background: lay === id ? "rgba(0,217,255,0.12)" : V.bg3,
-                border: `1px solid ${lay === id ? V.blue : V.border}`,
-                fontFamily: FD, fontWeight: 600, fontSize: 14,
-                color: lay === id ? V.blue : V.text2,
-              }}>{t}</button>
-            ))}
-          </div>
         </div>
 
-        {wall ? (
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 1fr) minmax(340px, 1.15fr) minmax(340px, 1.15fr)", gap: 14, alignItems: "start" }}>
-            <WeekPanel w={s.week} wide={false} />
-            <div style={{ display: "grid", gap: 14 }}>{teamPanels}</div>
-            <Panel title="Players" accent={V.blue}>
-              <PlayerTable rows={s.players} place={s.place} meId={s.meId} limit={20} />
-            </Panel>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(340px, 0.95fr) minmax(340px, 1.1fr) minmax(340px, 1.1fr)",
+          gap: 14, alignItems: "start",
+        }}>
+          {/* The phone's home page, exactly as it is. It brings its own dark
+              ground and its own 480px cap, which is a column here. */}
+          <div style={{ ...card({ padding: 0, overflow: "hidden" }), minWidth: 0 }}>
+            <VegasHome currentUser={currentUser} onNavigate={onNavigate} />
           </div>
-        ) : (
-          <div style={{ display: "grid", gap: 14 }}>
-            <WeekPanel w={s.week} wide />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, alignItems: "start" }}>
-              {teamPanels}
-              <Panel title="Players" accent={V.blue}>
-                <PlayerTable rows={s.players} place={s.place} meId={s.meId} limit={14} />
-              </Panel>
-            </div>
-          </div>
-        )}
+          <div style={{ display: "grid", gap: 14 }}>{teamPanels}</div>
+          <Panel title="Players" accent={V.blue}>
+            <PlayerTable rows={s.players} place={s.place} meId={s.meId} limit={22} />
+          </Panel>
+        </div>
 
         <p style={{ ...body("bodySm"), color: V.text2, textAlign: "center", marginTop: 20 }}>
-          Desktop mockup. Real numbers, same modules as the phone.
+          Desktop mockup. The left column is the phone home page itself.
         </p>
       </div>
     </div>

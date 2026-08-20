@@ -1087,7 +1087,7 @@ export default function App() {
             is still thin. It is the only place the 1-11 standings render. */}
         {activePage === "team-standings-v1" && <TeamStandings currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "division-trends" && <DivisionTrends currentUser={currentUser} onNavigate={navigateTo} />}
-        {activePage === "dashboard" && <DashboardPage currentUser={currentUser} />}
+        {activePage === "dashboard" && <DashboardPage currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "schedule" && <ComingSoon title="Schedule" />}
         {/* The first-half schedule page, unrouted. */}
         {activePage === "schedule-v1" && <Schedule currentUser={currentUser} onNavigate={navigateTo} initialView={scheduleInitialView} />}
