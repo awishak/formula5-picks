@@ -103,6 +103,15 @@ export function lockedDemo(kind = "all") {
       stop: scored ? 10 : null,
       guesses: {},
     },
+    // Andrew's actual round 9, the individual game. It went the wrong way,
+    // which is the case this card has to survive: 32 points is under his
+    // average, so the week took his average down and took him from third to
+    // sixth.
+    mine: scored ? {
+      parts: { top: 15, mid: 17, best: 0, order: 0, needle: 0, bonus: 0 },
+      total: 32, place: 29, of: 48,
+      avg: 41.7, rank: 6, avgBefore: 42.9, rankBefore: 3,
+    } : null,
     // Cal Aggie had the over and the stop came in at ten seconds, so BOX BOX
     // went their way: five to the winner, one off the loser.
     teamBoxBox: scored ? { mine: 5, theirs: -1 } : { mine: 0, theirs: 0 },

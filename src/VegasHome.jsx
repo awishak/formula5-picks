@@ -1966,6 +1966,101 @@ function RootingCard({ seats, boxBox }) {
   );
 }
 
+// Your own week. The board above is the matchup; this is the other game, the
+// one that runs all 23 races and does not care who you were drawn against.
+//
+// It counts the needle and the weekly bonus and it leaves BOX BOX out, because
+// BOX BOX is won by a team. So this total is not your column on the board, and
+// the card says which parts it is made of rather than asking anyone to work out
+// why two numbers about the same person differ.
+function YourWeek({ mine, seat, scored }) {
+  const me = seat && seat.pick;
+  if (!scored) {
+    if (!me) return null;
+    return (
+      <div style={{ ...card({ padding: "14px 14px 16px", marginBottom: 14 }) }}>
+        <Label color={MINE} style={{ marginBottom: 10 }}>Your week</Label>
+        <div style={{ display: "grid", gap: 6 }}>
+          {me.order.slice(0, 5).map((d, i) => (
+            <div key={d} style={{ display: "flex", alignItems: "center", gap: 10,
+                                  padding: ROW_PAD, borderRadius: 12, background: V.bg3,
+                                  border: `1px solid ${V.border}` }}>
+              <span style={{ ...numeric("h3"), color: V.blue, width: 46, flexShrink: 0 }}>
+                {ordinal(i + 1)}
+              </span>
+              <Face name={d} size={ROW_FACE} ring={dColor(d)} glow={0} />
+              <span style={{ ...body("bodyMd"), fontSize: ROW_NAME, color: V.text }}>{d}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+          <StatTile label="Best finish" value={me.bestFinish} />
+          <StatTile label="The needle" value={`${me.pitGuess.toFixed(1)}s`} />
+        </div>
+      </div>
+    );
+  }
+  if (!mine) return null;
+
+  const P = mine.parts;
+  const ROWS = [
+    { k: "Top", v: P.top }, { k: "Mid", v: P.mid },
+    { k: "Best finish", v: P.best, sub: me ? me.bestFinish : null },
+    { k: "Order", v: P.order },
+    { k: "Needle", v: P.needle, sub: me ? `${me.pitGuess.toFixed(1)}s` : null },
+    { k: "Bonus", v: P.bonus },
+  ];
+  const dAvg = mine.avgBefore == null ? null : Math.round((mine.avg - mine.avgBefore) * 10) / 10;
+  const dRank = mine.rankBefore == null ? null : mine.rankBefore - mine.rank;
+  // Up is green and down is pink, and a week that moved nothing says so.
+  const arrow = (n) => (n > 0 ? "\u25b2" : n < 0 ? "\u25bc" : "\u2013");
+  const tone = (n) => (n > 0 ? MINE : n < 0 ? THEIRS : V.text2);
+  const Fact = ({ big, sub, color = V.text }) => (
+    <div style={{ flex: 1, minWidth: 0, textAlign: "center", padding: "8px 6px",
+                  borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}` }}>
+      <div style={{ ...numeric("h3"), fontSize: 20, color, lineHeight: 1.1 }}>{big}</div>
+      <div style={{ ...display("chip"), fontSize: 10, color: V.text2, marginTop: 3,
+                    letterSpacing: "0.04em" }}>{sub}</div>
+    </div>
+  );
+
+  return (
+    <div style={{ ...card({ padding: "14px 14px 16px", marginBottom: 14 }) }}>
+      <Label color={MINE} style={{ marginBottom: 8 }}>Your week</Label>
+      <div>
+        {ROWS.map(row => (
+          <div key={row.k} style={{ display: "flex", alignItems: "center", gap: 10,
+                                    padding: "6px 0", borderTop: `1px solid ${V.border}` }}>
+            <span style={{ ...display("chip"), fontSize: 13, color: V.text2,
+                           letterSpacing: "0.04em" }}>{row.k}</span>
+            {row.sub && (
+              <span style={{ ...display("chip"), fontSize: 12, color: V.text3 }}>{row.sub}</span>
+            )}
+            <span style={{ marginLeft: "auto", ...numeric("chip"), fontSize: 20,
+                           color: row.v ? MINE : V.text2 }}>
+              {row.v === 0 ? "\u2715" : row.v}
+            </span>
+          </div>
+        ))}
+        <div style={{ display: "flex", alignItems: "center", padding: "8px 0 2px",
+                      borderTop: `2px solid ${MINE}55` }}>
+          <span style={{ ...display("chip"), fontSize: 13, color: MINE,
+                         letterSpacing: "0.04em" }}>Total</span>
+          <span style={{ marginLeft: "auto", ...numeric("h3"), fontSize: 30, color: MINE,
+                         ...textGlow(MINE, 0.8) }}>{mine.total}</span>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <Fact big={ordinal(mine.place)} sub={`of ${mine.of} this week`} />
+        <Fact big={`${arrow(dAvg)} ${dAvg == null ? "" : Math.abs(dAvg).toFixed(1)}`}
+              color={tone(dAvg)} sub={`average ${mine.avg}`} />
+        <Fact big={ordinal(mine.rank)} color={tone(dRank)}
+              sub={dRank ? `${arrow(dRank)} ${Math.abs(dRank)} overall` : "overall"} />
+      </div>
+    </div>
+  );
+}
+
 // The four hands, scored.
 //
 // Players across, their five down, and the week's points under each name. The
@@ -2472,6 +2567,7 @@ function HomeLocked({ scored: scoredWeek = true }) {
             <HandsColumns seats={seats} under={under} scored={scored}
                           driverPts={week.driverPts || {}} />
             <RootingCard seats={seats} boxBox={boxBox} />
+            <YourWeek mine={week.mine} seat={seats.find(x => x.mine)} scored={scored} />
           </>
         );
       })()}

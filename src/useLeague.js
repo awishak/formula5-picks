@@ -169,6 +169,57 @@ export function useLeague(currentUser, { round = null } = {}) {
           // The four seats in this matchup, in team order. Picks are only
           // filled in once the deadline has gone: before that nobody outside
           // your own team can see them, which is the same rule PickIntel uses.
+          // Your own week, the individual game. Wider than the matchup score:
+          // it counts the needle and the weekly bonus, and it leaves out BOX
+          // BOX, which is a team result and not yours. Same sum playerTable
+          // uses, so the number here and the number on /players agree.
+          mine: (() => {
+            if (!me) return null;
+            const roundOf = {};
+            races.forEach(r => { roundOf[r.id] = r.round; });
+            const tot = x => (x.top_pick_pts || 0) + (x.midfield_pts || 0) +
+              (x.order_bonus || 0) + (x.best_finish_bonus || 0) +
+              (x.pit_individual_pts || 0) + (x.weekly_bonus_pts || 0);
+            const row = scores.find(x => x.race_id === race.id && x.player_id === me.id);
+            if (!row) return null;
+
+            // Where you came that week, among everyone who scored it. Ties
+            // share a place, so two people on 44 are both 5th.
+            const wk = scores.filter(x => x.race_id === race.id)
+              .map(x => ({ id: x.player_id, t: tot(x) }))
+              .sort((a, b) => b.t - a.t);
+            let p = 0, prev = null, placeOfWk = {};
+            wk.forEach((x, i) => { if (x.t !== prev) { p = i + 1; prev = x.t; } placeOfWk[x.id] = p; });
+
+            // The season with this race in it and the season without, so the
+            // card can say what the week did rather than only where you stand.
+            const through = (maxRound) => {
+              const agg = {};
+              scores.filter(x => roundOf[x.race_id] != null && roundOf[x.race_id] <= maxRound)
+                .forEach(x => {
+                  const a2 = agg[x.player_id] || (agg[x.player_id] = { pts: 0, n: 0 });
+                  a2.pts += tot(x); a2.n += 1;
+                });
+              const rows = Object.entries(agg).map(([id, a2]) => ({ id, avg: a2.pts / a2.n }))
+                .sort((a, b) => b.avg - a.avg);
+              let q = 0, pv = null, rank = {};
+              rows.forEach((x, i) => { if (x.avg !== pv) { q = i + 1; pv = x.avg; } rank[x.id] = q; });
+              const own = agg[me.id];
+              return own ? { avg: Math.round((own.pts / own.n) * 10) / 10, rank: rank[me.id] } : null;
+            };
+            const now = through(race.round), before = through(race.round - 1);
+            return {
+              parts: {
+                top: row.top_pick_pts || 0, mid: row.midfield_pts || 0,
+                best: row.best_finish_bonus || 0, order: row.order_bonus || 0,
+                needle: row.pit_individual_pts || 0, bonus: row.weekly_bonus_pts || 0,
+              },
+              total: tot(row),
+              place: placeOfWk[me.id], of: wk.length,
+              avg: now ? now.avg : null, rank: now ? now.rank : null,
+              avgBefore: before ? before.avg : null, rankBefore: before ? before.rank : null,
+            };
+          })(),
           // Whether Admin has run this race yet. Everything that used to ask
           // "is there a score on this seat" now asks this once.
           scored: scores.some(x => x.race_id === race.id),
