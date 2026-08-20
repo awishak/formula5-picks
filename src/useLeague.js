@@ -16,7 +16,7 @@ import { displayOf, shortOf } from "./teams";
 // home_team_id IS the OVER seat. Home carries no other meaning.
 const sideOf = (fixture, teamId) => (fixture.home_team_id === teamId ? "OVER" : "UNDER");
 
-export function useLeague(currentUser) {
+export function useLeague(currentUser, { round = null } = {}) {
   const [state, setState] = useState({ loading: true });
 
   useEffect(() => {
@@ -42,7 +42,10 @@ export function useLeague(currentUser) {
         const now = new Date().toISOString();
         const upcoming = races.find(r => r.pick_deadline && r.pick_deadline > now);
         const scored = new Set(scores.map(s => s.race_id));
-        const race = upcoming || races.filter(r => !scored.has(r.id))[0] || races[races.length - 1];
+        // A pinned round is for looking at a week that has already been played.
+        const race = round != null
+          ? races.find(r => r.round === round)
+          : (upcoming || races.filter(r => !scored.has(r.id))[0] || races[races.length - 1]);
 
         const me = players.find(p => p.name === currentUser) || null;
         const myTeamRow = me ? teams.find(t => t.player1_id === me.id || t.player2_id === me.id) : null;
@@ -110,6 +113,21 @@ export function useLeague(currentUser) {
           ? (await supabase.from("picks").select("*").eq("race_id", race.id).in("player_id", teamIds)).data || []
           : [];
         const pickOf = Object.fromEntries(picks.map(p => [p.player_id, p]));
+        // What each player put on the board this round. The four parts are the
+        // ones that count toward the matchup; the needle and the weekly bonus
+        // are the individual game and are not in here.
+        const scoreOf = {};
+        scores.filter(x => x.race_id === race.id).forEach(x => {
+          scoreOf[x.player_id] = {
+            top: x.top_pick_pts || 0,
+            mid: x.midfield_pts || 0,
+            best: x.best_finish_bonus || 0,
+            order: x.order_bonus || 0,
+            boxBox: x.pit_matchup_pts || 0,
+          };
+          const v = scoreOf[x.player_id];
+          v.total = v.top + v.mid + v.best + v.order;
+        });
         // A picks row is stored as top_pick / finishing_order / best_finish /
         // pit_guess; the page was written against the snapshot's shape. Map it
         // once here rather than teach every component both names.
@@ -147,6 +165,10 @@ export function useLeague(currentUser) {
           // The four seats in this matchup, in team order. Picks are only
           // filled in once the deadline has gone: before that nobody outside
           // your own team can see them, which is the same rule PickIntel uses.
+          teamBoxBox: {
+            mine: myTeamRow && scoreOf[myTeamRow.player1_id] ? scoreOf[myTeamRow.player1_id].boxBox : 0,
+            theirs: oppRow && scoreOf[oppRow.player1_id] ? scoreOf[oppRow.player1_id].boxBox : 0,
+          },
           seats: [myTeamRow, oppRow].filter(Boolean).flatMap(t =>
             [t.player1_id, t.player2_id].filter(Boolean).map(id => {
               const p = players.find(x => x.id === id);
@@ -159,6 +181,7 @@ export function useLeague(currentUser) {
                 team: displayOf(t.name),
                 picked: Boolean(pickOf[id]),
                 pick: visible ? asPick(pickOf[id]) || null : null,
+                score: visible ? scoreOf[id] || null : null,
               };
             })),
           picksIn: {
@@ -211,7 +234,7 @@ export function useLeague(currentUser) {
       }
     })();
     return () => { alive = false; };
-  }, [currentUser]);
+  }, [currentUser, round]);
 
   return state;
 }

@@ -2079,7 +2079,8 @@ function HandsBoard({ seats }) {
 //   someone else is missing the line is an average, so the number can still move
 //   all four are in         the line is final and the week is set
 function HomeLocked() {
-  const { race, seats = [], boxBox, myTeam, opp, order = [], orderIs } = useWeek();
+  const week = useWeek();
+  const { race, seats = [], boxBox, myTeam, opp } = week;
   const mine = seats.filter(s => s.ours);
   const theirs = seats.filter(s => !s.ours);
   const you = seats.find(s => s.mine);
@@ -2147,8 +2148,10 @@ function HomeLocked() {
       )}
 
       {(() => {
+        const bb = week.teamBoxBox || { mine: 0, theirs: 0 };
         const tot = (ours) => seats.filter(s => s.ours === ours)
-          .reduce((a, s) => a + (s.score ? s.score.total : 0), 0);
+          .reduce((a, s) => a + (s.score ? s.score.total : 0), 0)
+          + (ours ? bb.mine : bb.theirs);
         const under = boxBox.side === "UNDER" ? "mine" : "theirs";
         return (
           <>
@@ -2576,14 +2579,15 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
   // ?demo=locked|waiting|missed renders the locked screen on made-up data. It
   // does not treat the real week as locked, because that would show everyone
   // their opponents' picks before the deadline.
-  const demo = (() => {
-    // The smoke test renders this through react-dom/server, where there is no
-    // window at all.
-    if (typeof window === "undefined") return null;
-    const k = new URLSearchParams(window.location.search).get("demo");
-    return ["all", "waiting", "missed"].includes(k) ? lockedDemo(k) : null;
-  })();
-  const loaded = useLeague(given || demo ? null : currentUser);
+  // The smoke test renders this through react-dom/server, where there is no
+  // window at all.
+  const q = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
+  const kind = q ? q.get("demo") : null;
+  // ?demo=r11 is the same screen on a week that actually happened: real logos,
+  // real faces, the picks people made and the points they scored.
+  const pinned = /^r\d+$/.test(kind || "") ? Number((kind || "").slice(1)) : null;
+  const demo = ["all", "waiting", "missed"].includes(kind) ? lockedDemo(kind) : null;
+  const loaded = useLeague(given || demo ? null : currentUser, { round: pinned });
   const week = given || demo || loaded;
 
   // The page triples in height the moment the week arrives. Whatever the
@@ -2599,7 +2603,7 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
   // picks are in; after the deadline, they are locked. Live and final need a running
   // order, which has no source yet, so nothing reaches them.
   const state = initialState
-    || (week.locked ? "locked" : week.picksIn && week.picksIn.me ? "submitted" : "open");
+    || (pinned ? "locked" : week.locked ? "locked" : week.picksIn && week.picksIn.me ? "submitted" : "open");
   const nav = onNavigate || (() => {});
 
   const Toggle = ({ opts, val, set }) => (
