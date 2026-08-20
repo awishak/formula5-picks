@@ -1,0 +1,13 @@
+<!-- Dev harness. macOS Chrome clamps its own window to about 500px, so a
+     desktop layout cannot be screenshotted with --window-size. Same iframe
+     trick as fit.html, at a desktop width. -->
+<meta charset="utf-8" /><style>body{margin:0;background:#07070c}iframe{border:0;display:block}</style>
+<iframe id="f"></iframe>
+<script>
+  const q = new URLSearchParams(location.search);
+  const f = document.getElementById("f");
+  f.style.width = (q.get("w") || 1440) + "px";
+  f.style.height = (q.get("h") || 900) + "px";
+  const p = q.get("path") || "/dashboard";
+  f.src = `${p}${p.includes("?") ? "&" : "?"}player=${encodeURIComponent(q.get("player") || "Andrew Ishak")}`;
+</script>

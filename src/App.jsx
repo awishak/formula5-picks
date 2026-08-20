@@ -20,6 +20,7 @@ import VegasHome from "./VegasHome.jsx";
 import ViewingAs from "./ViewingAs.jsx";
 import MorePage from "./MorePage.jsx";
 import ComingSoon from "./ComingSoon.jsx";
+import DashboardPage from "./DashboardPage.jsx";
 import VegasNav from "./VegasNav.jsx";
 import Recap from "./Recap.jsx";
 import { NEWS } from "./news";
@@ -814,7 +815,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 // the pages that have no path of their own yet.
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
-  "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
+  "dashboard", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
   "f1-calendar", "season-preview", "recaps", "admin",
 ]);
 
@@ -830,6 +831,7 @@ const PAGES = new Set([
 const ROUTES = [
   { path: "/", page: "vegas" },
   { path: "/more", page: "home" },
+  { path: "/dashboard", page: "dashboard" },
   { path: "/picks", page: "picks" },
   { path: "/teams", page: "team-standings" },
   { path: "/players", page: "player-standings" },
@@ -846,7 +848,7 @@ const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 // Pages rebuilt on the Vegas look. They set their own ground and their own
 // header, so the light shell's logo bar and background have to get out of the
 // way or a dark page opens under a white block.
-const VEGAS_PAGES = new Set(["home", "vegas", "schedule", "team-standings", "player-standings"]);
+const VEGAS_PAGES = new Set(["home", "vegas", "dashboard", "schedule", "team-standings", "player-standings"]);
 
 // A path in, a page and any parameter out.
 function readPath(pathname) {
@@ -1036,7 +1038,12 @@ export default function App() {
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; } body { background: ${BG}; } .app-wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; background: ${BG}; padding-bottom: 80px; }`}</style>
-      <div className="app-wrap" style={onVegas ? { background: "#07070c" } : undefined}>
+      {/* The dashboard is the one page that is not a phone. .app-wrap caps
+          everything at 480px, which is the point everywhere else. */}
+      <div className="app-wrap" style={{
+        ...(onVegas ? { background: "#07070c" } : {}),
+        ...(activePage === "dashboard" ? { maxWidth: "none" } : {}),
+      }}>
         {/* One header for every page: logo left, who you are looking as right.
             The picker used to be inside HomePage, which made switching player
             something you could only do by going home first. */}
@@ -1080,6 +1087,7 @@ export default function App() {
             is still thin. It is the only place the 1-11 standings render. */}
         {activePage === "team-standings-v1" && <TeamStandings currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "division-trends" && <DivisionTrends currentUser={currentUser} onNavigate={navigateTo} />}
+        {activePage === "dashboard" && <DashboardPage currentUser={currentUser} />}
         {activePage === "schedule" && <ComingSoon title="Schedule" />}
         {/* The first-half schedule page, unrouted. */}
         {activePage === "schedule-v1" && <Schedule currentUser={currentUser} onNavigate={navigateTo} initialView={scheduleInitialView} />}
@@ -1105,7 +1113,11 @@ export default function App() {
         {activePage === "season-preview" && <SeasonPreview />}
         {activePage === "recaps" && <Recaps />}
       </div>
-      <VegasNav active={activePage} onChange={navigateTo} hasSubmittedPicks={hasSubmittedPicks} />
+      {/* The phone nav is a phone's. On the desktop mockup it would float in
+          the middle of the page. */}
+      {activePage !== "dashboard" && (
+        <VegasNav active={activePage} onChange={navigateTo} hasSubmittedPicks={hasSubmittedPicks} />
+      )}
     </>
   );
 }
