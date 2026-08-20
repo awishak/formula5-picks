@@ -1584,11 +1584,11 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
                 <g key={a.dir}>
                   <line x1={a.from} y1="16" x2={a.dir === "left" ? a.to + 11 : a.to - 11} y2="16"
                         stroke={a.c} strokeWidth="5" strokeLinecap="round"
-                        style={{ filter: `drop-shadow(0 0 5px ${a.c})` }} />
+                        style={a.c === THEIRS ? { filter: `drop-shadow(0 0 5px ${a.c})` } : undefined} />
                   <path d={a.dir === "left"
                     ? `M ${a.to} 16 L ${a.to + 12} 9 L ${a.to + 12} 23 z`
                     : `M ${a.to} 16 L ${a.to - 12} 9 L ${a.to - 12} 23 z`}
-                    fill={a.c} style={{ filter: `drop-shadow(0 0 5px ${a.c})` }} />
+                    fill={a.c} style={a.c === THEIRS ? { filter: `drop-shadow(0 0 5px ${a.c})` } : undefined} />
                 </g>
               ))}
             </svg>
@@ -1640,11 +1640,13 @@ const MINE = V.green, THEIRS = V.pink, DIVIDE = V.blue;
 
 // The two teams and where the week stands.
 function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under }) {
-  const Card = ({ t, total, c, side }) => (
+  // Only the team in front glows. Green on its own is the resting state, so a
+  // lit card means something happened rather than "this one is yours".
+  const Card = ({ t, total, c, side, won }) => (
     <div style={{
       flex: 1, minWidth: 0, textAlign: "center", padding: "14px 10px",
       borderRadius: 14, background: V.bg3, border: `2px solid ${c}`,
-      ...edgeGlow(c, 0.5),
+      ...(won ? edgeGlow(c, 0.9) : {}),
     }}>
       {t && t.logo
         ? <img src={t.logo} alt="" style={{ width: 46, height: 46, objectFit: "contain" }} />
@@ -1655,15 +1657,17 @@ function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under }) {
         whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
       }}>{t ? t.name : "\u2014"}</div>
       <div style={{ ...display("chip"), fontSize: 11, color: c, marginTop: 2 }}>{side}</div>
-      <div style={{ ...numeric("hero"), fontSize: 44, ...textGlow(c, 0.8), marginTop: 6 }}>{total}</div>
+      <div style={{ ...numeric("hero"), fontSize: 44, color: c, marginTop: 6,
+                    ...(won ? textGlow(c, 0.9) : {}) }}>{total}</div>
     </div>
   );
+  const mineWon = mineTotal > theirTotal, theirsWon = theirTotal > mineTotal;
   const left = under === "mine"
-    ? { t: myTeam, total: mineTotal, c: MINE, side: "UNDER" }
-    : { t: opp, total: theirTotal, c: THEIRS, side: "UNDER" };
+    ? { t: myTeam, total: mineTotal, c: MINE, side: "UNDER", won: mineWon }
+    : { t: opp, total: theirTotal, c: THEIRS, side: "UNDER", won: theirsWon };
   const right = under === "mine"
-    ? { t: opp, total: theirTotal, c: THEIRS, side: "OVER" }
-    : { t: myTeam, total: mineTotal, c: MINE, side: "OVER" };
+    ? { t: opp, total: theirTotal, c: THEIRS, side: "OVER", won: theirsWon }
+    : { t: myTeam, total: mineTotal, c: MINE, side: "OVER", won: mineWon };
   return (
     <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
       <Card {...left} /><Card {...right} />
@@ -1688,7 +1692,7 @@ function RootingCard({ seats, boxBox }) {
         ? <span style={{ ...body("bodySm"), color: V.text2 }}>Nobody</span>
         : names.map(n => (
           <div key={n} style={{ textAlign: "center", flexShrink: 0, width: 52 }}>
-            <Face name={n} size={44} ring={c} edge={3} glow={1} />
+            <Face name={n} size={48} ring={c} edge={3} glow={c === THEIRS ? 1 : 0} />
             <div style={{
               marginTop: -6, display: "inline-block", position: "relative",
               padding: "2px 5px", borderRadius: 7, background: "#000", border: `1px solid ${c}`,
@@ -1764,7 +1768,7 @@ function HandsColumns({ seats, under }) {
   const colW = w > 0 ? (w - MID) / 4 : 0;
   // Columns 0 and 1 sit left of the label strip, 2 and 3 right of it.
   const cx = (c) => (c < 2 ? colW * (c + 0.5) : MID + colW * (c + 0.5));
-  const FACE = 44, HEAD = 78, ROW = 74;
+  const FACE = 46, HEAD = 96, ROW = 78;
   const cy = (r) => HEAD + ROW * r + ROW / 2 - 10;
   const boardH = HEAD + ROW * 5;
 
@@ -1788,15 +1792,15 @@ function HandsColumns({ seats, under }) {
         <polyline key={l.name} points={l.d} fill="none" stroke={COLOR[which]}
           strokeWidth={which === "level" ? 3.5 : 5} strokeLinecap="round" strokeLinejoin="round"
           opacity={which === "level" ? 0.5 : 1}
-          style={which === "level" ? undefined : { filter: `drop-shadow(0 0 6px ${COLOR[which]})` }} />
+          style={which === "theirs" ? { filter: `drop-shadow(0 0 6px ${COLOR[which]})` } : undefined} />
       ))}
     </svg>
   );
 
-  const Plate = ({ text, c, dim, size = 10, top = -6 }) => (
+  const Plate = ({ text, c, dim, size = 12, top = -7 }) => (
     <div style={{
       marginTop: top, display: "inline-block", position: "relative",
-      maxWidth: Math.max(58, colW + 6),
+      maxWidth: Math.max(58, colW + 12),
       padding: "2px 5px", borderRadius: 7, background: "#000",
       border: `1px solid ${dim ? V.border : c}`,
       fontFamily: FD, fontWeight: 700, fontSize: size, lineHeight: 1.35,
@@ -1816,7 +1820,7 @@ function HandsColumns({ seats, under }) {
             width: FACE, textAlign: "center",
           }}>
             <Face name={name} size={FACE} ring={COLOR[t]} edge={3}
-                  glow={t === "level" ? 0 : 1.1} drained={t === "level"} />
+                  glow={t === "theirs" ? 1.1 : 0} drained={t === "level"} />
             <Plate text={lastName(name)} c={COLOR[t]} dim={t === "level"} />
           </div>
         );
@@ -1841,13 +1845,13 @@ function HandsColumns({ seats, under }) {
             const col = h.ours ? MINE : THEIRS;
             return (
               <div key={h.id} style={{
-                position: "absolute", left: cx(c) - colW / 2, top: 0, width: colW, textAlign: "center",
+                position: "absolute", left: cx(c) - colW / 2, top: 0, width: colW,
+                display: "flex", flexDirection: "column", alignItems: "center",
               }}>
                 <PlayerBadge name={h.name} picked={false} dim={false} ring={col}
-                             photo={h.photo} size={40} />
-                <Plate text={h.mine ? "You" : lastName(h.name)} c={col} size={11} top={-7} />
-                <div style={{ ...numeric("h3"), fontSize: 20, color: col, marginTop: 3,
-                              ...textGlow(col, 0.5) }}>
+                             photo={h.photo} size={54} />
+                <Plate text={h.mine ? "You" : lastName(h.name)} c={col} size={13} top={-8} />
+                <div style={{ ...numeric("h3"), fontSize: 22, color: col, marginTop: 4 }}>
                   {h.score ? h.score.total : "\u2014"}
                 </div>
               </div>
@@ -2150,9 +2154,9 @@ function HomeLocked() {
           <>
             <Scoreboard myTeam={myTeam} opp={opp} under={under}
                         mineTotal={tot(true)} theirTotal={tot(false)} />
-            <RootingCard seats={seats} boxBox={boxBox} />
             <HandsColumns seats={seats} under={under} />
             <BoxBoxLine seats={seats} boxBox={boxBox} myTeam={myTeam} opp={opp} />
+            <RootingCard seats={seats} boxBox={boxBox} />
           </>
         );
       })()}
