@@ -252,8 +252,10 @@ function Chip({ children, color = V.blue, solid = false }) {
 }
 
 // blank: something is going to be printed on top of this face, so a driver with
-// no headshot shows an empty disc rather than initials fighting the number.
-// Lindblad's AL behind a 6 read as ".6.".
+// no headshot shows an empty disc rather than initials fighting it. Lindblad's
+// AL behind a 6 read as ".6.". The photograph is covered by the caller rather
+// than filtered here, because a filter would take the ring down with it: the
+// ring is this element's border.
 function Face({ name, size = 40, ring, glow = 1, drained = false, edge = 2, blank = false }) {
   const [bad, setBad] = useState(false);
   const c = ring || dColor(name);
@@ -1968,6 +1970,15 @@ function HandsColumns({ seats, under, driverPts = {} }) {
             <div style={{ position: "relative", height: FACE }}>
               <Face name={name} size={FACE} ring={COLOR[t]} edge={3} blank={pts != null}
                     glow={t === "theirs" ? 1.1 : 0} drained={t === "level"} />
+              {/* Inset by the ring width, so the photograph goes and the ring
+                  stays. A face is the loudest thing on the board and the number
+                  has to win. */}
+              {pts != null && (
+                <div style={{
+                  position: "absolute", inset: 3, borderRadius: "50%",
+                  background: "rgba(6,8,14,0.82)",
+                }} />
+              )}
               {pts != null && (
                 <div style={{
                   position: "absolute", inset: 0, display: "flex",
