@@ -1501,7 +1501,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
   const stopColor = wonBox ? MINE : THEIRS;
   const cColor = F1_TEAM_COLORS[boxBox.team] || V.purple;
   const TICKS = [1.5, 2, 2.5, 3, 3.5, 4, 4.5];
-  const LANE = 88, AXIS = LANE + 6, HEIGHT = AXIS + 26;
+  const LANE = 88, AXIS = LANE + 18, HEIGHT = AXIS + 50;
 
   const Marker = ({ dir, color }) => (
     <svg width="40" height="16" style={{ display: "block", overflow: "visible" }}>
@@ -1535,25 +1535,11 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
                 <line key={p.s.id} x1={p.px} y1={LANE - 6} x2={p.want} y2={AXIS - 5}
                       stroke={p.s.ours ? MINE : THEIRS} strokeWidth="2" opacity="0.7" />
               ))}
-              {stop != null && line != null && (
-                <g>
-                  <line x1={x(stop)} y1={AXIS - 22} x2={x(stop)} y2={AXIS + 8}
-                        stroke={stopColor} strokeWidth="4" strokeLinecap="round"
-                        style={{ filter: `drop-shadow(0 0 7px ${stopColor})` }} />
-                  <circle cx={x(stop)} cy={AXIS - 26} r="6" fill={stopColor}
-                          style={{ filter: `drop-shadow(0 0 7px ${stopColor})` }} />
-                </g>
-              )}
-              {line != null && (
-                <line x1={x(line)} y1={AXIS - 16} x2={x(line)} y2={AXIS + 16}
-                      stroke={DIVIDE} strokeWidth="5" strokeLinecap="round"
-                      style={{ filter: `drop-shadow(0 0 8px ${DIVIDE})` }} />
-              )}
             </svg>
 
             {TICKS.map(t => (
               <div key={t} style={{
-                position: "absolute", left: x(t) - 16, top: AXIS + 8, width: 32,
+                position: "absolute", left: x(t) - 16, top: AXIS + 32, width: 32,
                 textAlign: "center", ...numeric("chip"), fontSize: 11, color: V.text2,
               }}>{t.toFixed(1)}</div>
             ))}
@@ -1562,13 +1548,16 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
               const c = s.ours ? MINE : THEIRS;
               return (
                 <div key={s.id} style={{
-                  position: "absolute", left: px - FACE / 2, top: low ? 22 : 0,
+                  position: "absolute", left: px - FACE / 2, top: 0,
                   width: FACE, textAlign: "center",
                 }}>
                   <PlayerBadge name={s.name} picked={false} dim={false} ring={c}
                                photo={s.photo} size={FACE} />
                   <div style={{
-                    marginTop: -6, display: "inline-block", position: "relative",
+                    // The faces stay on one level and the plate is what steps
+                    // down, so the row reads as four people at four guesses
+                    // rather than two rows of two.
+                    marginTop: low ? 16 : -6, display: "inline-block", position: "relative",
                     padding: "2px 5px", borderRadius: 7, background: "#000",
                     border: `1px solid ${c}`, fontFamily: FD, fontWeight: 700,
                     fontSize: 11, lineHeight: 1.35, color: "#fff", whiteSpace: "nowrap",
@@ -1579,6 +1568,30 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
                 </div>
               );
             })}
+
+            {/* Drawn last so it is drawn over. The line and the stop are the
+                whole mechanic, and a name plate is only a label: a marker
+                buried behind one says the stop never happened. */}
+            <svg width="100%" height={HEIGHT} style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+              {/* The guesses sit above the line and the result sits below it,
+                  pointing up at where it landed. Above the line there is no
+                  clear space: a stop can land under any name plate, and it did
+                  here. Below the line nothing lives but the scale. */}
+              {stop != null && line != null && (
+                <g>
+                  <line x1={x(stop)} y1={AXIS - 6} x2={x(stop)} y2={AXIS + 18}
+                        stroke={stopColor} strokeWidth="4" strokeLinecap="round"
+                        style={{ filter: `drop-shadow(0 0 7px ${stopColor})` }} />
+                  <circle cx={x(stop)} cy={AXIS + 22} r="6" fill={stopColor}
+                          style={{ filter: `drop-shadow(0 0 7px ${stopColor})` }} />
+                </g>
+              )}
+              {line != null && (
+                <line x1={x(line)} y1={AXIS - 16} x2={x(line)} y2={AXIS + 16}
+                      stroke={DIVIDE} strokeWidth="5" strokeLinecap="round"
+                      style={{ filter: `drop-shadow(0 0 8px ${DIVIDE})` }} />
+              )}
+            </svg>
           </>
         )}
       </div>

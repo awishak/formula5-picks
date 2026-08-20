@@ -11,6 +11,11 @@ const other = ["Lando Norris", "Isack Hadjar", "Carlos Sainz", "Franco Colapinto
 const themA = ["George Russell", "Max Verstappen", "Liam Lawson", "Carlos Sainz", "Oliver Bearman"];
 const themB = ["George Russell", "Max Verstappen", "Pierre Gasly", "Arvid Lindblad", "Gabriel Bortoleto"];
 
+const LOGO = {
+  cal: "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/f3eab88a-5d25-4e3b-b7fc-2aa7a9ea4385.png?t=1772417213026",
+  xlix: "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/579bad3e-bbc9-42f2-9371-22abd9da04d4.png?t=1772469411331",
+};
+
 const pick = (order, best, guess) => ({ topPick: order[0], order, bestFinish: best, pitGuess: guess });
 
 // A scored week. top / mid / best / order are what Admin writes per player, and
@@ -43,8 +48,11 @@ export function lockedDemo(kind = "all") {
     pools: { top: ["Lewis Hamilton", "Lando Norris", "George Russell"],
              mid: ["Pierre Gasly", "Liam Lawson", "Max Verstappen", "Oscar Piastri",
                    "Carlos Sainz", "Franco Colapinto", "Gabriel Bortoleto"] },
-    myTeam: { name: "Cal Aggie Racing", logo: null },
-    opp: { name: "XLIX Racing Team", logo: null, division: "championship", place: 3, avgRank: 6, avg: 77.4,
+    // Real logos. The demo already names two real teams, and an empty square
+    // where the logo goes is the difference between checking this screen and
+    // guessing at it.
+    myTeam: { name: "Cal Aggie Racing", logo: LOGO.cal },
+    opp: { name: "XLIX Racing Team", logo: LOGO.xlix, division: "championship", place: 3, avgRank: 6, avg: 77.4,
            players: [{ name: "Their one", photo: null, rank: 11 }, { name: "Their two", photo: null, rank: 23 }] },
     oppWeeks: [],
     side: "UNDER",
@@ -62,6 +70,11 @@ export function lockedDemo(kind = "all") {
       team: "Williams",
       line: Math.round((guesses.reduce((a, b) => a + b, 0) / guesses.length) * 100) / 100,
       waitingOn: 4 - guesses.length,
+      // The stop landed. Without it the card is only half the mechanic: the
+      // guesses and the line, and no result, so the pin and the verdict below
+      // never render and the screen cannot be checked in the state that
+      // matters.
+      stop: 2.31,
       guesses: {},
     },
     f1Points: {},
