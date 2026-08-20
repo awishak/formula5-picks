@@ -65,7 +65,7 @@ function Face({ name, photo, size }) {
 
 // Form: the last five weeks, oldest first. A won week is blue, a lost one pink,
 // a draw grey. A box around the letter means BOX BOX decided it: the drivers
-// alone were within its six points of swing, so the pit call settled it.
+// alone were within its six points of swing, so the pit call settled the week.
 //
 // Five rather than ten because ten wrapped onto a second line beside the
 // teammate, and a run of results that wraps stops reading as a run.

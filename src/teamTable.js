@@ -2,7 +2,7 @@
 //
 // This math used to live only inside TeamStandings.jsx, welded to that
 // component's state. Any second page that wanted a standings row had to
-// reimplement it, which is how you end up with two copies that disagree by a
+// reimplement the rules, which is how you end up with two copies that disagree by a
 // point and nobody knowing which one is right. Same failure DRIVER_NAMES had
 // before it moved into drivers.js.
 //

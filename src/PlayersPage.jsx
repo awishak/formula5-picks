@@ -18,7 +18,7 @@ const TEAM_SIZE = "clamp(13px, 3.5vw, 14px)";
 // at 19px two of them run past the column and at 21px ten do. Measured across
 // all 48 rather than eyeballed off the top of the table.
 // Tuned against the row as it is now. It was set when a trophy column shared
-// the width; that came off and this did not go back up with it.
+// the width; that column came off and this size never went back up.
 const NAME_SIZE = "clamp(15px, calc(10.4vw - 22.0px), 19px)";
 
 function Title() {

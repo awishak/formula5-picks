@@ -38,7 +38,7 @@ export function useLeague(currentUser) {
           .select("driver,points").order("position")).data || [];
 
         // The next race is the earliest whose deadline has not passed. Once it
-        // has, this is still the race being run, so the page keeps showing it.
+        // has, this is still the race being run, so the page keeps showing that round.
         const now = new Date().toISOString();
         const upcoming = races.find(r => r.pick_deadline && r.pick_deadline > now);
         const scored = new Set(scores.map(s => s.race_id));

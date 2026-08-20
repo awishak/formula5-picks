@@ -86,7 +86,7 @@ const SNAP = {
     bestFinish: "P3",
     pitGuess: 1.5,
   },
-  // team is the F1 constructor whose stop settles it, from race.pitQuestion.
+  // team is the F1 constructor whose stop settles the week, from race.pitQuestion.
   boxBox: { side: "OVER", line: 2.48, waitingOn: 0, team: "Alpine", guesses: { "Andrew Ishak": 1.5, "Kevin Coolidge": 1.5, "Brett Dillon": 3.5, "Stacy Michaelsen": 3.4 } },
   picksIn: { me: true, teammate: true, mate: true },
   // The four seats in the matchup, the shape useLeague returns.
@@ -189,7 +189,7 @@ const lastName = (n) => (n || "").split(" ").slice(-1)[0];
 // First three of the surname matches the real F1 acronym for every driver on the
 // 2026 grid, so no lookup table is needed here.
 const code3 = (n) => lastName(n).slice(0, 3).toUpperCase();
-// The marquee says the place, not the words "Grand Prix", which sit under it.
+// The marquee says the place, not the words "Grand Prix", which sit on the line below.
 const shortRace = (n) => (n || "").replace(/\s*Grand Prix\s*/i, "").trim();
 
 // ── Primitives ───────────────────────────────────────────
@@ -326,7 +326,7 @@ function DriverRow({ name, accent, badge, why, grid, dim = false }) {
 function StatTile({ label, value, unit, color = V.text, glow = false }) {
   // Three of these across a phone leaves about 90px of content each. "4.38" at
   // the stat step plus "km" is wider than that, and the unit was being cut off,
-  // so a tile carrying a unit drops a step and the unit shrinks with it.
+  // so a tile carrying a unit drops a step and the unit drops with the number.
   return (
     <div style={{ ...card({ padding: "14px 9px", flex: 1, minWidth: 0 }) }}>
       <Label>{label}</Label>
@@ -526,7 +526,7 @@ function HomeOpen({ onNav, submitted = false }) {
 
       {/* Circuit character has no source. The snapshot had it written by hand
           for the Hungaroring; there is nothing like it for Zandvoort, and a
-          page that makes it up is worse than a page without it. */}
+          page that invents the character is worse than a page with none. */}
       {track && (
       <>
       <SectionHead accent={V.blue}>{race.circuit || race.name} intel</SectionHead>
@@ -1187,8 +1187,8 @@ function PickFlow() {
 
 // ── Submitted, deadline still open ───────────────────────
 
-// The window most people sit in: your entry is in, you can still change it, and
-// nobody outside your team can see it. PickIntel.jsx:110 gates everyone else's
+// The window most people sit in: your entry is in, you can still change those
+// picks, and nobody outside your team can see them. PickIntel.jsx:110 gates
 // picks on the deadline, so there is nothing of theirs to show yet.
 function HomeSubmitted({ onEdit }) {
   const { myPick, matePick, teammate, race, boxBox } = useWeek();
@@ -1351,7 +1351,7 @@ function OpponentCard() {
           )}
 
           {/* The two people you are playing, under the run of results rather
-              than beside it, and ranked instead of averaged: a rank says where
+              than beside the results, and ranked rather than averaged: a rank says where
               they sit without you having to know what a good average is. */}
           <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
             {opp.players.map(pl => (
@@ -1522,7 +1522,7 @@ function HomeLocked() {
           </span>
         </div>
         <p style={{ ...body("body"), color: V.text2, margin: "10px 0 0" }}>
-          {race.pitQuestion || "The pit stop"} decides it. Your team scores{" "}
+          {race.pitQuestion || "The pit stop"} settles the week. Your team scores{" "}
           <span style={{ color: V.green }}>+5</span> if the stop lands{" "}
           {boxBox.side === "OVER" ? "above" : "below"} the line, and{" "}
           <span style={{ color: V.pink }}>&minus;1</span> if it does not.
@@ -1564,7 +1564,7 @@ function RootingBoard({ order, live, lapInfo, settled = false }) {
   // The ring count is the pick count: one ring means one teammate has him, two
   // concentric rings mean both do and he scores twice. Two real nested elements
   // rather than stacked box-shadows, so the gap shows the row's own background
-  // instead of an approximation of it. "both" keeps the number but drops the
+  // instead of an approximation. "both" keeps the number but drops the
   // glow, since a driver on both cards moves nothing.
   const Val = ({ v, count, color, muted }) => {
     if (v == null) return null;
@@ -1972,7 +1972,7 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
   const [lapIdx, setLapIdx] = useState(initialLap);
 
   // The state is the week, not a control. Before the deadline it is whether the
-  // picks are in; after it, they are locked. Live and final need a running
+  // picks are in; after the deadline, they are locked. Live and final need a running
   // order, which has no source yet, so nothing reaches them.
   const state = initialState
     || (week.locked ? "locked" : week.picksIn && week.picksIn.me ? "submitted" : "open");
@@ -2004,7 +2004,7 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
     <div style={{ background: V.bg, minHeight: "100vh" }}>
       {/* The faces load with the page. This used to come from a branch in
           App.jsx that rendered VegasHome outside the shell; when it became a
-          tab that went with it, and FM fell back to the browser's cursive,
+          tab the import went with the branch, and FM fell back to the browser's cursive,
           which is why the race name turned into handwriting. */}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');`}</style>
       <style>{VEGAS_CSS}</style>

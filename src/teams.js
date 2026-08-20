@@ -8,7 +8,7 @@
 //   code   three letters, for URLs (/teams/CAR) and anywhere a name cannot fit.
 //
 // Two teams also carry a display name, used where the full name is written out
-// in a row. Those two are the only ones long enough to need it.
+// in a row. Those two are the only ones long enough to need a shorter form.
 //
 // Codes were set by Andrew on 2026-08-18. They are part of the URL scheme now,
 // so changing one breaks a link somebody has.
