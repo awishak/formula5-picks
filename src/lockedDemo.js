@@ -13,8 +13,13 @@ const themB = ["George Russell", "Oscar Piastri", "Pierre Gasly", "Arvid Lindbla
 
 const pick = (order, best, guess) => ({ topPick: order[0], order, bestFinish: best, pitGuess: guess });
 
-const seat = (name, ours, mine, picked, p) => ({
-  id: name, name, photo: null, ours, mine, picked, pick: picked ? p : null, team: ours ? "Your team" : "Them",
+// A scored week. top / mid / best / order are what Admin writes per player, and
+// the total is their sum, so the columns add up to the number above them.
+const score = (top, mid, best, order) => ({ top, mid, best, order, total: top + mid + best + order });
+
+const seat = (name, ours, mine, picked, p, sc) => ({
+  id: name, name, photo: null, ours, mine, picked, pick: picked ? p : null,
+  team: ours ? "Your team" : "Them", score: picked ? sc : null,
 });
 
 // case: everyone in / someone missing / you missed it
@@ -38,8 +43,8 @@ export function lockedDemo(kind = "all") {
     pools: { top: ["Lewis Hamilton", "Lando Norris", "George Russell"],
              mid: ["Pierre Gasly", "Liam Lawson", "Max Verstappen", "Oscar Piastri",
                    "Carlos Sainz", "Franco Colapinto", "Gabriel Bortoleto"] },
-    myTeam: { name: "Your team", logo: null },
-    opp: { name: "Their team", logo: null, division: "championship", place: 3, avgRank: 6, avg: 77.4,
+    myTeam: { name: "Cal Aggie Racing", logo: null },
+    opp: { name: "XLIX Racing Team", logo: null, division: "championship", place: 3, avgRank: 6, avg: 77.4,
            players: [{ name: "Their one", photo: null, rank: 11 }, { name: "Their two", photo: null, rank: 23 }] },
     oppWeeks: [],
     side: "UNDER",
@@ -47,10 +52,10 @@ export function lockedDemo(kind = "all") {
     myPick: youPicked ? pick(drivers, "P3", 2.1) : null,
     matePick: matePicked ? pick(other, "P2", 3.4) : null,
     seats: [
-      seat("You", true, true, youPicked, pick(drivers, "P3", 2.1)),
-      seat("Your teammate", true, false, matePicked, pick(other, "P2", 3.4)),
-      seat("Their one", false, false, true, pick(themA, "P1", 2.8)),
-      seat("Their two", false, false, true, pick(themB, "P5", 1.9)),
+      seat("You", true, true, youPicked, pick(drivers, "P3", 2.1), score(15, 26, 0, 6)),
+      seat("Your teammate", true, false, matePicked, pick(other, "P2", 3.4), score(15, 21, 3, 6)),
+      seat("Their one", false, false, true, pick(themA, "P1", 2.8), score(25, 16, 0, 0)),
+      seat("Their two", false, false, true, pick(themB, "P5", 1.9), score(18, 24, 3, 0)),
     ],
     boxBox: {
       side: "UNDER",

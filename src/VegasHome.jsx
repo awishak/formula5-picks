@@ -1460,7 +1460,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
   const span = Math.max(0, w - PAD * 2);
   const x = (v) => PAD + ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * span;
 
-  const FACE = 34, GAP = 3;
+  const FACE = 42, GAP = 4;
   const guessed = seats.filter(s => s.pick && typeof s.pick.pitGuess === "number");
 
   // One lane, always. Two guesses at the same tenth sit shoulder to shoulder
@@ -1484,7 +1484,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
   const ours = boxBox.side === "UNDER" ? "left" : "right";
   const cColor = F1_TEAM_COLORS[boxBox.team] || V.purple;
   const TICKS = [1.5, 2, 2.5, 3, 3.5, 4, 4.5];
-  const LANE = 76, AXIS = LANE + 6, HEIGHT = AXIS + 26;
+  const LANE = 88, AXIS = LANE + 6, HEIGHT = AXIS + 26;
 
   const Marker = ({ dir, color }) => (
     <svg width="40" height="16" style={{ display: "block", overflow: "visible" }}>
@@ -1515,13 +1515,13 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
               {/* A guess is joined to the point on the scale it belongs to,
                   since packing moves the face off its own value. */}
               {packed.map(p => (
-                <line key={p.s.id} x1={p.px} y1={LANE - 8} x2={p.want} y2={AXIS - 5}
-                      stroke={p.s.ours ? V.blue : V.pink} strokeWidth="2" opacity="0.7" />
+                <line key={p.s.id} x1={p.px} y1={LANE - 6} x2={p.want} y2={AXIS - 5}
+                      stroke={p.s.ours ? MINE : THEIRS} strokeWidth="2" opacity="0.7" />
               ))}
               {line != null && (
                 <line x1={x(line)} y1={AXIS - 16} x2={x(line)} y2={AXIS + 16}
-                      stroke={V.gold} strokeWidth="4" strokeLinecap="round"
-                      style={{ filter: `drop-shadow(0 0 8px ${V.gold})` }} />
+                      stroke={DIVIDE} strokeWidth="5" strokeLinecap="round"
+                      style={{ filter: `drop-shadow(0 0 8px ${DIVIDE})` }} />
               )}
             </svg>
 
@@ -1533,7 +1533,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
             ))}
 
             {packed.map(({ s, px }) => {
-              const c = s.ours ? V.blue : V.pink;
+              const c = s.ours ? MINE : THEIRS;
               return (
                 <div key={s.id} style={{
                   position: "absolute", left: px - FACE / 2, top: 0, width: FACE, textAlign: "center",
@@ -1542,11 +1542,11 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
                                photo={s.photo} size={FACE} />
                   <div style={{
                     marginTop: -6, display: "inline-block", position: "relative",
-                    padding: "1px 4px", borderRadius: 6, background: "#000",
+                    padding: "2px 5px", borderRadius: 7, background: "#000",
                     border: `1px solid ${c}`, fontFamily: FD, fontWeight: 700,
-                    fontSize: 10, lineHeight: 1.3, color: "#fff", whiteSpace: "nowrap",
+                    fontSize: 11, lineHeight: 1.35, color: "#fff", whiteSpace: "nowrap",
                   }}>{lastName(s.name)}</div>
-                  <div style={{ ...numeric("chip"), fontSize: 11, color: c, marginTop: 1 }}>
+                  <div style={{ ...numeric("chip"), fontSize: 12, color: c, marginTop: 2 }}>
                     {s.pick.pitGuess.toFixed(1)}
                   </div>
                 </div>
@@ -1560,22 +1560,22 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
           and the arrows outside them running to the ends of the range: your
           side wins anywhere in that direction. */}
       {w > 0 && line != null && (() => {
-        const GW = 172, GAP = 8;
+        const GW = 190, GAP = 8;
         const gl = Math.min(Math.max(x(line) - GW / 2, PAD), Math.max(PAD, w - PAD - GW));
         const Side = ({ t, mine, word }) => (
-          <div style={{ textAlign: "center", width: 40 }}>
+          <div style={{ textAlign: "center", width: 46 }}>
             {t && t.logo
-              ? <img src={t.logo} alt="" style={{ width: 28, height: 28, objectFit: "contain" }} />
-              : <div style={{ width: 28, height: 28, borderRadius: 6, margin: "0 auto",
-                              background: V.bg3, border: `2px solid ${mine ? V.blue : V.pink}` }} />}
-            <div style={{ ...display("chip"), fontSize: 11, color: mine ? V.blue : V.pink, marginTop: 2 }}>
+              ? <img src={t.logo} alt="" style={{ width: 32, height: 32, objectFit: "contain" }} />
+              : <div style={{ width: 32, height: 32, borderRadius: 7, margin: "0 auto",
+                              background: V.bg3, border: `2px solid ${mine ? MINE : THEIRS}` }} />}
+            <div style={{ ...display("chip"), fontSize: 11, color: mine ? MINE : THEIRS, marginTop: 2 }}>
               {word}
             </div>
           </div>
         );
         const arrows = [
-          { dir: "left", c: ours === "left" ? V.blue : V.pink, from: gl - GAP, to: PAD },
-          { dir: "right", c: ours === "right" ? V.blue : V.pink, from: gl + GW + GAP, to: w - PAD },
+          { dir: "left", c: ours === "left" ? MINE : THEIRS, from: gl - GAP, to: PAD },
+          { dir: "right", c: ours === "right" ? MINE : THEIRS, from: gl + GW + GAP, to: w - PAD },
         ];
         return (
           <div style={{ position: "relative", height: 56, marginTop: 2 }}>
@@ -1625,10 +1625,125 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
 
 
 
-// The same board turned on its side: the four players across the top, their
-// five picks down. A driver on more than one card is still joined by a line,
-// same colours and same layering.
-function HandsColumns({ seats }) {
+
+// The locked and scored screen, in four cards.
+//
+// One colour rule runs through all of them: green is your side, because green
+// means go. Pink is theirs. Blue is only ever a divider, which is why the BOX
+// BOX line itself is blue and nothing else is.
+//
+// And one layout rule: the UNDER team is always on the left, the OVER team
+// always on the right. So your green is on the left in a week you have the
+// under and on the right in a week you have the over, and the side you are on
+// is readable without reading a word.
+const MINE = V.green, THEIRS = V.pink, DIVIDE = V.blue;
+
+// The two teams and where the week stands.
+function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under }) {
+  const Card = ({ t, total, c, side }) => (
+    <div style={{
+      flex: 1, minWidth: 0, textAlign: "center", padding: "14px 10px",
+      borderRadius: 14, background: V.bg3, border: `2px solid ${c}`,
+      ...edgeGlow(c, 0.5),
+    }}>
+      {t && t.logo
+        ? <img src={t.logo} alt="" style={{ width: 46, height: 46, objectFit: "contain" }} />
+        : <div style={{ width: 46, height: 46, borderRadius: 10, margin: "0 auto",
+                        background: V.bg2, border: `2px solid ${c}` }} />}
+      <div style={{
+        ...display("h3"), fontSize: 16, color: V.text, marginTop: 6, lineHeight: 1.25,
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+      }}>{t ? t.name : "\u2014"}</div>
+      <div style={{ ...display("chip"), fontSize: 11, color: c, marginTop: 2 }}>{side}</div>
+      <div style={{ ...numeric("hero"), fontSize: 44, ...textGlow(c, 0.8), marginTop: 6 }}>{total}</div>
+    </div>
+  );
+  const left = under === "mine"
+    ? { t: myTeam, total: mineTotal, c: MINE, side: "UNDER" }
+    : { t: opp, total: theirTotal, c: THEIRS, side: "UNDER" };
+  const right = under === "mine"
+    ? { t: opp, total: theirTotal, c: THEIRS, side: "OVER" }
+    : { t: myTeam, total: mineTotal, c: MINE, side: "OVER" };
+  return (
+    <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+      <Card {...left} /><Card {...right} />
+    </div>
+  );
+}
+
+// Who you want, and which way you want the stop to go.
+function RootingCard({ seats, boxBox }) {
+  const [open, setOpen] = useState(true);
+  const mineHas = {}, theirsHas = {};
+  seats.forEach(s => (s.pick ? s.pick.order : []).forEach(d => {
+    const bag = s.ours ? mineHas : theirsHas;
+    bag[d] = (bag[d] || 0) + 1;
+  }));
+  const forUs = Object.keys(mineHas).filter(d => (mineHas[d] || 0) > (theirsHas[d] || 0));
+  const against = Object.keys(theirsHas).filter(d => (theirsHas[d] || 0) > (mineHas[d] || 0));
+
+  const Strip = ({ names, c }) => (
+    <div className="v-scroll" style={{ display: "flex", gap: 8, overflowX: "auto", padding: "2px 0" }}>
+      {names.length === 0
+        ? <span style={{ ...body("bodySm"), color: V.text2 }}>Nobody</span>
+        : names.map(n => (
+          <div key={n} style={{ textAlign: "center", flexShrink: 0, width: 52 }}>
+            <Face name={n} size={44} ring={c} edge={3} glow={1} />
+            <div style={{
+              marginTop: -6, display: "inline-block", position: "relative",
+              padding: "2px 5px", borderRadius: 7, background: "#000", border: `1px solid ${c}`,
+              fontFamily: FD, fontWeight: 700, fontSize: 10, lineHeight: 1.35, color: "#fff",
+              whiteSpace: "nowrap",
+            }}>{lastName(n)}</div>
+          </div>
+        ))}
+    </div>
+  );
+
+  return (
+    <div style={{ ...card({ padding: "14px 14px 16px", marginBottom: 14 }) }}>
+      <button onClick={() => setOpen(o => !o)} style={{
+        display: "flex", alignItems: "center", gap: 8, width: "100%",
+        background: "transparent", border: "none", cursor: "pointer", padding: 0,
+      }}>
+        <span style={{
+          ...numeric("h3"), fontSize: 17, color: MINE, lineHeight: 1,
+          transform: open ? "rotate(90deg)" : "none", transition: "transform .2s ease",
+          display: "inline-block",
+        }}>&rsaquo;</span>
+        <Label color={MINE}>Rooting interests</Label>
+      </button>
+      <div style={{
+        maxHeight: open ? 520 : 0, opacity: open ? 1 : 0, overflow: "hidden",
+        transition: "max-height .4s ease, opacity .3s ease",
+      }}>
+        <div style={{ paddingTop: 12 }}>
+          <Label color={MINE} style={{ fontSize: 11, marginBottom: 6 }}>Root for</Label>
+          <Strip names={forUs} c={MINE} />
+          <Label color={THEIRS} style={{ fontSize: 11, margin: "12px 0 6px" }}>Root against</Label>
+          <Strip names={against} c={THEIRS} />
+          {boxBox.line != null && (
+            <p style={{ ...body("body"), color: V.text, margin: "14px 0 0" }}>
+              And you want the stop{" "}
+              <span style={{ color: MINE, fontWeight: 700 }}>
+                {boxBox.side === "UNDER" ? "under" : "over"} {boxBox.line.toFixed(2)}
+              </span>.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// The four hands, scored.
+//
+// Players across, their five down, and the week's points under each name. The
+// score rows share a label column down the middle, so a number on the left is
+// read against the number on the right without a legend.
+//
+// UNDER on the left, OVER on the right, always.
+function HandsColumns({ seats, under }) {
   const wrap = useRef(null);
   const [w, setW] = useState(0);
   useEffect(() => {
@@ -1641,32 +1756,34 @@ function HandsColumns({ seats }) {
     return () => ro.disconnect();
   }, []);
 
-  const hands = seats.slice(0, 4);
-  const HEAD = 46, ROW = 74, FACE = 40;
-  const colW = w > 0 ? w / hands.length : 0;
-  const cx = (c) => colW * (c + 0.5);
-  const cy = (r) => HEAD + ROW * r + ROW / 2 - 8;
-  const height = HEAD + ROW * 5;
+  // Left pair is whoever has the under.
+  const ours = seats.filter(s => s.ours), theirs = seats.filter(s => !s.ours);
+  const cols = under === "mine" ? [...ours, ...theirs] : [...theirs, ...ours];
+
+  const MID = 56;
+  const colW = w > 0 ? (w - MID) / 4 : 0;
+  // Columns 0 and 1 sit left of the label strip, 2 and 3 right of it.
+  const cx = (c) => (c < 2 ? colW * (c + 0.5) : MID + colW * (c + 0.5));
+  const FACE = 44, HEAD = 78, ROW = 74;
+  const cy = (r) => HEAD + ROW * r + ROW / 2 - 10;
+  const boardH = HEAD + ROW * 5;
 
   const spots = {};
-  hands.forEach((h, c) => {
-    (h.pick ? h.pick.order : []).slice(0, 5).forEach((name, r) => {
-      (spots[name] ||= []).push({ r, c, ours: h.ours });
-    });
-  });
+  cols.forEach((h, c) => (h.pick ? h.pick.order : []).slice(0, 5)
+    .forEach((name, r) => { (spots[name] ||= []).push({ r, c, ours: h.ours }); }));
   const tone = (name) => {
     const at = spots[name] || [];
     const mine = at.filter(p => p.ours).length;
     return mine > at.length - mine ? "mine" : at.length - mine > mine ? "theirs" : "level";
   };
-  const COLOR = { mine: V.blue, theirs: V.pink, level: V.text2 };
+  const COLOR = { mine: MINE, theirs: THEIRS, level: V.text2 };
   const lines = Object.entries(spots).filter(([, at]) => at.length > 1).map(([name, at]) => ({
     name, t: tone(name),
     d: at.slice().sort((a, b) => a.c - b.c).map(p => `${cx(p.c)},${cy(p.r)}`).join(" "),
   }));
 
   const Layer = ({ which, z }) => (
-    <svg width="100%" height={height} style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
+    <svg width="100%" height={boardH} style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
       {lines.filter(l => l.t === which).map(l => (
         <polyline key={l.name} points={l.d} fill="none" stroke={COLOR[which]}
           strokeWidth={which === "level" ? 3.5 : 5} strokeLinecap="round" strokeLinejoin="round"
@@ -1676,9 +1793,21 @@ function HandsColumns({ seats }) {
     </svg>
   );
 
+  const Plate = ({ text, c, dim, size = 10, top = -6 }) => (
+    <div style={{
+      marginTop: top, display: "inline-block", position: "relative",
+      maxWidth: Math.max(58, colW + 6),
+      padding: "2px 5px", borderRadius: 7, background: "#000",
+      border: `1px solid ${dim ? V.border : c}`,
+      fontFamily: FD, fontWeight: 700, fontSize: size, lineHeight: 1.35,
+      color: dim ? V.text2 : "#fff",
+      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+    }}>{text}</div>
+  );
+
   const Drivers = ({ which, z }) => (
     <div style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
-      {hands.flatMap((h, c) => (h.pick ? h.pick.order : []).slice(0, 5).map((name, r) => {
+      {cols.flatMap((h, c) => (h.pick ? h.pick.order : []).slice(0, 5).map((name, r) => {
         const t = tone(name);
         if (which === "level" ? t !== "level" : t === "level") return null;
         return (
@@ -1688,40 +1817,42 @@ function HandsColumns({ seats }) {
           }}>
             <Face name={name} size={FACE} ring={COLOR[t]} edge={3}
                   glow={t === "level" ? 0 : 1.1} drained={t === "level"} />
-            <div style={{
-              marginTop: -6, display: "inline-block", position: "relative",
-              maxWidth: Math.max(56, colW - 2),
-              padding: "2px 5px", borderRadius: 7, background: "#000",
-              border: `1px solid ${t === "level" ? V.border : COLOR[t]}`,
-              fontFamily: FD, fontWeight: 700, fontSize: 10, lineHeight: 1.35,
-              color: t === "level" ? V.text2 : "#fff",
-              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-            }}>{lastName(name)}</div>
+            <Plate text={lastName(name)} c={COLOR[t]} dim={t === "level"} />
           </div>
         );
       }))}
     </div>
   );
 
+  // Four numbers a side with the label between them.
+  const ROWS = [
+    { k: "Top", get: s => (s.score ? s.score.top : null) },
+    { k: "Mid", get: s => (s.score ? s.score.mid : null) },
+    { k: "Best", get: s => (s.score ? s.score.best : null),
+      sub: s => (s.pick ? s.pick.bestFinish : null) },
+    { k: "Order", get: s => (s.score ? s.score.order : null) },
+  ];
+
   return (
-    <div style={{ ...card({ padding: "14px 10px", marginBottom: 18 }) }}>
-      <Label color={V.blue} style={{ marginBottom: 10 }}>The four hands</Label>
-      <div ref={wrap} style={{ position: "relative", height, minWidth: 0 }}>
+    <div style={{ ...card({ padding: "14px 10px 12px", marginBottom: 14 }) }}>
+      <div ref={wrap} style={{ position: "relative", height: boardH, minWidth: 0 }}>
         <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-          {hands.map((h, c) => (
-            <div key={h.id} style={{
-              position: "absolute", left: cx(c) - colW / 2, top: 0, width: colW, textAlign: "center",
-            }}>
-              <div style={{
-                ...display("chip"), fontSize: 13, lineHeight: 1.2,
-                color: h.mine ? V.blue : h.ours ? V.text : V.pink,
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px",
-              }}>{h.mine ? "You" : h.name.split(" ")[0]}</div>
-              <div style={{ ...body("bodySm"), fontSize: 11, color: V.text2 }}>
-                {h.pick ? `${h.pick.bestFinish} · ${h.pick.pitGuess.toFixed(1)}s` : "no picks"}
+          {cols.map((h, c) => {
+            const col = h.ours ? MINE : THEIRS;
+            return (
+              <div key={h.id} style={{
+                position: "absolute", left: cx(c) - colW / 2, top: 0, width: colW, textAlign: "center",
+              }}>
+                <PlayerBadge name={h.name} picked={false} dim={false} ring={col}
+                             photo={h.photo} size={40} />
+                <Plate text={h.mine ? "You" : lastName(h.name)} c={col} size={11} top={-7} />
+                <div style={{ ...numeric("h3"), fontSize: 20, color: col, marginTop: 3,
+                              ...textGlow(col, 0.5) }}>
+                  {h.score ? h.score.total : "\u2014"}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         {w > 0 && (
           <>
@@ -1733,9 +1864,43 @@ function HandsColumns({ seats }) {
           </>
         )}
       </div>
+
+      {w > 0 && (
+        <div style={{ marginTop: 6 }}>
+          {ROWS.map(row => (
+            <div key={row.k} style={{ display: "flex", alignItems: "center", padding: "5px 0",
+                                      borderTop: `1px solid ${V.border}` }}>
+              {cols.map((h, c) => {
+                const col = h.ours ? MINE : THEIRS;
+                const v = row.get(h);
+                const cell = (
+                  <div key={h.id} style={{ width: colW, textAlign: "center" }}>
+                    <div style={{ ...numeric("chip"), fontSize: 16, color: v ? col : V.text2 }}>
+                      {v == null ? "\u2014" : v === 0 ? "\u2715" : v}
+                    </div>
+                    {row.sub && (
+                      <div style={{ ...display("chip"), fontSize: 11, color: V.text2, marginTop: 1 }}>
+                        {row.sub(h) || ""}
+                      </div>
+                    )}
+                  </div>
+                );
+                // The label sits between the two pairs.
+                return c === 2
+                  ? [<div key="lab" style={{
+                      width: MID, textAlign: "center", ...display("chip"), fontSize: 12,
+                      color: DIVIDE, letterSpacing: "0.06em",
+                    }}>{row.k}</div>, cell]
+                  : cell;
+              })}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
 
 // Four hands, five drivers each, in the order that player put them.
 //
@@ -1751,11 +1916,7 @@ function HandsColumns({ seats }) {
 // blue and pink drivers on top. So a contested driver is never buried under a
 // line for a driver nobody is fighting over.
 function HandsBoard({ seats }) {
-  // ?hands=cols turns the board on its side: players across the top, the five
-  // slots down. A mockup to compare against, not a setting.
-  const cols4 = typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("hands") === "cols";
-  if (cols4) return <HandsColumns seats={seats} />;
+
   const wrap = useRef(null);
   const [w, setW] = useState(0);
   useEffect(() => {
@@ -1981,28 +2142,20 @@ function HomeLocked() {
         </div>
       )}
 
-      <BoxBoxLine seats={seats} boxBox={boxBox} myTeam={myTeam} opp={opp} />
-      {waiting > 0 && (
-        <p style={{ ...body("bodySm"), fontSize: 14, color: V.pink, margin: "-8px 0 18px" }}>
-          {waiting === 1 ? "One guess is missing" : `${waiting} guesses are missing`}, so the line
-          is an average of the rest. It moves if the others are filled in.
-        </p>
-      )}
-
-      <SectionHead accent={V.blue}
-        sub={`${myTeam ? myTeam.name : "You"} on top, ${opp ? opp.name : "them"} below`}>
-        Who has who
-      </SectionHead>
-      <HandsBoard seats={[...mine, ...theirs]} />
-
-      <SectionHead accent={V.blue}>{myTeam ? myTeam.name : "Your team"}</SectionHead>
-      {mine.map(s => <Pick key={s.id} seat={s} />)}
-
-      <div style={{ height: 10 }} />
-      <SectionHead accent={V.pink}>{opp ? opp.name : "Your opponent"}</SectionHead>
-      {theirs.length
-        ? theirs.map(s => <Pick key={s.id} seat={s} />)
-        : <p style={{ ...body("body"), color: V.text2 }}>No opponent for this round.</p>}
+      {(() => {
+        const tot = (ours) => seats.filter(s => s.ours === ours)
+          .reduce((a, s) => a + (s.score ? s.score.total : 0), 0);
+        const under = boxBox.side === "UNDER" ? "mine" : "theirs";
+        return (
+          <>
+            <Scoreboard myTeam={myTeam} opp={opp} under={under}
+                        mineTotal={tot(true)} theirTotal={tot(false)} />
+            <RootingCard seats={seats} boxBox={boxBox} />
+            <HandsColumns seats={seats} under={under} />
+            <BoxBoxLine seats={seats} boxBox={boxBox} myTeam={myTeam} opp={opp} />
+          </>
+        );
+      })()}
 
       {order.length > 0 && (
         <>
