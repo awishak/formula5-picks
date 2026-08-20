@@ -17,7 +17,9 @@ const TEAM_SIZE = "clamp(13px, 3.5vw, 14px)";
 // Real names are longer than team short names, and 48 of them set the budget:
 // at 19px two of them run past the column and at 21px ten do. Measured across
 // all 48 rather than eyeballed off the top of the table.
-const NAME_SIZE = "clamp(15px, calc(9.55vw - 22.0px), 19px)";
+// Tuned against the row as it is now. It was set when a trophy column shared
+// the width; that came off and this did not go back up with it.
+const NAME_SIZE = "clamp(15px, calc(10.4vw - 22.0px), 19px)";
 
 function Title() {
   return (
@@ -75,9 +77,9 @@ function YouAre({ row, place, total }) {
   return (
     <div style={{ ...card({ padding: 16, marginBottom: 20 }), ...edgeGlow(V.blue, 0.8) }}>
       <div style={label({ color: V.blue, fontSize: 15, marginBottom: 12 })}>Your season so far</div>
+      {/* No face. The avatar is already on your row in the table below and in
+          the header, and this box has four lines and a trophy case to fit. */}
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <Face name={row.name} photo={row.photo} size={44} />
-
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={display("h3", {
             // The trophy case takes a fixed column, so the name is what gives

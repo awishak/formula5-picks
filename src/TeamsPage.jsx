@@ -20,7 +20,9 @@ const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 // phone almost nobody in the league is carrying.
 // Same budget as the players page: full team names against the room a row
 // leaves after the place, the logo and the number.
-const NAME_SIZE = "clamp(15px, calc(9.55vw - 22.0px), 19px)";
+// Line one is the team name on its own now, so it has the room the old
+// shared-with-the-record version did not.
+const NAME_SIZE = "clamp(15px, calc(10.0vw - 21.0px), 19px)";
 
 const TITLE_SIZE = titleFit("TEAM STANDINGS");
 
@@ -61,14 +63,17 @@ function Face({ name, photo, size }) {
   );
 }
 
-// The last ten weeks, oldest first. A won week is blue, a lost one pink, a draw
-// grey. A box around the letter means BOX BOX decided it: the drivers alone
-// were within its six points of swing, so the pit call is what settled it.
+// Form: the last five weeks, oldest first. A won week is blue, a lost one pink,
+// a draw grey. A box around the letter means BOX BOX decided it: the drivers
+// alone were within its six points of swing, so the pit call settled it.
+//
+// Five rather than ten because ten wrapped onto a second line beside the
+// teammate, and a run of results that wraps stops reading as a run.
 function Form({ weeks }) {
-  const last = weeks.slice(-10);
+  const last = weeks.slice(-5);
   if (!last.length) return null;
   return (
-    <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10 }}>
+    <div style={{ display: "flex", gap: 5, marginTop: 6 }}>
       {last.map((w, i) => {
         const letter = w.won === true ? "W" : w.won === false ? "L" : "D";
         const color = w.won === true ? V.blue : w.won === false ? V.pink : V.silver;
@@ -109,6 +114,12 @@ function YourTeam({ row, season, place, avgRank, teammate }) {
           </div>
           <div style={body("bodySm", { fontSize: 15, color: V.text2, lineHeight: 1.55, whiteSpace: "nowrap" })}>
             Scoring average: <strong style={{ color: V.text }}>{ordinal(avgRank)}</strong> ({season.avg.toFixed(1)})
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <span style={{
+              fontFamily: FD, fontWeight: 700, fontSize: 13, letterSpacing: "0.1em",
+              textTransform: "uppercase", color: V.text2,
+            }}>Form</span>
           </div>
           <Form weeks={season.weeks} />
         </div>
