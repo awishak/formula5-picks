@@ -166,9 +166,9 @@ export function useLeague(currentUser, { round = null } = {}) {
         const bonusAvg = {};
         earlier.forEach(x => {
           const b = bonusAvg[x.player_id] || (bonusAvg[x.player_id] =
-            { order: 0, best: 0, needle: 0, bonus: 0, n: 0 });
+            { order: 0, best: 0, needle: 0, n: 0 });
           b.order += x.order_bonus || 0; b.best += x.best_finish_bonus || 0;
-          b.needle += x.pit_individual_pts || 0; b.bonus += x.weekly_bonus_pts || 0;
+          b.needle += x.pit_individual_pts || 0;
           b.n += 1;
         });
         const topPool = new Set(race.top_drivers || []);
@@ -180,17 +180,29 @@ export function useLeague(currentUser, { round = null } = {}) {
             const a = driverAvg[n] ? driverAvg[n].avg : 0;
             if (topPool.has(n)) top += a; else mid += a;
           });
+          // No bonus yet: it is not a thing you earn at some rate, it is paid
+          // for finishing in the top ten, so it cannot be known until everyone
+          // is ranked.
           const parts = { top, mid, best: b.best / b.n, order: b.order / b.n,
-                          needle: b.needle / b.n, bonus: b.bonus / b.n };
+                          needle: b.needle / b.n, bonus: 0 };
           return { id: p.player_id, parts,
-                   total: Object.values(parts).reduce((x, y) => x + y, 0) };
+                   pre: top + mid + parts.best + parts.order + parts.needle };
         };
         const projected = allPicks.map(projectOne).filter(Boolean)
-          .sort((a, b) => b.total - a.total);
+          .sort((a, b) => b.pre - a.pre);
         let pp = 0, ppv = null, projPlace = {};
         projected.forEach((x, i) => {
-          if (x.total !== ppv) { pp = i + 1; ppv = x.total; }
+          if (x.pre !== ppv) { pp = i + 1; ppv = x.pre; }
           projPlace[x.id] = pp;
+        });
+        // Ten for first down to one for tenth, and nothing below. Ranking on
+        // the score before the bonus is what makes this answerable at all, and
+        // the order survives it: a falling bonus added to a falling score
+        // cannot reorder anybody.
+        projected.forEach(x => {
+          const place = projPlace[x.id];
+          x.parts.bonus = place <= 10 ? 11 - place : 0;
+          x.total = x.pre + x.parts.bonus;
         });
         const r1 = (x) => Math.round(x * 10) / 10;
         const myProj = me ? projected.find(x => x.id === me.id) : null;
