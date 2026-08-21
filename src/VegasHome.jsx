@@ -447,7 +447,7 @@ function PickBadges({ players }) {
 // Carries the round, the race, who has picked, and what the event is doing right
 // now. The circuit name used to sit at the bottom; event status is what people
 // actually open the app for.
-function Marquee({ race, status, time }) {
+function Marquee({ race, status, time, flicker = false }) {
   return (
     <div style={{
       ...card({ padding: "18px 20px 20px", marginBottom: 18, position: "relative", overflow: "hidden" }),
@@ -456,6 +456,7 @@ function Marquee({ race, status, time }) {
     }}>
 
 
+      <div className={flicker ? "v-flicker" : undefined}>
       <p style={{
         ...marquee(shortRace(race.name)), lineHeight: 1.02, ...textGlow(V.pink),
         textAlign: "center", textTransform: "uppercase", margin: "6px 0 0",
@@ -468,6 +469,7 @@ function Marquee({ race, status, time }) {
         lineHeight: 1.02, ...textGlow(V.blue), textAlign: "center",
         textTransform: "uppercase", margin: "2px 0 0",
       }}>Grand Prix</p>
+      </div>
       {/* Small, under the sign. Before the deadline the loud line is the clock,
           and the start time is the thing you plan around. */}
       {time && (
@@ -521,8 +523,11 @@ function HomeOpen({ onNav, submitted = false }) {
   // The real deadline, which is the whole point of the clock.
   return (
     <>
+      {/* One sign flickers per screen, never two. Before you have picked it is
+          the one telling you to; after that it is the race itself, until the
+          race is run and a team's box takes it. */}
       <Marquee race={race} status={showPicker ? null : status}
-               time={raceTimePT(race.round)} />
+               time={raceTimePT(race.round)} flicker={!showPicker} />
 
       {showPicker ? (
         <>
@@ -1894,7 +1899,7 @@ function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under, scored = true }
   // Only the team in front glows. Green on its own is the resting state, so a
   // lit card means something happened rather than "this one is yours".
   const Card = ({ t, total, c, side, won }) => (
-    <div style={{
+    <div className={won ? "v-flicker" : undefined} style={{
       flex: 1, minWidth: 0, textAlign: "center", padding: "14px 10px",
       borderRadius: 14, background: V.bg3, border: `2px solid ${c}`,
       ...(won ? edgeGlow(c, 0.9) : {}),
@@ -2003,6 +2008,110 @@ function RootingCard({ seats, boxBox }) {
             </p>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// What everyone else did. It exists on one screen only: before the deadline it
+// would give the week away, and after the race nobody cares what anyone guessed.
+//
+// Shut, it is the height of a score card and shows the one line that is about
+// you, which is where your needle sits against everybody's. Open, it is the
+// rest of the field.
+function FieldCard({ field, mine }) {
+  const [open, setOpen] = useState(false);
+  if (!field || !field.needle) return null;
+  const N = field.needle;
+  const MIN = 1.5, MAX = 4.5;
+  const pc = (v) => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
+
+  const Bars = ({ rows, color, label }) => {
+    const top = rows[0] ? rows[0].n : 1;
+    return (
+      <div style={{ marginTop: 14 }}>
+        <Label color={DIVIDE} style={{ marginBottom: 8 }}>{label}</Label>
+        <div style={{ display: "grid", gap: 5 }}>
+          {rows.slice(0, 5).map(r => (
+            <div key={r.k} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ ...display("chip"), fontSize: 12, color: V.text,
+                             width: 84, flexShrink: 0, whiteSpace: "nowrap",
+                             overflow: "hidden", textOverflow: "ellipsis" }}>
+                {r.k.includes(" ") ? lastName(r.k) : r.k}
+              </span>
+              <div style={{ flex: 1, height: 14, borderRadius: 7, background: V.bg3,
+                            overflow: "hidden", minWidth: 0 }}>
+                <div style={{ width: `${(r.n / top) * 100}%`, height: "100%",
+                              borderRadius: 7, background: color, opacity: 0.85 }} />
+              </div>
+              <span style={{ ...numeric("chip"), fontSize: 14, color, width: 24,
+                             textAlign: "right", flexShrink: 0 }}>{r.n}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ ...card({ padding: "14px 14px 16px", marginBottom: 14 }) }}>
+      <button onClick={() => setOpen(o => !o)} style={{
+        display: "flex", alignItems: "center", gap: 8, width: "100%",
+        background: "transparent", border: "none", cursor: "pointer", padding: 0,
+      }}>
+        <span style={{ ...numeric("h3"), fontSize: 17, color: DIVIDE, lineHeight: 1,
+          transform: open ? "rotate(90deg)" : "none", transition: "transform .2s ease",
+          display: "inline-block" }}>&rsaquo;</span>
+        <Label color={DIVIDE}>The field</Label>
+        <span style={{ marginLeft: "auto", ...display("chip"), fontSize: 12, color: V.text2 }}>
+          {field.in} of {field.of} in
+        </span>
+      </button>
+
+      {/* Every guess as a tick, so the shape of the field is the picture and the
+          numbers are only labels. Yours is the tall one. */}
+      <div style={{ position: "relative", height: 52, margin: "12px 4px 0" }}>
+        <div style={{ position: "absolute", left: 0, right: 0, top: 24, height: 2,
+                      borderRadius: 2, background: V.border2 }} />
+        {[1.5, 2, 2.5, 3, 3.5, 4, 4.5].map(t => (
+          <div key={t} style={{ position: "absolute", left: `${pc(t)}%`, top: 21,
+                                width: 2, height: 8, marginLeft: -1, background: V.border2 }} />
+        ))}
+        {field.guesses.map((v, i) => (
+          <div key={i} style={{
+            position: "absolute", left: `${pc(v)}%`, top: 12, width: 2, height: 12,
+            marginLeft: -1, borderRadius: 1, background: V.text2, opacity: 0.5,
+          }} />
+        ))}
+        {N.mine != null && (
+          <div style={{ position: "absolute", left: `${pc(N.mine)}%`, top: 4, width: 4,
+                        height: 28, marginLeft: -2, borderRadius: 2, background: MINE,
+                        boxShadow: `0 0 7px ${MINE}` }} />
+        )}
+        {/* Each label under its own mark. Pinned to the two ends they said the
+            opposite of the numbers: yours at 2.0 sat on the right of a field at
+            2.7. */}
+        <div style={{ position: "absolute", left: `${pc(N.median)}%`, top: 20, width: 2,
+                      height: 10, marginLeft: -1, background: V.text, opacity: 0.7 }} />
+        <div style={{
+          position: "absolute", top: 34, width: 64, textAlign: "center",
+          left: `clamp(0px, calc(${pc(N.median)}% - 32px), calc(100% - 64px))`,
+          ...display("chip"), fontSize: 11, color: V.text2,
+        }}>Field {N.median.toFixed(1)}</div>
+        {N.mine != null && (
+          <div style={{
+            position: "absolute", top: 34, width: 64, textAlign: "center",
+            left: `clamp(0px, calc(${pc(N.mine)}% - 32px), calc(100% - 64px))`,
+            ...display("chip"), fontSize: 11, color: MINE,
+          }}>You {N.mine.toFixed(1)}</div>
+        )}
+      </div>
+
+      <div style={{ maxHeight: open ? 800 : 0, opacity: open ? 1 : 0, overflow: "hidden",
+                    transition: "max-height .4s ease, opacity .3s ease" }}>
+        <Bars rows={field.drivers} color={V.blue} label="Most picked" />
+        <Bars rows={field.topPick} color={V.gold} label="Top pick" />
+        <Bars rows={field.bestFinish} color={V.purple} label="Best finish called" />
       </div>
     </div>
   );
@@ -2624,6 +2733,7 @@ function HomeLocked({ scored: scoredWeek = true }) {
         // something you plan around, and there is nothing left to plan.
         status={{ text: scoredWeek ? "Final" : (raceTimePT(race.round) || "Picks are locked"),
                   color: V.gold }}
+        flicker={!scoredWeek}
       />
 
       {missed && (
@@ -2658,6 +2768,7 @@ function HomeLocked({ scored: scoredWeek = true }) {
             <RootingCard seats={seats} boxBox={boxBox} />
             <YourWeek mine={week.mine} seat={seats.find(x => x.mine)} scored={scored}
                       driverAvg={week.driverAvg || {}} projection={week.projection} />
+            {!scored && <FieldCard field={week.field} />}
           </>
         );
       })()}

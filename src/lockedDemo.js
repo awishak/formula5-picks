@@ -114,6 +114,25 @@ export function lockedDemo(kind = "all") {
       total: 32, place: 29, of: 48,
       avg: 41.7, rank: 6, avgBefore: 42.9, rankBefore: 3,
     } : null,
+    // What all 48 did at Silverstone. Only ever visible on the locked screen:
+    // before the deadline it would give the week away, and after the race
+    // nobody looks at what people guessed.
+    field: {
+      in: 48, of: 48,
+      drivers: [
+        { k: "Isack Hadjar", n: 44 }, { k: "Pierre Gasly", n: 43 },
+        { k: "George Russell", n: 33 }, { k: "Arvid Lindblad", n: 30 },
+        { k: "Oliver Bearman", n: 27 }, { k: "Franco Colapinto", n: 25 },
+      ],
+      topPick: [{ k: "George Russell", n: 33 }, { k: "Lewis Hamilton", n: 13 },
+                { k: "Lando Norris", n: 2 }],
+      bestFinish: [{ k: "P2", n: 27 }, { k: "P1", n: 17 }, { k: "P3", n: 2 },
+                   { k: "P5", n: 1 }, { k: "P10", n: 1 }],
+      guesses: [1.5,1.5,1.5,2,2,2,2.1,2.1,2.1,2.1,2.2,2.2,2.3,2.3,2.3,2.3,2.4,2.5,
+                2.5,2.5,2.5,2.6,2.6,2.6,2.7,2.7,2.7,2.8,2.8,2.8,2.8,2.9,2.9,3,3,3,3,
+                3.1,3.1,3.1,3.2,3.2,3.3,3.4,3.4,3.5,3.6,4],
+      needle: { lo: 1.5, hi: 4, median: 2.7, mine: 2 },
+    },
     // Round 9 projected: the drivers from their own form through round 8, best
     // finish, order and needle from how often Andrew had earned each, and the
     // weekly bonus from the projected place, which is 38th and so pays nothing.

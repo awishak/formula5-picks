@@ -160,7 +160,8 @@ export function useLeague(currentUser, { round = null } = {}) {
         // gone. Before it, a projected place would be built out of picks nobody
         // is allowed to see.
         const allPicks = locked
-          ? (await supabase.from("picks").select("player_id,finishing_order")
+          ? (await supabase.from("picks")
+              .select("player_id,finishing_order,top_pick,best_finish,pit_guess")
               .eq("race_id", race.id)).data || []
           : [];
         const bonusAvg = {};
@@ -205,6 +206,34 @@ export function useLeague(currentUser, { round = null } = {}) {
           x.total = x.pre + x.parts.bonus;
         });
         const r1 = (x) => Math.round(x * 10) / 10;
+
+        // What everyone else did. Only knowable after the deadline, and nobody
+        // looks at it again once the race has run, so it belongs to exactly one
+        // screen.
+        const tally = (get) => {
+          const c = {};
+          allPicks.forEach(p => { const k = get(p); if (k != null) c[k] = (c[k] || 0) + 1; });
+          return Object.entries(c).map(([k, n]) => ({ k, n })).sort((a, b) => b.n - a.n);
+        };
+        const drivers = {};
+        allPicks.forEach(p => (p.finishing_order || []).slice(0, 5)
+          .forEach(d => { drivers[d] = (drivers[d] || 0) + 1; }));
+        const guesses = allPicks.map(p => Number(p.pit_guess))
+          .filter(x => !Number.isNaN(x)).sort((a, b) => a - b);
+        const myGuess = me && pickOf[me.id] ? Number(pickOf[me.id].pit_guess) : null;
+        const field = allPicks.length ? {
+          in: allPicks.length, of: players.length,
+          drivers: Object.entries(drivers).map(([k, n]) => ({ k, n }))
+            .sort((a, b) => b.n - a.n || a.k.localeCompare(b.k)),
+          topPick: tally(p => p.top_pick),
+          bestFinish: tally(p => p.best_finish),
+          guesses,
+          needle: guesses.length ? {
+            lo: guesses[0], hi: guesses[guesses.length - 1],
+            median: guesses[Math.floor(guesses.length / 2)],
+            mine: Number.isNaN(myGuess) ? null : myGuess,
+          } : null,
+        } : null;
         const myProj = me ? projected.find(x => x.id === me.id) : null;
         const projection = myProj ? {
           parts: Object.fromEntries(Object.entries(myProj.parts).map(([k, v]) => [k, r1(v)])),
@@ -339,6 +368,7 @@ export function useLeague(currentUser, { round = null } = {}) {
           // predicting with the answer.
           driverAvg,
           projection,
+          field,
           // Whether Admin has run this race yet. Everything that used to ask
           // "is there a score on this seat" now asks this once.
           scored: scores.some(x => x.race_id === race.id),
