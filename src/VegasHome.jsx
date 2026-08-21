@@ -345,7 +345,10 @@ function StatTile({ label, value, unit, color = V.text, glow = false }) {
   // so a tile carrying a unit drops a step and the unit drops with the number.
   return (
     <div style={{ ...card({ padding: "14px 9px", flex: 1, minWidth: 0 }) }}>
-      <Label>{label}</Label>
+      {/* Blue, not grey. A small grey label on a dark card is the hardest
+          thing on the page to read, and it is the thing telling you what the
+          number under it means. */}
+      <Label color={V.blue}>{label}</Label>
       <p style={{
         ...(unit ? numeric("h2", { fontSize: 26 }) : display("stat")),
         ...(glow ? textGlow(color) : { color }),
@@ -599,6 +602,31 @@ function PickSign({ status }) {
 // row: the pool loses 18px a row over ten rows, and the picks list gains 8 over
 // five.
 const ROW_FACE = 44, ROW_NAME = 17, ROW_PAD = "5px 12px";
+
+// Your five, in your order. The same list either side of the deadline: it was
+// two lists that happened to hold the same drivers, one with a green card and
+// one without, one naming the constructors and one not.
+function PickList({ order }) {
+  return (
+    <div style={{ display: "grid", gap: 6 }}>
+      {order.slice(0, 5).map((d, i) => (
+        <div key={d} style={{
+          display: "flex", alignItems: "center", gap: 10, padding: ROW_PAD,
+          borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}`,
+        }}>
+          <span style={{ ...numeric("h3"), color: V.blue, width: 40, flexShrink: 0 }}>
+            {ordinal(i + 1)}
+          </span>
+          <Face name={d} size={ROW_FACE} ring={dColor(d)} glow={0} />
+          <div style={{ minWidth: 0 }}>
+            <p style={{ ...body("bodyMd"), fontSize: ROW_NAME, color: V.text, margin: 0 }}>{d}</p>
+            <p style={{ ...body("bodySm"), color: dColor(d), margin: "1px 0 0" }}>{dTeam(d)}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function DriverPickRow({ name, picked, muted, onTap }) {
   // Championship points, from the standings the Monday cron writes. A dash
@@ -922,11 +950,11 @@ function PickReview({ order, finish, needle, sent, onBack, onSubmit, saving, err
 
             <div style={{ display: "flex", gap: 10, marginBottom: 22 }}>
               <div style={{ flex: 1, padding: "12px 14px", borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}` }}>
-                <Label color={V.text3} style={{ marginBottom: 6 }}>Best finish</Label>
+                <Label color={V.blue} style={{ marginBottom: 6 }}>Best finish</Label>
                 <p style={{ ...numeric("h2"), ...textGlow(V.blue, 0.6), margin: 0 }}>{finish}</p>
               </div>
               <div style={{ flex: 1, padding: "12px 14px", borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}` }}>
-                <Label color={V.text3} style={{ marginBottom: 6 }}>The Needle</Label>
+                <Label color={V.blue} style={{ marginBottom: 6 }}>The Needle</Label>
                 <p style={{ ...numeric("h2"), ...textGlow(V.purple, 0.6), margin: 0 }}>{needle.toFixed(1)}s</p>
               </div>
             </div>
@@ -1221,20 +1249,9 @@ function HomeSubmitted({ onEdit }) {
   const mate1 = teammate ? teammate.split(" ")[0] : "your teammate";
   const same = matePick ? myPick.order.every((d, i) => matePick.order[i] === d) : false;
 
-  const Row = ({ n, name }) => (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 10, padding: ROW_PAD,
-      borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}`,
-    }}>
-      <span style={{ ...numeric("h3"), color: V.blue, width: 46, flexShrink: 0 }}>{ordinal(n)}</span>
-      <Face name={name} size={ROW_FACE} ring={dColor(name)} glow={0} />
-      <span style={{ ...body("bodyMd"), fontSize: ROW_NAME, color: V.text }}>{name}</span>
-    </div>
-  );
-
   return (
     <>
-      <div style={{ ...card({ padding: "20px 18px", marginBottom: 22 }), borderColor: `${V.green}33` }}>
+      <div style={{ ...card({ padding: "16px 14px", marginBottom: 22 }) }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
           <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: 0 }}>Your picks are in</p>
           <div style={{ marginLeft: "auto" }}>
@@ -1249,19 +1266,14 @@ function HomeSubmitted({ onEdit }) {
           Only your team can see your picks until after the deadline.
         </p>
 
-        <div style={{ display: "grid", gap: 6, marginBottom: 16 }}>
-          {myPick.order.map((d, i) => <Row key={d} n={i + 1} name={d} />)}
-        </div>
+        <div style={{ marginBottom: 16 }}><PickList order={myPick.order} /></div>
 
-        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-          <div style={{ flex: 1, padding: "12px 14px", borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}` }}>
-            <Label color={V.text3} style={{ marginBottom: 6 }}>Best finish</Label>
-            <p style={{ ...numeric("h2"), ...textGlow(V.blue, 0.6), margin: 0 }}>{myPick.bestFinish}</p>
-          </div>
-          <div style={{ flex: 1, padding: "12px 14px", borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}` }}>
-            <Label color={V.text3} style={{ marginBottom: 6 }}>The Needle</Label>
-            <p style={{ ...numeric("h2"), ...textGlow(V.purple, 0.6), margin: 0 }}>{myPick.pitGuess.toFixed(1)}s</p>
-          </div>
+        {/* The same two tiles the locked card carries. They were a second
+            design of the same thing a few hundred lines apart in one file. */}
+        <div style={{ display: "flex", gap: 10, margin: "14px 0 16px" }}>
+          <StatTile label="Best finish" value={myPick.bestFinish} color={V.blue} glow />
+          <StatTile label="The needle" value={`${myPick.pitGuess.toFixed(1)}s`}
+                    color={V.purple} glow />
         </div>
 
         <button onClick={onEdit} style={{
@@ -1299,7 +1311,7 @@ function HomeSubmitted({ onEdit }) {
             </p>
             <Label color={V.text3} style={{ marginBottom: 8 }}>{mate1}&rsquo;s order</Label>
             <div style={{ display: "grid", gap: 6, marginBottom: 14 }}>
-              {matePick.order.map((d, i) => <Row key={d} n={i + 1} name={d} />)}
+              <PickList order={matePick.order} />
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <div style={{ flex: 1, padding: "10px 12px", borderRadius: 10, background: V.bg3, border: `1px solid ${V.border}` }}>
@@ -1973,42 +1985,53 @@ function RootingCard({ seats, boxBox }) {
 // BOX BOX is won by a team. So this total is not your column on the board, and
 // the card says which parts it is made of rather than asking anyone to work out
 // why two numbers about the same person differ.
-function YourWeek({ mine, seat, scored }) {
+function YourWeek({ mine, seat, scored, driverAvg = {} }) {
   const me = seat && seat.pick;
   if (!scored) {
     if (!me) return null;
+    // What your five have paid a round, over the rounds each was in a pool
+    // before this one. It is a read on these picks and not on you: change a
+    // driver and it moves.
+    const five = me.order.slice(0, 5).map(d => driverAvg[d]).filter(Boolean);
+    const predicted = five.length === 5
+      ? Math.round(me.order.slice(0, 5).reduce((a, d) => a + driverAvg[d].avg, 0) * 10) / 10
+      : null;
     return (
-      <div style={{ ...card({ padding: "14px 14px 16px", marginBottom: 14 }) }}>
-        <Label color={MINE} style={{ marginBottom: 10 }}>Your week</Label>
-        <div style={{ display: "grid", gap: 6 }}>
-          {me.order.slice(0, 5).map((d, i) => (
-            <div key={d} style={{ display: "flex", alignItems: "center", gap: 10,
-                                  padding: ROW_PAD, borderRadius: 12, background: V.bg3,
-                                  border: `1px solid ${V.border}` }}>
-              <span style={{ ...numeric("h3"), color: V.blue, width: 46, flexShrink: 0 }}>
-                {ordinal(i + 1)}
-              </span>
-              <Face name={d} size={ROW_FACE} ring={dColor(d)} glow={0} />
-              <span style={{ ...body("bodyMd"), fontSize: ROW_NAME, color: V.text }}>{d}</span>
+      <div style={{ ...card({ padding: "16px 14px", marginBottom: 22 }) }}>
+        <Label color={V.blue} style={{ marginBottom: 10 }}>Your week</Label>
+        <PickList order={me.order} />
+        <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+          <StatTile label="Best finish" value={me.bestFinish} color={V.blue} glow />
+          <StatTile label="The needle" value={`${me.pitGuess.toFixed(1)}s`}
+                    color={V.purple} glow />
+        </div>
+        {predicted != null && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12,
+                        padding: "10px 12px", borderRadius: 12, background: V.bg3,
+                        border: `1px solid ${V.border}` }}>
+            <div style={{ minWidth: 0 }}>
+              <Label color={V.blue}>On form</Label>
+              <p style={{ ...body("bodySm"), color: V.text2, margin: "3px 0 0" }}>
+                What your five have paid a round this season
+              </p>
             </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-          <StatTile label="Best finish" value={me.bestFinish} />
-          <StatTile label="The needle" value={`${me.pitGuess.toFixed(1)}s`} />
-        </div>
+            <span style={{ marginLeft: "auto", ...numeric("h3"), fontSize: 28, color: V.blue,
+                           ...textGlow(V.blue, 0.7) }}>{predicted}</span>
+          </div>
+        )}
       </div>
     );
   }
   if (!mine) return null;
 
   const P = mine.parts;
+  const R = mine.ranks || {};
   const ROWS = [
-    { k: "Top", v: P.top }, { k: "Mid", v: P.mid },
-    { k: "Best finish", v: P.best, sub: me ? me.bestFinish : null },
-    { k: "Order", v: P.order },
-    { k: "Needle", v: P.needle, sub: me ? `${me.pitGuess.toFixed(1)}s` : null },
-    { k: "Bonus", v: P.bonus },
+    { k: "Top", v: P.top, rank: R.top }, { k: "Mid", v: P.mid, rank: R.mid },
+    { k: "Best finish", v: P.best, rank: R.best, sub: me ? me.bestFinish : null },
+    { k: "Order", v: P.order, rank: R.order },
+    { k: "Needle", v: P.needle, rank: R.needle, sub: me ? `${me.pitGuess.toFixed(1)}s` : null },
+    { k: "Bonus", v: P.bonus, rank: R.bonus },
   ];
   const dAvg = mine.avgBefore == null ? null : Math.round((mine.avg - mine.avgBefore) * 10) / 10;
   const dRank = mine.rankBefore == null ? null : mine.rankBefore - mine.rank;
@@ -2019,26 +2042,35 @@ function YourWeek({ mine, seat, scored }) {
     <div style={{ flex: 1, minWidth: 0, textAlign: "center", padding: "8px 6px",
                   borderRadius: 12, background: V.bg3, border: `1px solid ${V.border}` }}>
       <div style={{ ...numeric("h3"), fontSize: 20, color, lineHeight: 1.1 }}>{big}</div>
-      <div style={{ ...display("chip"), fontSize: 10, color: V.text2, marginTop: 3,
+      <div style={{ ...display("chip"), fontSize: 11, color: DIVIDE, marginTop: 3,
                     letterSpacing: "0.04em" }}>{sub}</div>
     </div>
   );
 
   return (
     <div style={{ ...card({ padding: "14px 14px 16px", marginBottom: 14 }) }}>
-      <Label color={MINE} style={{ marginBottom: 8 }}>Your week</Label>
+      <Label color={V.blue} style={{ marginBottom: 8 }}>Your week</Label>
       <div>
         {ROWS.map(row => (
-          <div key={row.k} style={{ display: "flex", alignItems: "center", gap: 10,
+          <div key={row.k} style={{ display: "flex", alignItems: "center", gap: 8,
                                     padding: "6px 0", borderTop: `1px solid ${V.border}` }}>
-            <span style={{ ...display("chip"), fontSize: 13, color: V.text2,
+            <span style={{ ...display("chip"), fontSize: 13, color: DIVIDE,
                            letterSpacing: "0.04em" }}>{row.k}</span>
             {row.sub && (
-              <span style={{ ...display("chip"), fontSize: 12, color: V.text3 }}>{row.sub}</span>
+              <span style={{ ...display("chip"), fontSize: 12, color: DIVIDE, opacity: 0.7 }}>
+                {row.sub}
+              </span>
             )}
-            <span style={{ marginLeft: "auto", ...numeric("chip"), fontSize: 20,
+            {/* The score, then where it came. A rank on a part you scored
+                nothing in is only a tie, so those are blank. */}
+            <span style={{ marginLeft: "auto", width: 44, textAlign: "right",
+                           ...numeric("chip"), fontSize: 20,
                            color: row.v ? MINE : V.text2 }}>
               {row.v === 0 ? "\u2715" : row.v}
+            </span>
+            <span style={{ width: 42, textAlign: "right", ...display("chip"), fontSize: 12,
+                           color: DIVIDE, opacity: row.rank ? 0.85 : 0 }}>
+              {row.rank ? ordinal(row.rank) : "\u2013"}
             </span>
           </div>
         ))}
@@ -2046,12 +2078,21 @@ function YourWeek({ mine, seat, scored }) {
                       borderTop: `2px solid ${MINE}55` }}>
           <span style={{ ...display("chip"), fontSize: 13, color: MINE,
                          letterSpacing: "0.04em" }}>Total</span>
-          <span style={{ marginLeft: "auto", ...numeric("h3"), fontSize: 30, color: MINE,
+          <span style={{ marginLeft: "auto", width: 44, textAlign: "right",
+                         ...numeric("h3"), fontSize: 30, color: MINE,
                          ...textGlow(MINE, 0.8) }}>{mine.total}</span>
+          <span style={{ width: 42, textAlign: "right", ...display("chip"), fontSize: 12,
+                         color: MINE }}>{ordinal(mine.place)}</span>
+        </div>
+        <div style={{ ...display("chip"), fontSize: 11, color: DIVIDE, textAlign: "right",
+                      marginTop: 2, letterSpacing: "0.04em" }}>
+          of {mine.of} who scored this week
         </div>
       </div>
+      {/* The rows are this week and the tiles are the season. The week's place
+          used to be a tile as well as the number beside Total, which is one
+          fact printed twice an inch apart. */}
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <Fact big={ordinal(mine.place)} sub={`of ${mine.of} this week`} />
         <Fact big={`${arrow(dAvg)} ${dAvg == null ? "" : Math.abs(dAvg).toFixed(1)}`}
               color={tone(dAvg)} sub={`average ${mine.avg}`} />
         <Fact big={ordinal(mine.rank)} color={tone(dRank)}
@@ -2567,7 +2608,8 @@ function HomeLocked({ scored: scoredWeek = true }) {
             <HandsColumns seats={seats} under={under} scored={scored}
                           driverPts={week.driverPts || {}} />
             <RootingCard seats={seats} boxBox={boxBox} />
-            <YourWeek mine={week.mine} seat={seats.find(x => x.mine)} scored={scored} />
+            <YourWeek mine={week.mine} seat={seats.find(x => x.mine)} scored={scored}
+                      driverAvg={week.driverAvg || {}} />
           </>
         );
       })()}

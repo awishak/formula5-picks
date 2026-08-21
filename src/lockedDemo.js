@@ -109,9 +109,20 @@ export function lockedDemo(kind = "all") {
     // sixth.
     mine: scored ? {
       parts: { top: 15, mid: 17, best: 0, order: 0, needle: 0, bonus: 0 },
+      // Null where he scored nothing, because a rank there is only a tie.
+      ranks: { top: 34, mid: 11, best: null, order: null, needle: null, bonus: null, total: 29 },
       total: 32, place: 29, of: 48,
       avg: 41.7, rank: 6, avgBefore: 42.9, rankBefore: 3,
     } : null,
+    // What his five had paid a round, over the rounds each was in a pool
+    // through round 8. Adds to 23; the week actually paid 32.
+    driverAvg: {
+      "Lewis Hamilton": { avg: 13.3, rounds: 4 }, "Isack Hadjar": { avg: 4.3, rounds: 7 },
+      "Pierre Gasly": { avg: 5.4, rounds: 7 }, "Arvid Lindblad": { avg: 0.2, rounds: 5 },
+      "Carlos Sainz": { avg: -0.2, rounds: 6 }, "George Russell": { avg: 11.9, rounds: 5 },
+      "Alex Albon": { avg: 1.4, rounds: 4 }, "Oliver Bearman": { avg: 2.1, rounds: 6 },
+      "Franco Colapinto": { avg: 1.8, rounds: 5 },
+    },
     // Cal Aggie had the over and the stop came in at ten seconds, so BOX BOX
     // went their way: five to the winner, one off the loser.
     teamBoxBox: scored ? { mine: 5, theirs: -1 } : { mine: 0, theirs: 0 },

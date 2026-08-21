@@ -208,7 +208,26 @@ export function useLeague(currentUser, { round = null } = {}) {
               return own ? { avg: Math.round((own.pts / own.n) * 10) / 10, rank: rank[me.id] } : null;
             };
             const now = through(race.round), before = through(race.round - 1);
+
+            // Where you came on each part. A rank on a part you scored nothing
+            // in is not a rank: in round 9 nobody took a needle point, so all
+            // 48 tie and everyone is "1st". Those come back null.
+            const COL = { top: "top_pick_pts", mid: "midfield_pts",
+              best: "best_finish_bonus", order: "order_bonus",
+              needle: "pit_individual_pts", bonus: "weekly_bonus_pts" };
+            const rankOn = (val) => {
+              const rows = scores.filter(x => x.race_id === race.id)
+                .map(x => ({ id: x.player_id, v: val(x) })).sort((a, b) => b.v - a.v);
+              let q = 0, pv = null, out = {};
+              rows.forEach((x, i) => { if (x.v !== pv) { q = i + 1; pv = x.v; } out[x.id] = q; });
+              return out[me.id];
+            };
+            const ranks = { total: rankOn(tot) };
+            Object.entries(COL).forEach(([k, col]) => {
+              ranks[k] = (row[col] || 0) === 0 ? null : rankOn(x => x[col] || 0);
+            });
             return {
+              ranks,
               parts: {
                 top: row.top_pick_pts || 0, mid: row.midfield_pts || 0,
                 best: row.best_finish_bonus || 0, order: row.order_bonus || 0,
@@ -219,6 +238,34 @@ export function useLeague(currentUser, { round = null } = {}) {
               avg: now ? now.avg : null, rank: now ? now.rank : null,
               avgBefore: before ? before.avg : null, rankBefore: before ? before.rank : null,
             };
+          })(),
+          // What your five have paid, over the rounds they were in a pool
+          // before this one. Points per round, never per pick: 48 people
+          // picking the same driver in one round is one race and not 48
+          // samples, which is the number the recap got wrong on sight.
+          //
+          // Prior rounds only. Averaging in the race you are predicting is
+          // predicting with the answer.
+          driverAvg: (() => {
+            const roundOf = {};
+            races.forEach(r => { roundOf[r.id] = r.round; });
+            const byDriver = {};
+            scores.filter(x => roundOf[x.race_id] != null && roundOf[x.race_id] < race.round)
+              .forEach(x => {
+                let d = x.driver_pts;
+                if (typeof d === "string") { try { d = JSON.parse(d); } catch { d = null; } }
+                if (!d) return;
+                Object.entries(d).forEach(([name, v]) => {
+                  (byDriver[name] || (byDriver[name] = {}))[x.race_id] = v;
+                });
+              });
+            const out = {};
+            Object.entries(byDriver).forEach(([n, m]) => {
+              const v = Object.values(m);
+              out[n] = { avg: Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10,
+                         rounds: v.length };
+            });
+            return out;
           })(),
           // Whether Admin has run this race yet. Everything that used to ask
           // "is there a score on this seat" now asks this once.
