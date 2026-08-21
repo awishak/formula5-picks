@@ -80,6 +80,10 @@ export default function SchedulePage({ currentUser }) {
     );
   }
 
+  // ?v=2 mirrors the whole card around the divider: logos to the outer edges
+  // and both totals meeting in the middle. ?v=1 keeps the team block centred.
+  const variant = typeof window === "undefined" ? 1
+    : (Number(new URLSearchParams(window.location.search).get("v")) === 2 ? 2 : 1);
   const race = s.races.find(r => r.round === round);
   const isScored = race ? s.scored.has(race.id) : false;
   // The table is built for this round alone, so a week reads as itself rather
@@ -122,6 +126,19 @@ export default function SchedulePage({ currentUser }) {
       division: (round >= FIRST_H2_ROUND ? div.division_h2 : div.division) || div.division,
       mine: m.home_team_id === s.myTeamId || m.away_team_id === s.myTeamId,
       margin: wk && awk ? Math.abs(wk.score - awk.score) : null,
+      // Put BOX BOX the other way and see who wins. Not the tiebreak chain's
+      // decidedByBoxBox, which is true whenever the other result was available
+      // at all: at a driver margin of exactly six the week turns into a draw,
+      // and a draw is not "a win and a loss for the opposite teams". This is a
+      // strict flip.
+      boxBoxDecided: (() => {
+        if (!wk || !awk) return false;
+        const dh = wk.parts.p1 + wk.parts.p2, da = awk.parts.p1 + awk.parts.p2;
+        const sh = dh + (wk.parts.boxBox > 0 ? -1 : 5);
+        const sa = da + (awk.parts.boxBox > 0 ? -1 : 5);
+        const before = Math.sign(wk.score - awk.score), after = Math.sign(sh - sa);
+        return before !== 0 && after !== 0 && before !== after;
+      })(),
       line: lineOf(teamById[m.home_team_id], teamById[m.away_team_id]),
       players: {
         away: rosterOf(teamById[m.away_team_id], away, race.id, s.playersById),
@@ -137,6 +154,18 @@ export default function SchedulePage({ currentUser }) {
     (a.division === myDiv ? 0 : 1) - (b.division === myDiv ? 0 : 1) ||
     (b.mine ? 1 : 0) - (a.mine ? 1 : 0) ||
     ((a.margin == null ? 999 : a.margin) - (b.margin == null ? 999 : b.margin)));
+
+  // Championship gold, Second Division silver, and the header carries the same
+  // colour the matchups under it are outlined in.
+  const DIV_LABEL = { championship: "Championship Division", second: "Second Division" };
+  const seen = [];
+  fixtures.forEach(f => { if (!seen.includes(f.division)) seen.push(f.division); });
+  const groups = seen.map(d => ({
+    division: d,
+    label: DIV_LABEL[d] || (d ? String(d) : "Division"),
+    accent: d === "championship" ? V.gold : V.silver,
+    rows: fixtures.filter(f => f.division === d),
+  }));
 
   const idx = s.drawn.findIndex(r => r.round === round);
   const go = (d) => {
@@ -170,7 +199,18 @@ export default function SchedulePage({ currentUser }) {
           {isScored ? "Final" : (raceTimePT(round) || "")}
         </p>
 
-        {fixtures.map(f => <Fixture key={f.id} f={f} scored={isScored} />)}
+        {groups.map(g => (
+          <div key={g.division}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "6px 0 10px" }}>
+              <span style={{ ...display("chip"), fontSize: 12, color: g.accent,
+                             letterSpacing: "0.08em", whiteSpace: "nowrap" }}>{g.label}</span>
+              <div style={{ flex: 1, height: 1, background: `${g.accent}44` }} />
+            </div>
+            {g.rows.map(f => (
+              <Fixture key={f.id} f={f} scored={isScored} variant={variant} />
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -205,9 +245,12 @@ function Arrow({ dir, on, onClick }) {
   );
 }
 
-// One matchup. The totals are the loud thing, and under each the score is
-// itemised: the two players by name in score order, then BOX BOX.
-function Fixture({ f, scored }) {
+// One matchup, itemised.
+//
+// The card mirrors around the divider: the two totals meet in the middle and
+// everything else runs outward from them, so the comparison is between two
+// numbers side by side rather than two numbers a card apart.
+function Fixture({ f, scored, variant = 1 }) {
   const lw = f.left.wk, rw = f.right.wk;
   const lWon = scored && lw && rw && lw.score > rw.score;
   const rWon = scored && lw && rw && rw.score > lw.score;
@@ -223,59 +266,91 @@ function Fixture({ f, scored }) {
     return won ? MINE : OTHER;
   };
 
-  const Side = ({ s, won, roster }) => {
+  const Logo = ({ t }) => (t && t.logo_url
+    ? <img src={t.logo_url} alt="" style={{ width: 24, height: 24, objectFit: "contain",
+                                            flexShrink: 0 }} />
+    : <div style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+                    background: V.bg2, border: `1px solid ${V.border}` }} />);
+
+  const Name = ({ t, align }) => (
+    <p style={{ ...display("chip"), fontSize: 15, color: V.text, margin: 0, minWidth: 0,
+                textAlign: align, whiteSpace: "nowrap", overflow: "hidden",
+                textOverflow: "ellipsis", flex: "1 1 0" }}>
+      {t ? short(t.name) : "\u2014"}
+    </p>
+  );
+
+  // mirror: this side is the right of the card, so it runs inward-out.
+  const Side = ({ s, won, roster, mirror }) => {
     const c = colour(s, won);
-    const p = s.wk ? s.wk.parts : null;
-    const box = p ? p.boxBox : null;
-    return (
-      <div style={{ flex: 1, minWidth: 0 }}>
+    const box = s.wk ? s.wk.parts.boxBox : null;
+    const row = (leftEl, rightEl) => (
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {mirror ? rightEl : leftEl}{mirror ? leftEl : rightEl}
+      </div>
+    );
+
+    const head = variant === 2 ? (
+      // Logo out on the edge, name beside it, total against the divider.
+      <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0,
+                    flexDirection: mirror ? "row-reverse" : "row" }}>
+        <Logo t={s.t} />
+        <Name t={s.t} align={mirror ? "right" : "left"} />
+        <p style={{ ...numeric("hero"), fontSize: 34, color: scored ? c : V.text3,
+                    margin: 0, flexShrink: 0, ...(won ? textGlow(c, 0.9) : {}) }}>
+          {scored && s.wk ? s.wk.score : "\u2013"}
+        </p>
+      </div>
+    ) : (
+      <>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center",
-                      gap: 6, minWidth: 0 }}>
-          {s.t && s.t.logo_url
-            ? <img src={s.t.logo_url} alt="" style={{ width: 22, height: 22, objectFit: "contain",
-                                                      flexShrink: 0 }} />
-            : <div style={{ width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-                            background: V.bg2, border: `1px solid ${V.border}` }} />}
-          <p style={{ ...display("chip"), fontSize: 15, color: V.text, margin: 0,
-                      minWidth: 0, whiteSpace: "nowrap", overflow: "hidden",
-                      textOverflow: "ellipsis" }}>
-            {s.t ? short(s.t.name) : "\u2014"}
-          </p>
+                      gap: 7, minWidth: 0 }}>
+          <Logo t={s.t} />
+          <Name t={s.t} align="left" />
         </div>
         <p style={{ ...numeric("hero"), fontSize: 36, color: scored ? c : V.text3,
                     textAlign: "center", margin: "2px 0 0",
                     ...(won ? textGlow(c, 0.9) : {}) }}>
           {scored && s.wk ? s.wk.score : "\u2013"}
         </p>
+      </>
+    );
+
+    return (
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {head}
         {/* Under the score, not over the name: the side is a fact about the
             week, and the team is the thing being named. */}
-        <p style={{ ...display("chip"), fontSize: 10, color: c, textAlign: "center",
-                    margin: "1px 0 0", letterSpacing: "0.06em" }}>{s.side}</p>
+        <p style={{ ...display("chip"), fontSize: 11, color: c, margin: "2px 0 0",
+                    letterSpacing: "0.06em", textAlign: variant === 2
+                      ? (mirror ? "left" : "right") : "center" }}>{s.side}</p>
 
-        <div style={{ display: "grid", gap: 2, marginTop: 8 }}>
+        {/* Names outward, scores against the divider, so the four numbers form
+            two columns down the middle of the card. */}
+        <div style={{ display: "grid", gap: 3, marginTop: 9 }}>
           {(roster.length ? roster : [{ name: null }, { name: null }]).map((r, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ ...body("bodySm"), fontSize: 12, color: V.text2,
+            <div key={i}>{row(
+              <span key="n" style={{ ...body("bodySm"), fontSize: 14, color: V.text2,
                              flex: "1 1 0", minWidth: 0, whiteSpace: "nowrap",
-                             overflow: "hidden", textOverflow: "ellipsis" }}>
+                             overflow: "hidden", textOverflow: "ellipsis",
+                             textAlign: mirror ? "right" : "left" }}>
                 {r.name ? initialLast(r.name) : "\u2014"}
-              </span>
-              <span style={{ ...numeric("chip"), fontSize: 13, color: V.text,
+              </span>,
+              <span key="v" style={{ ...numeric("chip"), fontSize: 15, color: V.text,
                              flexShrink: 0 }}>
                 {scored && r.pts != null ? r.pts : "\u2013"}
-              </span>
-            </div>
+              </span>)}</div>
           ))}
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ ...display("chip"), fontSize: 10, color: V.text3,
-                           flex: "1 1 0", minWidth: 0, letterSpacing: "0.04em" }}>Box box</span>
-            {/* Green for whoever took it, whichever matchup this is. BOX BOX is
-                won outright and six points change hands on it. */}
-            <span style={{ ...numeric("chip"), fontSize: 13, flexShrink: 0,
+          <div>{row(
+            <span key="n" style={{ ...display("chip"), fontSize: 14, color: V.text3,
+                           flex: "1 1 0", minWidth: 0, letterSpacing: "0.04em",
+                           textAlign: mirror ? "right" : "left" }}>BOX BOX</span>,
+            // Green for whoever took it, whichever matchup this is. BOX BOX is
+            // won outright and six points change hands on it.
+            <span key="v" style={{ ...numeric("chip"), fontSize: 15, flexShrink: 0,
                            color: !scored || box == null ? V.text3 : box > 0 ? MINE : V.text2 }}>
               {!scored || box == null ? "\u2013" : box > 0 ? `+${box}` : box}
-            </span>
-          </div>
+            </span>)}</div>
         </div>
       </div>
     );
@@ -283,18 +358,24 @@ function Fixture({ f, scored }) {
 
   const MIN = 1.5, MAX = 4.5;
   const pc = (v) => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
+  // Gold for the Championship, silver for the Second Division, and green when
+  // BOX BOX was the difference: the same week with the stop on the other side
+  // of the line is a win and a loss the other way round.
+  const outline = f.boxBoxDecided && scored ? MINE
+    : f.division === "championship" ? V.gold : V.silver;
 
   return (
     <div style={{
-      ...card({ padding: "10px 12px 14px", marginBottom: 10 }),
+      ...card({ padding: "10px 12px 14px", marginBottom: 12 }),
       position: "relative",
+      border: `1px solid ${outline}${f.boxBoxDecided && scored ? "cc" : "55"}`,
       // Yours gets its own ground, not just a line around it.
-      ...(f.mine ? { background: `${MINE}12`, borderColor: `${MINE}66` } : {}),
+      ...(f.mine ? { background: `${MINE}12` } : {}),
     }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-        <Side s={f.left} won={lWon} roster={f.players.away} />
+        <Side s={f.left} won={lWon} roster={f.players.away} mirror={false} />
         <div style={{ width: 1, alignSelf: "stretch", background: V.border }} />
-        <Side s={f.right} won={rWon} roster={f.players.home} />
+        <Side s={f.right} won={rWon} roster={f.players.home} mirror />
       </div>
 
       {/* The BOX BOX line, sitting on the bottom edge where it fell between 1.5

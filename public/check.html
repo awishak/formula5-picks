@@ -32,7 +32,7 @@
       const past = Math.round(Math.max(r.right - w, -r.left));
       if (past > 1) over.push(`${el.tagName.toLowerCase()}+${past}px "${(el.textContent||"").trim().slice(0,26)}"`);
     });
-    doc.querySelectorAll("div, span").forEach(el => {
+    doc.querySelectorAll("div, span, p").forEach(el => {
       const cs = getComputedStyle(el);
       if (cs.textOverflow !== "ellipsis" || cs.whiteSpace !== "nowrap") return;
       const n = el.scrollWidth - el.clientWidth;

@@ -59,7 +59,7 @@
       const cut = [];
       // span as well as div: an ellipsised team name is a span, and checking
       // only divs reported "nothing cut" on a row that was cutting four names.
-      doc.querySelectorAll("div, span").forEach(el => {
+      doc.querySelectorAll("div, span, p").forEach(el => {
         const cs = getComputedStyle(el);
         const t = (el.textContent || "").trim();
         if (!t || el.children.length) return;
