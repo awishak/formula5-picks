@@ -97,6 +97,10 @@ export function buildTeamTable(db, { fromRound = 1, toRound = 99, seed = null } 
       weeks.push({
         raceId, round: roundOf[raceId], score, oppScore, oppId, won,
         boxBoxWon: boxBox > 0, decidedByBoxBox,
+        // What the score is made of. The schedule shows the two players and
+        // the BOX BOX under each total, and it reads them from here rather
+        // than adding the same three numbers up a second time somewhere else.
+        parts: { p1: playerPart(s1), p2: playerPart(s2), boxBox },
         orderPts, midPts, bestPlayer,
         // home_team_id IS the OVER seat. Home carries no other meaning.
         over: fixture.home_team_id === team.id,

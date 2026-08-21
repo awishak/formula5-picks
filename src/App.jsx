@@ -17,6 +17,7 @@ import PracticePicks from "./PracticePicks.jsx";
 import PickIntel from "./PickIntel.jsx";
 import Recaps from "./Recaps.jsx";
 import VegasHome from "./VegasHome.jsx";
+import SchedulePage from "./SchedulePage.jsx";
 import ViewingAs from "./ViewingAs.jsx";
 import MorePage from "./MorePage.jsx";
 import ComingSoon from "./ComingSoon.jsx";
@@ -1104,7 +1105,7 @@ export default function App() {
         {activePage === "division-trends" && <DivisionTrends currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "dashboard" && <DashboardPage currentUser={currentUser} onNavigate={navigateTo} />}
 
-        {activePage === "schedule" && <ComingSoon title="Schedule" />}
+        {activePage === "schedule" && <SchedulePage currentUser={currentUser} />}
         {/* The first-half schedule page, unrouted. */}
         {activePage === "schedule-v1" && <Schedule currentUser={currentUser} onNavigate={navigateTo} initialView={scheduleInitialView} />}
         {activePage === "rules" && <Rules />}
