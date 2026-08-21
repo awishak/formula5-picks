@@ -1,0 +1,27 @@
+<!-- Dev harness. Catches the runtime error behind a blank page.
+     npm run build compiles a shadowed name clean and the smoke test renders
+     server-side, so neither sees it; the page just goes black. This loads a
+     route in an iframe and prints whatever it threw.
+     Usage: /err.html?path=/%3Fdemo%3Dpending -->
+<meta charset="utf-8"><style>body{margin:0;font:12px monospace;background:#111;color:#f88}
+#o{padding:8px;white-space:pre-wrap}iframe{border:0;position:absolute;left:-9999px}</style>
+<div id="o">…</div><iframe id="f"></iframe>
+<script>
+  const q = new URLSearchParams(location.search);
+  const path = q.get("path") || "/";
+  const f = document.getElementById("f"), msgs = [];
+  f.src = `${path}${path.includes("?") ? "&" : "?"}player=${encodeURIComponent(q.get("player") || "Andrew Ishak")}`;
+  f.onload = () => {
+    const w = f.contentWindow;
+    w.addEventListener("error", e =>
+      msgs.push("ERROR " + e.message + "\n" + ((e.error && e.error.stack) || "").slice(0, 700)));
+    const ce = w.console.error;
+    w.console.error = (...a) => {
+      msgs.push("console.error " + a.map(x => String((x && x.stack) || x)).join(" ").slice(0, 700));
+      ce.apply(w.console, a);
+    };
+  };
+  setTimeout(() => {
+    document.getElementById("o").textContent = msgs.join("\n---\n") || "no errors";
+  }, 6000);
+</script>

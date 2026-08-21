@@ -1,0 +1,29 @@
+<!-- Dev harness. The field card holds two 48-row lists inside a max-height
+     transition, and a max-height that is too small clips silently: the page
+     just ends. Counts the rows that actually rendered. -->
+<meta charset="utf-8"><style>body{margin:0;font:13px monospace;background:#111;color:#eee}
+#o{padding:10px;white-space:pre}iframe{border:0;position:absolute;left:-9999px}</style>
+<div id="o">measuring…</div><iframe id="f"></iframe>
+<script>
+const f = document.getElementById("f"), out = [];
+const wait = ms => new Promise(r => setTimeout(r, ms));
+(async () => {
+  for (const k of ["pending", "all"]) {
+    f.style.width = "393px"; f.style.height = "900px";
+    f.src = `/?demo=${k}&player=Andrew%20Ishak&t=${k}`;
+    await new Promise(r => f.onload = r); await wait(3000);
+    const d = f.contentDocument;
+    const labels = [...d.querySelectorAll("p")].filter(p =>
+      /TOP PICK|MIDFIELD|BEST FINISH|NEEDLE|WEEK PAID/i.test(p.textContent || ""));
+    const rows = labels.map(p => {
+      const grid = p.parentElement.querySelector("div");
+      return `${(p.textContent||"").trim()}=${grid ? grid.children.length : "?"}`;
+    });
+    // Is anything cut off by the collapse?
+    const card = labels.length ? labels[0].closest("div[style*='max-height']") : null;
+    const clip = card ? `${card.scrollHeight}px content in ${card.clientHeight}px box` : "no box";
+    out.push(`${k.padEnd(8)} ${rows.join("  ")}\n         ${clip}`);
+  }
+  document.getElementById("o").textContent = out.join("\n");
+})();
+</script>

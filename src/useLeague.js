@@ -221,17 +221,57 @@ export function useLeague(currentUser, { round = null } = {}) {
         const guesses = allPicks.map(p => Number(p.pit_guess))
           .filter(x => !Number.isNaN(x)).sort((a, b) => a - b);
         const myGuess = me && pickOf[me.id] ? Number(pickOf[me.id].pit_guess) : null;
+        // Which side of the line every player is on. home_team_id is the OVER
+        // seat, so it comes off the fixture their team is in, not off anything
+        // about them.
+        const sideOfPlayer = {};
+        teams.forEach(t => {
+          const fx = schedule.find(m => m.race_id === race.id &&
+            (m.home_team_id === t.id || m.away_team_id === t.id));
+          if (!fx) return;
+          [t.player1_id, t.player2_id].filter(Boolean)
+            .forEach(id => { sideOfPlayer[id] = sideOf(fx, t.id); });
+        });
+        const nameOf = Object.fromEntries(players.map(p => [p.id, p.name]));
+        const myPickRow = me ? pickOf[me.id] : null;
+        const midPool = new Set(race.mid_drivers || []);
+        const bestOrder = (k) => Number(String(k).replace(/\D/g, "")) || 99;
+
         const field = allPicks.length ? {
           in: allPicks.length, of: players.length,
-          drivers: Object.entries(drivers).map(([k, n]) => ({ k, n }))
-            .sort((a, b) => b.n - a.n || a.k.localeCompare(b.k)),
           topPick: tally(p => p.top_pick),
-          bestFinish: tally(p => p.best_finish),
+          // The midfield pool, ranked by how many took each. The top pool has
+          // its own list above, so this is the other seven and nothing else.
+          mid: Object.entries(drivers).filter(([k]) => midPool.has(k))
+            .map(([k, n]) => ({ k, n })).sort((a, b) => b.n - a.n || a.k.localeCompare(b.k)),
+          // P1 to P10, not most-called first. It is a scale, and a scale out of
+          // order is a bar chart of nothing.
+          bestFinish: tally(p => p.best_finish).sort((a, b) => bestOrder(a.k) - bestOrder(b.k)),
           guesses,
           needle: guesses.length ? {
             lo: guesses[0], hi: guesses[guesses.length - 1],
             median: guesses[Math.floor(guesses.length / 2)],
             mine: Number.isNaN(myGuess) ? null : myGuess,
+          } : null,
+          // Everyone's guess, lowest first, with the side they are guessing for.
+          stops: allPicks.map(p => ({
+            name: nameOf[p.player_id] || "?",
+            guess: Number(p.pit_guess),
+            side: sideOfPlayer[p.player_id] || null,
+            mine: !!(me && p.player_id === me.id),
+          })).filter(x => !Number.isNaN(x.guess)).sort((a, b) => a.guess - b.guess),
+          // What the week paid everyone, once it has been scored.
+          earned: scores.filter(x => x.race_id === race.id).map(x => ({
+            name: nameOf[x.player_id] || "?",
+            total: (x.top_pick_pts || 0) + (x.midfield_pts || 0) + (x.order_bonus || 0) +
+              (x.best_finish_bonus || 0) + (x.pit_individual_pts || 0) + (x.weekly_bonus_pts || 0),
+            mine: !!(me && x.player_id === me.id),
+          })).sort((a, b) => b.total - a.total),
+          // What you did, so the lists can point at you.
+          mine: myPickRow ? {
+            topPick: myPickRow.top_pick,
+            mid: (myPickRow.finishing_order || []).filter(d => midPool.has(d)),
+            bestFinish: myPickRow.best_finish,
           } : null,
         } : null;
         const myProj = me ? projected.find(x => x.id === me.id) : null;

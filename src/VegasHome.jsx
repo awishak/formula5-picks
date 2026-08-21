@@ -2019,39 +2019,87 @@ function RootingCard({ seats, boxBox }) {
 // Shut, it is the height of a score card and shows the one line that is about
 // you, which is where your needle sits against everybody's. Open, it is the
 // rest of the field.
-function FieldCard({ field, mine }) {
-  const [open, setOpen] = useState(false);
+function FieldCard({ field, scored }) {
+  // Open. It is the bottom of the page and it is the only screen it appears on,
+  // so there is nothing under it to get in the way of.
+  const [open, setOpen] = useState(true);
+  // Measured, not guessed. Two 48-row lists come to 3300px against a hardcoded
+  // 4000, and the number of rows is the size of the league: a cap that is only
+  // 20% clear today clips silently the day it is not, and a clipped collapse
+  // does not look broken, the page just ends.
+  const bodyRef = useRef(null);
+  const [full, setFull] = useState(4000);
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const read = () => setFull(el.scrollHeight);
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [field]);
   if (!field || !field.needle) return null;
-  const N = field.needle;
+  const N = field.needle, MY = field.mine || {};
   const MIN = 1.5, MAX = 4.5;
   const pc = (v) => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
 
-  const Bars = ({ rows, color, label }) => {
-    const top = rows[0] ? rows[0].n : 1;
+  // Yours is green wherever it appears, which is the whole point of the lists:
+  // not what the league did, but where you were in it.
+  const Bars = ({ rows, color, label, isMine }) => {
+    const top = rows.reduce((a, r) => Math.max(a, r.n), 1);
     return (
-      <div style={{ marginTop: 14 }}>
+      <div style={{ marginTop: 16 }}>
         <Label color={DIVIDE} style={{ marginBottom: 8 }}>{label}</Label>
         <div style={{ display: "grid", gap: 5 }}>
-          {rows.slice(0, 5).map(r => (
-            <div key={r.k} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ ...display("chip"), fontSize: 12, color: V.text,
-                             width: 84, flexShrink: 0, whiteSpace: "nowrap",
-                             overflow: "hidden", textOverflow: "ellipsis" }}>
-                {r.k.includes(" ") ? lastName(r.k) : r.k}
-              </span>
-              <div style={{ flex: 1, height: 14, borderRadius: 7, background: V.bg3,
-                            overflow: "hidden", minWidth: 0 }}>
-                <div style={{ width: `${(r.n / top) * 100}%`, height: "100%",
-                              borderRadius: 7, background: color, opacity: 0.85 }} />
+          {rows.map(r => {
+            const on = isMine(r.k);
+            return (
+              <div key={r.k} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ ...display("chip"), fontSize: 12, color: on ? MINE : V.text,
+                               width: 84, flexShrink: 0, whiteSpace: "nowrap",
+                               overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {r.k.includes(" ") ? lastName(r.k) : r.k}
+                </span>
+                <div style={{ flex: 1, height: 14, borderRadius: 7, background: V.bg3,
+                              overflow: "hidden", minWidth: 0 }}>
+                  <div style={{ width: `${(r.n / top) * 100}%`, height: "100%", borderRadius: 7,
+                                background: on ? MINE : color, opacity: on ? 1 : 0.85,
+                                ...(on ? { boxShadow: `0 0 8px ${MINE}` } : {}) }} />
+                </div>
+                <span style={{ ...numeric("chip"), fontSize: 14, color: on ? MINE : color,
+                               width: 24, textAlign: "right", flexShrink: 0 }}>{r.n}</span>
               </div>
-              <span style={{ ...numeric("chip"), fontSize: 14, color, width: 24,
-                             textAlign: "right", flexShrink: 0 }}>{r.n}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
   };
+
+  const List = ({ rows, label, value, right }) => (
+    <div style={{ marginTop: 16 }}>
+      <Label color={DIVIDE} style={{ marginBottom: 8 }}>{label}</Label>
+      <div style={{ display: "grid", gap: 2 }}>
+        {rows.map((r, i) => (
+          <div key={`${r.name}-${i}`} style={{
+            display: "flex", alignItems: "center", gap: 8, padding: "3px 8px",
+            borderRadius: 8,
+            background: r.mine ? `${MINE}1f` : "transparent",
+            border: `1px solid ${r.mine ? MINE : "transparent"}`,
+          }}>
+            <span style={{ ...numeric("chip"), fontSize: 12, color: V.text3,
+                           width: 22, flexShrink: 0 }}>{i + 1}</span>
+            <span style={{ ...body("bodySm"), fontSize: 13, color: r.mine ? MINE : V.text,
+                           flex: "1 1 0", minWidth: 0, whiteSpace: "nowrap",
+                           overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</span>
+            {right && right(r)}
+            <span style={{ ...numeric("chip"), fontSize: 14, color: r.mine ? MINE : V.text,
+                           width: 40, textAlign: "right", flexShrink: 0 }}>{value(r)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ ...card({ padding: "14px 14px 16px", marginBottom: 14 }) }}>
@@ -2089,8 +2137,7 @@ function FieldCard({ field, mine }) {
                         boxShadow: `0 0 7px ${MINE}` }} />
         )}
         {/* Each label under its own mark. Pinned to the two ends they said the
-            opposite of the numbers: yours at 2.0 sat on the right of a field at
-            2.7. */}
+            opposite of the numbers: yours at 2.0 sat right of a field at 2.7. */}
         <div style={{ position: "absolute", left: `${pc(N.median)}%`, top: 20, width: 2,
                       height: 10, marginLeft: -1, background: V.text, opacity: 0.7 }} />
         <div style={{
@@ -2107,11 +2154,33 @@ function FieldCard({ field, mine }) {
         )}
       </div>
 
-      <div style={{ maxHeight: open ? 800 : 0, opacity: open ? 1 : 0, overflow: "hidden",
-                    transition: "max-height .4s ease, opacity .3s ease" }}>
-        <Bars rows={field.drivers} color={V.blue} label="Most picked" />
-        <Bars rows={field.topPick} color={V.gold} label="Top pick" />
-        <Bars rows={field.bestFinish} color={V.purple} label="Best finish called" />
+      <div style={{ maxHeight: open ? full : 0, opacity: open ? 1 : 0, overflow: "hidden",
+                    transition: "max-height .5s ease, opacity .3s ease" }}>
+        {/* flow-root, so the first child's top margin is inside the height
+            rather than collapsing through it. Measured 3284 against 3300 of
+            content, and 16px off is 16px of the last row gone. */}
+        <div ref={bodyRef} style={{ display: "flow-root" }}>
+        <Bars rows={field.topPick} color={V.gold} label="Top pick"
+              isMine={k => k === MY.topPick} />
+        <Bars rows={field.mid || []} color={V.blue} label="Midfield"
+              isMine={k => (MY.mid || []).includes(k)} />
+        <Bars rows={field.bestFinish} color={V.purple} label="Best finish"
+              isMine={k => k === MY.bestFinish} />
+        {scored && field.earned && field.earned.length > 0 && (
+          <List rows={field.earned} label="What the week paid" value={r => r.total} />
+        )}
+        {field.stops && field.stops.length > 0 && (
+          <List rows={field.stops} label="The needle, lowest first"
+                value={r => r.guess.toFixed(1)}
+                right={r => (
+                  <span style={{ ...display("chip"), fontSize: 10, width: 42,
+                                 textAlign: "right", flexShrink: 0,
+                                 color: r.side === "OVER" ? V.gold : V.purple }}>
+                    {r.side || ""}
+                  </span>
+                )} />
+        )}
+        </div>
       </div>
     </div>
   );
@@ -2768,7 +2837,7 @@ function HomeLocked({ scored: scoredWeek = true }) {
             <RootingCard seats={seats} boxBox={boxBox} />
             <YourWeek mine={week.mine} seat={seats.find(x => x.mine)} scored={scored}
                       driverAvg={week.driverAvg || {}} projection={week.projection} />
-            {!scored && <FieldCard field={week.field} />}
+            <FieldCard field={week.field} scored={scored} />
           </>
         );
       })()}
