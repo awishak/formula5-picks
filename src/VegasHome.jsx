@@ -1262,7 +1262,9 @@ function HomeSubmitted({ onEdit }) {
   return (
     <>
       <div style={{ ...card({ padding: "16px 14px", marginBottom: 22 }) }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+        {/* The badges hang below the title, so a 4px gap under the row put the
+            line under the faces and not under the heading. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
           <p style={{ ...body("bodyMd"), fontSize: 21, color: V.text, margin: 0 }}>Your picks are in</p>
           <div style={{ marginLeft: "auto" }}>
             <PickBadges players={[
