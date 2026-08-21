@@ -606,7 +606,7 @@ const ROW_FACE = 44, ROW_NAME = 17, ROW_PAD = "5px 12px";
 // Your five, in your order. The same list either side of the deadline: it was
 // two lists that happened to hold the same drivers, one with a green card and
 // one without, one naming the constructors and one not.
-function PickList({ order }) {
+function PickList({ order, avg }) {
   return (
     <div style={{ display: "grid", gap: 6 }}>
       {order.slice(0, 5).map((d, i) => (
@@ -618,10 +618,20 @@ function PickList({ order }) {
             {ordinal(i + 1)}
           </span>
           <Face name={d} size={ROW_FACE} ring={dColor(d)} glow={0} />
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, flex: "1 1 0" }}>
             <p style={{ ...body("bodyMd"), fontSize: ROW_NAME, color: V.text, margin: 0 }}>{d}</p>
             <p style={{ ...body("bodySm"), color: dColor(d), margin: "1px 0 0" }}>{dTeam(d)}</p>
           </div>
+          {avg && avg[d] && (
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <div style={{ ...numeric("chip"), fontSize: 18, color: V.blue }}>
+                {avg[d].avg.toFixed(1)}
+              </div>
+              <div style={{ ...display("chip"), fontSize: 10, color: V.blue, opacity: 0.7 }}>
+                {avg[d].rounds} rds
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -1985,38 +1995,54 @@ function RootingCard({ seats, boxBox }) {
 // BOX BOX is won by a team. So this total is not your column on the board, and
 // the card says which parts it is made of rather than asking anyone to work out
 // why two numbers about the same person differ.
-function YourWeek({ mine, seat, scored, driverAvg = {} }) {
+// The six parts, in the order the scored card lists them, so a projection and
+// a result read down the same way.
+const PROJ_ROWS = [
+  { k: "Top", p: "top" }, { k: "Mid", p: "mid" },
+  { k: "Best finish", p: "best" }, { k: "Order", p: "order" },
+  { k: "Needle", p: "needle" }, { k: "Bonus", p: "bonus" },
+];
+
+function YourWeek({ mine, seat, scored, driverAvg = {}, projection = null }) {
   const me = seat && seat.pick;
   if (!scored) {
     if (!me) return null;
-    // What these five average a round, over the rounds each was in a pool
-    // before this one. It is a read on these picks and not on you: change a
-    // driver and it moves.
-    const five = me.order.slice(0, 5).map(d => driverAvg[d]).filter(Boolean);
-    const predicted = five.length === 5
-      ? Math.round(me.order.slice(0, 5).reduce((a, d) => a + driverAvg[d].avg, 0) * 10) / 10
-      : null;
     return (
       <div style={{ ...card({ padding: "16px 14px", marginBottom: 22 }) }}>
         <Label color={V.blue} style={{ marginBottom: 10 }}>Your week</Label>
-        <PickList order={me.order} />
+        <PickList order={me.order} avg={driverAvg} />
         <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
           <StatTile label="Best finish" value={me.bestFinish} color={V.blue} glow />
           <StatTile label="The needle" value={`${me.pitGuess.toFixed(1)}s`}
                     color={V.purple} glow />
         </div>
-        {predicted != null && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12,
-                        padding: "10px 12px", borderRadius: 12, background: V.bg3,
-                        border: `1px solid ${V.border}` }}>
-            <div style={{ minWidth: 0 }}>
-              <Label color={V.blue}>On form</Label>
-              <p style={{ ...body("bodySm"), color: V.text2, margin: "3px 0 0" }}>
-                What these five average a round
-              </p>
+        {projection && (
+          <div style={{ marginTop: 16 }}>
+            <Label color={V.blue} style={{ marginBottom: 8 }}>Predicted score</Label>
+            {PROJ_ROWS.map(r => (
+              <div key={r.k} style={{ display: "flex", alignItems: "center",
+                                      padding: "6px 0", borderTop: `1px solid ${V.border}` }}>
+                <span style={{ ...display("chip"), fontSize: 13, color: DIVIDE,
+                               letterSpacing: "0.04em" }}>{r.k}</span>
+                <span style={{ marginLeft: "auto", ...numeric("chip"), fontSize: 20,
+                               color: V.blue }}>
+                  {projection.parts[r.p].toFixed(1)}
+                </span>
+              </div>
+            ))}
+            <div style={{ display: "flex", alignItems: "center", padding: "8px 0 2px",
+                          borderTop: `2px solid ${V.blue}55` }}>
+              <span style={{ ...display("chip"), fontSize: 13, color: V.blue,
+                             letterSpacing: "0.04em" }}>Total</span>
+              <span style={{ marginLeft: "auto", ...numeric("h3"), fontSize: 30, color: V.blue,
+                             ...textGlow(V.blue, 0.8) }}>{projection.total.toFixed(1)}</span>
+              <span style={{ width: 46, textAlign: "right", ...display("chip"), fontSize: 12,
+                             color: V.blue }}>{ordinal(projection.place)}</span>
             </div>
-            <span style={{ marginLeft: "auto", ...numeric("h3"), fontSize: 28, color: V.blue,
-                           ...textGlow(V.blue, 0.7) }}>{predicted}</span>
+            <div style={{ ...display("chip"), fontSize: 11, color: DIVIDE, textAlign: "right",
+                          marginTop: 2, letterSpacing: "0.04em" }}>
+              projected, of {projection.of}
+            </div>
           </div>
         )}
       </div>
@@ -2609,7 +2635,7 @@ function HomeLocked({ scored: scoredWeek = true }) {
                           driverPts={week.driverPts || {}} />
             <RootingCard seats={seats} boxBox={boxBox} />
             <YourWeek mine={week.mine} seat={seats.find(x => x.mine)} scored={scored}
-                      driverAvg={week.driverAvg || {}} />
+                      driverAvg={week.driverAvg || {}} projection={week.projection} />
           </>
         );
       })()}

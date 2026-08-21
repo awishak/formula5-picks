@@ -114,6 +114,13 @@ export function lockedDemo(kind = "all") {
       total: 32, place: 29, of: 48,
       avg: 41.7, rank: 6, avgBefore: 42.9, rankBefore: 3,
     } : null,
+    // Round 9 projected: the drivers from their own form through round 8, the
+    // four bonuses from how often Andrew had earned each. It called 28.0 and
+    // 35th; the week actually scored 32 and came 29th.
+    projection: {
+      parts: { top: 13.3, mid: 9.7, best: 1.5, order: 0.8, needle: 0.5, bonus: 2.3 },
+      total: 28, place: 35, of: 48,
+    },
     // What his five averaged a round, over the rounds each was in a pool
     // through round 8. Adds to 23; the week actually scored 32.
     driverAvg: {

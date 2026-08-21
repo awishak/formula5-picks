@@ -117,6 +117,87 @@ export function useLeague(currentUser, { round = null } = {}) {
           ? (await supabase.from("picks").select("*").eq("race_id", race.id).in("player_id", teamIds)).data || []
           : [];
         const pickOf = Object.fromEntries(picks.map(p => [p.player_id, p]));
+        // Declared here rather than further down: the projections below read it,
+        // and a const used above its own declaration throws at run time and
+        // compiles clean.
+        const locked = race.pick_deadline ? race.pick_deadline <= now : false;
+
+        // ── Projections ──────────────────────────────────────────
+        // What a week is worth before it is run.
+        //
+        // The driver points come from the drivers you picked, so the number
+        // moves when the picks do. The four bonuses cannot: nothing about a
+        // pick says whether the order will come in, so those are how often you
+        // have earned each of them, which is the only honest predictor of a
+        // thing you either get or you do not.
+        //
+        // Prior rounds only, throughout. Averaging in the race you are
+        // predicting is predicting with the answer.
+        const roundOfRace = {};
+        races.forEach(r => { roundOfRace[r.id] = r.round; });
+        const earlier = scores.filter(x => roundOfRace[x.race_id] != null
+          && roundOfRace[x.race_id] < race.round);
+
+        const byDriver = {};
+        earlier.forEach(x => {
+          let d = x.driver_pts;
+          if (typeof d === "string") { try { d = JSON.parse(d); } catch { d = null; } }
+          if (!d) return;
+          // Keyed by race, so a driver forty people picked in one round counts
+          // once. Points per round, never per pick.
+          Object.entries(d).forEach(([name, v]) => {
+            (byDriver[name] || (byDriver[name] = {}))[x.race_id] = v;
+          });
+        });
+        const driverAvg = {};
+        Object.entries(byDriver).forEach(([n, m]) => {
+          const v = Object.values(m);
+          driverAvg[n] = { avg: Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10,
+                           rounds: v.length };
+        });
+
+        // Everyone's picks, which only exist to be read once the deadline has
+        // gone. Before it, a projected place would be built out of picks nobody
+        // is allowed to see.
+        const allPicks = locked
+          ? (await supabase.from("picks").select("player_id,finishing_order")
+              .eq("race_id", race.id)).data || []
+          : [];
+        const bonusAvg = {};
+        earlier.forEach(x => {
+          const b = bonusAvg[x.player_id] || (bonusAvg[x.player_id] =
+            { order: 0, best: 0, needle: 0, bonus: 0, n: 0 });
+          b.order += x.order_bonus || 0; b.best += x.best_finish_bonus || 0;
+          b.needle += x.pit_individual_pts || 0; b.bonus += x.weekly_bonus_pts || 0;
+          b.n += 1;
+        });
+        const topPool = new Set(race.top_drivers || []);
+        const projectOne = (p) => {
+          const b = bonusAvg[p.player_id];
+          if (!b || !b.n || !p.finishing_order) return null;
+          let top = 0, mid = 0;
+          p.finishing_order.slice(0, 5).forEach(n => {
+            const a = driverAvg[n] ? driverAvg[n].avg : 0;
+            if (topPool.has(n)) top += a; else mid += a;
+          });
+          const parts = { top, mid, best: b.best / b.n, order: b.order / b.n,
+                          needle: b.needle / b.n, bonus: b.bonus / b.n };
+          return { id: p.player_id, parts,
+                   total: Object.values(parts).reduce((x, y) => x + y, 0) };
+        };
+        const projected = allPicks.map(projectOne).filter(Boolean)
+          .sort((a, b) => b.total - a.total);
+        let pp = 0, ppv = null, projPlace = {};
+        projected.forEach((x, i) => {
+          if (x.total !== ppv) { pp = i + 1; ppv = x.total; }
+          projPlace[x.id] = pp;
+        });
+        const r1 = (x) => Math.round(x * 10) / 10;
+        const myProj = me ? projected.find(x => x.id === me.id) : null;
+        const projection = myProj ? {
+          parts: Object.fromEntries(Object.entries(myProj.parts).map(([k, v]) => [k, r1(v)])),
+          total: r1(myProj.total), place: projPlace[me.id], of: projected.length,
+        } : null;
         // What each player put on the board this round. The four parts are the
         // ones that count toward the matchup; the needle and the weekly bonus
         // are the individual game and are not in here.
@@ -141,8 +222,6 @@ export function useLeague(currentUser, { round = null } = {}) {
           bestFinish: row.best_finish,
           pitGuess: Number(row.pit_guess),
         });
-
-        const locked = race.pick_deadline ? race.pick_deadline <= now : false;
 
         if (!alive) return;
         setState({
@@ -246,27 +325,8 @@ export function useLeague(currentUser, { round = null } = {}) {
           //
           // Prior rounds only. Averaging in the race you are predicting is
           // predicting with the answer.
-          driverAvg: (() => {
-            const roundOf = {};
-            races.forEach(r => { roundOf[r.id] = r.round; });
-            const byDriver = {};
-            scores.filter(x => roundOf[x.race_id] != null && roundOf[x.race_id] < race.round)
-              .forEach(x => {
-                let d = x.driver_pts;
-                if (typeof d === "string") { try { d = JSON.parse(d); } catch { d = null; } }
-                if (!d) return;
-                Object.entries(d).forEach(([name, v]) => {
-                  (byDriver[name] || (byDriver[name] = {}))[x.race_id] = v;
-                });
-              });
-            const out = {};
-            Object.entries(byDriver).forEach(([n, m]) => {
-              const v = Object.values(m);
-              out[n] = { avg: Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 10) / 10,
-                         rounds: v.length };
-            });
-            return out;
-          })(),
+          driverAvg,
+          projection,
           // Whether Admin has run this race yet. Everything that used to ask
           // "is there a score on this seat" now asks this once.
           scored: scores.some(x => x.race_id === race.id),
