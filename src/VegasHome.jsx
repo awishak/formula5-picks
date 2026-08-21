@@ -1779,7 +1779,12 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, scored = true }) {
   const MIN = 1.5, MAX = 4.5;
   const pct = (v) => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
   const TICKS = [1.5, 2, 2.5, 3, 3.5, 4, 4.5];
-  const AXIS = 26;
+  // Two plates over one scale. They only need two rows when they would land on
+  // top of each other, which depends entirely on where the stop came in.
+  const PLATE_BB = 78, PLATE_ACT = 62;
+  const clash = stop != null && line != null &&
+    Math.abs(pct(stop) - pct(line)) < ((PLATE_BB + PLATE_ACT) / 2 / 330) * 100;
+  const AXIS = 26 + (clash ? 20 : 0);
   // Which way you want it to go. Over the line is your side in an over week and
   // theirs in an under one, so the green is on the right or the left depending
   // on the seat, never on a fixed side.
@@ -1825,12 +1830,25 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, scored = true }) {
             wear, so it reads as a marker on the scale rather than a heading
             for the box. */}
         <div style={{
-          position: "absolute", top: 0, width: 78, textAlign: "center", left: at(line, 78),
+          position: "absolute", top: 0, width: PLATE_BB, textAlign: "center",
+          left: at(line, PLATE_BB),
           padding: "2px 5px", borderRadius: 7, background: "#000",
           border: `1px solid ${DIVIDE}`, boxSizing: "border-box",
           fontFamily: FD, fontWeight: 700, fontSize: 11, lineHeight: 1.35,
           letterSpacing: "0.04em", color: DIVIDE, whiteSpace: "nowrap",
         }}>BOX BOX</div>
+        {/* The stop gets named the same way the line does, or the second mark
+            on the scale is just a mark. */}
+        {stop != null && (
+          <div style={{
+            position: "absolute", top: clash ? 20 : 0, width: PLATE_ACT, textAlign: "center",
+            left: at(stop, PLATE_ACT),
+            padding: "2px 5px", borderRadius: 7, background: "#000",
+            border: `1px solid ${c}`, boxSizing: "border-box",
+            fontFamily: FD, fontWeight: 700, fontSize: 11, lineHeight: 1.35,
+            letterSpacing: "0.04em", color: c, whiteSpace: "nowrap",
+          }}>ACTUAL</div>
+        )}
         {/* Colour spreading out of the line, brightest against it and gone by
             the ends: everything this side of it is the result you want. */}
         <div style={{
@@ -2034,14 +2052,16 @@ function YourWeek({ mine, seat, scored, driverAvg = {}, projection = null }) {
                           borderTop: `2px solid ${V.blue}55` }}>
               <span style={{ ...display("chip"), fontSize: 13, color: V.blue,
                              letterSpacing: "0.04em" }}>Total</span>
-              <span style={{ marginLeft: "auto", ...numeric("h3"), fontSize: 30, color: V.blue,
+              <span style={{ marginLeft: "auto", ...display("chip"), fontSize: 11,
+                             color: DIVIDE, opacity: 0.8, marginRight: 8 }}>Projected</span>
+              <span style={{ ...numeric("h3"), fontSize: 30, color: V.blue,
                              ...textGlow(V.blue, 0.8) }}>{projection.total.toFixed(1)}</span>
               <span style={{ width: 46, textAlign: "right", ...display("chip"), fontSize: 12,
                              color: V.blue }}>{ordinal(projection.place)}</span>
             </div>
             <div style={{ ...display("chip"), fontSize: 11, color: DIVIDE, textAlign: "right",
                           marginTop: 2, letterSpacing: "0.04em" }}>
-              projected, of {projection.of}
+              of {projection.of}
             </div>
           </div>
         )}
