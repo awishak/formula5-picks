@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { V, display, numeric, body, card, textGlow, VEGAS_CSS } from "./theme.vegas";
 import { buildTeamTable, FIRST_H2_ROUND } from "./teamTable";
-import { displayOf, shortOf } from "./teams";
+import { shortOf } from "./teams";
 import { raceTimePT } from "./raceTimes";
 
 // The round, every matchup in it.
@@ -18,7 +18,10 @@ import { raceTimePT } from "./raceTimes";
 // like they had done something to you.
 const MINE = V.green, THEIRS = V.pink, OTHER = V.blue;
 
-const short = (n) => shortOf(displayOf(n)) || n;
+// shortOf keys on the canonical name, so it has to be handed the raw one.
+// Running it through displayOf first meant Scuderia Iskandaraya arrived as
+// "Scud. Iskandaraya", matched nothing, and came back too long to fit.
+const short = (n) => shortOf(n) || n;
 
 export default function SchedulePage({ currentUser }) {
   const [s, setS] = useState({ loading: true });
@@ -35,6 +38,10 @@ export default function SchedulePage({ currentUser }) {
         supabase.from("schedule").select("*"),
       ]).then(rs => rs.map(r => r.data || []));
       if (!alive) return;
+      // Every needle guess in the season, so each matchup can carry its own
+      // BOX BOX line: the line is the average of the four in it.
+      const picks = (await supabase.from("picks").select("race_id,player_id,pit_guess")).data || [];
+      if (!alive) return;
 
       const db = { players, teams, races, scores, schedule };
       const me = players.find(p => p.name === currentUser) || null;
@@ -50,7 +57,7 @@ export default function SchedulePage({ currentUser }) {
       const scored = new Set(scores.map(x => x.race_id));
       const latest = [...drawn].reverse().find(r => scored.has(r.id)) || drawn[drawn.length - 1];
 
-      setS({ loading: false, db, teams, races, schedule, drawn, scored,
+      setS({ loading: false, db, teams, races, schedule, drawn, scored, picks,
              myTeamId: myTeam ? myTeam.id : null, playersById:
                Object.fromEntries(players.map(p => [p.id, p.name])) });
       // ?round=12 opens on that round. It makes an unscored week checkable
@@ -81,6 +88,24 @@ export default function SchedulePage({ currentUser }) {
   const byId = Object.fromEntries(rows.map(r => [r.id, r]));
   const teamById = Object.fromEntries(s.teams.map(t => [t.id, t]));
 
+  const guessOf = {};
+  s.picks.filter(p => p.race_id === race.id)
+    .forEach(p => { const v = Number(p.pit_guess); if (!Number.isNaN(v)) guessOf[p.player_id] = v; });
+  // The line is the average of the four guesses in the matchup, same as the
+  // week computes it, so a matchup with a card missing still has a line off
+  // whoever did guess.
+  const lineOf = (a, b) => {
+    const g = [a, b].filter(Boolean)
+      .flatMap(t => [t.player1_id, t.player2_id])
+      .map(id => guessOf[id]).filter(v => v != null);
+    return g.length ? Math.round((g.reduce((x, y) => x + y, 0) / g.length) * 100) / 100 : null;
+  };
+  const myDiv = (() => {
+    const t = teamById[s.myTeamId];
+    if (!t) return null;
+    return (round >= FIRST_H2_ROUND ? t.division_h2 : t.division) || t.division;
+  })();
+
   const fixtures = s.schedule.filter(m => m.race_id === race.id).map(m => {
     const home = byId[m.home_team_id], away = byId[m.away_team_id];
     const wk = home && home.weeks.find(x => x.raceId === race.id);
@@ -96,10 +121,22 @@ export default function SchedulePage({ currentUser }) {
                yours: m.home_team_id === s.myTeamId },
       division: (round >= FIRST_H2_ROUND ? div.division_h2 : div.division) || div.division,
       mine: m.home_team_id === s.myTeamId || m.away_team_id === s.myTeamId,
+      margin: wk && awk ? Math.abs(wk.score - awk.score) : null,
+      line: lineOf(teamById[m.home_team_id], teamById[m.away_team_id]),
+      players: {
+        away: rosterOf(teamById[m.away_team_id], away, race.id, s.playersById),
+        home: rosterOf(teamById[m.home_team_id], home, race.id, s.playersById),
+      },
     };
   });
-  // Yours first. You are in one of twelve and it should not be a hunt.
-  fixtures.sort((a, b) => (b.mine ? 1 : 0) - (a.mine ? 1 : 0));
+  // Your division first, and inside a division the closest week first, so the
+  // top of the page is the one still in the balance rather than the one that
+  // happened to be drawn first. Yours stays at the head of its own division:
+  // you are in one of twelve and it should not be a hunt.
+  fixtures.sort((a, b) =>
+    (a.division === myDiv ? 0 : 1) - (b.division === myDiv ? 0 : 1) ||
+    (b.mine ? 1 : 0) - (a.mine ? 1 : 0) ||
+    ((a.margin == null ? 999 : a.margin) - (b.margin == null ? 999 : b.margin)));
 
   const idx = s.drawn.findIndex(r => r.round === round);
   const go = (d) => {
@@ -139,6 +176,25 @@ export default function SchedulePage({ currentUser }) {
   );
 }
 
+// First initial and last name, because two numbers under a total with nothing
+// attached to them are just two numbers.
+const initialLast = (full) => {
+  const bits = String(full || "").trim().split(/\s+/);
+  return bits.length < 2 ? bits[0] || "" : `${bits[0][0]} ${bits[bits.length - 1]}`;
+};
+
+// The two players in score order, highest first. Reading the bigger number
+// first is how anyone reads a scoreline.
+function rosterOf(team, row, raceId, namesById) {
+  if (!team || !row) return [];
+  const wk = row.weeks.find(x => x.raceId === raceId);
+  if (!wk) return [];
+  return [
+    { name: namesById[team.player1_id], pts: wk.parts.p1 },
+    { name: namesById[team.player2_id], pts: wk.parts.p2 },
+  ].sort((a, b) => b.pts - a.pts);
+}
+
 function Arrow({ dir, on, onClick }) {
   return (
     <button onClick={on ? onClick : undefined} disabled={!on} style={{
@@ -149,65 +205,108 @@ function Arrow({ dir, on, onClick }) {
   );
 }
 
-// One matchup. The totals are the loud thing and the three numbers under each
-// are what they are made of, in the order the score is built: the two players,
-// then BOX BOX.
+// One matchup. The totals are the loud thing, and under each the score is
+// itemised: the two players by name in score order, then BOX BOX.
 function Fixture({ f, scored }) {
   const lw = f.left.wk, rw = f.right.wk;
   const lWon = scored && lw && rw && lw.score > rw.score;
   const rWon = scored && lw && rw && rw.score > lw.score;
-  // In your own matchup the colour is whose team it is, not who won, which is
-  // the rule the home page runs on all week: green is your side, pink is
+
+  // In your own matchup the colour is whose team it is and not who won, which
+  // is the rule the home page runs on all week: green is your side, pink is
   // theirs, and losing does not turn your team into somebody else's. Winning is
   // said by the glow. Everywhere else there is no "yours", so green is the
-  // winner and blue is the other one.
+  // winner and blue is the one who is not.
   const colour = (s2, won) => {
     if (!scored) return V.text2;
     if (f.mine) return s2.yours ? MINE : THEIRS;
     return won ? MINE : OTHER;
   };
 
-  const Side = ({ s, won }) => {
+  const Side = ({ s, won, roster }) => {
     const c = colour(s, won);
     const p = s.wk ? s.wk.parts : null;
+    const box = p ? p.boxBox : null;
     return (
-      <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
-        <p style={{ ...display("chip"), fontSize: 13, color: V.text, margin: 0,
-                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {s.t ? short(s.t.name) : "—"}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center",
+                      gap: 6, minWidth: 0 }}>
+          {s.t && s.t.logo_url
+            ? <img src={s.t.logo_url} alt="" style={{ width: 22, height: 22, objectFit: "contain",
+                                                      flexShrink: 0 }} />
+            : <div style={{ width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                            background: V.bg2, border: `1px solid ${V.border}` }} />}
+          <p style={{ ...display("chip"), fontSize: 15, color: V.text, margin: 0,
+                      minWidth: 0, whiteSpace: "nowrap", overflow: "hidden",
+                      textOverflow: "ellipsis" }}>
+            {s.t ? short(s.t.name) : "\u2014"}
+          </p>
+        </div>
+        <p style={{ ...numeric("hero"), fontSize: 36, color: scored ? c : V.text3,
+                    textAlign: "center", margin: "2px 0 0",
+                    ...(won ? textGlow(c, 0.9) : {}) }}>
+          {scored && s.wk ? s.wk.score : "\u2013"}
         </p>
-        <p style={{ ...display("chip"), fontSize: 10, color: c, margin: "1px 0 0",
-                    letterSpacing: "0.06em" }}>{s.side}</p>
-        <p style={{ ...numeric("hero"), fontSize: 34, color: scored ? c : V.text3,
-                    margin: "2px 0 0", ...(won ? textGlow(c, 0.9) : {}) }}>
-          {scored && s.wk ? s.wk.score : "–"}
-        </p>
-        {/* Player, player, BOX BOX. Lined up under the total they add to. */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 2 }}>
-          {(p ? [p.p1, p.p2, p.boxBox] : [null, null, null]).map((v, i) => (
-            <span key={i} style={{
-              ...numeric("chip"), fontSize: 12, minWidth: 22,
-              color: i === 2 ? OTHER : V.text2,
-            }}>
-              {v == null || !scored ? "–" : i === 2 && v > 0 ? `+${v}` : v}
-            </span>
+        {/* Under the score, not over the name: the side is a fact about the
+            week, and the team is the thing being named. */}
+        <p style={{ ...display("chip"), fontSize: 10, color: c, textAlign: "center",
+                    margin: "1px 0 0", letterSpacing: "0.06em" }}>{s.side}</p>
+
+        <div style={{ display: "grid", gap: 2, marginTop: 8 }}>
+          {(roster.length ? roster : [{ name: null }, { name: null }]).map((r, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ ...body("bodySm"), fontSize: 12, color: V.text2,
+                             flex: "1 1 0", minWidth: 0, whiteSpace: "nowrap",
+                             overflow: "hidden", textOverflow: "ellipsis" }}>
+                {r.name ? initialLast(r.name) : "\u2014"}
+              </span>
+              <span style={{ ...numeric("chip"), fontSize: 13, color: V.text,
+                             flexShrink: 0 }}>
+                {scored && r.pts != null ? r.pts : "\u2013"}
+              </span>
+            </div>
           ))}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ ...display("chip"), fontSize: 10, color: V.text3,
+                           flex: "1 1 0", minWidth: 0, letterSpacing: "0.04em" }}>Box box</span>
+            {/* Green for whoever took it, whichever matchup this is. BOX BOX is
+                won outright and six points change hands on it. */}
+            <span style={{ ...numeric("chip"), fontSize: 13, flexShrink: 0,
+                           color: !scored || box == null ? V.text3 : box > 0 ? MINE : V.text2 }}>
+              {!scored || box == null ? "\u2013" : box > 0 ? `+${box}` : box}
+            </span>
+          </div>
         </div>
       </div>
     );
   };
 
+  const MIN = 1.5, MAX = 4.5;
+  const pc = (v) => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
+
   return (
     <div style={{
-      ...card({ padding: "10px 10px 12px", marginBottom: 10 }),
-      display: "flex", alignItems: "flex-start", gap: 6,
-      // Only yours is bordered. Glowing every card green because somebody won
-      // it made all twelve look like the result.
-      ...(f.mine ? { borderColor: `${MINE}55` } : {}),
+      ...card({ padding: "10px 12px 14px", marginBottom: 10 }),
+      position: "relative",
+      // Yours gets its own ground, not just a line around it.
+      ...(f.mine ? { background: `${MINE}12`, borderColor: `${MINE}66` } : {}),
     }}>
-      <Side s={f.left} won={lWon} />
-      <div style={{ width: 1, alignSelf: "stretch", background: V.border, marginTop: 6 }} />
-      <Side s={f.right} won={rWon} />
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <Side s={f.left} won={lWon} roster={f.players.away} />
+        <div style={{ width: 1, alignSelf: "stretch", background: V.border }} />
+        <Side s={f.right} won={rWon} roster={f.players.home} />
+      </div>
+
+      {/* The BOX BOX line, sitting on the bottom edge where it fell between 1.5
+          and 4.5. Twelve cards down the page it reads as a scatter of where the
+          league set its lines this week. */}
+      {f.line != null && (
+        <div style={{
+          position: "absolute", left: `${pc(f.line)}%`, bottom: -4, width: 8, height: 8,
+          marginLeft: -4, borderRadius: 4, background: V.blue,
+          boxShadow: `0 0 6px ${V.blue}`,
+        }} title={`BOX BOX line ${f.line.toFixed(2)}`} />
+      )}
     </div>
   );
 }
