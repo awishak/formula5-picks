@@ -114,8 +114,8 @@ export function lockedDemo(kind = "all") {
       total: 32, place: 29, of: 48,
       avg: 41.7, rank: 6, avgBefore: 42.9, rankBefore: 3,
     } : null,
-    // What his five had paid a round, over the rounds each was in a pool
-    // through round 8. Adds to 23; the week actually paid 32.
+    // What his five averaged a round, over the rounds each was in a pool
+    // through round 8. Adds to 23; the week actually scored 32.
     driverAvg: {
       "Lewis Hamilton": { avg: 13.3, rounds: 4 }, "Isack Hadjar": { avg: 4.3, rounds: 7 },
       "Pierre Gasly": { avg: 5.4, rounds: 7 }, "Arvid Lindblad": { avg: 0.2, rounds: 5 },
@@ -126,7 +126,7 @@ export function lockedDemo(kind = "all") {
     // Cal Aggie had the over and the stop came in at ten seconds, so BOX BOX
     // went their way: five to the winner, one off the loser.
     teamBoxBox: scored ? { mine: 5, theirs: -1 } : { mine: 0, theirs: 0 },
-    // What each driver paid at Silverstone. Same for everybody: a driver is
+    // What each driver scored at Silverstone. Same for everybody: a driver is
     // worth what he finished, and who picked him only decides who collects.
     driverPts: {
       "George Russell": 18, "Lewis Hamilton": 15, "Isack Hadjar": 10,

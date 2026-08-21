@@ -239,7 +239,7 @@ export function useLeague(currentUser, { round = null } = {}) {
               avgBefore: before ? before.avg : null, rankBefore: before ? before.rank : null,
             };
           })(),
-          // What your five have paid, over the rounds they were in a pool
+          // What each driver averages a round, over the rounds they were in a pool
           // before this one. Points per round, never per pick: 48 people
           // picking the same driver in one round is one race and not 48
           // samples, which is the number the recap got wrong on sight.
@@ -294,7 +294,7 @@ export function useLeague(currentUser, { round = null } = {}) {
             mate: Boolean(mateId && pickOf[mateId]),
           },
           f1Points: Object.fromEntries(standings.map(d => [d.driver, d.points])),
-          // What each driver paid this round. driver_pts is written per player
+          // What each driver scored this round. driver_pts is written per player
           // but a driver is worth the same to everyone who has him, so the four
           // cards merge into one map. Stored as a JSON string, so it is parsed
           // before use.

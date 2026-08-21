@@ -1989,7 +1989,7 @@ function YourWeek({ mine, seat, scored, driverAvg = {} }) {
   const me = seat && seat.pick;
   if (!scored) {
     if (!me) return null;
-    // What your five have paid a round, over the rounds each was in a pool
+    // What these five average a round, over the rounds each was in a pool
     // before this one. It is a read on these picks and not on you: change a
     // driver and it moves.
     const five = me.order.slice(0, 5).map(d => driverAvg[d]).filter(Boolean);
@@ -2012,7 +2012,7 @@ function YourWeek({ mine, seat, scored, driverAvg = {} }) {
             <div style={{ minWidth: 0 }}>
               <Label color={V.blue}>On form</Label>
               <p style={{ ...body("bodySm"), color: V.text2, margin: "3px 0 0" }}>
-                What your five have paid a round this season
+                What these five average a round
               </p>
             </div>
             <span style={{ marginLeft: "auto", ...numeric("h3"), fontSize: 28, color: V.blue,
@@ -2202,7 +2202,7 @@ function HandsColumns({ seats, under, driverPts = {}, scored = true }) {
       {cols.flatMap((h, c) => (h.pick ? h.pick.order : []).slice(0, 5).map((name, r) => {
         const t = toneAt({ r, c, ours: h.ours });
         if (which === "level" ? t !== "level" : t === "level") return null;
-        // Once the week is scored, what he paid goes on his face. Same size as
+        // Once the week is scored, what he scored goes on his face. Same size as
         // the totals underneath and the colour of his ring, so a column reads
         // down as five numbers and across as the same driver twice.
         const pts = scored ? driverPts[name] : undefined;
