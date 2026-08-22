@@ -1986,17 +1986,23 @@ function RootingCard({ seats, boxBox }) {
         maxHeight: open ? 900 : 0, opacity: open ? 1 : 0, overflow: "hidden",
         transition: "max-height .4s ease, opacity .3s ease",
       }}>
+        {/* UNDER on the left and OVER on the right, the same way every other
+            card on this screen is arranged. Which of them is yours changes week
+            to week, so the words follow the column rather than the column
+            following the words: in an over week your drivers are on the right
+            and Root for goes with them. */}
         <div style={{ paddingTop: 12, display: "flex", gap: 12 }}>
-          {/* Your side on the left, theirs on the right, the same way every
-              other card on this screen is arranged. */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Label color={MINE} style={{ fontSize: 11, marginBottom: 6 }}>Root for</Label>
-            <Strip names={forUs} c={MINE} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Label color={THEIRS} style={{ fontSize: 11, marginBottom: 6 }}>Root against</Label>
-            <Strip names={against} c={THEIRS} />
-          </div>
+          {(boxBox.side === "UNDER"
+            ? [{ names: forUs, c: MINE, label: "Root for" },
+               { names: against, c: THEIRS, label: "Root against" }]
+            : [{ names: against, c: THEIRS, label: "Root against" },
+               { names: forUs, c: MINE, label: "Root for" }]
+          ).map(col => (
+            <div key={col.label} style={{ flex: 1, minWidth: 0 }}>
+              <Label color={col.c} style={{ fontSize: 11, marginBottom: 6 }}>{col.label}</Label>
+              <Strip names={col.names} c={col.c} />
+            </div>
+          ))}
         </div>
         <div>
           {boxBox.line != null && (
