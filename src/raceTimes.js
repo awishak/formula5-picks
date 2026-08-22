@@ -50,3 +50,31 @@ export function raceTimePT(round) {
   const time = mins === "0" ? `${h} ${ampm.toLowerCase()}` : `${h}:${mins.padStart(2, "0")} ${ampm.toLowerCase()}`;
   return `${day} ${month} ${date} at ${time}`;
 }
+
+// Which race the app is on.
+//
+// Not "the next one still taking picks". The deadline closing is what locks the
+// picks, not what ends the week: between the deadline and the race there are
+// two days where the locked screen is the whole point, and reading the deadline
+// as the end of the round jumped the entire app to the next Grand Prix four
+// hours after picks shut.
+//
+// A round is finished when it has been scored, or when it ran more than two
+// days ago and nobody scored it. Everything else is still the current week.
+const GRACE_MS = 2 * 24 * 3600e3;
+
+export const raceStartMs = (race) => {
+  const iso = RACE_UTC[race.round];
+  if (iso) return Date.parse(iso);
+  return race.race_date ? Date.parse(race.race_date) : null;
+};
+
+export function currentRace(races, scoredIds, nowMs = Date.now()) {
+  const list = [...races].sort((a, b) => a.round - b.round);
+  const done = (r) => {
+    if (scoredIds && scoredIds.has && scoredIds.has(r.id)) return true;
+    const t = raceStartMs(r);
+    return t != null && nowMs - t > GRACE_MS;
+  };
+  return list.find(r => !done(r)) || list[list.length - 1] || null;
+}

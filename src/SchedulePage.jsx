@@ -3,7 +3,7 @@ import { supabase } from "./supabaseClient";
 import { V, display, numeric, body, card, textGlow, VEGAS_CSS } from "./theme.vegas";
 import { buildTeamTable, FIRST_H2_ROUND } from "./teamTable";
 import { shortOf } from "./teams";
-import { raceTimePT } from "./raceTimes";
+import { raceTimePT, currentRace } from "./raceTimes";
 
 // The round, every matchup in it.
 //
@@ -55,7 +55,11 @@ export default function SchedulePage({ currentUser }) {
         .filter(r => schedule.some(m => m.race_id === r.id))
         .sort((a, b) => a.round - b.round);
       const scored = new Set(scores.map(x => x.race_id));
-      const latest = [...drawn].reverse().find(r => scored.has(r.id)) || drawn[drawn.length - 1];
+      // The week the app is on, not the last one scored. Between the deadline
+      // and the race there are two days where this round is the whole point,
+      // and opening on the last scored round skips straight past them.
+      const cur = currentRace(drawn, scored);
+      const latest = cur || drawn[drawn.length - 1];
 
       setS({ loading: false, db, teams, races, schedule, drawn, scored, picks,
              myTeamId: myTeam ? myTeam.id : null, playersById:

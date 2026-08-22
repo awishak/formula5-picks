@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 import { buildTeamTable, rankByAverage, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { displayOf, shortOf, codeOf } from "./teams";
+import { currentRace } from "./raceTimes";
 
 // The week, for real. Everything the Home page needs about the next race, who
 // you are playing, and whether the picks are in.
@@ -43,12 +44,11 @@ export function useLeague(currentUser, { round = null } = {}) {
         // The next race is the earliest whose deadline has not passed. Once it
         // has, this is still the race being run, so the page keeps showing that round.
         const now = new Date().toISOString();
-        const upcoming = races.find(r => r.pick_deadline && r.pick_deadline > now);
         const scored = new Set(scores.map(s => s.race_id));
         // A pinned round is for looking at a week that has already been played.
         const race = round != null
           ? races.find(r => r.round === round)
-          : (upcoming || races.filter(r => !scored.has(r.id))[0] || races[races.length - 1]);
+          : currentRace(races, scored);
 
         const me = players.find(p => p.name === currentUser) || null;
         const myTeamRow = me ? teams.find(t => t.player1_id === me.id || t.player2_id === me.id) : null;

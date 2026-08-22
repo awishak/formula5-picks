@@ -4,6 +4,7 @@ import { V, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow 
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { displayOf } from "./teams";
+import { currentRace } from "./raceTimes";
 import VegasHome from "./VegasHome.jsx";
 
 // Desktop mockup. Everything the phone spreads over five tabs, on one screen.
@@ -146,7 +147,8 @@ export default function DashboardPage({ currentUser, onNavigate }) {
         const fixtures = nextFixtures(db);
 
         const now = new Date().toISOString();
-        const race = races.find(r => r.pick_deadline && r.pick_deadline > now) || races[races.length - 1];
+        const race = currentRace(races, new Set((scores || []).map(x => x.race_id)))
+          || races[races.length - 1];
         const me = players.find(p => p.name === currentUser);
         const myTeam = me ? teams.find(t => t.player1_id === me.id || t.player2_id === me.id) : null;
         const mateId = myTeam ? [myTeam.player1_id, myTeam.player2_id].find(i => i !== me.id) : null;
