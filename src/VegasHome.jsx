@@ -1940,12 +1940,10 @@ function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under, scored = true }
 
 // A call, on a plate, with whoever made it under it. Same shape as a driver
 // chip so the card reads the same whichever rung it has fallen to.
-function Calls({ rows, c, big }) {
-  if (!rows.length) return <span style={{ ...body("bodySm"), color: V.text2 }}>Nobody</span>;
+function Call({ r, c, big }) {
+  if (!r) return <div style={{ flex: 1, minWidth: 0 }} />;
   return (
-    <div style={{ display: "grid", gap: 8 }}>
-      {rows.map((r, i) => (
-        <div key={i}>
+    <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
             display: "inline-block", padding: big ? "4px 10px 5px" : "3px 7px", borderRadius: 9,
             background: "#000", border: `1px solid ${c}`, maxWidth: "100%",
@@ -1961,11 +1959,15 @@ function Calls({ rows, c, big }) {
                           fontSize: big ? 22 : 11, lineHeight: 1.25, color: c,
                           whiteSpace: big ? "nowrap" : "normal" }}>{r.label}</div>
           </div>
-          <p style={{ ...body("bodySm"), fontSize: 12, color: V.text2, margin: "3px 0 0" }}>
-            {lastName(r.who)}
-          </p>
-        </div>
-      ))}
+    </div>
+  );
+}
+
+function Calls({ rows, c, big }) {
+  if (!rows.length) return <span style={{ ...body("bodySm"), color: V.text2 }}>Nobody</span>;
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      {rows.map((r, i) => <Call key={i} r={r} c={c} big={big} />)}
     </div>
   );
 }
@@ -2008,6 +2010,24 @@ function RootingCard({ seats, boxBox }) {
                  label: s.pick.order.slice(0, 5).map(d => lastName(d)).join(" \u203a ") }));
 
   const best = cancel(bestBag(true), bestBag(false));
+  // Paired on the driver, so the two calls on Russell sit across from each
+  // other instead of diagonally. Same driver, two positions, one row: that is
+  // the comparison being made, and the eye should not have to travel to it.
+  const bestRows = (() => {
+    const order = [];
+    [...best.mine, ...best.theirs].forEach(x => {
+      if (!order.includes(x.driver)) order.push(x.driver);
+    });
+    const rows = [];
+    order.forEach(d => {
+      const m = best.mine.filter(x => x.driver === d);
+      const t = best.theirs.filter(x => x.driver === d);
+      for (let i = 0; i < Math.max(m.length, t.length); i++) {
+        rows.push({ driver: d, mine: m[i] || null, theirs: t[i] || null });
+      }
+    });
+    return rows;
+  })();
   const ord = cancel(orderBag(true), orderBag(false));
   // What the week is actually being decided on, in the order it falls through.
   const level = forUs.length || against.length ? "drivers"
@@ -2067,26 +2087,54 @@ function RootingCard({ seats, boxBox }) {
             to week, so the words follow the column rather than the column
             following the words: in an over week your drivers are on the right
             and Root for goes with them. */}
-        <div style={{ paddingTop: 12, display: "flex", gap: 12 }}>
-          {(boxBox.side === "UNDER"
+        {(() => {
+          const cols = boxBox.side === "UNDER"
             ? [{ mine: true, c: MINE, label: "Root for" },
                { mine: false, c: THEIRS, label: "Root against" }]
             : [{ mine: false, c: THEIRS, label: "Root against" },
-               { mine: true, c: MINE, label: "Root for" }]
-          ).map(col => (
-            <div key={col.label} style={{ flex: 1, minWidth: 0 }}>
-              <Label color={col.c} style={{ fontSize: 11, marginBottom: 6 }}>{col.label}</Label>
-              {level === "drivers"
-                ? <Strip names={col.mine ? forUs : against} c={col.c} />
-                : level === "boxbox"
-                ? <span style={{ ...body("bodySm"), color: V.text2 }}>
-                    {col.mine ? `Under ${boxBox.line.toFixed(2)}` : `Over ${boxBox.line.toFixed(2)}`}
-                  </span>
-                : <Calls rows={(level === "best" ? best : ord)[col.mine ? "mine" : "theirs"]}
-                         c={col.c} big={level === "best"} />}
+               { mine: true, c: MINE, label: "Root for" }];
+          const heads = (
+            <div style={{ display: "flex", gap: 12 }}>
+              {cols.map(col => (
+                <div key={col.label} style={{ flex: 1, minWidth: 0 }}>
+                  <Label color={col.c} style={{ fontSize: 11 }}>{col.label}</Label>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          );
+          if (level === "best") {
+            return (
+              <div style={{ paddingTop: 12 }}>
+                {heads}
+                <div style={{ display: "grid", gap: 8, marginTop: 6 }}>
+                  {bestRows.map((r, i) => (
+                    <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      {cols.map(col => (
+                        <Call key={col.label} r={col.mine ? r.mine : r.theirs} c={col.c} big />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+          return (
+            <div style={{ paddingTop: 12, display: "flex", gap: 12 }}>
+              {cols.map(col => (
+                <div key={col.label} style={{ flex: 1, minWidth: 0 }}>
+                  <Label color={col.c} style={{ fontSize: 11, marginBottom: 6 }}>{col.label}</Label>
+                  {level === "drivers"
+                    ? <Strip names={col.mine ? forUs : against} c={col.c} />
+                    : level === "boxbox"
+                    ? <span style={{ ...body("bodySm"), color: V.text2 }}>
+                        {col.mine ? `Under ${boxBox.line.toFixed(2)}` : `Over ${boxBox.line.toFixed(2)}`}
+                      </span>
+                    : <Calls rows={ord[col.mine ? "mine" : "theirs"]} c={col.c} />}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
         <div>
           {boxBox.line != null && (
             <p style={{ ...body("body"), color: V.text, margin: "14px 0 0" }}>
