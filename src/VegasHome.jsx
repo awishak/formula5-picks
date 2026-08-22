@@ -1938,6 +1938,30 @@ function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under, scored = true }
   );
 }
 
+// A call, on a plate, with whoever made it under it. Same shape as a driver
+// chip so the card reads the same whichever rung it has fallen to.
+function Calls({ rows, c, big }) {
+  if (!rows.length) return <span style={{ ...body("bodySm"), color: V.text2 }}>Nobody</span>;
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      {rows.map((r, i) => (
+        <div key={i}>
+          <div style={{
+            display: "inline-block", padding: big ? "4px 12px" : "3px 7px", borderRadius: 9,
+            background: "#000", border: `1px solid ${c}`, maxWidth: "100%",
+            ...(big ? numeric("h3") : display("chip")),
+            fontSize: big ? 22 : 11, lineHeight: 1.3, color: c,
+            whiteSpace: big ? "nowrap" : "normal",
+          }}>{r.label}</div>
+          <p style={{ ...body("bodySm"), fontSize: 12, color: V.text2, margin: "3px 0 0" }}>
+            {lastName(r.who)}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Who you want, and which way you want the stop to go.
 function RootingCard({ seats, boxBox }) {
   const [open, setOpen] = useState(true);
@@ -1948,6 +1972,36 @@ function RootingCard({ seats, boxBox }) {
   }));
   const forUs = Object.keys(mineHas).filter(d => (mineHas[d] || 0) > (theirsHas[d] || 0));
   const against = Object.keys(theirsHas).filter(d => (theirsHas[d] || 0) > (mineHas[d] || 0));
+
+  // When the drivers cancel exactly there is nothing to root for among them,
+  // and "Nobody" on both sides is true but useless: it reads as a dead week
+  // when the week is still live, just somewhere else. So the card drops to
+  // whatever is left holding it up.
+  //
+  // Same rule each time, one rung down: a call on your side cancels the same
+  // call on theirs, and what is left over is the thing worth wanting.
+  const cancel = (mine, theirs) => {
+    const bag = theirs.slice(), left = [];
+    mine.forEach(x => {
+      const i = bag.findIndex(y => y.key === x.key);
+      if (i >= 0) bag.splice(i, 1); else left.push(x);
+    });
+    return { mine: left, theirs: bag };
+  };
+  const cards = seats.filter(s => s.pick);
+  const bestBag = (ours) => cards.filter(s => s.ours === ours)
+    .map(s => ({ key: s.pick.bestFinish, who: s.name, label: s.pick.bestFinish }));
+  const orderBag = (ours) => cards.filter(s => s.ours === ours)
+    .map(s => ({ key: s.pick.order.slice(0, 5).join(">"), who: s.name,
+                 label: s.pick.order.slice(0, 5).map(d => lastName(d)).join(" \u203a ") }));
+
+  const best = cancel(bestBag(true), bestBag(false));
+  const ord = cancel(orderBag(true), orderBag(false));
+  // What the week is actually being decided on, in the order it falls through.
+  const level = forUs.length || against.length ? "drivers"
+    : best.mine.length || best.theirs.length ? "best"
+    : ord.mine.length || ord.theirs.length ? "order"
+    : "boxbox";
 
   const Strip = ({ names, c }) => (
     // Wraps rather than scrolls. A third face off the right edge is a rooting
@@ -1986,6 +2040,16 @@ function RootingCard({ seats, boxBox }) {
         maxHeight: open ? 900 : 0, opacity: open ? 1 : 0, overflow: "hidden",
         transition: "max-height .4s ease, opacity .3s ease",
       }}>
+        {level !== "drivers" && (
+          <p style={{ ...body("bodySm"), fontSize: 13, color: V.text2, margin: "10px 0 0" }}>
+            {level === "boxbox"
+              ? "Same drivers, same orders, same calls. BOX BOX is the week."
+              : level === "order"
+              ? "Same drivers, same calls. The orders are the week."
+              : "Same drivers both sides. The best finish is the week."}
+          </p>
+        )}
+
         {/* UNDER on the left and OVER on the right, the same way every other
             card on this screen is arranged. Which of them is yours changes week
             to week, so the words follow the column rather than the column
@@ -1993,14 +2057,21 @@ function RootingCard({ seats, boxBox }) {
             and Root for goes with them. */}
         <div style={{ paddingTop: 12, display: "flex", gap: 12 }}>
           {(boxBox.side === "UNDER"
-            ? [{ names: forUs, c: MINE, label: "Root for" },
-               { names: against, c: THEIRS, label: "Root against" }]
-            : [{ names: against, c: THEIRS, label: "Root against" },
-               { names: forUs, c: MINE, label: "Root for" }]
+            ? [{ mine: true, c: MINE, label: "Root for" },
+               { mine: false, c: THEIRS, label: "Root against" }]
+            : [{ mine: false, c: THEIRS, label: "Root against" },
+               { mine: true, c: MINE, label: "Root for" }]
           ).map(col => (
             <div key={col.label} style={{ flex: 1, minWidth: 0 }}>
               <Label color={col.c} style={{ fontSize: 11, marginBottom: 6 }}>{col.label}</Label>
-              <Strip names={col.names} c={col.c} />
+              {level === "drivers"
+                ? <Strip names={col.mine ? forUs : against} c={col.c} />
+                : level === "boxbox"
+                ? <span style={{ ...body("bodySm"), color: V.text2 }}>
+                    {col.mine ? `Under ${boxBox.line.toFixed(2)}` : `Over ${boxBox.line.toFixed(2)}`}
+                  </span>
+                : <Calls rows={(level === "best" ? best : ord)[col.mine ? "mine" : "theirs"]}
+                         c={col.c} big={level === "best"} />}
             </div>
           ))}
         </div>
