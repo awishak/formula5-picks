@@ -1,0 +1,36 @@
+<!-- Dev harness. The matchup card in its three states, side by side at phone
+     width. macOS Chrome clamps its own window to about 500px, so the iframe is
+     the only way to see a 393px phone.
+     Usage: /schedmock.html?v=3&scored=11&open=12&w=393 -->
+<meta charset="utf-8" />
+<title>F5 matchup states</title>
+<style>
+  body { margin:0; background:#07070c; font-family:ui-sans-serif,system-ui; }
+  .row { display:flex; gap:16px; padding:14px; align-items:flex-start; }
+  .cap { color:#00d9ff; font:700 12px/1.5 ui-monospace,monospace;
+         letter-spacing:.08em; padding:4px 2px 8px; text-transform:uppercase; }
+  .cap span { color:#7a7a94; font-weight:400; letter-spacing:0; text-transform:none; }
+  iframe { border:1px solid #1d1d2b; border-radius:10px; display:block; background:#07070c; }
+</style>
+<div class="row" id="r"></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const w = +(q.get("w") || 393), h = +(q.get("h") || 1500);
+  const player = q.get("player") || "Andrew Ishak";
+  const v = q.get("v") || "3";
+  const scored = q.get("scored") || "11";   // a round that has been scored
+  const open = q.get("open") || "12";       // a round whose picks are still open
+  // The three the card has to hold. State 2 is a mockup: nothing live is wired
+  // up, so it is a scored round rendered in the live treatment.
+  const STATES = [
+    ["state 1", "before the race", `round=${open}`],
+    ["state 2", "live — mockup only", `round=${scored}&demo=live`],
+    ["state 3", "after the race", `round=${scored}`],
+  ];
+  document.getElementById("r").innerHTML = STATES.map(([t, note, qs]) => `
+    <div>
+      <div class="cap">${t} <span>&mdash; ${note}</span></div>
+      <iframe width="${w}" height="${h}"
+        src="/schedule?v=${v}&player=${encodeURIComponent(player)}&${qs}"></iframe>
+    </div>`).join("");
+</script>

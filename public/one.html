@@ -1,0 +1,20 @@
+<!-- Dev harness. One schedule state, one phone, nothing around it.
+     Holds the shot until the webfonts are in: /schedule pulls Encode Sans and
+     Chakra Petch at runtime, and a screenshot taken before they land renders
+     the fallback and looks like somebody changed the typeface.
+     Usage: /one.html?v=3&round=11 -->
+<meta charset="utf-8" /><title>F5 one state</title>
+<style>body{margin:0;background:#07070c}iframe{border:0;display:block;margin:0 auto}
+  body.ready::after{content:"";position:fixed;inset:auto 0 0 0;height:1px}</style>
+<iframe id="f" width="393" height="900"></iframe>
+<script>
+  const f = document.getElementById("f");
+  f.src = "/schedule" + location.search;
+  f.onload = async () => {
+    const d = f.contentDocument;
+    await d.fonts.load("600 15px 'Encode Sans Semi Condensed'");
+    await d.fonts.load("700 32px 'Chakra Petch'");
+    await d.fonts.ready;
+    document.body.classList.add("ready");
+  };
+</script>
