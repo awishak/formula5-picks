@@ -1947,12 +1947,20 @@ function Calls({ rows, c, big }) {
       {rows.map((r, i) => (
         <div key={i}>
           <div style={{
-            display: "inline-block", padding: big ? "4px 12px" : "3px 7px", borderRadius: 9,
+            display: "inline-block", padding: big ? "4px 10px 5px" : "3px 7px", borderRadius: 9,
             background: "#000", border: `1px solid ${c}`, maxWidth: "100%",
-            ...(big ? numeric("h3") : display("chip")),
-            fontSize: big ? 22 : 11, lineHeight: 1.3, color: c,
-            whiteSpace: big ? "nowrap" : "normal",
-          }}>{r.label}</div>
+            textAlign: "center",
+          }}>
+            {r.driver && (
+              <div style={{ ...display("chip"), fontSize: 11, color: c, opacity: 0.85,
+                            lineHeight: 1.2, whiteSpace: "nowrap" }}>
+                {lastName(r.driver)}
+              </div>
+            )}
+            <div style={{ ...(big ? numeric("h3") : display("chip")),
+                          fontSize: big ? 22 : 11, lineHeight: 1.25, color: c,
+                          whiteSpace: big ? "nowrap" : "normal" }}>{r.label}</div>
+          </div>
           <p style={{ ...body("bodySm"), fontSize: 12, color: V.text2, margin: "3px 0 0" }}>
             {lastName(r.who)}
           </p>
@@ -1989,8 +1997,12 @@ function RootingCard({ seats, boxBox }) {
     return { mine: left, theirs: bag };
   };
   const cards = seats.filter(s => s.pick);
+  // A best finish is a driver AND a position: Coolidge calling Russell second
+  // and Abdelshaid calling Hamilton second are two different things happening,
+  // and keying the cancel on the position alone wiped both off the card.
   const bestBag = (ours) => cards.filter(s => s.ours === ours)
-    .map(s => ({ key: s.pick.bestFinish, who: s.name, label: s.pick.bestFinish }));
+    .map(s => ({ key: `${s.pick.topPick}|${s.pick.bestFinish}`, who: s.name,
+                 driver: s.pick.topPick, label: s.pick.bestFinish }));
   const orderBag = (ours) => cards.filter(s => s.ours === ours)
     .map(s => ({ key: s.pick.order.slice(0, 5).join(">"), who: s.name,
                  label: s.pick.order.slice(0, 5).map(d => lastName(d)).join(" \u203a ") }));
