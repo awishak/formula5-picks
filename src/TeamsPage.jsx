@@ -11,18 +11,19 @@ import { displayOf } from "./teams";
 
 const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 
-// The name column is whatever is left after P1, a 58px logo, the gaps and the
-// points, which works out at roughly the viewport minus 218px. The longest name
-// costs about 7.6px per point of type in Encode, so the size that just fits is
-// (viewport - 218) / 7.6. Written as a clamp it holds 23px on a 393 phone and
-// steps down rather than cutting "HomeworkTubes" in half on a narrower one.
-// Below about 350px it gives up and ellipsises, which is the right trade for a
-// phone almost nobody in the league is carrying.
-// Same budget as the players page: full team names against the room a row
-// leaves after the place, the logo and the number.
-// Line one is the team name on its own now, so it has the room the old
-// shared-with-the-record version did not.
-const NAME_SIZE = "clamp(15px, calc(10.0vw - 21.0px), 19px)";
+// The name column is whatever is left after the place, the logo, the gaps, the
+// points and now the last result, which works out at roughly the viewport minus
+// 266px. The longest name in the league costs about 11.3px per point of type in
+// Encode, so the size that just fits is (viewport - 266) / 11.3.
+//
+// The last-result column cost 48px of that budget and the type is what paid:
+// 15px on a 393 phone where it used to be 18. Measured rather than reasoned
+// about, at 430/393/375/360, and the floor is what the last two widths land on.
+// Two names ellipsise at 393 and five at 360, against one at both before the
+// column existed. Nothing crosses the viewport edge at any width. If those
+// names matter more than the result does, the result goes under the points
+// instead and the whole 48px comes back.
+const NAME_SIZE = "clamp(13px, calc(8.9vw - 19.9px), 19px)";
 
 const TITLE_SIZE = titleFit("TEAM STANDINGS");
 
@@ -142,6 +143,26 @@ function YourTeam({ row, season, place, avgRank, teammate }) {
 // A record with no draws does not need a third number. 6-5 carries the same as 6-5-0.
 const rec = s => (s.d > 0 ? `${s.w}-${s.l}-${s.d}` : `${s.w}-${s.l}`);
 
+// The last matchup played, beside the points it paid. Won is green, lost is
+// pink, drawn is grey, and the two totals sit under the letter in the order
+// they belong to: this team first, then whoever they played.
+function LastResult({ week }) {
+  if (!week) return null;
+  const letter = week.won === true ? "W" : week.won === false ? "L" : "D";
+  const c = week.won === true ? V.green : week.won === false ? V.pink : V.silver;
+  return (
+    <div style={{ flexShrink: 0, width: 38, textAlign: "center" }}>
+      <div style={{
+        fontFamily: FD, fontWeight: 700, fontSize: 17, lineHeight: 1.1,
+        ...textGlow(c, 0.55),
+      }}>{letter}</div>
+      <div style={numeric("chip", {
+        fontSize: 11, color: V.text2, marginTop: 1, whiteSpace: "nowrap",
+      })}>{week.score}&ndash;{week.oppScore}</div>
+    </div>
+  );
+}
+
 function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {
   return (
     <div style={{
@@ -183,6 +204,8 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {
         </div>
       </div>
       <div style={numeric("stat", { fontSize: 28, color: V.text, flexShrink: 0, width: 56, textAlign: "center", ...textGlow(V.blue, 0.7) })}>{row.pts}</div>
+      {/* The second-half table, so this is the last week the points came off. */}
+      <LastResult week={row.weeks[row.weeks.length - 1]} />
     </div>
   );
 }

@@ -125,7 +125,24 @@ function YouAre({ row, place, total }) {
   );
 }
 
-function Row({ row, place, mine }) {
+// What the last scored race did to this place. Up is green, down is pink, and
+// a place that held still says nothing at all rather than printing a zero.
+function Move({ n }) {
+  if (!n) return null;
+  const up = n > 0;
+  const c = up ? V.green : V.pink;
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "center", gap: 2,
+      marginTop: 1,
+    }}>
+      <span style={{ fontSize: 9, lineHeight: 1, color: c }}>{up ? "\u25B2" : "\u25BC"}</span>
+      <span style={numeric("chip", { fontSize: 12, color: c })}>{Math.abs(n)}</span>
+    </div>
+  );
+}
+
+function Row({ row, place, mine, move }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 8,
@@ -133,7 +150,10 @@ function Row({ row, place, mine }) {
       background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
       border: `1px solid ${mine ? V.blue : V.border}`,
     }}>
-      <div style={numeric("stat", { fontSize: 21, color: V.text2, flexShrink: 0 })}>P{place}</div>
+      <div style={{ flexShrink: 0, textAlign: "center" }}>
+        <div style={numeric("stat", { fontSize: 21, color: V.text2 })}>P{place}</div>
+        <Move n={move} />
+      </div>
       <Face name={row.name} photo={row.photo} size={42} />
 
       {/* Who they are. */}
@@ -178,7 +198,25 @@ export default function PlayersPage({ currentUser }) {
         ]).then(rs => rs.map(r => r.data || []));
 
         const rows = buildPlayerTable({ players, teams, races, scores });
-        setState({ loading: false, rows, place: placesBy(rows, r => r.avg) });
+        const place = placesBy(rows, r => r.avg);
+
+        // Where everyone stood before the last scored race, so the row can say
+        // what that race moved. The same table built without it: two orders out
+        // of one set of rules rather than a second copy of the ranking.
+        const roundOf = Object.fromEntries(races.map(r => [r.id, r.round]));
+        const scoredIds = [...new Set(scores.map(s => s.race_id))]
+          .filter(id => roundOf[id] != null).sort((a, b) => roundOf[a] - roundOf[b]);
+        // One scored race is nothing to have moved from. The table before it has
+        // all 48 level on nought, so everybody would read as climbing.
+        const move = {};
+        if (scoredIds.length > 1) {
+          const lastId = scoredIds[scoredIds.length - 1];
+          const wasPlace = placesBy(
+            buildPlayerTable({ players, teams, races, scores: scores.filter(s => s.race_id !== lastId) }),
+            r => r.avg);
+          rows.forEach(r => { move[r.id] = (wasPlace[r.id] || place[r.id]) - place[r.id]; });
+        }
+        setState({ loading: false, rows, place, move });
       } catch (e) {
         console.error(e);
         setState({ loading: false, error: true });
@@ -191,7 +229,7 @@ export default function PlayersPage({ currentUser }) {
   if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
   if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Standings did not load.</div>;
 
-  const { rows, place } = state;
+  const { rows, place, move } = state;
   const me = rows.find(r => r.name === currentUser);
 
   return (
@@ -202,7 +240,8 @@ export default function PlayersPage({ currentUser }) {
         <YouAre row={me} place={me ? place[me.id] : 0} total={rows.length} />
 
         {rows.map(r => (
-          <Row key={r.id} row={r} place={place[r.id]} mine={me && r.id === me.id} />
+          <Row key={r.id} row={r} place={place[r.id]} mine={me && r.id === me.id}
+               move={move[r.id]} />
         ))}
 
         <div style={body("bodySm", { color: V.text2, textAlign: "center", padding: "6px 0 0" })}>

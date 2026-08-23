@@ -1762,7 +1762,7 @@ const MINE = V.green, THEIRS = V.pink, DIVIDE = V.blue;
 // Where the BOX BOX points went. It is six of swing and it is already inside
 // the two numbers above, so the only question this answers is which team took
 // it, and the box is that team's colour.
-function BoxBoxScore({ myTeam, opp, bb, under, boxBox, scored = true }) {
+function BoxBoxScore({ myTeam, opp, bb, under, boxBox, seats, scored = true }) {
   const line = boxBox && boxBox.line, stop = boxBox && boxBox.stop;
   if (line == null) return null;
   // Undecided is blue, the same blue as the line, because blue is the divider
@@ -1876,6 +1876,35 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, scored = true }) {
         <div style={{ position: "absolute", left: 0, right: 0, top: AXIS,
                       height: 2, borderRadius: 2, background: V.border2 }} />
         {TICKS.map(t => <Tick key={t} v={t} color={V.border2} />)}
+        {/* Every guess in the matchup, on the scale it was made against: green
+            ours, pink theirs. The line is the average of the four, so these are
+            what pulled the line to where it sits. Drawn before the line and the
+            stop, which paint over them: those two are the mechanic, and a guess
+            is only an input to the average.
+
+            Two people on the same tenth stack into one dot and the pair reads
+            as a single guess, which is the whole reason round 9 is the fixture:
+            Andrew and Coolidge both called 2.0. Coincident guesses spread a few
+            pixels either side of the value they share, so a pair reads as a
+            pair and still reads as one call. */}
+        {(() => {
+          const g = (seats || []).filter(s => s.pick && typeof s.pick.pitGuess === "number");
+          const at = {};
+          g.forEach(s => { (at[s.pick.pitGuess] = at[s.pick.pitGuess] || []).push(s.id); });
+          return g.map(s => {
+            const gc = s.ours ? MINE : THEIRS;
+            const share = at[s.pick.pitGuess];
+            const off = (share.indexOf(s.id) - (share.length - 1) / 2) * 6;
+            return (
+              <div key={s.id} title={`${s.name} ${s.pick.pitGuess.toFixed(1)}s`} style={{
+                position: "absolute", left: `${pct(s.pick.pitGuess)}%`, top: AXIS - 3.5,
+                width: 9, height: 9, marginLeft: off - 4.5, borderRadius: 5,
+                background: gc, border: "2px solid #000", boxSizing: "border-box",
+                boxShadow: `0 0 6px ${gc}`,
+              }} />
+            );
+          });
+        })()}
         <Tick v={line} color={DIVIDE} wide />
         <Value v={line} text={line.toFixed(2)} color={DIVIDE} />
         {stop != null && <Tick v={stop} color={c} wide />}
@@ -2973,7 +3002,7 @@ function HomeLocked({ scored: scoredWeek = true }) {
             <Scoreboard myTeam={myTeam} opp={opp} under={under} scored={scored}
                         mineTotal={tot(true)} theirTotal={tot(false)} />
             <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under}
-                         boxBox={boxBox} scored={scored} />
+                         boxBox={boxBox} seats={seats} scored={scored} />
             <HandsColumns seats={seats} under={under} scored={scored}
                           driverPts={week.driverPts || {}} />
             <RootingCard seats={seats} boxBox={boxBox} />
