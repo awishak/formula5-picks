@@ -1039,10 +1039,15 @@ function PickFlow() {
     }
     setSaving(true);
     try {
+      // The top pick is the driver taken from the top pool, not whoever got
+      // dropped into P1. Writing order[0] here split the same five drivers
+      // across the wrong two columns: a midfielder listed first was scored as
+      // the top pick and the real one fell into the midfield total.
+      const topOfPool = order.find(d => pools.top.includes(d)) || order[0];
       const row = {
         player_id: playerId,
         race_id: race.id,
-        top_pick: order[0],
+        top_pick: topOfPool,
         finishing_order: order,
         best_finish: finish,
         pit_guess: needle,

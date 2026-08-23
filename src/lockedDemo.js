@@ -28,7 +28,17 @@ const LOGO = {
   tubes: "https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/fc7843e9-bf07-493f-a9bf-59c6ce2f3a21.png?t=1772436034485",
 };
 
-const pick = (order, best, guess) => ({ topPick: order[0], order, bestFinish: best, pitGuess: guess });
+// Round 9's top pool. Named once so the picks below and the pools the screen
+// reads come off the same list.
+const TOP_POOL = ["George Russell", "Lewis Hamilton", "Lando Norris"];
+
+// The top pick is the driver taken from the top pool, not whoever is listed
+// first. All four of these happen to lead with theirs, but order[0] is the rule
+// the real page got wrong, so the fixture should not teach it either.
+const pick = (order, best, guess) => ({
+  topPick: order.find(d => TOP_POOL.includes(d)) || order[0],
+  order, bestFinish: best, pitGuess: guess,
+});
 
 // A scored week. top / mid / best / order are what Admin writes per player, and
 // the total is their sum, so the columns add up to the number above them.
@@ -68,7 +78,7 @@ export function lockedDemo(kind = "all") {
       deadline: new Date(Date.now() + (open ? 39 * 3600e3 : -3600e3)).toISOString(),
       pitQuestion: "Williams' first pit stop",
     },
-    pools: { top: ["George Russell", "Lewis Hamilton", "Lando Norris"],
+    pools: { top: TOP_POOL,
              mid: ["Arvid Lindblad", "Oliver Bearman", "Isack Hadjar", "Pierre Gasly",
                    "Franco Colapinto", "Carlos Sainz", "Alex Albon"] },
     // Real logos. The demo already names two real teams, and an empty square
