@@ -59,9 +59,13 @@ export function raceTimePT(round) {
 // as the end of the round jumped the entire app to the next Grand Prix four
 // hours after picks shut.
 //
-// A round is finished when it has been scored, or when it ran more than two
-// days ago and nobody scored it. Everything else is still the current week.
-const GRACE_MS = 2 * 24 * 3600e3;
+// Scoring does not end the week either. The result is the most read screen of
+// the round and it only exists once the race is scored, so treating the score
+// as the end sent everyone to a Grand Prix a fortnight out on the Sunday
+// afternoon their own result landed.
+//
+// One rule, scored or not: a round is finished 48 hours after it started.
+const GRACE_MS = 48 * 3600e3;
 
 export const raceStartMs = (race) => {
   const iso = RACE_UTC[race.round];
@@ -72,9 +76,11 @@ export const raceStartMs = (race) => {
 export function currentRace(races, scoredIds, nowMs = Date.now()) {
   const list = [...races].sort((a, b) => a.round - b.round);
   const done = (r) => {
-    if (scoredIds && scoredIds.has && scoredIds.has(r.id)) return true;
     const t = raceStartMs(r);
-    return t != null && nowMs - t > GRACE_MS;
+    // No start time and no date is nothing to measure, so fall back to the
+    // score: an unplaceable round that has been played is over.
+    if (t == null) return !!(scoredIds && scoredIds.has && scoredIds.has(r.id));
+    return nowMs - t > GRACE_MS;
   };
   return list.find(r => !done(r)) || list[list.length - 1] || null;
 }
