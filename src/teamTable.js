@@ -117,6 +117,7 @@ export function buildTeamTable(db, { fromRound = 1, toRound = 99, seed = null } 
     return {
       id: team.id,
       name: team.name,
+      nation: team.nation != null ? team.nation : null,
       code: codeOf(team.name),
       short: shortOf(team.name),
       logo: team.logo_url,

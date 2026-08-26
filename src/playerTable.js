@@ -44,6 +44,10 @@ export function buildPlayerTable(db) {
     const t = teamOf[p.id];
     return {
       id: p.id, name: p.name, photo: p.photo_url || null,
+      // null means never chosen and "" means chose no flag. Both render as no
+      // flag; only the column knows the difference, and only the picker cares.
+      nation: p.nation != null ? p.nation : null,
+      teamNation: t && t.nation != null ? t.nation : null,
       teamId: t ? t.id : null,
       // Full names. Two teams carry a shorter display name in teams.js because
       // they are the only ones that will not fit written out.

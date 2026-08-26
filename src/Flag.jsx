@@ -107,6 +107,30 @@ const emojiFlag = code => (/^[A-Z]{2}$/.test(code)
   : null);
 
 /**
+ * A name with its flag after it.
+ *
+ * Inline rather than in a column of its own. A third of the league has not
+ * picked one, and a flag column would be a third empty holes, which reads as a
+ * bug. Inline, a missing flag is simply absence.
+ *
+ * The name truncates and the flag does not, so a long name gives way rather
+ * than pushing the flag off the row.
+ */
+export function Flagged({ name, nation, size = 17, style, gap = 7 }) {
+  return (
+    <span style={{ display: "flex", alignItems: "center", gap, minWidth: 0 }}>
+      <span style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden",
+        textOverflow: "ellipsis", ...style }}>{name}</span>
+      {nation ? (
+        <span style={{ flexShrink: 0, display: "inline-flex" }}>
+          <Flag nation={nation} size={size} />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/**
  * @param nation  a code from nationList.js: "EG", "US-TX", or "" for no flag
  * @param size    width in px; the flag keeps a 3:2 field
  * @param wave    draws it on a pole with a slow ripple, for the podium

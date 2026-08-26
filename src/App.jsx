@@ -990,6 +990,29 @@ export default function App() {
     checkPicks();
   }, [currentUser, activePage]);
 
+  // Every page starts at the top.
+  //
+  // Two things put you in the middle otherwise. The browser restores the scroll
+  // position on a reload, which it does after the page has painted, so telling
+  // it not to has to happen up front. And a page that loads its data grows
+  // after this effect runs, so scrolling once at mount lands on a page that is
+  // still short. Hence manual restoration, and a second scroll on the frame
+  // after the first.
+  //
+  // These sit ABOVE every early return in this component, and must stay there.
+  // They used to sit below the deck branches, so opening /week or /deck rendered
+  // two fewer hooks than the render before it and React threw #300, "rendered
+  // fewer hooks than expected". It only fired on a navigation, never on a cold
+  // load, which is why every check passed while the app broke on a tap.
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+  }, []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const r = requestAnimationFrame(() => window.scrollTo(0, 0));
+    return () => cancelAnimationFrame(r);
+  }, [activePage]);
+
   // The recap deck renders outside .app-wrap for the same reason the Vegas mockup
   // does: it sets its own ground and turns dark halfway, so the light theme's
   // background and bottom nav must not be underneath it.
@@ -1045,23 +1068,6 @@ export default function App() {
       />
     );
   }
-
-  // Every page starts at the top.
-  //
-  // Two things put you in the middle otherwise. The browser restores the scroll
-  // position on a reload, which it does after the page has painted, so telling
-  // it not to has to happen up front. And a page that loads its data grows
-  // after this effect runs, so scrolling once at mount lands on a page that is
-  // still short. Hence manual restoration, and a second scroll on the frame
-  // after the first.
-  useEffect(() => {
-    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
-  }, []);
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const r = requestAnimationFrame(() => window.scrollTo(0, 0));
-    return () => cancelAnimationFrame(r);
-  }, [activePage]);
 
   // The idea pages run on one fixed round and need no signed-in player, so they
   // render ahead of the name picker rather than behind it.

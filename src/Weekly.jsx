@@ -21,7 +21,7 @@ import { useState, useEffect, useMemo, useRef, Fragment } from "react";
 import { supabase } from "./supabaseClient";
 import { buildWeekly, PIT_FLOOR, PIT_CEIL } from "./weekly.js";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME, canonicalName } from "./drivers.js";
-import Flag from "./Flag.jsx";
+import Flag, { Flagged } from "./Flag.jsx";
 // The same board the home page draws, from the same file.
 import HandsColumns from "./HandsColumns.jsx";
 import { F1_TEAM_COLORS } from "./theme";
@@ -2602,12 +2602,9 @@ function StandingsTable({ rows, kind, value = r => r.pts, unit = "PTS" }) {
               {kind === "team"
                 ? <Logo src={r.logo} size={22} />
                 : <Face src={r.photo} size={22} ring={r.me ? V.amber : V.border2} />}
-              <span style={{ minWidth: 0, textAlign: "left",
-                ...body("bodySm", { fontSize: 15, color: r.me ? V.text : V.text2,
-                  fontWeight: r.me ? 700 : 400 }),
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {r.name}
-              </span>
+              <Flagged name={r.name} nation={r.nation} size={15} gap={6}
+                style={{ ...body("bodySm", { fontSize: 15,
+                  color: r.me ? V.text : V.text2, fontWeight: r.me ? 700 : 400 }) }} />
               <span style={{ textAlign: "right",
                 ...numeric("chip", { fontSize: 16, color: V.blue }),
                 ...(r.me ? textGlow(V.blue, 0.6) : {}) }}>{value(r)}</span>

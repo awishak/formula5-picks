@@ -988,7 +988,7 @@ export function buildWeekly(db, playerName, round = null) {
     return rows.slice(lo, lo + span * 2 + 1);
   };
   const indAll = sortedPlayers.map(r => ({
-    id: r.id, name: r.name, photo: r.photo,
+    id: r.id, name: r.name, photo: r.photo, nation: r.nation,
     place: indPlaces[r.id], pts: r.pts, avg: r.avg, races: r.races,
     me: r.id === me.id,
     was: placesBefore[r.id] || null,
@@ -1003,7 +1003,7 @@ export function buildWeekly(db, playerName, round = null) {
   // One either side is enough in a division of twelve. The individual table is
   // 48 deep, so that one keeps two.
   const teamAll = divRows.map((r, i) => ({
-    id: r.id, name: r.name, code: r.code, logo: r.logo,
+    id: r.id, name: r.name, code: r.code, logo: r.logo, nation: r.nation,
     place: i + 1, pts: r.pts, w: r.w, l: r.l, d: r.d,
     me: myRow && r.id === myRow.id, move: null,
   }));

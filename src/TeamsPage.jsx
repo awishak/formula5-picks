@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
+import { Flagged } from "./Flag.jsx";
 import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { displayOf } from "./teams";
@@ -105,10 +106,10 @@ function YourTeam({ row, season, place, avgRank, teammate }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {row.logo && <img src={row.logo} alt="" style={{ width: 42, height: 42, objectFit: "contain", flexShrink: 0 }} />}
-            <div style={display("h3", {
-              fontSize: "clamp(17px, 5.1vw, 23px)", lineHeight: 1.3, color: V.text,
-              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-            })}>{displayOf(row.name)}</div>
+            <Flagged name={displayOf(row.name)} nation={row.nation} size={19}
+              style={display("h3", {
+                fontSize: "clamp(17px, 5.1vw, 23px)", lineHeight: 1.3, color: V.text,
+              })} />
           </div>
           <div style={body("bodySm", { fontSize: 15, color: V.text2, lineHeight: 1.55, marginTop: 8, whiteSpace: "nowrap" })}>
             Overall: <strong style={{ color: V.text }}>P{place}</strong> in {DIV_NAME[row.division] || "the league"}
@@ -179,10 +180,11 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {
           that supports it goes on the second. That is what gives a full team
           name the room to stay whole. */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={display("h3", {
-          fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text,
-          letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-        })}>{displayOf(row.name)}</div>
+        <Flagged name={displayOf(row.name)} nation={row.nation} size={16}
+          style={display("h3", {
+            fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text,
+            letterSpacing: "0.01em",
+          })} />
         <div style={{
           display: "flex", gap: 8, alignItems: "baseline", marginTop: 1,
           whiteSpace: "nowrap", overflow: "hidden",
@@ -221,7 +223,7 @@ export default function TeamsPage({ currentUser }) {
           supabase.from("races").select("*"),
           supabase.from("scores").select("*"),
           supabase.from("schedule").select("*"),
-          supabase.from("players").select("id,name,photo_url"),
+          supabase.from("players").select("id,name,photo_url,nation"),
         ]).then(rs => rs.map(r => r.data || []));
 
         const db = { teams, races, scores, schedule };

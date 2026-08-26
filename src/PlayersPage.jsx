@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
+import Flag, { Flagged } from "./Flag.jsx";
 import { V, FM, FD, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { ordinal } from "./teamTable";
@@ -81,13 +82,13 @@ function YouAre({ row, place, total }) {
           the header, and this box has four lines and a trophy case to fit. */}
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={display("h3", {
-            // The trophy case takes a fixed column, so the name is what gives
-            // on a narrow phone rather than being clipped.
-            fontSize: "clamp(18px, 5.1vw, 23px)",
-            lineHeight: 1.3, color: V.text,
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-          })}>{row.name}</div>
+          <Flagged name={row.name} nation={row.nation} size={19}
+            style={display("h3", {
+              // The trophy case takes a fixed column, so the name is what gives
+              // on a narrow phone rather than being clipped.
+              fontSize: "clamp(18px, 5.1vw, 23px)",
+              lineHeight: 1.3, color: V.text,
+            })} />
           {/* Place first on every line, since that is the comparison. */}
           <Stat k="Overall" place={place} v={`${row.avg.toFixed(1)} avg`} />
           {row.lastPlace != null && (
@@ -158,10 +159,11 @@ function Row({ row, place, mine, move }) {
 
       {/* Who they are. */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={display("h3", {
-          fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text,
-          letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-        })}>{row.name}</div>
+        <Flagged name={row.name} nation={row.nation} size={16}
+          style={display("h3", {
+            fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text,
+            letterSpacing: "0.01em",
+          })} />
         <div style={{
           fontFamily: FD, fontWeight: 600, fontSize: TEAM_SIZE, letterSpacing: "0.01em",
           textTransform: "uppercase", color: V.text2, marginTop: 1, minWidth: 0,
@@ -191,7 +193,7 @@ export default function PlayersPage({ currentUser }) {
     (async () => {
       try {
         const [players, teams, races, scores] = await Promise.all([
-          supabase.from("players").select("id,name,photo_url"),
+          supabase.from("players").select("id,name,photo_url,nation"),
           supabase.from("teams").select("*"),
           supabase.from("races").select("*"),
           supabase.from("scores").select("*"),

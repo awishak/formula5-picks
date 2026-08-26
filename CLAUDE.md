@@ -142,6 +142,18 @@ Identical output lengths across smoke cases means the props are not actually dri
 Adding a state to VegasHome means adding it to the loop in scripts/smoke.jsx.
 `waiting` was added 2026-08-26 and the run passed at 20 without ever rendering it.
 
+**Every hook in App.jsx must sit above every early return, and there are five of
+those returns.** The two scroll effects sat below the deck branches, so tapping
+into /week rendered two fewer hooks than the render before it and React threw
+#300, "rendered fewer hooks than expected". Shipped 2026-08-26 and broke the app
+on a tap.
+
+Nothing caught it. A cold load of any URL renders a consistent set of hooks, so
+loading each page in turn proves nothing; the mismatch needs `activePage` to
+change WITHOUT a remount. **`npm run check:nav` taps through the app the way a
+person does** and is the only check that sees this class of bug. Reloading is
+not tapping.
+
 The smoke runs prove a card renders and differs across players. They cannot see
 that a chart drew the wrong bars. A renumber on 2026-08-24 widened a `stage <=`
 test so the matchup drew 11 bars instead of four, and every check passed; only
