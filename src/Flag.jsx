@@ -1,11 +1,14 @@
 // A flag, drawn rather than fetched or set as an emoji.
 //
-// Drawn because the deck needs one at 16px on a dark card and again at 34px
-// waving over a podium, and because an emoji flag renders as two letters on
-// some platforms and as somebody else's artwork on the rest.
+// Three sources, best first:
 //
-// Nationality comes from nations.js. Anything without an entry there flies the
-// default, so a new player never renders a hole.
+//   1. art in this file        the 15 simple ones, theme-consistent and animatable
+//   2. /flags/us-xx.svg        states, D.C. and territories, real artwork as files
+//   3. the emoji flag          every other country
+//   4. the code on a plate     nothing should reach this, but a hole is worse
+//
+// States are files rather than anything bundled because a state flag is a seal
+// on blue: Pennsylvania alone is 119KB.
 import { NATIONS, DEFAULT_NATION } from "./nations.js";
 import { NAME_OF as NATION_NAME } from "./nationList.js";
 
@@ -130,7 +133,24 @@ export default function Flag({ nation, size = 20, wave = false, title }) {
             width: size, textAlign: "center" }}>{emoji}</span>
       );
     }
-    // A state, or anything else with no artwork: its own code on a plate.
+    // States, D.C. and the territories: real artwork, served as a file.
+    //
+    // A file rather than a bundled component because a state flag is a seal on
+    // blue. Pennsylvania is 119KB and the 56 together are 2.5MB, which nobody
+    // should download to see one of them. Extracted by scripts/state-flags.mjs.
+    if (/^US-[A-Z]{2}$/.test(want)) {
+      return (
+        <span title={label} style={{ display: "inline-block", lineHeight: 0 }}>
+          <img src={`/flags/${want.toLowerCase()}.svg`} alt={label}
+            className={wave ? "v-wave" : undefined}
+            style={{ width: size, height: h, objectFit: "cover", display: "block",
+              borderRadius: 1.5, background: "#1d1d2b",
+              border: "1px solid rgba(255,255,255,0.28)", boxSizing: "border-box" }} />
+        </span>
+      );
+    }
+
+    // Anything else with no artwork at all: its own code on a plate.
     const short = want.replace(/^US-/, "");
     return (
       <span title={label} aria-label={label}

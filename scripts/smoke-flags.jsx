@@ -51,6 +51,21 @@ for (const code of DRAWN) {
 }
 ok(`all ${DRAWN.length} drawn flags emit valid paths`, badPath === 0);
 
+// Every state must point at a file that exists on disk, or the picker shows a
+// broken image where a flag should be.
+import { existsSync } from "node:fs";
+let missingArt = 0;
+for (const it of [...STATES, ...TERRITORIES]) {
+  const svg = renderToString(<Flag nation={it.code} size={20} />);
+  const m = svg.match(/src="([^"]+)"/);
+  if (!m) { missingArt++; console.log(`  FAIL  ${it.code} did not render an image`); continue; }
+  if (!existsSync(`public${m[1]}`)) {
+    missingArt++;
+    console.log(`  FAIL  ${it.code} points at public${m[1]}, which is not there`);
+  }
+}
+ok(`all ${STATES.length + TERRITORIES.length} state and territory flags have a file`, missingArt === 0);
+
 console.log(`\n  countries ${COUNTRIES.length}, states ${STATES.length}, territories ${TERRITORIES.length}, groups ${GROUPS.length}`);
 console.log(`\n${failed ? "FAILED" : "OK"}  flag picker`);
 process.exit(failed ? 1 : 0);

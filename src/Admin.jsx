@@ -941,14 +941,19 @@ export default function Admin() {
       </p>
 
       {/* Tab switcher */}
-      <div style={{ display: "flex", gap: 0, marginBottom: 20, borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
+      {/* Eight tabs at flex:1 on a phone gives each one 46px, which turns
+          "Missing Picks" into two squashed lines and makes the last tab hard to
+          hit. They scroll instead, each sized to its own label. */}
+      <div className="v-scroll" style={{ display: "flex", gap: 6, marginBottom: 20,
+        overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
         {[{ id: "scoring", label: "Score Race" }, { id: "missing", label: "Missing Picks" }, { id: "drivers", label: "Driver Pools" }, { id: "news", label: "News" }, { id: "export", label: "Export" }, { id: "logos", label: "Logos" }, { id: "photos", label: "Photos" }, { id: "flags", label: "Flags" }].map(tab => (
           <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{
-            flex: 1, padding: "10px 0", border: "none",
+            flexShrink: 0, padding: "10px 14px", borderRadius: 8,
+            border: `1px solid ${adminTab === tab.id ? BLUEDARK : BORDER}`,
             background: adminTab === tab.id ? BLUEDARK : "#fff",
             fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase",
             letterSpacing: "0.06em", color: adminTab === tab.id ? "#fff" : TEXT2,
-            cursor: "pointer"
+            whiteSpace: "nowrap", cursor: "pointer"
           }}>{tab.label}</button>
         ))}
       </div>

@@ -114,11 +114,19 @@ Empty is "chose no flag", which is an answer, and draws nothing.
 Codes are ISO 3166-1 alpha-2, with `US-XX` for states and territories. AL is
 Albania; Alabama is US-AL, and the prefix is what keeps them apart.
 
-Artwork, best first: the 15 hand-drawn in Flag.jsx, then the emoji flag, then
-the code on a plate. Emoji is the only emoji in the app and it is a picture
-rather than writing; it was checked, not assumed, by counting colours in a
-rendered glyph. **Proper US state flags need a dependency** and none has been
-added: they are seals on blue and cannot be drawn from primitives.
+Artwork, best first: the 15 hand-drawn in Flag.jsx, then `/flags/us-xx.svg` for
+states, then the emoji flag for every other country, then the code on a plate,
+which nothing should reach.
+
+Emoji is the only emoji in the app and it is a picture rather than writing; it
+was checked, not assumed, by counting colours in a rendered glyph.
+
+**State flags are files, not bundled.** A state flag is a seal on blue:
+Pennsylvania is 119KB and the 56 together are 2.5MB, which nobody should
+download to see one of them. `scripts/state-flags.mjs` extracts them once out of
+the `us-state-flags` devDependency into `public/flags/` and they are committed;
+nothing at runtime imports the package and the three production dependencies are
+unchanged. Re-run the script only if a flag changes.
 
 A path in `ART` carries its own leading M. Prefixing another gave `MM0,0` and
 every path-drawn flag emitted invalid SVG for a week, unseen because the only
