@@ -10,10 +10,11 @@
     "smoke": "esbuild scripts/smoke.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke.cjs --loader:.jsx=jsx --jsx=automatic --log-level=error && node node_modules/.cache/smoke.cjs",
     "smoke:recap": "esbuild scripts/smoke-recap.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke-recap.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error && node node_modules/.cache/smoke-recap.cjs",
     "smoke:drivers": "esbuild scripts/smoke-drivers.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke-drivers.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error --define:import.meta.env='{\"VITE_SUPABASE_URL\":\"http://localhost:54321\",\"VITE_SUPABASE_ANON_KEY\":\"smoke-test-key\"}' && node node_modules/.cache/smoke-drivers.cjs",
-    "smoke:all": "npm run smoke && npm run smoke:recap && npm run smoke:drivers && npm run smoke:weekly",
+    "smoke:all": "npm run smoke && npm run smoke:recap && npm run smoke:drivers && npm run smoke:weekly && npm run smoke:flags",
     "peek": "esbuild scripts/peek.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/peek.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error && node node_modules/.cache/peek.cjs",
     "smoke:weekly": "esbuild scripts/smoke-weekly.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke-weekly.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error --define:import.meta.env='{\"VITE_SUPABASE_URL\":\"http://localhost:54321\",\"VITE_SUPABASE_ANON_KEY\":\"smoke-test-key\"}' && node node_modules/.cache/smoke-weekly.cjs",
-    "check:weekly": "node scripts/check-weekly.mjs"
+    "check:weekly": "node scripts/check-weekly.mjs",
+    "smoke:flags": "esbuild scripts/smoke-flags.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke-flags.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error && node node_modules/.cache/smoke-flags.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",

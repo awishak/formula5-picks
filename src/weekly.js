@@ -22,6 +22,9 @@ import { codeOf, shortOf } from "./teams.js";
 // Finishing orders and pool lists are external spellings, so they resolve
 // through the alias map rather than by string equality.
 import { canonicalName } from "./drivers.js";
+// Flags come from the row, falling back to the static map and then the default,
+// so a player who has picked one wins over anything hardcoded.
+import { nationOf as staticNationOf, teamNationOf as staticTeamNationOf } from "./nations.js";
 import { buildPlayerTable, placesBy } from "./playerTable.js";
 
 // The pit guess input runs 1.5 to 4.5. Card 5 asks what the best legal guess
@@ -127,6 +130,13 @@ export function buildWeekly(db, playerName, round = null) {
     .forEach((n, i) => { finishPos[canonicalName(n)] = i + 1; });
 
   const nameOf = {}; players.forEach(p => { nameOf[p.id] = p.name; });
+  // null means never chosen, which falls through to the map. "" means chose no
+  // flag, which is an answer and must not fall through.
+  const nationById = {};
+  players.forEach(p => {
+    nationById[p.id] = p.nation != null ? p.nation : staticNationOf(p.name);
+  });
+  const nationOfTeam = t => (t && t.nation != null ? t.nation : staticTeamNationOf(t ? t.name : ""));
   const photoOf = {}; players.forEach(p => { photoOf[p.id] = p.photo_url || null; });
   const teamById = {}; teams.forEach(t => { teamById[t.id] = t; });
   const scoreOf = {}; roundScores.forEach(s => { scoreOf[s.player_id] = s; });
@@ -187,6 +197,7 @@ export function buildWeekly(db, playerName, round = null) {
     .map(s => ({
       id: s.player_id, name: nameOf[s.player_id], photo: photoOf[s.player_id],
       pts: INDIVIDUAL(s),
+      nation: nationById[s.player_id],
       team: teamOfPlayer[s.player_id] ? teamOfPlayer[s.player_id].name : null,
       teamLogo: teamOfPlayer[s.player_id] ? teamOfPlayer[s.player_id].logo_url : null,
     }))
@@ -837,6 +848,7 @@ export function buildWeekly(db, playerName, round = null) {
   const leagueScores = teamRank.map(t => ({
     id: t.id, name: t.name, code: codeOf(t.name), v: t.v,
     logo: (teamById[t.id] || {}).logo_url || null,
+    nation: nationOfTeam(teamById[t.id]),
     drivers: teamDriverPts[t.id] || 0,
     me: t.id === myTeam.id, opp: t.id === oppTeam.id,
     beat: myTotal > t.v, lostTo: myTotal < t.v,
@@ -1048,5 +1060,6 @@ function teamCard(t) {
   // The code and the short name are what fit under a bar. Codes are part of the
   // URL scheme, so they come from teams.js rather than being cut from the name.
   return { id: t.id, name: t.name, logo: t.logo_url || null,
-           code: codeOf(t.name), short: shortOf(t.name) };
+           code: codeOf(t.name), short: shortOf(t.name),
+           nation: t.nation != null ? t.nation : staticTeamNationOf(t.name) };
 }

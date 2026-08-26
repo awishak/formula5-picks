@@ -7,6 +7,7 @@
 // Nationality comes from nations.js. Anything without an entry there flies the
 // default, so a new player never renders a hole.
 import { NATIONS, DEFAULT_NATION } from "./nations.js";
+import { NAME_OF as NATION_NAME } from "./nationList.js";
 
 // Each flag is a list of plain shapes on a 30x20 field, so they all share one
 // aspect ratio and one drawing routine.
@@ -93,29 +94,76 @@ const ART = {
   ],
 };
 
+// A country code as its emoji flag. Two regional indicator letters, which every
+// phone in this league renders as real artwork.
+//
+// This is the only emoji in the app and it is a picture, not writing: there is
+// no other way to get 266 flags without shipping 266 files or a dependency.
+const emojiFlag = code => (/^[A-Z]{2}$/.test(code)
+  ? String.fromCodePoint(...[...code].map(ch => 0x1f1e6 + ch.charCodeAt(0) - 65))
+  : null);
+
 /**
- * @param nation  two-letter code from nations.js
+ * @param nation  a code from nationList.js: "EG", "US-TX", or "" for no flag
  * @param size    width in px; the flag keeps a 3:2 field
  * @param wave    draws it on a pole with a slow ripple, for the podium
+ *
+ * Three ways to draw one, best first: art in this file, then the emoji flag,
+ * then the code on a chip. US states have no emoji, so they land on the chip
+ * until somebody supplies artwork.
  */
 export default function Flag({ nation, size = 20, wave = false, title }) {
-  const code = ART[nation] ? nation : DEFAULT_NATION;
-  const art = ART[code];
+  const want = nation == null ? DEFAULT_NATION : nation;
   const h = (size / 30) * 20;
+
+  // No flag is a real choice, and it draws nothing.
+  if (want === "") return null;
+
+  if (!ART[want]) {
+    const emoji = emojiFlag(want);
+    const label = title || NATION_NAME[want] || want;
+    if (emoji) {
+      return (
+        <span title={label} aria-label={label} role="img"
+          className={wave ? "v-wave" : undefined}
+          style={{ display: "inline-block", fontSize: h * 1.12, lineHeight: 1,
+            width: size, textAlign: "center" }}>{emoji}</span>
+      );
+    }
+    // A state, or anything else with no artwork: its own code on a plate.
+    const short = want.replace(/^US-/, "");
+    return (
+      <span title={label} aria-label={label}
+        className={wave ? "v-wave" : undefined}
+        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
+          width: size, height: h, borderRadius: 2, background: "#1d1d2b",
+          border: "1px solid rgba(255,255,255,0.22)",
+          fontFamily: "'Encode Sans Semi Condensed', sans-serif", fontWeight: 700,
+          fontSize: Math.max(8, h * 0.62), letterSpacing: "0.02em", color: "#a8a8c0",
+        }}>{short}</span>
+    );
+  }
+
+  const code = want;
+  const art = ART[code];
   const id = `flagclip-${code}-${wave ? "w" : "s"}`;
 
   const shapes = art.map((s, i) => {
     if (s.r) return <rect key={i} x={s.r[0]} y={s.r[1]} width={s.r[2]} height={s.r[3]} fill={s.f} />;
     if (s.c) return <circle key={i} cx={s.c[0]} cy={s.c[1]} r={s.c[2]} fill={s.f || "none"}
       stroke={s.s} strokeWidth={s.w} />;
-    return <path key={i} d={`M${s.p.replace(/M/g, "M").replace(/ (\d)/g, " L$1")}`} fill={s.f || "none"}
+    // The path data already starts with its own M. Prefixing another gave
+    // "MM0,0" and every flag drawn from paths emitted invalid SVG. Implicit
+    // linetos become explicit so the shorthand in ART stays readable.
+    return <path key={i} d={s.p.replace(/ (\d)/g, " L$1")} fill={s.f || "none"}
       stroke={s.s} strokeWidth={s.w} />;
   });
 
   return (
-    <span style={{ display: "inline-block", lineHeight: 0 }} title={title || NATIONS[code].name}>
+    <span style={{ display: "inline-block", lineHeight: 0 }}
+      title={title || NATION_NAME[code] || code}>
       <svg width={size} height={h} viewBox="0 0 30 20" role="img"
-        aria-label={NATIONS[code].name}
+        aria-label={title || NATION_NAME[code] || code}
         className={wave ? "v-wave" : undefined}
         style={{ borderRadius: 1.5, overflow: "hidden", display: "block" }}>
         <defs>

@@ -24,7 +24,6 @@ import { DRIVER_HEADSHOTS, TEAM_BY_NAME, canonicalName } from "./drivers.js";
 import Flag from "./Flag.jsx";
 // The same board the home page draws, from the same file.
 import HandsColumns from "./HandsColumns.jsx";
-import { nationOf, teamNationOf } from "./nations.js";
 import { F1_TEAM_COLORS } from "./theme";
 import {
   V, FM, FD, FN, FB, TYPE, display, numeric, body, label,
@@ -1337,7 +1336,7 @@ const Podium = ({ top3, meId, topTeam }) => {
                   </span>
                 </>
               )}
-              <Flag nation={nationOf(p.name)} size={first ? 32 : 24} wave />
+              <Flag nation={p.nation} size={first ? 32 : 24} wave />
               {first && <Cup color={c} size={34} />}
               <Face src={p.photo} size={first ? 64 : 48} ring={mine ? V.amber : c}
                 width={first ? 3.5 : 2.5} />
@@ -1366,7 +1365,7 @@ const Podium = ({ top3, meId, topTeam }) => {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center",
           gap: 8, marginTop: 9 }}>
           <span style={{ ...label({ fontSize: 10, color: V.text3 }) }}>TOP TEAM</span>
-          <Flag nation={teamNationOf(topTeam.name)} size={20} />
+          <Flag nation={topTeam.nation} size={20} />
           <Logo src={topTeam.logo} size={26} />
           <span style={{ ...body("bodySm", { fontSize: 14, color: V.text, fontWeight: 600 }),
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>

@@ -5,6 +5,104 @@ import NewsAdmin from "./NewsAdmin.jsx";
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, FD, FB, F1_TEAM_COLORS } from "./theme";
 
+import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
+import { NAME_OF as NATION_NAME } from "./nationList.js";
+
+// Every player's flag and every team's flag, in one place, for the one person
+// who can set anybody's. Players set their own on the More page; this is the
+// override and the way a team gets one before either teammate bothers.
+function FlagsAdmin() {
+  const [players, setPlayers] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [picking, setPicking] = useState(null);   // { kind, row }
+  const [err, setErr] = useState(null);
+  const [q, setQ] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const [{ data: p, error: pe }, { data: t, error: te }] = await Promise.all([
+          supabase.from("players").select("id,name,nation").order("name"),
+          supabase.from("teams").select("id,name,nation").order("name"),
+        ]);
+        if (pe) throw pe;
+        if (te) throw te;
+        if (!alive) return;
+        setPlayers(p || []);
+        setTeams(t || []);
+      } catch (e) { if (alive) setErr(String(e.message || e)); }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  // Always .select() on a write. A policy mismatch swallows an update with no
+  // error otherwise, which is how a change gets lost here silently.
+  const save = async (kind, row, code) => {
+    const table = kind === "team" ? "teams" : "players";
+    try {
+      const { data, error } = await supabase.from(table)
+        .update({ nation: code }).eq("id", row.id).select();
+      if (error) throw error;
+      if (!data || !data.length) throw new Error("nothing was written");
+      const set = kind === "team" ? setTeams : setPlayers;
+      set(list => list.map(x => (x.id === row.id ? { ...x, nation: code } : x)));
+      setErr(null);
+    } catch (e) { setErr(String(e.message || e)); }
+  };
+
+  const hit = row => !q.trim() ||
+    row.name.toLowerCase().includes(q.trim().toLowerCase()) ||
+    (NATION_NAME[row.nation] || "").toLowerCase().includes(q.trim().toLowerCase());
+  const shownPlayers = players.filter(hit);
+  const shownTeams = teams.filter(hit);
+  const unsetP = players.filter(p => p.nation == null).length;
+  const unsetT = teams.filter(t => t.nation == null).length;
+
+  if (err && /column .* does not exist/.test(err)) return (
+    <div style={{ padding: 16, background: "#fff", borderRadius: 10, border: `1px solid ${BORDER}` }}>
+      <p style={{ fontFamily: FB, fontSize: 14, color: TEXT }}>
+        Flags are not switched on yet. Run <code>scripts/nations.sql</code>, which adds a
+        nullable <code>nation</code> column to players and teams and changes nothing else.
+      </p>
+    </div>
+  );
+
+  const Section = ({ title, rows, kind, unset }) => (
+    <div style={{ marginBottom: 22 }}>
+      <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, textTransform: "uppercase",
+        letterSpacing: "0.06em", color: TEXT2, margin: "0 0 8px" }}>
+        {title} · {rows.length} shown · {unset} without a flag
+      </p>
+      <div style={{ display: "grid", gap: 6 }}>
+        {rows.map(row => (
+          <div key={row.id} style={{ background: "#0e0e17", borderRadius: 12 }}>
+            <FlagRow who={row.name} nation={row.nation}
+              onOpen={() => setPicking({ kind, row })} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <input value={q} onChange={e => setQ(e.target.value)}
+        placeholder="Filter by name or flag"
+        style={{ width: "100%", padding: "10px 12px", borderRadius: 8, marginBottom: 16,
+          border: `1px solid ${BORDER}`, fontFamily: FB, fontSize: 14 }} />
+      {err && <p style={{ fontFamily: FB, fontSize: 13, color: RED, marginBottom: 12 }}>{err}</p>}
+      <Section title="Players" rows={shownPlayers} kind="player" unset={unsetP} />
+      <Section title="Teams" rows={shownTeams} kind="team" unset={unsetT} />
+      {picking && (
+        <FlagPicker title={`${picking.row.name}'s flag`} value={picking.row.nation}
+          onPick={code => save(picking.kind, picking.row, code)}
+          onClose={() => setPicking(null)} />
+      )}
+    </div>
+  );
+}
+
 // F1 points by finishing position
 const F1_PTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
 
@@ -844,7 +942,7 @@ export default function Admin() {
 
       {/* Tab switcher */}
       <div style={{ display: "flex", gap: 0, marginBottom: 20, borderRadius: 10, overflow: "hidden", border: `1px solid ${BORDER}` }}>
-        {[{ id: "scoring", label: "Score Race" }, { id: "missing", label: "Missing Picks" }, { id: "drivers", label: "Driver Pools" }, { id: "news", label: "News" }, { id: "export", label: "Export" }, { id: "logos", label: "Logos" }, { id: "photos", label: "Photos" }].map(tab => (
+        {[{ id: "scoring", label: "Score Race" }, { id: "missing", label: "Missing Picks" }, { id: "drivers", label: "Driver Pools" }, { id: "news", label: "News" }, { id: "export", label: "Export" }, { id: "logos", label: "Logos" }, { id: "photos", label: "Photos" }, { id: "flags", label: "Flags" }].map(tab => (
           <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{
             flex: 1, padding: "10px 0", border: "none",
             background: adminTab === tab.id ? BLUEDARK : "#fff",
@@ -856,6 +954,8 @@ export default function Admin() {
       </div>
 
       {adminTab === "news" && <NewsAdmin />}
+
+      {adminTab === "flags" && <FlagsAdmin />}
 
       {/* MISSING PICKS TAB */}
       {adminTab === "missing" && (() => {

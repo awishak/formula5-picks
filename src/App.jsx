@@ -1151,7 +1151,7 @@ export default function App() {
             })()}
           />
         )}
-        {activePage === "home" && <MorePage onNavigate={navigateTo} />}
+        {activePage === "home" && <MorePage onNavigate={navigateTo} currentUser={currentUser} />}
         {/* The old home page: next race, season summary, week by week and the
             league news. Unrouted while the second half is being built. */}
         {activePage === "home-v1" && <HomePage currentUser={currentUser} onNavigate={navigateTo} onChangeName={handleChangeName} onSelectName={handleSelectName} />}
