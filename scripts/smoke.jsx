@@ -6,7 +6,10 @@ import VegasHome, { SNAP_FOR_SMOKE } from "../src/VegasHome.jsx";
 
 const cases = [];
 for (const tab of ["home", "kit"]) {
-  for (const state of ["open", "submitted", "locked", "live", "final"]) {
+  // "waiting" is the week between a race being scored and the next pools being
+  // drawn. A state missing from this loop is a state nobody renders until a
+  // player hits it on a phone.
+  for (const state of ["waiting", "open", "submitted", "locked", "live", "final"]) {
     for (const lapIdx of [0, 1]) {
       cases.push({ tab, state, lapIdx });
     }

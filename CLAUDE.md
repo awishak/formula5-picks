@@ -1,6 +1,6 @@
 # Formula 5 (F5)
 
-Fantasy Formula 1 pick'em league. Custom web app I built and maintain. This file is the context for working on the codebase. Recap workflow lives in docs/recaps.md. Team lore lives in docs/F5_Team_Lore.md.
+Fantasy Formula 1 pick'em league. Custom web app I built and maintain. This file is the context for working on the codebase. Recap workflow lives in docs/recaps.md. Team lore lives in docs/F5_Team_Lore.md. A live in-race /schedule was designed and parked 2026-08-23; docs/live-page.md holds it.
 
 ## Stack
 
@@ -32,8 +32,15 @@ theme.vegas.js: Vegas tokens. Type scale with a 13px floor, palette, neon glow h
 MorePage.jsx: the fifth tab at /. A holding page: coming soon, and a link to Admin. The old home page (next race, season summary, week by week, league news) is still in App.jsx, unrouted, at ?page=home-v1. The news itself lives on in src/news.js.
 ViewingAs.jsx: who you are looking at the app as. Top right of every page, rendered by the app shell. Used to live inside HomePage, so switching player meant going home first.
 VegasNav.jsx: the bottom nav on the Vegas look. Five starting lights, same five slots and the same order as the old one so the positions stay where people's thumbs expect. Home, Teams, Picks, Players, Schedule. The middle light reports the week rather than the route: green when picks are in, pink and pulsing when they are not.
-Recap.jsx: the 18-card first-half recap deck. Live at /deck.
+Recap.jsx: the 18-card first-half recap deck. No longer routed and no longer the gate; it opens at `?page=recap`. Superseded by the weekly deck.
+weekly.js: one player's week, computed. Pure, no React and no Supabase, the same shape as playerTable.js and teamTable.js. buildWeekly(db, name, round) returns every card's data plus a `context` block of league-wide stats. Mirrors scoreRace() in Admin.jsx; if the two disagree the deck is wrong.
+Weekly.jsx: the weekly deck itself, four cards and nine presses, Vegas throughout. Computed in the browser from the round's rows, so a deck exists the moment Admin writes the scores and changes if a round is rescored. WeeklyDeck is the presentational half, split out so the smoke script can render all 48 without a network.
+HandsColumns.jsx: the four-hand board, lifted out of VegasHome.jsx so the home page and the weekly deck draw the same board from the same code. A driver cancels COPY FOR COPY, not driver for driver.
+nations.js: nationality for players and teams. Everybody is American until told otherwise; overrides are one-line edits to PLAYER_NATIONS and TEAM_NATIONS.
+Flag.jsx: flags drawn from plain shapes, 15 nations, any size, with a wave for the podium. Not images and not emoji, because an emoji flag renders as two letters on some platforms.
 scripts/smoke.jsx: renders every VegasHome branch through react-dom/server and exits non-zero on a runtime error. Run with npm run smoke.
+scripts/smoke-weekly.jsx: 384 renders of the weekly deck, every card at every press for all 48, checking each renders distinctly. npm run smoke:weekly. Reads scripts/weekly-fixture.json, a committed snapshot of a real round; regenerate with scripts/weekly-fixture.mjs.
+scripts/check-weekly.mjs: loads every card and press in a real browser and fails on any console error. npm run check:weekly, with npm run dev in another shell. **The bundled smoke run is not the browser**: esbuild reorders module-level constants, so a `const` read before its declaration passes smoke and throws on load. That happened on 2026-08-24 and this is what catches it.
 scripts/smoke-recap.jsx: 864 renders of the deck, and checks each card differs across players by content hash. npm run smoke:recap.
 scripts/peek.jsx: prints the rendered TEXT of recap cards so copy gets read as copy. npm run peek.
 scripts/schedule2.mjs: draws and checks the second-half round robin, writes schedule2.sql and recap/schedule2.json.
@@ -41,11 +48,64 @@ public/check.html, public/fit.html, public/scroll.html, public/drive.html, publi
 
 All components live in src/. Recaps are static HTML in public/recaps/, surfaced via the recap button in App.jsx and Schedule.jsx.
 
+## The weekly deck
+
+**Live as the gate since 2026-08-26.** The first time you open the app after a
+race is scored you get your own deck, once, and closing it is remembered under
+`f5_week_seen_r{round}_{name}` in localStorage. It replaced the first-half recap
+deck in that slot.
+
+The trigger is the round being **scored**, not picks being open: Andrew scores by
+hand, so a Monday that has not been scored has nothing to show and a Tuesday that
+has been scored should not wait for the next deadline. App.jsx does two small
+reads to find the most recently scored round; the deck loads the rest itself.
+
+Four cards, nine presses. `/week` opens it, with `?player=`, `?card=`, `?stage=`
+and `?round=` overrides so every press can be photographed.
+
+| card | what |
+|---|---|
+| 1 | The team's result. Matchup box, then all 24 team scores as horizontal bars with the ones you outscored marked. |
+| 2 | Five presses: your score against the field, recoloured by who won, the matchup as the shared HandsColumns board, BOX BOX, then the pools and what you left behind. |
+| 3 | Where you stand. Both tables, scrollable, ranked on points a race. |
+| 4 | Next race and picks. |
+
+Rules this deck holds:
+
+1. **It ranks on points a race, the way /players does.** Ranking the same league
+   two ways on two screens is how they disagree about who is 4th.
+2. **Blue is the score colour.** Green and pink mean won and lost, so a points
+   column in those colours claims something it does not mean.
+3. **One scale for the whole of card 2.** The chart height used to change between
+   presses, so a 26-point bar was drawn four different heights and its height
+   stopped meaning a number.
+4. **Nothing may change height between presses**, or the card rescales to fit and
+   every bar appears to jump on the click. The headline reserves two lines, the
+   caption reserves two lines, and the panel under the chart has a floor.
+5. **Every card hands off with a question** the next one answers.
+6. **The matchup press is the only thing in the deck that scrolls.** HandsColumns
+   is about 600px tall; on the home page it sits on a scrolling page, and a deck
+   card is a fixed frame.
+7. **Nothing "pays" anybody.** A driver is *worth* points to whoever picked him.
+
+Numbers it works out that the app never had: all-play record, schedule luck, the
+perfect hand the pools allowed and what you left behind, the single best swap you
+could have made, this week against your own weeks, and how often a player in your
+band wins.
+
 ## Verify before deploying
 
 npm run build does NOT catch undefined identifiers. A missing helper compiles clean and throws in the browser; this shipped once and crashed on a phone. Run `npm run smoke` before any deploy that touches VegasHome. Adding a state or branch there means adding it to the loop in scripts/smoke.jsx, or the new path is silently uncovered.
 
 Identical output lengths across smoke cases means the props are not actually driving state and every case rendered the same screen. Distinct lengths are the signal that coverage is real.
+
+Adding a state to VegasHome means adding it to the loop in scripts/smoke.jsx.
+`waiting` was added 2026-08-26 and the run passed at 20 without ever rendering it.
+
+The smoke runs prove a card renders and differs across players. They cannot see
+that a chart drew the wrong bars. A renumber on 2026-08-24 widened a `stage <=`
+test so the matchup drew 11 bars instead of four, and every check passed; only
+the screenshot caught it.
 
 ## Data model
 
@@ -346,15 +406,15 @@ Blockers found 2026-07-20, all unresolved:
   OpenF1 rate limits and answers 429. That is what made two runs a minute apart count 14 races and then 12, and it was silently swallowed. get() backs off to 8s and gives up loudly; finished races are cached in scripts/f1-results.json so a rerun is 1.6s instead of a rate limit.
   A session OpenF1 has nothing for answers 404, not an empty list. Bahrain and Saudi Arabia 2026 are both that, which is also why neither is on the F5 calendar. They are recorded as skipped rather than thrown.
 - OPEN QUESTION 2026-07-25, gates the live rooting board. drivers.js warns that OpenF1 returns 401 across the whole API while a session is live, which is exactly when a live board would poll it. Tested during the Hungary weekend and got 200s from /v1/position with real data, but no session was live at the time, so that proves nothing. If the 401 is real, live results need a server-side proxy with a cache, which is a new service. The only cheap test is polling /v1/position during an actual race hour.
-- No server-side code exists. Pure client-side Vite SPA, no api/, no vercel.json, no cron. Unattended Monday runs need a Vercel Cron plus an api/ function, plus a Supabase service-role key in env, since supabaseClient.js is anon-only and all writes go through RLS.
+- RESOLVED. Server-side code exists: `api/` with `_supabase.js` and three cron functions, and `vercel.json` carries the schedules. The service-role key turned out to be unnecessary — Admin writes driver pools from the browser with the anon key, so RLS already allows the same write from a function, and `api/_supabase.js` uses the anon key deliberately. No new secret was added. Cron calls are authed on Vercel's `x-vercel-cron` header, with `CRON_SECRET` for triggering by hand.
 - An emailed digest on generation day was wanted. No mail provider is set up, so that is a third new service.
 - RESOLVED 2026-07-24: DRIVER_NAMES was module-local to Admin.jsx. It now lives in src/drivers.js and is exported. Admin.jsx imports it.
 - RESOLVED 2026-07-24: name matching now goes through canonicalName() in src/drivers.js, backed by a NAME_ALIASES map, instead of string equality. Antonelli, Albon, Hulkenberg and Perez variants are covered.
-Decision still open: full cron automation vs an Admin "auto-generate pool" button that needs no new service and keeps a human veto.
+RESOLVED. Cron automation shipped and kept the veto: `api/cron/pools.js` runs Tuesdays at 15:00 UTC and will not overwrite a pool already set by hand in Admin. `?force=1` with the secret is how to redraw, not clearing it and waiting. `api/cron/standings.js` refreshes the drivers' championship Mondays at 14:00 UTC.
 
 RESOLVED 2026-08-19: Admin now writes the full finishing order. Rounds 3-11 keep the five they were written with; nothing rewrote history.
 
 Announced to the league in the deck, so these are now promises:
 - The pit stop input must accept up to 4.5 seconds. **Done 2026-08-18.** Raised in MyPicks.jsx, PracticePicks.jsx, the Schedule.jsx guess bar and Admin's random-pick generator. Driven to the stop in the browser: the dial reads "4.5 or above".
-- Fernolo 5 Bort, Formula 5 Bot's less popular cousin, makes random picks for anyone who misses the deadline. **Not yet implemented.**
+- Fernolo 5 Bort, Formula 5 Bot's less popular cousin, makes random picks for anyone who misses the deadline. **Written and scheduled**: `api/cron/fernolo.js`, nightly at 03:00 UTC, which is 8pm Pacific and three hours after a 5pm deadline, so a missing pick can still be filled by hand from Admin first. Nightly rather than weekly because the deadlines are not all on the same day. It only acts on a race whose deadline passed in the last twelve hours, and inserts only, so somebody who picked is never overwritten. `?dry=1` with the secret returns who it would fill and a sample pick without writing, which is how to check it before trusting a Friday night to it. It marks its rows `auto: true`, and if that column does not exist yet it retries without the label rather than dropping the picks. **Not confirmed to have fired on a real deadline** — check a run before calling it done to the league.
 - Round 23, if the FIA holds it, is seeded 1v12, 2v11 and so on.

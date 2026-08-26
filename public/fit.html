@@ -34,7 +34,9 @@
       const fit = d.dataset.fit, nat = d.dataset.natural;
       // Only the deck stamps data-fit. A normal page has no fit scale to
       // report, so wait for it to have painted something instead.
-      if (path) { if (!f.contentDocument.body || f.contentDocument.body.scrollHeight < 50) return false; }
+      // The weekly deck stamps data-fit too, so a ?path= pointing at it still
+      // gets the real fit scale rather than only the overflow scan.
+      if (path && !fit) { if (!f.contentDocument.body || f.contentDocument.body.scrollHeight < 50) return false; }
       else if (!fit) return false;
       // overflow-x: hidden makes scrollWidth lie, so walk the tree and find
       // anything whose box actually crosses the viewport edge.

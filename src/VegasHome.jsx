@@ -16,6 +16,7 @@ import { raceTimePT } from "./raceTimes";
 import { ordinal } from "./teamTable";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
+import HandsColumns from "./HandsColumns.jsx";
 
 // ── Real league snapshot, round 11 ───────────────────────
 const PLAYER_PHOTOS = {
@@ -511,6 +512,50 @@ function eventStatus({ settled, live, lapInfo, race, closesAt }) {
   }
   const t = new Date(race.lightsOut).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   return { text: `Lights out ${t}`, color: V.blue };
+}
+
+// ── Last week's box score, kept up until the next picks are in ──
+//
+// Between a race being scored and the next pools being drawn there is nothing
+// to do and, until now, nothing to look at. The result stays on the page so the
+// week that just happened is still the thing the home page is about.
+function LastResult({ prev, onNav }) {
+  if (!prev) return null;
+  const c = prev.drew ? V.text2 : prev.won ? MINE : THEIRS;
+  return (
+    <>
+      <SectionHead accent={c} sub={`Round ${prev.race.round} · ${prev.race.name}`}>
+        {prev.drew ? "You drew" : prev.won ? "You won" : "You lost"}
+      </SectionHead>
+      <Scoreboard myTeam={prev.myTeam} opp={prev.opp}
+        mineTotal={prev.mineTotal} theirTotal={prev.theirTotal}
+        under={prev.under} scored />
+      <NeonBtn color={V.blue} onClick={() => onNav("weekly")}
+        sub="Your race, your matchup, and what you left behind">
+        See your week in review
+      </NeonBtn>
+    </>
+  );
+}
+
+// ── Waiting: race scored, next pools not drawn yet ───────
+function HomeWaiting({ onNav }) {
+  const week = useWeek();
+  const { race } = week;
+  return (
+    <>
+      <Marquee race={race} status={null} time={raceTimePT(race.round)} />
+      <div style={{ ...card({ padding: "18px 16px", marginBottom: 14, textAlign: "center" }),
+        ...edgeGlow(V.blue, 0.7) }}>
+        <div style={{ ...display("h2"), color: V.text }}>Picks aren't open yet</div>
+        <p style={{ ...body("body"), color: V.text2, marginTop: 8 }}>
+          Check back on the Tuesday before the race. That is when the driver pools
+          go up.
+        </p>
+      </div>
+      <LastResult prev={week.previous} onNav={onNav} />
+    </>
+  );
 }
 
 // ── State A: picks not in ────────────────────────────────
@@ -2506,242 +2551,8 @@ function YourWeek({ mine, seat, scored, driverAvg = {}, projection = null }) {
 // read against the number on the right without a legend.
 //
 // UNDER on the left, OVER on the right, always.
-function HandsColumns({ seats, under, driverPts = {}, scored = true }) {
-  const wrap = useRef(null);
-  const [w, setW] = useState(0);
-  useEffect(() => {
-    const el = wrap.current;
-    if (!el) return;
-    const read = () => setW(el.clientWidth);
-    read();
-    const ro = new ResizeObserver(read);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  // Left pair is whoever has the under.
-  const ours = seats.filter(s => s.ours), theirs = seats.filter(s => !s.ours);
-  const cols = under === "mine" ? [...ours, ...theirs] : [...theirs, ...ours];
-
-  const MID = 62;
-  const colW = w > 0 ? (w - MID) / 4 : 0;
-  // Columns 0 and 1 sit left of the label strip, 2 and 3 right of it.
-  const cx = (c) => (c < 2 ? colW * (c + 0.5) : MID + colW * (c + 0.5));
-  const FACE = 46, HEAD = 96, ROW = 78;
-  const cy = (r) => HEAD + ROW * r + ROW / 2 - 10;
-  const boardH = HEAD + ROW * 5;
-
-  const spots = {};
-  cols.forEach((h, c) => (h.pick ? h.pick.order : []).slice(0, 5)
-    .forEach((name, r) => { (spots[name] ||= []).push({ r, c, ours: h.ours }); }));
-  const COLOR = { mine: MINE, theirs: THEIRS, level: V.text2 };
-
-  // A driver cancels copy for copy, not driver for driver. Two of theirs
-  // against one of ours is one pair that goes grey and one copy left over that
-  // still counts, so pair them off and light only what is left. A driver both
-  // teams hold evenly pairs out completely and the whole row goes quiet, which
-  // is the same rule, not a special case.
-  const cancelled = {};
-  const pairs = [], surplus = [];
-  Object.entries(spots).forEach(([name, at]) => {
-    const free = at.filter(p => p.ours), open = at.filter(p => !p.ours);
-    while (free.length && open.length) {
-      // Pair the closest two, so the grey line is the short one and the copy
-      // left over is not stranded across the board.
-      let bi = 0, bj = 0, best = Infinity;
-      open.forEach((o, j) => free.forEach((f, i) => {
-        const d = Math.abs(o.c - f.c);
-        if (d < best) { best = d; bi = i; bj = j; }
-      }));
-      const [f] = free.splice(bi, 1), [o] = open.splice(bj, 1);
-      cancelled[`${f.c}-${f.r}`] = cancelled[`${o.c}-${o.r}`] = true;
-      pairs.push({ key: `${name}-${f.c}-${o.c}`, at: [f, o] });
-    }
-    // Two copies left on one side are both live and both scoring, so they get
-    // a lit line. One on its own has nothing to join.
-    const left = [...free, ...open];
-    if (left.length > 1) surplus.push({ key: name, ours: left[0].ours, at: left });
-  });
-  const toneAt = (p) => cancelled[`${p.c}-${p.r}`] ? "level" : p.ours ? "mine" : "theirs";
-  const LINES = {
-    level: pairs,
-    mine: surplus.filter(s => s.ours),
-    theirs: surplus.filter(s => !s.ours),
-  };
-
-  const Layer = ({ which, z }) => (
-    <svg width="100%" height={boardH} style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
-      {LINES[which].map(l => (
-        <polyline key={l.key} fill="none" stroke={COLOR[which]}
-          points={l.at.slice().sort((a, b) => a.c - b.c).map(p => `${cx(p.c)},${cy(p.r)}`).join(" ")}
-          strokeWidth={which === "level" ? 3.5 : 5} strokeLinecap="round" strokeLinejoin="round"
-          opacity={which === "level" ? 0.5 : 1}
-          style={which === "theirs" ? { filter: `drop-shadow(0 0 6px ${COLOR[which]})` } : undefined} />
-      ))}
-    </svg>
-  );
-
-  const Plate = ({ text, c, dim, size = 12, top = -7 }) => (
-    <div style={{
-      marginTop: top, display: "inline-block", position: "relative",
-      // No max width and no ellipsis. A surname is never cut: the plate is the
-      // top layer, so a wide one sits over its neighbour rather than losing
-      // letters, and a name you cannot read is worse than one that overlaps.
-      padding: "2px 5px", borderRadius: 7, background: "#000",
-      border: `1px solid ${dim ? V.border : c}`,
-      fontFamily: FD, fontWeight: 700, fontSize: size, lineHeight: 1.35,
-      color: dim ? V.text2 : "#fff", whiteSpace: "nowrap",
-    }}>{text}</div>
-  );
-
-  const Drivers = ({ which, z }) => (
-    <div style={{ position: "absolute", inset: 0, zIndex: z, pointerEvents: "none" }}>
-      {cols.flatMap((h, c) => (h.pick ? h.pick.order : []).slice(0, 5).map((name, r) => {
-        const t = toneAt({ r, c, ours: h.ours });
-        if (which === "level" ? t !== "level" : t === "level") return null;
-        // Once the week is scored, what he scored goes on his face. Same size as
-        // the totals underneath and the colour of his ring, so a column reads
-        // down as five numbers and across as the same driver twice.
-        const pts = scored ? driverPts[name] : undefined;
-        return (
-          <div key={`${c}-${r}`} style={{
-            position: "absolute", left: cx(c) - FACE / 2, top: cy(r) - FACE / 2,
-            width: FACE, textAlign: "center",
-          }}>
-            <div style={{ position: "relative", height: FACE }}>
-              <Face name={name} size={FACE} ring={COLOR[t]} edge={3} blank={pts != null}
-                    glow={t === "theirs" ? 1.1 : 0} drained={t === "level"} />
-              {/* Inset by the ring width, so the photograph goes and the ring
-                  stays. A face is the loudest thing on the board and the number
-                  has to win. */}
-              {pts != null && (
-                <div style={{
-                  position: "absolute", inset: 3, borderRadius: "50%",
-                  background: "rgba(6,8,14,0.82)",
-                }} />
-              )}
-              {pts != null && (
-                <div style={{
-                  position: "absolute", inset: 0, display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  ...numeric("chip"), fontSize: 20, color: COLOR[t],
-                  // No plate behind it. The face is a photograph and the number
-                  // has to sit on any part of one, so it carries its own dark.
-                  textShadow: "0 0 3px #000, 0 0 6px #000, 0 1px 3px #000",
-                }}>{pts}</div>
-              )}
-            </div>
-            <Plate text={lastName(name)} c={COLOR[t]} dim={t === "level"} />
-          </div>
-        );
-      }))}
-    </div>
-  );
-
-  // Four numbers a side with the label between them.
-  const ROWS = [
-    { k: "Top", get: s => (s.score ? s.score.top : null) },
-    { k: "Mid", get: s => (s.score ? s.score.mid : null) },
-    { k: "Best\nfinish", get: s => (s.score ? s.score.best : null),
-      sub: s => (s.pick ? s.pick.bestFinish : null) },
-    { k: "Order", get: s => (s.score ? s.score.order : null) },
-  ];
-
-  return (
-    <div style={{ ...card({ padding: "14px 10px 12px", marginBottom: 14 }) }}>
-      <div ref={wrap} style={{ position: "relative", height: boardH, minWidth: 0 }}>
-        <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-          {cols.map((h, c) => {
-            const col = h.ours ? MINE : THEIRS;
-            return (
-              <div key={h.id} style={{
-                position: "absolute", left: cx(c) - colW / 2, top: 0, width: colW,
-                display: "flex", flexDirection: "column", alignItems: "center",
-              }}>
-                <PlayerBadge name={h.name} picked={false} dim={false} ring={col}
-                             photo={h.photo} size={54} />
-                <Plate text={h.mine ? "You" : lastName(h.name)} c={col} size={13} top={-8} />
-                {scored && (
-                  <div style={{ ...numeric("h3"), fontSize: 22, color: col, marginTop: 4 }}>
-                    {h.score ? h.score.total : "\u2014"}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {w > 0 && (
-          <>
-            <Layer which="level" z={1} />
-            <Drivers which="level" z={2} />
-            <Layer which="theirs" z={3} />
-            <Layer which="mine" z={4} />
-            <Drivers which="owned" z={5} />
-          </>
-        )}
-      </div>
-
-      {/* Before the race there are no components to compare, but the best
-          finish each player called is a pick and not a score, so that one line
-          stays and the other three wait. */}
-      {w > 0 && !scored && (
-        <div style={{ marginTop: 6, display: "flex", alignItems: "center", padding: "5px 0",
-                      borderTop: `1px solid ${V.border}` }}>
-          {cols.map((h, c) => {
-            const cell = (
-              <div key={h.id} style={{ width: colW, textAlign: "center" }}>
-                <div style={{ ...display("chip"), fontSize: 15, color: h.ours ? MINE : THEIRS }}>
-                  {h.pick ? h.pick.bestFinish : "\u2014"}
-                </div>
-              </div>
-            );
-            return c === 2
-              ? [<div key="lab" style={{
-                  width: MID, textAlign: "center", ...display("chip"), fontSize: 13,
-                  color: DIVIDE, letterSpacing: "0.04em", lineHeight: 1.15,
-                }}><div>Best</div><div>finish</div></div>, cell]
-              : cell;
-          })}
-        </div>
-      )}
-
-      {w > 0 && scored && (
-        <div style={{ marginTop: 6 }}>
-          {ROWS.map(row => (
-            <div key={row.k} style={{ display: "flex", alignItems: "center", padding: "5px 0",
-                                      borderTop: `1px solid ${V.border}` }}>
-              {cols.map((h, c) => {
-                const col = h.ours ? MINE : THEIRS;
-                const v = row.get(h);
-                const cell = (
-                  <div key={h.id} style={{ width: colW, textAlign: "center" }}>
-                    <div style={{ ...numeric("chip"), fontSize: 20, color: v ? col : V.text2 }}>
-                      {v == null ? "\u2014" : v === 0 ? "\u2715" : v}
-                    </div>
-                    {row.sub && (
-                      <div style={{ ...display("chip"), fontSize: 13, color: V.text2, marginTop: 1 }}>
-                        {row.sub(h) || ""}
-                      </div>
-                    )}
-                  </div>
-                );
-                // The label sits between the two pairs.
-                return c === 2
-                  ? [<div key="lab" style={{
-                      width: MID, textAlign: "center", ...display("chip"), fontSize: 13,
-                      color: DIVIDE, letterSpacing: "0.04em", lineHeight: 1.15,
-                    }}>{row.k.split("\n").map(t => <div key={t}>{t}</div>)}</div>, cell]
-                  : cell;
-              })}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-
+// HandsColumns now lives in HandsColumns.jsx, so the weekly deck draws the
+// same board from the same code.
 // Four hands, five drivers each, in the order that player put them.
 //
 // Row one is you, row two your teammate, rows three and four the other team.
@@ -3456,9 +3267,14 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
   // scored. They render the same screen, because they are the same week at two
   // moments, but they are not the same state and the screen asks which.
   const locked = pinned || week.locked;
+  // Pools are drawn by the Tuesday cron. Until they are, "make your picks" is
+  // an instruction nobody can follow, so the page says so instead.
+  const poolsUp = !!(week.pools && (week.pools.top || []).length
+    && (week.pools.mid || []).length);
   const state = initialState
     || (locked ? (week.scored ? "final" : "locked")
-      : week.picksIn && week.picksIn.me ? "submitted" : "open");
+      : week.picksIn && week.picksIn.me ? "submitted"
+      : poolsUp ? "open" : "waiting");
   const nav = onNavigate || (() => {});
 
   const Toggle = ({ opts, val, set }) => (
@@ -3494,9 +3310,10 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "18px 18px 60px" }}>
 
         {tab === "kit" ? <NeonKit /> : (
-          state === "open" || state === "submitted"
-            ? <HomeOpen onNav={nav} submitted={state === "submitted"} />
-            : <HomeLocked scored={state === "final"} />
+          state === "waiting" ? <HomeWaiting onNav={nav} />
+            : state === "open" || state === "submitted"
+              ? <HomeOpen onNav={nav} submitted={state === "submitted"} />
+              : <HomeLocked scored={state === "final"} />
         )}
       </div>
     </div>

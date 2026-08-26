@@ -25,6 +25,7 @@ import DashboardPage from "./DashboardPage.jsx";
 import HandsIdeas from "./HandsIdeas.jsx";
 import VegasNav from "./VegasNav.jsx";
 import Recap from "./Recap.jsx";
+import Weekly from "./Weekly.jsx";
 import { NEWS } from "./news";
 
 
@@ -818,7 +819,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
   "dashboard", "hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
-  "f1-calendar", "season-preview", "recaps", "admin",
+  "f1-calendar", "season-preview", "recaps", "admin", "recap",
 ]);
 
 // ── Routing ──────────────────────────────────────────────
@@ -851,7 +852,8 @@ const ROUTES = [
   { path: "/rules", page: "rules" },
   { path: "/calendar", page: "f1-calendar" },
   { path: "/admin", page: "admin" },
-  { path: "/deck", page: "recap" },
+  // The weekly deck. Same three ways in as /deck, so ?week and #week also work.
+  { path: "/week", page: "weekly" },
 
 ];
 const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
@@ -902,7 +904,9 @@ export default function App() {
     // still work, so nothing anyone has bookmarked breaks mid-season.
     const routed = readPath(window.location.pathname);
     if (routed) return routed.page;
-    if (path === "/deck" || window.location.hash === "#recap" || q.has("recap")) return "recap";
+    // The first-half deck is no longer routed. ?page=recap still opens it.
+    if (window.location.hash === "#recap" || q.has("recap")) return "recap";
+    if (path === "/week" || window.location.hash === "#week" || q.has("week")) return "weekly";
     // /newui is the shareable path for the second-half look. ?vegas and #vegas
     // still work, and the query param is what the mockup's own controls use.
     if (path === "/newui" || window.location.hash === "#vegas" || q.has("vegas")) return "vegas";
@@ -940,10 +944,32 @@ export default function App() {
   // has already picked.
   const [picksChecked, setPicksChecked] = useState(null);
   const [deckSeen, setDeckSeen] = useState(false);
+  // The most recently scored round, which is what the weekly deck opens on and
+  // what the gate keys off.
+  const [weekRound, setWeekRound] = useState(null);
+  const [weekSeen, setWeekSeen] = useState(false);
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [adminCode, setAdminCode] = useState("");
   const handleSelectName = (name) => { localStorage.setItem("f1_user", name); setCurrentUser(name); };
   const handleChangeName = () => { localStorage.removeItem("f1_user"); setCurrentUser(null); };
+
+  // Which round was scored most recently. Two small reads rather than the whole
+  // league, because the deck itself loads what it needs once it opens.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const { data: last } = await supabase.from("scores")
+          .select("race_id, calculated_at")
+          .order("calculated_at", { ascending: false }).limit(1).maybeSingle();
+        if (!alive || !last) return;
+        const { data: race } = await supabase.from("races")
+          .select("round").eq("id", last.race_id).maybeSingle();
+        if (alive && race) setWeekRound(race.round);
+      } catch (e) { /* silent: no deck rather than a broken app */ }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   // Check pick status for bottom nav color
   useEffect(() => {
@@ -974,6 +1000,32 @@ export default function App() {
   // With no signed-in player it falls through to WelcomeScreen below, and once a
   // name is picked this branch catches the re-render and opens the deck. So a
   // cold visit to /deck is: pick your name, then your recap.
+  // The weekly deck, at /week. Same overrides as /deck: ?player= looks at
+  // somebody else's week, ?card= opens on a card so every one can be
+  // screenshotted, and ?round= goes back to an earlier week.
+  //
+  // Rendered outside .app-wrap because it sets its own black ground, exactly
+  // like the recap deck and the Vegas pages.
+  if (activePage === "weekly") {
+    const q = new URLSearchParams(window.location.search);
+    const who = q.get("player") || currentUser;
+    const card = Math.max(1, parseInt(q.get("card") || "1", 10) || 1) - 1;
+    const roundParam = parseInt(q.get("round") || "", 10);
+    // ?stage= opens a card that plays out in presses on one of those presses,
+    // so every stage can be photographed without clicking through.
+    const stageParam = parseInt(q.get("stage") || "", 10);
+    if (who) return (
+      <Weekly
+        playerName={who}
+        round={Number.isFinite(roundParam) ? roundParam : null}
+        initialCard={card}
+        initialStage={Number.isFinite(stageParam) ? Math.max(0, stageParam - 1) : 0}
+        onPicks={() => { window.history.replaceState(null, "", "/picks"); navigateTo("picks"); }}
+        onExit={() => { window.history.replaceState(null, "", "/"); navigateTo("home"); }}
+      />
+    );
+  }
+
   if (activePage === "recap") {
     const q = new URLSearchParams(window.location.search);
     const override = q.get("player");
@@ -1018,31 +1070,40 @@ export default function App() {
 
   if (!currentUser) return <WelcomeScreen onSelect={handleSelectName} />;
 
-  // The deck, as a gate. Anyone who has not put picks in for the next race gets
-  // it over the app once, and closing it is remembered for that round.
+  // The week in review, as a gate. The first time you open the app after a race
+  // is scored, you get your deck, once. Closing it is remembered for that round.
+  //
+  // The trigger is the round being SCORED, not the picks being open: Andrew
+  // scores by hand, so a Monday that has not been scored has nothing to show,
+  // and a Tuesday that has been scored should not wait for the next deadline.
   //
   // Remembered in localStorage rather than a column on players: a seen flag in
   // Supabase is a migration and a write, and this is a per-person, per-round
   // "you have watched it" that costs nothing to lose. The worst case is that a
   // new device shows it again.
-  const deckKey = picksChecked ? `f5_deck_seen_r${picksChecked.round}_${currentUser}` : null;
-  const showDeckGate =
-    activePage !== "recap" &&
-    picksChecked && !picksChecked.has && !deckSeen &&
-    (!deckKey || localStorage.getItem(deckKey) !== "1");
+  const weekKey = weekRound && currentUser
+    ? `f5_week_seen_r${weekRound}_${currentUser}` : null;
+  const showWeekGate =
+    activePage !== "weekly" && weekKey && !weekSeen &&
+    (() => { try { return localStorage.getItem(weekKey) !== "1"; } catch (e) { return true; } })();
 
   // The gate returns the deck rather than laying it over the app. A fixed
   // overlay meant the window scrolled underneath it while the deck stayed put,
-  // so the cards that scroll could not be scrolled. This is how /deck renders
-  // too, so it behaves identically.
-  if (showDeckGate) return (
-    <Recap
+  // so the matchup card could not be scrolled. This is how /week renders too,
+  // so it behaves identically.
+  if (showWeekGate) return (
+    <Weekly
       playerName={currentUser}
       initialCard={0}
-      onChangeName={handleChangeName}
+      onPicks={() => {
+        try { localStorage.setItem(weekKey, "1"); } catch (e) {}
+        setWeekSeen(true);
+        window.history.replaceState(null, "", "/picks");
+        navigateTo("picks");
+      }}
       onExit={() => {
-        if (deckKey) { try { localStorage.setItem(deckKey, "1"); } catch (e) {} }
-        setDeckSeen(true);
+        try { localStorage.setItem(weekKey, "1"); } catch (e) {}
+        setWeekSeen(true);
       }}
     />
   );

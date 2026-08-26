@@ -304,9 +304,66 @@ export function useLeague(currentUser, { round = null } = {}) {
           pitGuess: Number(row.pit_guess),
         });
 
+        // The week just gone, for the home page to keep showing until picks for
+        // the next one are in. Only the box score: teams, seats, both totals and
+        // who won. Everything richer already lives in the weekly deck.
+        //
+        // It fetches its own four guesses. `picks` above is scoped to the
+        // current race, so reusing it left the previous week with no BOX BOX
+        // line and a 55-55 draw where the team had actually won 60-54.
+        const previous = await (async () => {
+          if (!myTeamRow) return null;
+          const played = races
+            .filter(r => r.round < race.round && scored.has(r.id))
+            .sort((a, b) => b.round - a.round)[0];
+          if (!played) return null;
+          const fx = schedule.find(f => f.race_id === played.id &&
+            (f.home_team_id === myTeamRow.id || f.away_team_id === myTeamRow.id));
+          if (!fx) return null;
+          const homeTeam = teams.find(t => t.id === fx.home_team_id) || null;
+          const awayTeam = teams.find(t => t.id === fx.away_team_id) || null;
+          const seatIds = t => (t ? [t.player1_id, t.player2_id].filter(Boolean) : []);
+          const four = [...seatIds(homeTeam), ...seatIds(awayTeam)];
+          const rows = scores.filter(x => x.race_id === played.id);
+          const half = t => seatIds(t).reduce((a, id) => {
+            const r = rows.find(x => x.player_id === id);
+            return a + (r ? (r.top_pick_pts || 0) + (r.midfield_pts || 0)
+              + (r.order_bonus || 0) + (r.best_finish_bonus || 0) : 0);
+          }, 0);
+
+          const rr = (results || []).find(x => x.race_id === played.id);
+          const stop = rr && rr.pit_stop_time != null ? Number(rr.pit_stop_time) : null;
+          const lastPicks = four.length
+            ? (await supabase.from("picks").select("player_id,pit_guess")
+                .eq("race_id", played.id).in("player_id", four)).data || []
+            : [];
+          const gs = lastPicks
+            .map(x => (x.pit_guess == null ? null : Number(x.pit_guess)))
+            .filter(v => v != null && !Number.isNaN(v));
+          const line = gs.length ? gs.reduce((a, b) => a + b, 0) / gs.length : null;
+          let ob = 0, ub = 0;
+          if (line != null && stop != null) {
+            if (stop > line) { ob = 5; ub = -1; }
+            else if (stop < line) { ob = -1; ub = 5; }
+          }
+          const homeTotal = half(homeTeam) + ob, awayTotal = half(awayTeam) + ub;
+          const iAmHome = fx.home_team_id === myTeamRow.id;
+          const mineTotal = iAmHome ? homeTotal : awayTotal;
+          const theirTotal = iAmHome ? awayTotal : homeTotal;
+          const oppTeamRow = iAmHome ? awayTeam : homeTeam;
+          return {
+            race: { round: played.round, name: played.race_name },
+            myTeam: teamShape(myTeamRow), opp: teamShape(oppTeamRow),
+            mineTotal, theirTotal,
+            under: iAmHome ? "theirs" : "mine",
+            won: mineTotal > theirTotal, drew: mineTotal === theirTotal,
+          };
+        })();
+
         if (!alive) return;
         setState({
           loading: false,
+          previous,
           me: currentUser,
           playerId: me ? me.id : null,
           myTeam: teamShape(myTeamRow),
