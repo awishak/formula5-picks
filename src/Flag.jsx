@@ -102,6 +102,12 @@ const ART = {
 //
 // This is the only emoji in the app and it is a picture, not writing: there is
 // no other way to get 266 flags without shipping 266 files or a dependency.
+// How much of an emoji's font size the flag artwork actually occupies. Measured
+// by painting a glyph to a canvas and reading the non-transparent bounds, on
+// 2026-08-26: every flag came back identical at 0.880 x 0.640, a 1.38 ratio
+// rather than the 3:2 the drawn ones use.
+const EMOJI_ART_W = 0.880;
+
 const emojiFlag = code => (/^[A-Z]{2}$/.test(code)
   ? String.fromCodePoint(...[...code].map(ch => 0x1f1e6 + ch.charCodeAt(0) - 65))
   : null);
@@ -150,11 +156,25 @@ export default function Flag({ nation, size = 20, wave = false, title }) {
     const emoji = emojiFlag(want);
     const label = title || NATION_NAME[want] || want;
     if (emoji) {
+      // An emoji flag's artwork is 0.880 of the font size wide and 0.640 tall,
+      // measured off a rendered glyph rather than assumed. Sizing the font to
+      // the box height painted them at 66% the width of a drawn flag, which is
+      // why Argentina looked smaller than Brazil in the same list.
+      //
+      // So the font is sized to fill the width, the box is the same 3:2 every
+      // other flag gets, and the 4% of extra height is cropped. A flag is the
+      // one picture where losing a sliver top and bottom costs nothing.
       return (
         <span title={label} aria-label={label} role="img"
           className={wave ? "v-wave" : undefined}
-          style={{ display: "inline-block", fontSize: h * 1.12, lineHeight: 1,
-            width: size, textAlign: "center" }}>{emoji}</span>
+          style={{ display: "inline-block", position: "relative", overflow: "hidden",
+            width: size, height: h, borderRadius: 1.5, verticalAlign: "middle" }}>
+          <span style={{
+            position: "absolute", left: "50%", top: "50%",
+            transform: "translate(-50%, -50%)",
+            fontSize: size / EMOJI_ART_W, lineHeight: 1, whiteSpace: "nowrap",
+          }}>{emoji}</span>
+        </span>
       );
     }
     // States, D.C. and the territories: real artwork, served as a file.

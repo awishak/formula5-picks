@@ -121,6 +121,13 @@ which nothing should reach.
 Emoji is the only emoji in the app and it is a picture rather than writing; it
 was checked, not assumed, by counting colours in a rendered glyph.
 
+**An emoji flag's artwork is 0.880 of its font size wide and 0.640 tall**, a 1.38
+ratio, measured by painting a glyph to a canvas and reading the non-transparent
+bounds. Sizing the font to the box height painted emoji flags at 66% the width
+of a drawn one, so Argentina looked smaller than Brazil in the same list. The
+font is sized to fill the width now and the extra 4% of height is cropped, which
+makes every flag on screen the same box whatever drew it.
+
 **State flags are files, not bundled.** A state flag is a seal on blue:
 Pennsylvania is 119KB and the 56 together are 2.5MB, which nobody should
 download to see one of them. `scripts/state-flags.mjs` extracts them once out of
