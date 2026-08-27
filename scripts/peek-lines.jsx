@@ -18,7 +18,9 @@ for (const p of DB.players) {
   if (!data) continue;
   const t = text(renderToString(<WeeklyDeck data={data} initialCard={0} initialStage={0} />));
   const i = t.findIndex(x => /how did you do yourself/i.test(x));
-  const line = i > 0 ? t[i - 1] : "(none)";
+  // The BOX BOX groups print a fact line above the commentary, so take both.
+  const line = i > 0 ? t.slice(Math.max(0, i - 2), i)
+    .filter(x => !/^\d+$/.test(x) && !/^(OVER|UNDER)$/.test(x)).join("  //  ") : "(none)";
   const head = t.find(x => /won!|lost this week|drew this week/.test(x)) || "(no headline)";
   console.log(`${p.name.padEnd(21)} ${head}`);
   console.log(`${" ".repeat(21)} ${line}`);

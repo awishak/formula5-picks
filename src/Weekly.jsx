@@ -1985,68 +1985,89 @@ const SEASON_LINES = [
     "{n} wins in a row. Nobody else in the league is close to that.",
     "That's {n} straight. Whatever you two are doing, don't stop.",
     "{n} in a row. You're the team everyone else is watching now.",
+    "{n} on the bounce. This is a title charge.",
+    "{n} straight, and you're pulling away from the field.",
   ] },
   { k: "loss5", when: f => f.run.losses >= 5, lines: [
     "{n} straight losses. Time to try something different.",
     "That's {n} in a row now. Long stretch.",
     "{n} losses running. But every pool is a fresh start, so.",
+    "{n} straight. Time for a new call from the pit wall.",
+    "{n} in a row. Somewhere in there is a setup problem.",
   ] },
-  // Nobody wins BOX BOX by guessing well. The line is the average of all four
-  // numbers, so winning means both of you shading yours away from the stop you
-  // actually expect, which costs you needle points. It is the one part of the
-  // week where the team game and your own score pull against each other, and
-  // the copy says so.
-  { k: "bbWon", when: f => f.bbDecided && f.won, lines: [
-    "You won on the BOX BOX line. That's the team game, and it takes both of you pulling the same way.",
-    "Take BOX BOX out and you lose that one. Six points for putting the team ahead of your own needle.",
-    "That's teamwork. The line sits on the average of all four numbers, and your two pushed the average your way.",
+  // The fact first, then the commentary. Winning on the line is the one result
+  // the scoreboard cannot show you: the two totals already have BOX BOX in
+  // them, so without this sentence the week reads as a normal win.
+  { k: "bbWon", when: f => f.bbDecided && f.won,
+    fact: "Your team won the matchup by winning the BOX BOX line.", lines: [
+    "That's the team game, and it takes both of you pulling the same way.",
+    "Six points for putting the team ahead of your own needle.",
+    "The line sits on the average of all four numbers, and your two pushed the average your way.",
+    "Take BOX BOX out and you lose that one.",
+    "That's a pit wall call, and both of you made the call.",
+    "Somebody gave up needle points to move the line. That's how the line is won.",
   ] },
-  { k: "bbLost", when: f => f.bbDecided && f.lost, lines: [
-    "You lost on the BOX BOX line. Their two numbers moved the average further than yours did.",
-    "Without BOX BOX you win that. The other pair gave up more of their own needle to move the line.",
-    "Six points on the line, and the other team played the line harder. That's the trade.",
+  { k: "bbLost", when: f => f.bbDecided && f.lost,
+    fact: "Your team lost the matchup on the BOX BOX line.", lines: [
+    "Their two numbers moved the average further than yours did.",
+    "The other pair gave up more of their own needle to move the line.",
+    "Six points, and they played the line harder. That's the trade.",
+    "Take BOX BOX out and you win that one.",
+    "Their pit wall made the better call this week.",
   ] },
   { k: "win3", when: f => f.run.wins >= 3, lines: [
     "That's a {n} match winning streak.",
     "{n} in a row, and nobody's stopped you yet.",
     "{n} straight. You're the team nobody wants to draw right now.",
     "Three's a nice number. Five's better.",
+    "{n} in a row. You're building a real gap now.",
   ] },
   { k: "loss3", when: f => f.run.losses >= 3, lines: [
     "{n} in a row now. Rough patch.",
     "That's {n} straight. Not much going right.",
     "{n} weeks without a win. So next week matters.",
+    "{n} in a row. That's a run of retirements.",
   ] },
   { k: "blowWin", when: f => f.won && f.margin >= 20, lines: [
     "{pts}. That one was over early.",
     "You beat {opp} by {pts}. They'll want the week back.",
     "{margin} clear of {opp}, and they never got going.",
     "Nothing close about that one. {pts}.",
+    "{pts}. Lights to flag, that one.",
+    "You put {margin} points on {opp}. That's most of a lap.",
   ] },
   { k: "blowLoss", when: f => f.lost && f.margin >= 20, lines: [
     "Down {pts}. Best we don't dwell on that one.",
     "{opp} beat you by {pts}. That one's going in the book.",
     "{pts}. Everything that could go their way did.",
     "{pts} down. Some weeks you take the loss and go again.",
+    "{pts}. Into the barriers on lap one.",
+    "Down {pts}. Call that one a DNF and move on.",
   ] },
   { k: "closeWin", when: f => f.won && f.margin <= 3, lines: [
     "{pts} in that one. You'll take that.",
     "Won by {pts}. Those are the weeks that decide a season.",
     "{pts}, and they went your way. A win's a win.",
     "That was tight. {pts}, and you're on the right side.",
+    "Won by {pts}. Call that a photo finish.",
+    "{pts}. You took that one at the line.",
   ] },
   { k: "closeLoss", when: f => f.lost && f.margin <= 3, lines: [
     "{pts} short. That one stings.",
-    "Lost by {pts}. There was nothing in that all day.",
+    "Lost by {pts}. That's about as close as a loss gets.",
     "{pts}. And there's no points for close.",
+    "Beaten to the line by {pts}.",
+    "{pts}. Pipped at the flag.",
   ] },
   { k: "openWin", when: f => f.round === FIRST_H2 && f.won, lines: [
     "That's a great way to start the second half.",
     "One from one in the second half. Good start.",
+    "Lights out on the second half, and you're away.",
   ] },
   { k: "openLoss", when: f => f.round === FIRST_H2 && f.lost, lines: [
     "Not the start to the second half you wanted.",
     "There are 11 more races. Plenty of time.",
+    "A bad start off the line, and 11 races to make that back.",
   ] },
   { k: "hot10", when: f => f.run.played >= 10 && f.run.last10.w >= 8, lines: [
     "{n} wins in your last 10. Nobody's having a better season.",
@@ -2060,26 +2081,31 @@ const SEASON_LINES = [
     "Back to winning after last week.",
     "You answered last week's loss.",
     "A win right after a loss. That's how a season stays alive.",
+    "That's a recovery drive.",
   ] },
   { k: "slip", when: f => f.lost && f.run.prev && f.run.prev.won, lines: [
     "Won last week, lost this one.",
     "And that run's over.",
     "Up one week, down the next.",
+    "From the front row into the gravel in seven days.",
   ] },
   { k: "draw", when: f => f.drew, lines: [
     "A draw. Neither of you deserved to lose that one.",
     "Dead level. That happens about once a season.",
+    "Nothing between you at the flag.",
   ] },
   { k: "win", when: f => f.won, lines: [
     "A win, and the table looks better this morning.",
     "You won. On to the next one.",
     "Nothing fancy about that one, but you'll take the points.",
     "A win over {opp}, and they're not an easy week.",
+    "You took the flag ahead of {opp}. Good week.",
   ] },
   { k: "loss", when: f => f.lost, lines: [
     "A loss this week. The next race is a fresh start.",
     "You lost this week. That happens.",
     "Lost this week. Go again next race.",
+    "No points this week. There's always the next race.",
   ] },
 ];
 
@@ -2090,7 +2116,7 @@ function seasonLine(c, run, round, playerId) {
     round, run,
   };
   const group = SEASON_LINES.find(g => g.when(f));
-  if (!group) return "";
+  if (!group) return { fact: null, line: "" };
   let h = 5381;
   const key = `${playerId}|${round}|${group.k}`;
   for (let i = 0; i < key.length; i++) h = ((h * 33) ^ key.charCodeAt(i)) >>> 0;
@@ -2098,7 +2124,7 @@ function seasonLine(c, run, round, playerId) {
   const n = group.k === "hot10" || group.k === "cold10" ? run.last10.w
     : group.k.startsWith("loss") ? run.losses
     : run.wins;
-  const out = group.lines[h % group.lines.length]
+  const fill = t => t
     .replace(/\{team\}/g, c.myTeam.name)
     .replace(/\{opp\}/g, c.oppTeam.name)
     // A margin of one is one point, not one points.
@@ -2106,8 +2132,14 @@ function seasonLine(c, run, round, playerId) {
     .replace(/\{margin\}/g, apNum(f.margin))
     .replace(/\{n\}/g, apNum(n));
   // A spelled number that lands at the start of a sentence still takes a
-  // capital, and apNum has no way to know where the word ended up.
-  return out.charAt(0).toUpperCase() + out.slice(1);
+  // capital, and apNum has no way to know where the word ended up. It can land
+  // mid-line as well as first: "That was tight. one point, and you're on the
+  // right side."
+  const cap = t => t.replace(/(^|[.!?]\s+)([a-z])/g, (m, a, b) => a + b.toUpperCase());
+  return {
+    fact: group.fact ? cap(fill(group.fact)) : null,
+    line: cap(fill(group.lines[h % group.lines.length])),
+  };
 }
 
 function CardResult({ d }) {
@@ -2115,7 +2147,7 @@ function CardResult({ d }) {
   const won = c.outcome === "won", lost = c.outcome === "lost";
   const mColor = won ? MINE_C : lost ? V.text2 : V.text2;
   const me = d.card2.you;
-  const line = seasonLine(c, d.context.teamRun, d.round, me ? me.id : "");
+  const say = seasonLine(c, d.context.teamRun, d.round, me ? me.id : "");
 
   return (
     <>
@@ -2128,7 +2160,14 @@ function CardResult({ d }) {
 
       <Scoreboard M={d.card2.matchup} />
 
-      {line && <Line color={V.text}>{line}</Line>}
+      {/* The fact, then the commentary. Both totals on the scoreboard already
+          have BOX BOX in them, so a matchup won on the line looks like any
+          other win until somebody says otherwise. */}
+      {say.fact && (
+        <div style={{ ...body("bodyMd", { fontSize: 17, color: V.blue }),
+          maxWidth: 460, textWrap: "pretty" }}>{say.fact}</div>
+      )}
+      {say.line && <Line color={V.text}>{say.line}</Line>}
 
       <Ask>And how did you do yourself?</Ask>
     </>
