@@ -732,7 +732,9 @@ function RaceChart({ c, stage, beat }) {
 
   // The axis gets its own gutter. Numbers printed over the first few bars are
   // not a scale, they are noise on top of the data.
-  const GUTTER = 24;
+  // 28, not 24: the axis numbers went from 11px to 13px and a two-digit one no
+  // longer fits in 19.
+  const GUTTER = 28;
 
   return (
     <div style={{ position: "relative", width: "100%", overflow: "hidden",
@@ -748,7 +750,7 @@ function RaceChart({ c, stage, beat }) {
         }}>
           <span style={{ position: "absolute", left: 0, bottom: -6, width: GUTTER - 5,
             textAlign: "right",
-            ...numeric("chip", { fontSize: 11, color: V.text3 }) }}>{v}</span>
+            ...numeric("chip", { fontSize: 13, color: V.text3 }) }}>{v}</span>
         </div>
       ))}
 
@@ -760,19 +762,26 @@ function RaceChart({ c, stage, beat }) {
       {/* The best score of the week, named on the chart. Whether that player
           won or lost is the whole point of recolouring, and two averages a
           point apart never was the finding. */}
-      {stage === S_COLOR && bars.filter(b => b.place === 1).map(b => (
+      {stage === S_COLOR && bars.filter(b => b.place === 1).map(b => {
+        // The pill hangs off whichever side keeps it on the chart. A fixed
+        // shift put the best score of the week over the axis numbers as soon
+        // as the type grew, and the best score is usually the leftmost bar.
+        const at = b.left + b.width / 2;
+        const shift = at < 30 ? "0%" : at > 70 ? "-100%" : "-50%";
+        return (
         <div key="best" className="v-pop" style={{
-          position: "absolute", left: `${b.left + b.width / 2}%`,
+          position: "absolute", left: `${at}%`,
           bottom: BOTTOM + b.teamH + 8, animationDelay: "600ms", pointerEvents: "none",
         }}>
-          <span style={{ display: "block", transform: "translateX(-8%)",
+          <span style={{ display: "block", transform: `translateX(${shift})`,
             padding: "2px 7px", borderRadius: 7, background: "#000",
             border: `1px solid ${b.color}`, whiteSpace: "nowrap",
-            fontFamily: FD, fontWeight: 700, fontSize: 11, color: b.color }}>
+            fontFamily: FD, fontWeight: 700, fontSize: 13, color: b.color }}>
             {shortName(b.name)} {b.pts} · {b.color === MINE_C ? "WON" : "LOST"}
           </span>
         </div>
-      ))}
+        );
+      })}
 
       {bars.map(b => (
         <div key={b.id} className="v-move" style={{
@@ -792,7 +801,7 @@ function RaceChart({ c, stage, beat }) {
           {stage >= S_TEAM && !merged && (
             <div className="v-seg" style={{ position: "absolute", top: "100%",
               left: "50%", transform: "translateX(-50%)", marginTop: 6,
-              ...label({ fontSize: 10, color: b.color }), whiteSpace: "nowrap" }}>
+              ...label({ fontSize: 13, color: b.color }), whiteSpace: "nowrap" }}>
               {shortName(b.name)}
             </div>
           )}
@@ -827,15 +836,15 @@ function RaceChart({ c, stage, beat }) {
           <div className="v-pop" style={{ position: "absolute", left: 0, right: 0,
             bottom: BOTTOM - 20, height: 14, animationDelay: "2400ms",
             pointerEvents: "none" }}>
-            <span style={{ position: "absolute", left: 0, ...label({ fontSize: 10,
+            <span style={{ position: "absolute", left: 0, ...label({ fontSize: 13,
               color: V.text3 }) }}>OUTSCORED BY {lost}</span>
             {at > 26 && at < 72 && (
               <span style={{ position: "absolute", left: `${at}%`,
-                transform: "translateX(-50%)", ...label({ fontSize: 10, color: V.amber }) }}>
+                transform: "translateX(-50%)", ...label({ fontSize: 13, color: V.amber }) }}>
                 YOU
               </span>
             )}
-            <span style={{ position: "absolute", right: 0, ...label({ fontSize: 10,
+            <span style={{ position: "absolute", right: 0, ...label({ fontSize: 13,
               color: V.blue }) }}>YOU BEAT {beat}</span>
           </div>
         );
@@ -849,7 +858,7 @@ function RaceChart({ c, stage, beat }) {
         }}>
           <span style={{ padding: "2px 7px", borderRadius: 7, background: "#000",
             border: `1px solid ${V.amber}`, whiteSpace: "nowrap",
-            fontFamily: FD, fontWeight: 700, fontSize: 11, color: V.amber }}>
+            fontFamily: FD, fontWeight: 700, fontSize: 13, color: V.amber }}>
             YOU {b.pts}
           </span>
         </div>
@@ -873,7 +882,7 @@ function RaceChart({ c, stage, beat }) {
               boxShadow: won ? `0 0 12px ${b.color}` : "none" }} />
             <div style={{ position: "absolute", bottom: h + 5, left: "50%",
               transform: "translateX(-50%)",
-              ...numeric("chip", { fontSize: 16, color: won ? b.color : V.text2 }),
+              ...numeric("chip", { fontSize: 18, color: won ? b.color : V.text2 }),
               ...textGlow(won ? b.color : V.text2, 0.8), whiteSpace: "nowrap" }}>
               {v > 0 ? `+${v}` : `\u2212${Math.abs(v)}`}
             </div>
@@ -891,7 +900,7 @@ function RaceChart({ c, stage, beat }) {
           }}>
             <span style={{ padding: "3px 8px", borderRadius: 7, background: "#000",
               border: `1px solid ${col}`, whiteSpace: "nowrap",
-              fontFamily: FD, fontWeight: 700, fontSize: 12, color: col }}>
+              fontFamily: FD, fontWeight: 700, fontSize: 13, color: col }}>
               {t.code || t.short || t.name}
             </span>
           </div>
@@ -1015,7 +1024,7 @@ function TeamBarsH({ M, hands, merged, bb = false }) {
             {/* 78px, not 62: the initial and its stop cost three characters and
                 the column was cutting them off. The bar loses the same 16px. */}
             <span style={{ width: merged ? 40 : 78, flexShrink: 0, textAlign: "left",
-              ...label({ fontSize: merged ? 12 : 10, color: col }),
+              ...label({ fontSize: merged ? 15 : 13, color: col }),
               whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {merged ? r.code : shortName(r.name)}
             </span>
@@ -1041,12 +1050,12 @@ function TeamBarsH({ M, hands, merged, bb = false }) {
             </span>
             {bb && r.add !== 0 && (
               <span style={{ width: 24, textAlign: "right",
-                ...numeric("chip", { fontSize: 13, color: r.add > 0 ? col : V.text2 }) }}>
+                ...numeric("chip", { fontSize: 15, color: r.add > 0 ? col : V.text2 }) }}>
                 {r.add > 0 ? `+${r.add}` : `\u2212${Math.abs(r.add)}`}
               </span>
             )}
             <span style={{ width: 30, textAlign: "right",
-              ...numeric("stat", { fontSize: merged ? 24 : 17, color: col }),
+              ...numeric("stat", { fontSize: merged ? 27 : 20, color: col }),
               ...(merged ? textGlow(col, 0.5) : {}) }}>{r.v}</span>
           </div>
         );
@@ -1406,7 +1415,7 @@ const ASK = [
 // What each chart is showing, in one line. The headline says what happened;
 // this says what you are looking at.
 const CHART_NOTE = [
-  "One bar for each of the 48 players. Height is points scored this week.",
+  "",
   "The same bars, now coloured by whether that player's team won.",
   "Four players, then two teams. Shared drivers cancel out.",
   "The matchup score, after BOX BOX.",
@@ -1494,8 +1503,8 @@ function CardRace({ d, stage = 0 }) {
               </div>
             )}
             {stage !== S_TEAM && (
-              <div style={{ ...body("bodySm", { fontSize: 12, color: V.text3, marginTop: 10,
-                textAlign: "left", minHeight: 34 }) }}>{CHART_NOTE[stage]}</div>
+              <div style={{ ...body("bodySm", { fontSize: 14, color: V.text3, marginTop: 10,
+                textAlign: "left", minHeight: 38 }) }}>{CHART_NOTE[stage]}</div>
             )}
           </div>
         )}
@@ -1505,8 +1514,8 @@ function CardRace({ d, stage = 0 }) {
             {/* Two lines reserved. A caption that is one line on one press and
                 two on the next changes the card height, which changes the scale,
                 which moves the chart. */}
-            <div style={{ ...body("bodySm", { fontSize: 12, color: V.text3, marginTop: 8,
-              textAlign: "left", minHeight: 34 }) }}>{CHART_NOTE[stage]}</div>
+            <div style={{ ...body("bodySm", { fontSize: 14, color: V.text3, marginTop: 8,
+              textAlign: "left", minHeight: 38 }) }}>{CHART_NOTE[stage]}</div>
           </>
         )}
         {stage === S_POOL && (
@@ -1973,94 +1982,94 @@ const FIRST_H2 = 12;
 // spelled out, figures from 10 up.
 const SEASON_LINES = [
   { k: "win5", when: f => f.run.wins >= 5, lines: [
-    "{n} wins in a row. Nobody else in the division is doing that.",
-    "That is {n} straight. Whatever you two are doing, keep doing it.",
-    "{n} on the bounce. This is a run now.",
+    "{n} wins in a row. Nobody else in the league is close to that.",
+    "That's {n} straight. Whatever you two are doing, don't stop.",
+    "{n} in a row. You're the team everyone else is watching now.",
   ] },
   { k: "loss5", when: f => f.run.losses >= 5, lines: [
-    "{n} straight losses. Something has to change.",
-    "That is {n} in a row gone.",
-    "{n} losses running. Time to pick differently.",
+    "{n} straight losses. Time to try something different.",
+    "That's {n} in a row now. Long stretch.",
+    "{n} losses running. But every pool is a fresh start, so.",
   ] },
   { k: "bbWon", when: f => f.bbDecided && f.won, lines: [
-    "You won on the BOX BOX line, which takes both of you guessing well.",
-    "The line won that one. Take the line away and you lose.",
-    "BOX BOX decided that, your way. That is teamwork and nothing else.",
+    "You won on the BOX BOX line. Both of you guessed well, and that's the whole point of the line.",
+    "Take BOX BOX out and you lose that one. Good week to guess right together.",
+    "You didn't win that on drivers. You won on the pit guess, and that takes both of you.",
   ] },
   { k: "bbLost", when: f => f.bbDecided && f.lost, lines: [
-    "You lost on the BOX BOX line. Take the line away and you win.",
-    "The line beat you, and nothing else did.",
-    "BOX BOX decided that one, their way.",
+    "You lost on the BOX BOX line. Take the line out and you win that one.",
+    "The pit guess is where that one went. Six points is a lot to hand over.",
+    "Without BOX BOX you win that. Two guesses, six points, and there's your week.",
   ] },
   { k: "win3", when: f => f.run.wins >= 3, lines: [
-    "That is a {n} match winning streak.",
-    "{n} in a row, and nobody has stopped you yet.",
-    "{n} straight wins. You are the team nobody wants right now.",
-    "Three has a way of becoming five. Keep going.",
+    "That's a {n} match winning streak.",
+    "{n} in a row, and nobody's stopped you yet.",
+    "{n} straight. You're the team nobody wants to draw right now.",
+    "Three's a nice number. Five's better.",
   ] },
   { k: "loss3", when: f => f.run.losses >= 3, lines: [
     "{n} in a row now. Rough patch.",
-    "That is {n} straight losses.",
-    "{n} weeks without a win. Next one matters.",
+    "That's {n} straight. Not much going right.",
+    "{n} weeks without a win. So next week matters.",
   ] },
   { k: "blowWin", when: f => f.won && f.margin >= 20, lines: [
-    "{pts}. That was a formality.",
-    "You beat {opp} by {pts}. They may want the week back.",
-    "{margin} clear. {opp} never got going.",
-    "Nothing close about that. {pts}.",
+    "{pts}. That one was over early.",
+    "You beat {opp} by {pts}. They'll want the week back.",
+    "{margin} clear of {opp}, and they never got going.",
+    "Nothing close about that one. {pts}.",
   ] },
   { k: "blowLoss", when: f => f.lost && f.margin >= 20, lines: [
-    "Down {pts}. Nobody needs to see the details.",
-    "{opp} beat you by {pts}. That one goes in the book.",
+    "Down {pts}. Best we don't dwell on that one.",
+    "{opp} beat you by {pts}. That one's going in the book.",
     "{pts}. Everything that could go their way did.",
-    "{pts}. Some weeks you take the loss and go again.",
+    "{pts} down. Some weeks you take the loss and go again.",
   ] },
   { k: "closeWin", when: f => f.won && f.margin <= 3, lines: [
-    "{pts} in that one. You will take that.",
+    "{pts} in that one. You'll take that.",
     "Won by {pts}. Those are the weeks that decide a season.",
-    "{pts}, and they went your way. A win counts the same either way.",
-    "That was tight. {pts}.",
+    "{pts}, and they went your way. A win's a win.",
+    "That was tight. {pts}, and you're on the right side.",
   ] },
   { k: "closeLoss", when: f => f.lost && f.margin <= 3, lines: [
     "{pts} short. That one stings.",
-    "Lost by {pts}. Nothing in that all day.",
-    "{pts}, and no points for close.",
+    "Lost by {pts}. There was nothing in that all day.",
+    "{pts}. And there's no points for close.",
   ] },
   { k: "openWin", when: f => f.round === FIRST_H2 && f.won, lines: [
-    "That is a great way to start the second half.",
-    "One from one in the second half.",
+    "That's a great way to start the second half.",
+    "One from one in the second half. Good start.",
   ] },
   { k: "openLoss", when: f => f.round === FIRST_H2 && f.lost, lines: [
     "Not the start to the second half you wanted.",
-    "The second half runs 11 more races. Plenty of time.",
+    "There are 11 more races. Plenty of time.",
   ] },
   { k: "hot10", when: f => f.run.played >= 10 && f.run.last10.w >= 8, lines: [
-    "{n} wins in your last 10. Nobody is having a better season.",
-    "{n} from your last 10. That is a season, not a run.",
+    "{n} wins in your last 10. Nobody's having a better season.",
+    "{n} from your last 10. You've been good for months.",
   ] },
   { k: "cold10", when: f => f.run.played >= 10 && f.run.last10.w <= 2, lines: [
-    "{n} wins in your last 10. Long stretch.",
-    "{n} from 10. This season has been hard work.",
+    "Only {n} wins in your last 10. It's been a long stretch.",
+    "{n} from 10. This season's been hard work.",
   ] },
   { k: "bounce", when: f => f.won && f.run.prev && f.run.prev.lost, lines: [
     "Back to winning after last week.",
     "You answered last week's loss.",
-    "A win straight after a loss. That is how a season stays alive.",
+    "A win right after a loss. That's how a season stays alive.",
   ] },
   { k: "slip", when: f => f.lost && f.run.prev && f.run.prev.won, lines: [
-    "Winning last week, losing this one.",
-    "That run ended.",
-    "One week up, one week down.",
+    "Won last week, lost this one.",
+    "And that run's over.",
+    "Up one week, down the next.",
   ] },
   { k: "draw", when: f => f.drew, lines: [
-    "A draw. Neither of you deserved to lose that.",
+    "A draw. Neither of you deserved to lose that one.",
     "Dead level. That happens about once a season.",
   ] },
   { k: "win", when: f => f.won, lines: [
     "A win, and the table looks better this morning.",
     "You won. On to the next one.",
-    "Won this week. Good.",
-    "A win over {opp}, and they are not an easy week.",
+    "Nothing fancy about that one, but you'll take the points.",
+    "A win over {opp}, and they're not an easy week.",
   ] },
   { k: "loss", when: f => f.lost, lines: [
     "A loss this week. The next race is a fresh start.",
