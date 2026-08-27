@@ -1991,15 +1991,20 @@ const SEASON_LINES = [
     "That's {n} in a row now. Long stretch.",
     "{n} losses running. But every pool is a fresh start, so.",
   ] },
+  // Nobody wins BOX BOX by guessing well. The line is the average of all four
+  // numbers, so winning means both of you shading yours away from the stop you
+  // actually expect, which costs you needle points. It is the one part of the
+  // week where the team game and your own score pull against each other, and
+  // the copy says so.
   { k: "bbWon", when: f => f.bbDecided && f.won, lines: [
-    "You won on the BOX BOX line. Both of you guessed well, and that's the whole point of the line.",
-    "Take BOX BOX out and you lose that one. Good week to guess right together.",
-    "You didn't win that on drivers. You won on the pit guess, and that takes both of you.",
+    "You won on the BOX BOX line. That's the team game, and it takes both of you pulling the same way.",
+    "Take BOX BOX out and you lose that one. Six points for putting the team ahead of your own needle.",
+    "That's teamwork. The line sits on the average of all four numbers, and your two pushed the average your way.",
   ] },
   { k: "bbLost", when: f => f.bbDecided && f.lost, lines: [
-    "You lost on the BOX BOX line. Take the line out and you win that one.",
-    "The pit guess is where that one went. Six points is a lot to hand over.",
-    "Without BOX BOX you win that. Two guesses, six points, and there's your week.",
+    "You lost on the BOX BOX line. Their two numbers moved the average further than yours did.",
+    "Without BOX BOX you win that. The other pair gave up more of their own needle to move the line.",
+    "Six points on the line, and the other team played the line harder. That's the trade.",
   ] },
   { k: "win3", when: f => f.run.wins >= 3, lines: [
     "That's a {n} match winning streak.",
