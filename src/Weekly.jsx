@@ -20,6 +20,7 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from "react";
 import { supabase } from "./supabaseClient";
 import { buildWeekly, PIT_FLOOR, PIT_CEIL } from "./weekly.js";
+import { shortName } from "./names.js";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME, canonicalName } from "./drivers.js";
 import Flag, { Flagged } from "./Flag.jsx";
 // The same board the home page draws, from the same file.
@@ -56,6 +57,7 @@ const one = n => (n == null ? "-" : Math.round(n * 10) / 10);
 const two = n => (n == null ? "-" : Number(n).toFixed(2));
 const signed = n => (n > 0 ? `+${n}` : String(n));
 const firstName = s => String(s || "").split(/\s+/)[0];
+// Drivers only. A person gets shortName; see src/names.js for why.
 const lastName = s => String(s || "").split(/\s+/).slice(-1)[0];
 // AP style: one through nine spelled out, figures from 10 up. Same for
 // ordinals in prose. Table cells and stat tiles keep figures throughout, which
@@ -345,7 +347,7 @@ function Scatter({ c, focus, onFocus }) {
         const cx = b.x + k.w / 2;
         const titleH = k.lines.length * 10;
         const avCy = b.y + titleH + 18;
-        const pillW = Math.max(30, lastName(w.name).length * 6 + 10);
+        const pillW = Math.max(30, shortName(w.name).length * 6 + 10);
         const tone = w.result === "won" ? V.green : w.result === "lost" ? V.pink : V.text2;
         return (
           <g key={k.q} onClick={() => onFocus(focus === w.id ? null : w.id)}
@@ -366,7 +368,7 @@ function Scatter({ c, focus, onFocus }) {
               fill="#000" stroke={mine ? V.amber : tone} strokeWidth="1" />
             <text x={cx} y={avCy + 18} textAnchor="middle"
               style={{ fontFamily: FD, fontWeight: 700, fontSize: 11 }}
-              fill={mine ? V.amber : "#fff"}>{lastName(w.name)}</text>
+              fill={mine ? V.amber : "#fff"}>{shortName(w.name)}</text>
             <text x={cx} y={avCy + 35} textAnchor="middle"
               style={{ ...numeric("chip", { fontSize: 11 }) }} fill={V.text2}>
               <tspan fill={V.text}>{w.x}</tspan>
@@ -762,7 +764,7 @@ function RaceChart({ c, stage, beat }) {
             padding: "2px 7px", borderRadius: 7, background: "#000",
             border: `1px solid ${b.color}`, whiteSpace: "nowrap",
             fontFamily: FD, fontWeight: 700, fontSize: 11, color: b.color }}>
-            {lastName(b.name)} {b.pts} · {b.color === MINE_C ? "WON" : "LOST"}
+            {shortName(b.name)} {b.pts} · {b.color === MINE_C ? "WON" : "LOST"}
           </span>
         </div>
       ))}
@@ -786,7 +788,7 @@ function RaceChart({ c, stage, beat }) {
             <div className="v-seg" style={{ position: "absolute", top: "100%",
               left: "50%", transform: "translateX(-50%)", marginTop: 6,
               ...label({ fontSize: 10, color: b.color }), whiteSpace: "nowrap" }}>
-              {lastName(b.name)}
+              {shortName(b.name)}
             </div>
           )}
           {/* Only the first showing is drawn. After that every change is a move. */}
@@ -1005,10 +1007,12 @@ function TeamBarsH({ M, hands, merged, bb = false }) {
               {merged ? <Logo src={r.logo} size={28} />
                 : <Face src={r.photo} size={24} ring={col} />}
             </span>
-            <span style={{ width: merged ? 40 : 62, flexShrink: 0, textAlign: "left",
+            {/* 78px, not 62: the initial and its stop cost three characters and
+                the column was cutting them off. The bar loses the same 16px. */}
+            <span style={{ width: merged ? 40 : 78, flexShrink: 0, textAlign: "left",
               ...label({ fontSize: merged ? 12 : 10, color: col }),
               whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {merged ? r.code : lastName(r.name)}
+              {merged ? r.code : shortName(r.name)}
             </span>
             <span style={{ flex: 1, height: merged ? 22 : 13, borderRadius: 5,
               background: V.bg2, position: "relative", overflow: "hidden" }}>
@@ -1344,7 +1348,7 @@ const Podium = ({ top3, meId, topTeam }) => {
                 background: "#000", border: `1px solid ${mine ? V.amber : c}`,
                 whiteSpace: "nowrap", fontFamily: FD, fontWeight: 700,
                 fontSize: first ? 15 : 12, lineHeight: 1.3,
-                color: mine ? V.amber : "#fff" }}>{lastName(p.name)}</div>
+                color: mine ? V.amber : "#fff" }}>{shortName(p.name)}</div>
               <TeamChip logo={p.teamLogo} size={first ? 22 : 18} />
               <div style={{ ...numeric("stat", { fontSize: first ? 26 : 19, color: V.blue }),
                 ...textGlow(V.blue, first ? 0.8 : 0.5) }}>{p.pts}</div>
@@ -1444,9 +1448,12 @@ function CardRace({ d, stage = 0 }) {
   const lostN = c.ladder.filter(r => !r.me && me.pts < r.pts).length;
   const head = stage === S_RACE
       ? `You scored ${me.pts} points, good for ${apOrdinal(me.place)} out of ${c.ladder.length}.`
+    // A sentence is not a label, so it gets the whole name. And the team it
+    // belongs to rather than a pronoun: half the league is women and this line
+    // said "his" for all of them.
     : stage === S_COLOR ? (top.result === "lost"
-        ? `${lastName(top.name)} scored the most and still lost.`
-        : `${lastName(top.name)} scored the most, and his team won.`)
+        ? `${top.name} scored the most and still lost.`
+        : `${top.name} scored the most, and the team won.`)
     : stage === S_POOL ? (x.bestSwap
         ? `You should have taken ${lastName(x.bestSwap.in.driver)} over ${lastName(x.bestSwap.out.driver)}.`
         : "You took the best hand available.")
@@ -1558,11 +1565,11 @@ function CardRace({ d, stage = 0 }) {
           <div style={{ display: "grid", gap: 6, marginTop: 2 }}>
             {[
               { t: "PERFECT PICKS", v: x.perfect.total, col: V.blue },
-              { t: `BEST, ${lastName(x.bestHaul.name).toUpperCase()}`, v: x.bestHaul.haul, col: V.text2 },
+              { t: `BEST, ${shortName(x.bestHaul.name).toUpperCase()}`, v: x.bestHaul.haul, col: V.text2 },
               { t: "YOU", v: x.myHaul, col: V.amber },
               ...(x.mateHaul != null
                 ? [{ t: x.mateFirst.toUpperCase(), v: x.mateHaul, col: V.text2 }] : []),
-              { t: `LOWEST, ${lastName(x.worstHaul.name).toUpperCase()}`, v: x.worstHaul.haul, col: V.text3 },
+              { t: `LOWEST, ${shortName(x.worstHaul.name).toUpperCase()}`, v: x.worstHaul.haul, col: V.text3 },
             ].map((r, i) => (
               <div key={r.t} style={{ display: "flex", alignItems: "center", gap: 9 }}>
                 <span style={{ width: 106, flexShrink: 0, textAlign: "left",
@@ -1654,7 +1661,7 @@ function GridFace({ p, open, onOpen, below = false }) {
         }}>
           <Face src={p.photo} size={44} ring={ring === V.border2 ? tone : ring} />
           <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, lineHeight: 1.3,
-            color: p.me ? V.green : "#fff" }}>{lastName(p.name)}</span>
+            color: p.me ? V.green : "#fff" }}>{shortName(p.name)}</span>
           <span style={{ ...numeric("chip", { fontSize: 12, color: V.text2 }) }}>
             {p.pts}{" "}
             <span style={{ color: tone }}>
@@ -2265,7 +2272,7 @@ function CardScatter({ d }) {
                   border: `1px solid ${mine ? V.amber : medal}`, whiteSpace: "nowrap",
                   fontFamily: FD, fontWeight: 700, fontSize: 12, lineHeight: 1.3,
                   color: mine ? V.amber : "#fff",
-                }}>{lastName(p.name)}</div>
+                }}>{shortName(p.name)}</div>
                 <div style={{ ...numeric("chip", { fontSize: 16, color: V.text, marginTop: 3 }) }}>
                   {p.pts}
                 </div>
@@ -2572,10 +2579,16 @@ function StandingsTable({ rows, kind, value = r => r.pts, unit = "PTS" }) {
     if (row) el.scrollTop = Math.max(0, row.offsetTop - el.clientHeight / 2 + row.clientHeight / 2);
   }, [rows, unit]);
 
-  const cols = "30px 26px 1fr 54px 36px";
+  // The name column is what is left, so everything beside it is only as wide as
+  // it has to be and the gaps are 6 rather than 8. Names still wrap rather than
+  // lose their end: at 360 this table was cutting 29 of them, "Cascadia
+  // Motorsport" by 60px. A grid puts the header in one grid and every row in
+  // another, so these have to be fixed widths; auto would size each row on its
+  // own contents and the columns would not line up.
+  const cols = "26px 24px 1fr 44px 28px";
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: cols, gap: 8,
+      <div style={{ display: "grid", gridTemplateColumns: cols, gap: 6,
         padding: "0 8px 6px", borderBottom: `1px solid ${V.border}` }}>
         <span style={{ ...label({ fontSize: 11, color: V.text3, textAlign: "right" }) }}>POS</span>
         <span />
@@ -2590,7 +2603,7 @@ function StandingsTable({ rows, kind, value = r => r.pts, unit = "PTS" }) {
         <div style={{ display: "grid", gap: 3 }}>
           {rows.map(r => (
             <div key={r.id} data-me={r.me ? "1" : "0"} style={{
-              display: "grid", gridTemplateColumns: cols, gap: 8, alignItems: "center",
+              display: "grid", gridTemplateColumns: cols, gap: 6, alignItems: "center",
               padding: "5px 8px", borderRadius: 8,
               background: r.me ? V.bg4 : "transparent",
               border: `1px solid ${r.me ? V.amber : "transparent"}`,
@@ -2602,7 +2615,7 @@ function StandingsTable({ rows, kind, value = r => r.pts, unit = "PTS" }) {
               {kind === "team"
                 ? <Logo src={r.logo} size={22} />
                 : <Face src={r.photo} size={22} ring={r.me ? V.amber : V.border2} />}
-              <Flagged name={r.name} nation={r.nation} size={15} gap={6}
+              <Flagged name={r.name} nation={r.nation} size={15} gap={6} wrap
                 style={{ ...body("bodySm", { fontSize: 15,
                   color: r.me ? V.text : V.text2, fontWeight: r.me ? 700 : 400 }) }} />
               <span style={{ textAlign: "right",

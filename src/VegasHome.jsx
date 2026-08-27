@@ -8,6 +8,7 @@
 // Nothing here touches Supabase. It is a design surface, reachable at #vegas.
 
 import { useState, useRef, useEffect , createContext, useContext } from "react";
+import { shortName } from "./names.js";
 import { V, FD, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
 import { supabase } from "./supabaseClient";
 import { useLeague } from "./useLeague";
@@ -1475,7 +1476,7 @@ function OpponentCard() {
                   <p style={{
                     ...display("chip"), fontSize: 14, color: V.text, margin: 0,
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                  }}>{pl.name.split(" ")[0]}</p>
+                  }}>{shortName(pl.name)}</p>
                   <p style={{ ...numeric("chip"), fontSize: 15, ...textGlow(V.pink, 0.5), margin: "1px 0 0" }}>
                     {pl.rank ? ordinal(pl.rank) : "-"}
                   </p>

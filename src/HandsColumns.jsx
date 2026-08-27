@@ -14,6 +14,7 @@
 // under: "mine" or "theirs", which decides which pair sits on the left
 // driverPts: { driver: points }, drawn on the faces once the week is scored
 import { useState, useRef, useEffect } from "react";
+import { shortName } from "./names.js";
 import { V, FD, display, numeric, card } from "./theme.vegas";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
@@ -21,6 +22,7 @@ import { F1_TEAM_COLORS } from "./theme";
 export const MINE = V.green, THEIRS = V.pink, DIVIDE = V.blue;
 
 const dColor = (name) => F1_TEAM_COLORS[TEAM_BY_NAME[name]] || V.text3;
+// Drivers only. A person gets shortName; see src/names.js.
 const lastName = (n) => (n || "").split(" ").slice(-1)[0];
 
 // Drivers only in this file, so the headshot map is the whole lookup.
@@ -221,7 +223,7 @@ export default function HandsColumns({ seats, under, driverPts = {}, scored = tr
               }}>
                 <PlayerBadge name={h.name} picked={false} dim={false} ring={col}
                              photo={h.photo} size={54} />
-                <Plate text={h.mine ? "You" : lastName(h.name)} c={col} size={13} top={-8} />
+                <Plate text={h.mine ? "You" : shortName(h.name)} c={col} size={13} top={-8} />
                 {scored && (
                   <div style={{ ...numeric("h3"), fontSize: 22, color: col, marginTop: 4 }}>
                     {h.score ? h.score.total : "\u2014"}
