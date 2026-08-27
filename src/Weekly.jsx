@@ -1231,8 +1231,14 @@ function BoxBoxStrip({ M, mine = null, needlePts = 0 }) {
 
 // The board the home page finishes a scored week on. Only the team in front
 // lights up, because green on its own is the resting state.
+// Colour follows the result, the same rule the home board uses: our side is
+// green when we won and grey when we lost, and theirs lights up only when it
+// beat us. A losing box painted in the team's own colour looks like a result it
+// was not. A draw lights neither.
 function Scoreboard({ M }) {
   const mineWon = M.myTotal > M.oppTotal, theirsWon = M.oppTotal > M.myTotal;
+  const mineC = mineWon ? MINE_C : V.text2;
+  const theirsC = theirsWon ? THEIRS_C : V.text2;
   const Card = ({ t, total, c, side, won }) => (
     <div className={won ? "v-flicker" : undefined} style={{
       flex: 1, minWidth: 0, textAlign: "center", padding: "10px 8px", borderRadius: 13,
@@ -1242,17 +1248,17 @@ function Scoreboard({ M }) {
         ? <img src={t.logo} alt="" style={{ width: 36, height: 36, objectFit: "contain" }} />
         : <div style={{ width: 36, height: 36, borderRadius: 10, margin: "0 auto",
             background: V.bg2, border: `2px solid ${c}` }} />}
-      <div style={{ ...display("h3", { fontSize: 15, color: V.text, marginTop: 5,
+      <div style={{ ...display("h3", { fontSize: 17, color: V.text, marginTop: 5,
         lineHeight: 1.25, whiteSpace: "nowrap" }) }}>
         {t.name.length > 16 && t.short ? t.short : t.name}
       </div>
-      <div style={{ ...label({ fontSize: 11, color: c, marginTop: 2 }) }}>{side}</div>
-      <div style={{ ...numeric("hero", { fontSize: 38, color: c, marginTop: 3 }),
+      <div style={{ ...label({ fontSize: 13, color: c, marginTop: 2 }) }}>{side}</div>
+      <div style={{ ...numeric("hero", { fontSize: 44, color: c, marginTop: 3 }),
         ...(won ? textGlow(c, 0.9) : {}) }}>{total}</div>
     </div>
   );
-  const meCard = { t: M.myTeam, total: M.myTotal, c: MINE_C, side: M.seat, won: mineWon };
-  const themCard = { t: M.oppTeam, total: M.oppTotal, c: THEIRS_C,
+  const meCard = { t: M.myTeam, total: M.myTotal, c: mineC, side: M.seat, won: mineWon };
+  const themCard = { t: M.oppTeam, total: M.oppTotal, c: theirsC,
     side: M.seat === "OVER" ? "UNDER" : "OVER", won: theirsWon };
   const left = M.seat === "UNDER" ? meCard : themCard;
   const right = M.seat === "UNDER" ? themCard : meCard;
@@ -1897,67 +1903,6 @@ function SeasonTrack({ was, now, of, delay = 300 }) {
   );
 }
 
-// Reaction marks. Drawn rather than set as emoji, so they take the Vegas
-// palette, sit on the type baseline and stay legible at 26px.
-const Glyph = ({ kind, color, size = 26 }) => {
-  const c = size / 2, r = size * 0.42;
-  const stroke = { stroke: color, strokeWidth: size * 0.09, fill: "none",
-    strokeLinecap: "round", strokeLinejoin: "round" };
-  if (kind === "check") return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle cx={c} cy={c} r={r} {...stroke} opacity="0.45" />
-      <polyline points={`${c - r * 0.5},${c} ${c - r * 0.1},${c + r * 0.42} ${c + r * 0.56},${c - r * 0.44}`} {...stroke} />
-    </svg>
-  );
-  if (kind === "equals") return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle cx={c} cy={c} r={r} {...stroke} opacity="0.45" />
-      <line x1={c - r * 0.5} y1={c - r * 0.22} x2={c + r * 0.5} y2={c - r * 0.22} {...stroke} />
-      <line x1={c - r * 0.5} y1={c + r * 0.28} x2={c + r * 0.5} y2={c + r * 0.28} {...stroke} />
-    </svg>
-  );
-  if (kind === "thumbsdown") return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M7 3h7.2a2 2 0 0 1 1.95 1.55l1.25 5.4A1.6 1.6 0 0 1 15.84 12H12l.7 3.3a2.1 2.1 0 0 1-2.05 2.55L7 10.5Z"
-        fill="none" stroke={color} strokeWidth="1.7" strokeLinejoin="round" />
-      <rect x="3" y="3" width="3.2" height="8.2" rx="1.1" fill="none" stroke={color} strokeWidth="1.7" />
-    </svg>
-  );
-  // The four faces, best to worst.
-  const eye = dy => (
-    <>
-      <circle cx={c - r * 0.36} cy={c - r * 0.22 + dy} r={size * 0.045} fill={color} />
-      <circle cx={c + r * 0.36} cy={c - r * 0.22 + dy} r={size * 0.045} fill={color} />
-    </>
-  );
-  const mouths = {
-    happy: `M ${c - r * 0.45} ${c + r * 0.18} Q ${c} ${c + r * 0.72}, ${c + r * 0.45} ${c + r * 0.18}`,
-    flat: `M ${c - r * 0.42} ${c + r * 0.36} L ${c + r * 0.42} ${c + r * 0.36}`,
-    sad: `M ${c - r * 0.45} ${c + r * 0.58} Q ${c} ${c + r * 0.04}, ${c + r * 0.45} ${c + r * 0.58}`,
-    yikes: `M ${c - r * 0.42} ${c + r * 0.62} Q ${c} ${c - r * 0.06}, ${c + r * 0.42} ${c + r * 0.62}`,
-  };
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle cx={c} cy={c} r={r} {...stroke} opacity="0.55" />
-      {/* Yikes is wide eyes and an open mouth. Slanted brows read as angry,
-          which is a different feeling entirely. */}
-      {kind === "yikes" ? (
-        <>
-          <circle cx={c - r * 0.34} cy={c - r * 0.24} r={size * 0.075} {...stroke}
-            strokeWidth={size * 0.07} />
-          <circle cx={c + r * 0.34} cy={c - r * 0.24} r={size * 0.075} {...stroke}
-            strokeWidth={size * 0.07} />
-          <ellipse cx={c} cy={c + r * 0.42} rx={r * 0.26} ry={r * 0.3} fill={color} />
-        </>
-      ) : (
-        <>
-          {eye(0)}
-          <path d={mouths[kind] || mouths.flat} {...stroke} />
-        </>
-      )}
-    </svg>
-  );
-};
 
 const Chevron = ({ dir, color, size = 26 }) => {
   const c = size / 2, w = size * 0.3;
@@ -1975,95 +1920,7 @@ const Chevron = ({ dir, color, size = 26 }) => {
   );
 };
 
-// All 24 team scores as horizontal bars, best at the top, with your row picked
-// out and every team you outscored marked underneath it.
-//
-// Horizontal because the labels belong on the rows: a vertical version had 24
-// nameless columns and a legend, which is the arrangement the annotation
-// guidance says to reach for last.
-function LeagueStrip({ rows, metric, onMetric }) {
-  const val = r => (metric === "drivers" ? r.drivers : r.v);
-  const sorted = [...rows].sort((a, b) => val(b) - val(a) || a.name.localeCompare(b.name));
-  const mine = sorted.find(r => r.me);
-  const max = Math.max(...sorted.map(val), 1);
-  const beat = sorted.filter(r => !r.me && val(mine) > val(r)).length;
-  const lost = sorted.filter(r => !r.me && val(mine) < val(r)).length;
-  const tied = sorted.filter(r => !r.me && val(mine) === val(r)).length;
-  return (
-    <div style={{ width: "100%" }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 5, marginBottom: 8 }}>
-        {[["score", "TEAM SCORE"], ["drivers", "DRIVER POINTS"]].map(([k, t]) => (
-          <button key={k} onClick={() => onMetric(k)} style={{
-            ...label({ fontSize: 10, color: metric === k ? V.bg : V.blue }),
-            background: metric === k ? V.blue : "transparent",
-            border: `1px solid ${V.blue}`, borderRadius: 999, padding: "3px 9px",
-            cursor: "pointer",
-          }}>{t}</button>
-        ))}
-      </div>
-      <div style={{ display: "grid", gap: 2 }}>
-        {sorted.map((r, i) => {
-          // Three states, three colours. Beaten and tied used to share one
-          // swatch, which made the count under the chart unreadable.
-          const beatIt = !r.me && val(mine) > val(r);
-          const tiedIt = !r.me && val(mine) === val(r);
-          const col = r.me ? V.amber : beatIt ? V.blue : tiedIt ? V.purple : V.bg4;
-          return (
-            <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 7,
-              height: r.me ? 17 : 11 }}>
-              <span style={{ width: 34, flexShrink: 0, textAlign: "right",
-                ...label({ fontSize: r.me ? 11 : 9,
-                  color: r.me ? V.amber : beatIt ? V.text2 : V.text3 }) }}>
-                {r.me ? "YOU" : r.code}
-              </span>
-              <span style={{ flex: 1, height: r.me ? 13 : 8, borderRadius: 3,
-                background: V.bg2, overflow: "hidden" }}>
-                <span className="v-seg" style={{ display: "block", height: "100%",
-                  width: `${(val(r) / max) * 100}%`, borderRadius: 3, background: col,
-                  boxShadow: r.me ? `0 0 9px ${V.amber}` : "none",
-                  transitionDelay: `${200 + i * 34}ms` }} />
-              </span>
-              <span style={{ width: 24, flexShrink: 0, textAlign: "right",
-                ...numeric("chip", { fontSize: r.me ? 14 : 11,
-                  color: r.me ? V.amber : beatIt ? V.blue : tiedIt ? V.purple : V.text3 }) }}>
-                {val(r)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 9 }}>
-        {[[`${lost} MORE`, V.bg4], [`${tied} LEVEL`, V.purple], ["YOU", V.amber],
-          [`${beat} LESS`, V.blue]].map(([t, col]) => (
-          <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-            <span style={{ width: 9, height: 9, borderRadius: 2, background: col }} />
-            <span style={{ ...label({ fontSize: 10, color: V.text2 }) }}>{t}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
-// One row of the review: what it is, the number, the picture, the reaction.
-// The picture is the point. A number on its own says 37th; a row of 48 ticks
-// with one of them lit says it without being read.
-const ReviewRow = ({ cap, children, glyph, word, color, glow = false }) => (
-  <Panel pad={13} glow={glow ? color : null}>
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-      <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-        <div style={{ ...label({ fontSize: 11, color: V.text3, marginBottom: 6 }) }}>{cap}</div>
-        {children}
-      </div>
-      <div style={{ display: "grid", justifyItems: "center", gap: 3, paddingTop: 2 }}>
-        {glyph}
-        <span style={{ ...label({ fontSize: 11, color, lineHeight: 1.2, textAlign: "center" }) }}>
-          {word}
-        </span>
-      </div>
-    </div>
-  </Panel>
-);
 
 // What to name as the reason, in the player's own review. The kinds are worked
 // out in weekly.js, strongest reason first.
@@ -2084,52 +1941,185 @@ function because(c) {
   return "Nothing in particular separated the two teams.";
 }
 
-const QUARTER_MARK = [
-  { kind: "happy", word: "TOP QUARTER", color: V.green },
-  { kind: "flat", word: "UPPER HALF", color: V.blue },
-  { kind: "sad", word: "LOWER HALF", color: V.amber },
-  { kind: "yikes", word: "BOTTOM QUARTER", color: V.pink },
+
+// The five things a team score is made of, laid out as rows so the two sides
+// can be read against each other. Two views of the same five rows:
+//
+//   scores   what each side scored on that part, one bar each
+//   gaps     the difference alone, from a centre line, and the five add to the
+//            margin on the scoreboard
+//
+// Same rows, same order, same height in both, so the toggle animates rather
+// than redraws. Everything is in the DOM at full size and CSS does the
+// moving — a chart drawn by slicing data renders identically for all 48
+// under react-dom/server, which is what smoke:weekly exists to catch.
+const PART_ROWS = [
+  { k: "top", t: "TOP POOL" },
+  { k: "mid", t: "MIDFIELD" },
+  { k: "best", t: "BEST FINISH" },
+  { k: "order", t: "ORDER" },
+  { k: "bb", t: "BOX BOX" },
 ];
 
+function PartsChart({ parts, view, outcome }) {
+  const gaps = view === "gaps";
+  // Same rule as the scoreboard above it: our side is green when we won and
+  // grey when we lost, and theirs lights up only when it beat us. Leaving the
+  // chart green under a grey scoreboard reads as one of the two being wrong.
+  // The gaps view is different and keeps green and pink, because there they
+  // mean gained and lost on that row rather than which side is which.
+  const mineC = outcome === "won" ? MINE_C : V.text2;
+  const theirsC = outcome === "lost" ? THEIRS_C : V.text2;
+  // One scale per view, held across both sides and all five rows, so a bar of
+  // the same length is the same number of points everywhere in that view.
+  //
+  // The two views need their own, because they measure different things. A gap
+  // of three drawn against a top-pool score of 28 is four pixels: the view
+  // whose whole job is to show the gaps would be the one you cannot read.
+  const most = gaps
+    ? Math.max(1, ...PART_ROWS.map(r => Math.abs(parts.mine[r.k] - parts.theirs[r.k])))
+    : Math.max(1, ...PART_ROWS.flatMap(r => [Math.abs(parts.mine[r.k]), Math.abs(parts.theirs[r.k])]));
+
+  return (
+    <div style={{ display: "grid", gap: 7, width: "100%" }}>
+      {PART_ROWS.map((r, i) => {
+        const a = parts.mine[r.k], b = parts.theirs[r.k];
+        const gap = a - b;
+        const col = gaps ? (gap > 0 ? MINE_C : gap < 0 ? THEIRS_C : V.text3) : mineC;
+        return (
+          <div key={r.k} style={{ display: "grid",
+            // 100px, because "BEST FINISH" wrapped at 82 and a taller row put
+            // that one out of line with the other four.
+            gridTemplateColumns: "100px 1fr 34px", gap: 8, alignItems: "center" }}>
+            <span style={{ ...label({ fontSize: 13, color: V.text3, textAlign: "left" }) }}>
+              {r.t}
+            </span>
+
+            {/* The track. In scores view two bars grow from the left, yours
+                above theirs. In gaps view one bar leaves the middle. */}
+            <span style={{ position: "relative", display: "block", height: 22 }}>
+              {gaps && (
+                <span style={{ position: "absolute", left: "50%", top: 0, bottom: 0,
+                  width: 1, background: V.border2 }} />
+              )}
+              {/* A stub at the start of the track, so nought reads as nought
+                  rather than as a row that failed to draw. */}
+              {!gaps && (
+                <>
+                  <span style={{ position: "absolute", top: 1, height: 9, left: 0,
+                    width: 3, borderRadius: 2, background: V.border2 }} />
+                  <span style={{ position: "absolute", top: 12, height: 9, left: 0,
+                    width: 3, borderRadius: 2, background: V.border2 }} />
+                </>
+              )}
+              <span className="v-seg" style={{
+                position: "absolute", top: gaps ? 4 : 1, height: gaps ? 14 : 9,
+                left: gaps ? (gap >= 0 ? "50%" : `calc(50% - ${Math.abs(gap) / most * 50}%)`) : 0,
+                width: gaps ? `${Math.abs(gap) / most * 50}%` : `${Math.abs(a) / most * 100}%`,
+                background: col, borderRadius: 5, transitionDelay: `${i * 45}ms`,
+                boxShadow: `0 0 8px ${col}66`,
+              }} />
+              {!gaps && (
+                <span className="v-seg" style={{
+                  position: "absolute", top: 12, height: 9, left: 0,
+                  width: `${Math.abs(b) / most * 100}%`,
+                  background: theirsC, borderRadius: 5, transitionDelay: `${i * 45}ms`,
+                }} />
+              )}
+            </span>
+
+            {/* In scores view each bar gets its own number, on the same line as
+                the bar it belongs to. One number for two bars named neither. */}
+            <span style={{ position: "relative", display: "block", height: 22 }}>
+              {gaps ? (
+                <span style={{ position: "absolute", inset: 0, display: "flex",
+                  alignItems: "center", justifyContent: "flex-end",
+                  ...numeric("chip", { fontSize: 15, color: col }) }}>
+                  {signed(gap)}
+                </span>
+              ) : (
+                <>
+                  <span style={{ position: "absolute", right: 0, top: -2, lineHeight: "12px",
+                    ...numeric("chip", { fontSize: 13, color: mineC }) }}>{a}</span>
+                  <span style={{ position: "absolute", right: 0, top: 11, lineHeight: "12px",
+                    ...numeric("chip", { fontSize: 13, color: theirsC }) }}>{b}</span>
+                </>
+              )}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function CardResult({ d }) {
-  const [metric, setMetric] = useState("score");
+  const [view, setView] = useState("scores");
   const c = d.card1;
-  const x = d.context;
   const won = c.outcome === "won", lost = c.outcome === "lost";
   const mColor = won ? MINE_C : lost ? THEIRS_C : V.text2;
+  const best = c.bestDriver;
+  const bCol = best ? dColor(best.driver) : V.text3;
 
   return (
     <>
       <Kicker>ROUND {d.round} · {d.raceName.toUpperCase()}</Kicker>
-      <Head color={mColor} glow size="h2">
+      <Head color={mColor} glow size="h1">
         {won ? "Your team won." : lost ? "Your team lost." : "Your team drew."}
       </Head>
 
       <Scoreboard M={d.card2.matchup} />
 
-      <ReviewRow cap="AGAINST THE LEAGUE"
-        color={x.luck === "lucky" ? V.amber : x.luck === "unlucky" ? THEIRS_C : V.text2}
-        glyph={<Glyph kind={x.luck === "unlucky" ? "sad" : x.luck === "lucky" ? "happy" : "flat"}
-          color={x.luck === "lucky" ? V.amber : x.luck === "unlucky" ? THEIRS_C : V.text2} />}
-        word={x.luck === "lucky" ? "LUCKY" : x.luck === "unlucky" ? "UNLUCKY" : "FAIR"}>
-        <div style={{ ...body("bodySm", { color: V.text2, textAlign: "left",
-          marginBottom: 10 }) }}>
-          {apNum(x.allPlay.beat).charAt(0).toUpperCase() + apNum(x.allPlay.beat).slice(1)}
-          {" "}{x.allPlay.beat === 1 ? "team" : "teams"} scored less than you this week.
-          {" "}{apNum(x.allPlay.lost).charAt(0).toUpperCase() + apNum(x.allPlay.lost).slice(1)}
-          {" "}scored more.
+      {best && (
+        <Panel pad={12}>
+          <div style={{ ...label({ fontSize: 13, color: V.text3, textAlign: "left",
+            marginBottom: 9 }) }}>YOUR BEST DRIVER</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <Face src={dShot(best.driver)} size={54} ring={bCol} width={3} />
+            <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+              <div style={{ ...display("h3", { fontSize: 22, color: V.text,
+                lineHeight: 1.25, textAlign: "left" }) }}>{best.driver}</div>
+              <div style={{ ...label({ fontSize: 14, color: bCol, textAlign: "left",
+                marginTop: 2 }) }}>
+                {dTeam(best.driver)}{best.pos ? ` · P${best.pos}` : ""}
+              </div>
+            </div>
+            <div style={{ ...numeric("stat", { fontSize: 40, color: V.blue }),
+              ...textGlow(V.blue, 0.8), flexShrink: 0 }}>
+              <Count to={best.pts} dur={720} />
+            </div>
+          </div>
+        </Panel>
+      )}
+
+      <Panel>
+        <ChartHead n={1}
+          title={won ? "How you won" : lost ? "How you lost" : "How it ended level"}
+          action={view === "scores" ? "Show the gaps" : "Show the scores"}
+          onAction={() => setView(view === "scores" ? "gaps" : "scores")} />
+        <PartsChart parts={c.parts} view={view} outcome={c.outcome} />
+        <div style={{ display: "flex", gap: 14, justifyContent: "center",
+          marginTop: 10, flexWrap: "wrap" }}>
+          {(view === "gaps"
+            ? [["You gained", MINE_C], ["They gained", THEIRS_C]]
+            : [["Yours", won ? MINE_C : V.text2], ["Theirs", lost ? THEIRS_C : V.text2]]).map(([t, col]) => (
+            <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 3, background: col }} />
+              <span style={{ ...label({ fontSize: 13, color: V.text2 }) }}>{t}</span>
+            </span>
+          ))}
         </div>
-        <LeagueStrip rows={x.leagueScores} metric={metric} onMetric={setMetric} />
-      </ReviewRow>
+        <div style={{ ...body("bodySm", { fontSize: 14, color: V.text3,
+          marginTop: 8 }) }}>
+          {view === "gaps"
+            ? `The five add up to ${signed(c.margin)}, the margin on the scoreboard.`
+            : "What each side scored on each part of the team game."}
+        </div>
+      </Panel>
 
-      <Line color={V.text}>
-        {because(c)}{" "}
-        {x.luck === "lucky" ? "Most teams would have lost with that score."
-          : x.luck === "unlucky" ? "Most teams would have won with that score."
-          : `Your ${c.myTotal} was the ${apOrdinal(x.allPlay.rank)} best score of ${x.teams}.`}
-      </Line>
+      <Line color={V.text}>{because(c)}</Line>
 
-      <Ask>Who won and who lost?</Ask>
+      <Ask>And how did you do yourself?</Ask>
     </>
   );
 }

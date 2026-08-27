@@ -300,8 +300,39 @@ export function buildWeekly(db, playerName, round = null) {
     return placesBy(rows, r => r.avg);
   })();
 
+  // The five things a team score is made of, and who put them there. Two ways
+  // of cutting the same total, so the bar can be read either way and both
+  // readings add to the number on the scoreboard.
+  const partsOf = (ids, bb) => {
+    const sum = key => ids.reduce((a, id) => a + ((scoreOf[id] || {})[key] || 0), 0);
+    return {
+      top: sum("top_pick_pts"), mid: sum("midfield_pts"),
+      best: sum("best_finish_bonus"), order: sum("order_bonus"), bb,
+    };
+  };
+  const seatsOf = (ids, bb) => [
+    ...ids.map(id => ({ id, name: nameOf[id], photo: photoOf[id],
+      pts: TEAM_HALF(scoreOf[id]), me: id === me.id })),
+    { id: "bb", name: "BOX BOX", photo: null, pts: bb, me: false },
+  ];
+  const oppBB = iAmHome ? mine.underBonus : mine.overBonus;
+
   const card1 = {
     outcome, seat,
+    // What your own hand's best driver was worth. Yours, not the league's: the
+    // card is about your week.
+    bestDriver: (() => {
+      const rows = Object.entries(driverPts(myScore))
+        .map(([driver, pts]) => ({ driver, pts }))
+        .sort((a, b) => (b.pts - a.pts) || a.driver.localeCompare(b.driver));
+      if (!rows.length) return null;
+      const pos = finishPos[canonicalName(rows[0].driver)];
+      return { ...rows[0], pos: pos || null };
+    })(),
+    // How the two totals were built. Both cuts of both sides, so the graphic
+    // can switch between them without a second trip to the data.
+    parts: { mine: partsOf(myPlayers, myBB), theirs: partsOf(oppPlayers, oppBB) },
+    seatsBy: { mine: seatsOf(myPlayers, myBB), theirs: seatsOf(oppPlayers, oppBB) },
     // Which quarter of the 48 this week's score landed in, 0 for the best.
     quarter: Math.min(3, Math.floor((placeOf[me.id] - 1) / (ladder.length / 4))),
     season: seasonNow ? {
