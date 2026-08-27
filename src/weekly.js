@@ -300,39 +300,8 @@ export function buildWeekly(db, playerName, round = null) {
     return placesBy(rows, r => r.avg);
   })();
 
-  // The five things a team score is made of, and who put them there. Two ways
-  // of cutting the same total, so the bar can be read either way and both
-  // readings add to the number on the scoreboard.
-  const partsOf = (ids, bb) => {
-    const sum = key => ids.reduce((a, id) => a + ((scoreOf[id] || {})[key] || 0), 0);
-    return {
-      top: sum("top_pick_pts"), mid: sum("midfield_pts"),
-      best: sum("best_finish_bonus"), order: sum("order_bonus"), bb,
-    };
-  };
-  const seatsOf = (ids, bb) => [
-    ...ids.map(id => ({ id, name: nameOf[id], photo: photoOf[id],
-      pts: TEAM_HALF(scoreOf[id]), me: id === me.id })),
-    { id: "bb", name: "BOX BOX", photo: null, pts: bb, me: false },
-  ];
-  const oppBB = iAmHome ? mine.underBonus : mine.overBonus;
-
   const card1 = {
     outcome, seat,
-    // What your own hand's best driver was worth. Yours, not the league's: the
-    // card is about your week.
-    bestDriver: (() => {
-      const rows = Object.entries(driverPts(myScore))
-        .map(([driver, pts]) => ({ driver, pts }))
-        .sort((a, b) => (b.pts - a.pts) || a.driver.localeCompare(b.driver));
-      if (!rows.length) return null;
-      const pos = finishPos[canonicalName(rows[0].driver)];
-      return { ...rows[0], pos: pos || null };
-    })(),
-    // How the two totals were built. Both cuts of both sides, so the graphic
-    // can switch between them without a second trip to the data.
-    parts: { mine: partsOf(myPlayers, myBB), theirs: partsOf(oppPlayers, oppBB) },
-    seatsBy: { mine: seatsOf(myPlayers, myBB), theirs: seatsOf(oppPlayers, oppBB) },
     // Which quarter of the 48 this week's score landed in, 0 for the best.
     quarter: Math.min(3, Math.floor((placeOf[me.id] - 1) / (ladder.length / 4))),
     season: seasonNow ? {
@@ -805,8 +774,12 @@ export function buildWeekly(db, playerName, round = null) {
   // How many weeks running the team has won, this round included. BOX BOX has
   // to be in it: Cal Aggie were level at 55 on driver points this week and won
   // on the line, and a streak that ignores the line calls that a non-win.
-  const teamStreak = (() => {
-    let n = 0;
+  // Every round the team has played, newest first, replayed the same way a
+  // matchup is scored. BOX BOX has to be in it: Cal Aggie were level at 55 on
+  // driver points this week and won on the line, and a run that ignores the
+  // line calls that a non-win.
+  const teamForm = (() => {
+    const out = [];
     const rounds = races.filter(r => r.round <= race.round)
       .sort((a, b) => b.round - a.round);
     for (const r of rounds) {
@@ -814,6 +787,8 @@ export function buildWeekly(db, playerName, round = null) {
         (x.home_team_id === myTeam.id || x.away_team_id === myTeam.id));
       const rows = scores.filter(x => x.race_id === r.id);
       const rr = results.find(x => x.race_id === r.id);
+      // A round with no fixture, no scores or no result was never played. Rounds
+      // are walked newest first, so stopping here keeps the run contiguous.
       if (!f || !rows.length || !rr) break;
       const stop = num(rr.pit_stop_time);
       const ids = t => (teamById[t] ? [teamById[t].player1_id, teamById[t].player2_id].filter(Boolean) : []);
@@ -838,10 +813,41 @@ export function buildWeekly(db, playerName, round = null) {
       const iAmHomeHere = f.home_team_id === myTeam.id;
       const mineTotal = iAmHomeHere ? homeTotal : awayTotal;
       const theirTotal = iAmHomeHere ? awayTotal : homeTotal;
-      if (mineTotal > theirTotal) n += 1; else break;
+      const oppId = iAmHomeHere ? f.away_team_id : f.home_team_id;
+      out.push({
+        round: r.round,
+        won: mineTotal > theirTotal, lost: mineTotal < theirTotal,
+        drew: mineTotal === theirTotal,
+        mine: mineTotal, theirs: theirTotal,
+        margin: mineTotal - theirTotal,
+        opp: teamById[oppId] ? teamById[oppId].name : null,
+      });
     }
-    return n;
+    return out;
   })();
+
+  // A run of the same result, this round included, and what the last few weeks
+  // have looked like. A draw ends a run of wins and a run of losses both: it is
+  // neither, and calling a draw part of either is how a streak line lies.
+  const runOf = key => {
+    let n = 0;
+    for (const w of teamForm) { if (w[key]) n += 1; else break; }
+    return n;
+  };
+  const tally = n => teamForm.slice(0, n).reduce((a, w) => ({
+    w: a.w + (w.won ? 1 : 0), l: a.l + (w.lost ? 1 : 0), d: a.d + (w.drew ? 1 : 0),
+  }), { w: 0, l: 0, d: 0 });
+  const teamRun = {
+    played: teamForm.length,
+    wins: runOf("won"), losses: runOf("lost"),
+    // Unbeaten and winless both count a draw, which is why they are not the
+    // same number as the win and loss runs.
+    unbeaten: (() => { let n = 0; for (const w of teamForm) { if (!w.lost) n += 1; else break; } return n; })(),
+    winless: (() => { let n = 0; for (const w of teamForm) { if (!w.won) n += 1; else break; } return n; })(),
+    last5: tally(5), last10: tally(10),
+    prev: teamForm[1] || null,
+  };
+  const teamStreak = teamRun.wins;
 
   const margins = fixtures.map(f => ({
     home: f.home, away: f.away, homeTotal: f.homeTotal, awayTotal: f.awayTotal,
@@ -978,7 +984,7 @@ export function buildWeekly(db, playerName, round = null) {
     myBestPick: myPicksRanked[0] || null,
     myWorstPick: myPicksRanked[myPicksRanked.length - 1] || null,
     oppRank: rankOfTeam[oppTeam.id], teams: teamRank.length,
-    weekVsSelf, teamStreak,
+    weekVsSelf, teamStreak, teamRun, teamForm,
     closest: margins[0], biggest: margins[margins.length - 1],
   };
 

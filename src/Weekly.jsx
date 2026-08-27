@@ -134,7 +134,12 @@ function Card({ children, dep, scrolls }) {
   return (
     <div style={{
       minHeight: "100dvh", width: "100%", display: "flex",
-      alignItems: "flex-start", justifyContent: "center",
+      // Centred when the card fits, top justified when the card scrolls.
+      // A short card top justified leaves half a phone of black under the last
+      // line and reads as something that failed to load. Centring a scrolling
+      // card is the other mistake: the top goes off the screen with no way
+      // back, so the one card that scrolls keeps its top edge.
+      alignItems: scrolls ? "flex-start" : "center", justifyContent: "center",
       padding: `${pad.t}px 14px ${pad.b}px`, margin: "0 auto", maxWidth: 560,
       position: "relative", color: V.text, fontFamily: FB,
     }}>
@@ -1231,14 +1236,13 @@ function BoxBoxStrip({ M, mine = null, needlePts = 0 }) {
 
 // The board the home page finishes a scored week on. Only the team in front
 // lights up, because green on its own is the resting state.
-// Colour follows the result, the same rule the home board uses: our side is
-// green when we won and grey when we lost, and theirs lights up only when it
-// beat us. A losing box painted in the team's own colour looks like a result it
-// was not. A draw lights neither.
+// Ours is green when we won and grey when we lost. Theirs is pink either way:
+// the other team is the other team whatever the score did, and greying them out
+// on a loss made our own defeat look like something that happened to nobody.
 function Scoreboard({ M }) {
   const mineWon = M.myTotal > M.oppTotal, theirsWon = M.oppTotal > M.myTotal;
   const mineC = mineWon ? MINE_C : V.text2;
-  const theirsC = theirsWon ? THEIRS_C : V.text2;
+  const theirsC = THEIRS_C;
   const Card = ({ t, total, c, side, won }) => (
     <div className={won ? "v-flicker" : undefined} style={{
       flex: 1, minWidth: 0, textAlign: "center", padding: "10px 8px", borderRadius: 13,
@@ -1953,171 +1957,164 @@ function because(c) {
 // than redraws. Everything is in the DOM at full size and CSS does the
 // moving — a chart drawn by slicing data renders identically for all 48
 // under react-dom/server, which is what smoke:weekly exists to catch.
-const PART_ROWS = [
-  { k: "top", t: "TOP POOL" },
-  { k: "mid", t: "MIDFIELD" },
-  { k: "best", t: "BEST FINISH" },
-  { k: "order", t: "ORDER" },
-  { k: "bb", t: "BOX BOX" },
+// Round 12 is where the second half starts, which is the one round that gets
+// its own line.
+const FIRST_H2 = 12;
+
+// Where the season stands, in one line, chosen by what actually happened.
+//
+// Read in order and the first match wins, so a run of three or more overrides
+// whatever this week did: a team on five straight wins does not need telling
+// that this one was close. Inside a group the line comes off a hash of the
+// player and the round, the same trick VERDICTS uses, so two teammates read
+// different lines and the same person sees the same one all week.
+//
+// {team} {opp} {n} {margin} are filled in. Numbers are AP: one through nine
+// spelled out, figures from 10 up.
+const SEASON_LINES = [
+  { k: "win5", when: f => f.run.wins >= 5, lines: [
+    "{n} wins in a row. Nobody else in the division is doing that.",
+    "That is {n} straight. Whatever you two are doing, keep doing it.",
+    "{n} on the bounce. This is a run now.",
+  ] },
+  { k: "loss5", when: f => f.run.losses >= 5, lines: [
+    "{n} straight losses. Something has to change.",
+    "That is {n} in a row gone.",
+    "{n} losses running. Time to pick differently.",
+  ] },
+  { k: "bbWon", when: f => f.bbDecided && f.won, lines: [
+    "You won on the BOX BOX line, which takes both of you guessing well.",
+    "The line won that one. Take the line away and you lose.",
+    "BOX BOX decided that, your way. That is teamwork and nothing else.",
+  ] },
+  { k: "bbLost", when: f => f.bbDecided && f.lost, lines: [
+    "You lost on the BOX BOX line. Take the line away and you win.",
+    "The line beat you, and nothing else did.",
+    "BOX BOX decided that one, their way.",
+  ] },
+  { k: "win3", when: f => f.run.wins >= 3, lines: [
+    "That is a {n} match winning streak.",
+    "{n} in a row, and nobody has stopped you yet.",
+    "{n} straight wins. You are the team nobody wants right now.",
+    "Three has a way of becoming five. Keep going.",
+  ] },
+  { k: "loss3", when: f => f.run.losses >= 3, lines: [
+    "{n} in a row now. Rough patch.",
+    "That is {n} straight losses.",
+    "{n} weeks without a win. Next one matters.",
+  ] },
+  { k: "blowWin", when: f => f.won && f.margin >= 20, lines: [
+    "{pts}. That was a formality.",
+    "You beat {opp} by {pts}. They may want the week back.",
+    "{margin} clear. {opp} never got going.",
+    "Nothing close about that. {pts}.",
+  ] },
+  { k: "blowLoss", when: f => f.lost && f.margin >= 20, lines: [
+    "Down {pts}. Nobody needs to see the details.",
+    "{opp} beat you by {pts}. That one goes in the book.",
+    "{pts}. Everything that could go their way did.",
+    "{pts}. Some weeks you take the loss and go again.",
+  ] },
+  { k: "closeWin", when: f => f.won && f.margin <= 3, lines: [
+    "{pts} in that one. You will take that.",
+    "Won by {pts}. Those are the weeks that decide a season.",
+    "{pts}, and they went your way. A win counts the same either way.",
+    "That was tight. {pts}.",
+  ] },
+  { k: "closeLoss", when: f => f.lost && f.margin <= 3, lines: [
+    "{pts} short. That one stings.",
+    "Lost by {pts}. Nothing in that all day.",
+    "{pts}, and no points for close.",
+  ] },
+  { k: "openWin", when: f => f.round === FIRST_H2 && f.won, lines: [
+    "That is a great way to start the second half.",
+    "One from one in the second half.",
+  ] },
+  { k: "openLoss", when: f => f.round === FIRST_H2 && f.lost, lines: [
+    "Not the start to the second half you wanted.",
+    "The second half runs 11 more races. Plenty of time.",
+  ] },
+  { k: "hot10", when: f => f.run.played >= 10 && f.run.last10.w >= 8, lines: [
+    "{n} wins in your last 10. Nobody is having a better season.",
+    "{n} from your last 10. That is a season, not a run.",
+  ] },
+  { k: "cold10", when: f => f.run.played >= 10 && f.run.last10.w <= 2, lines: [
+    "{n} wins in your last 10. Long stretch.",
+    "{n} from 10. This season has been hard work.",
+  ] },
+  { k: "bounce", when: f => f.won && f.run.prev && f.run.prev.lost, lines: [
+    "Back to winning after last week.",
+    "You answered last week's loss.",
+    "A win straight after a loss. That is how a season stays alive.",
+  ] },
+  { k: "slip", when: f => f.lost && f.run.prev && f.run.prev.won, lines: [
+    "Winning last week, losing this one.",
+    "That run ended.",
+    "One week up, one week down.",
+  ] },
+  { k: "draw", when: f => f.drew, lines: [
+    "A draw. Neither of you deserved to lose that.",
+    "Dead level. That happens about once a season.",
+  ] },
+  { k: "win", when: f => f.won, lines: [
+    "A win, and the table looks better this morning.",
+    "You won. On to the next one.",
+    "Won this week. Good.",
+    "A win over {opp}, and they are not an easy week.",
+  ] },
+  { k: "loss", when: f => f.lost, lines: [
+    "A loss this week. The next race is a fresh start.",
+    "You lost this week. That happens.",
+    "Lost this week. Go again next race.",
+  ] },
 ];
 
-function PartsChart({ parts, view, outcome }) {
-  const gaps = view === "gaps";
-  // Same rule as the scoreboard above it: our side is green when we won and
-  // grey when we lost, and theirs lights up only when it beat us. Leaving the
-  // chart green under a grey scoreboard reads as one of the two being wrong.
-  // The gaps view is different and keeps green and pink, because there they
-  // mean gained and lost on that row rather than which side is which.
-  const mineC = outcome === "won" ? MINE_C : V.text2;
-  const theirsC = outcome === "lost" ? THEIRS_C : V.text2;
-  // One scale per view, held across both sides and all five rows, so a bar of
-  // the same length is the same number of points everywhere in that view.
-  //
-  // The two views need their own, because they measure different things. A gap
-  // of three drawn against a top-pool score of 28 is four pixels: the view
-  // whose whole job is to show the gaps would be the one you cannot read.
-  const most = gaps
-    ? Math.max(1, ...PART_ROWS.map(r => Math.abs(parts.mine[r.k] - parts.theirs[r.k])))
-    : Math.max(1, ...PART_ROWS.flatMap(r => [Math.abs(parts.mine[r.k]), Math.abs(parts.theirs[r.k])]));
-
-  return (
-    <div style={{ display: "grid", gap: 7, width: "100%" }}>
-      {PART_ROWS.map((r, i) => {
-        const a = parts.mine[r.k], b = parts.theirs[r.k];
-        const gap = a - b;
-        const col = gaps ? (gap > 0 ? MINE_C : gap < 0 ? THEIRS_C : V.text3) : mineC;
-        return (
-          <div key={r.k} style={{ display: "grid",
-            // 100px, because "BEST FINISH" wrapped at 82 and a taller row put
-            // that one out of line with the other four.
-            gridTemplateColumns: "100px 1fr 34px", gap: 8, alignItems: "center" }}>
-            <span style={{ ...label({ fontSize: 13, color: V.text3, textAlign: "left" }) }}>
-              {r.t}
-            </span>
-
-            {/* The track. In scores view two bars grow from the left, yours
-                above theirs. In gaps view one bar leaves the middle. */}
-            <span style={{ position: "relative", display: "block", height: 22 }}>
-              {gaps && (
-                <span style={{ position: "absolute", left: "50%", top: 0, bottom: 0,
-                  width: 1, background: V.border2 }} />
-              )}
-              {/* A stub at the start of the track, so nought reads as nought
-                  rather than as a row that failed to draw. */}
-              {!gaps && (
-                <>
-                  <span style={{ position: "absolute", top: 1, height: 9, left: 0,
-                    width: 3, borderRadius: 2, background: V.border2 }} />
-                  <span style={{ position: "absolute", top: 12, height: 9, left: 0,
-                    width: 3, borderRadius: 2, background: V.border2 }} />
-                </>
-              )}
-              <span className="v-seg" style={{
-                position: "absolute", top: gaps ? 4 : 1, height: gaps ? 14 : 9,
-                left: gaps ? (gap >= 0 ? "50%" : `calc(50% - ${Math.abs(gap) / most * 50}%)`) : 0,
-                width: gaps ? `${Math.abs(gap) / most * 50}%` : `${Math.abs(a) / most * 100}%`,
-                background: col, borderRadius: 5, transitionDelay: `${i * 45}ms`,
-                boxShadow: `0 0 8px ${col}66`,
-              }} />
-              {!gaps && (
-                <span className="v-seg" style={{
-                  position: "absolute", top: 12, height: 9, left: 0,
-                  width: `${Math.abs(b) / most * 100}%`,
-                  background: theirsC, borderRadius: 5, transitionDelay: `${i * 45}ms`,
-                }} />
-              )}
-            </span>
-
-            {/* In scores view each bar gets its own number, on the same line as
-                the bar it belongs to. One number for two bars named neither. */}
-            <span style={{ position: "relative", display: "block", height: 22 }}>
-              {gaps ? (
-                <span style={{ position: "absolute", inset: 0, display: "flex",
-                  alignItems: "center", justifyContent: "flex-end",
-                  ...numeric("chip", { fontSize: 15, color: col }) }}>
-                  {signed(gap)}
-                </span>
-              ) : (
-                <>
-                  <span style={{ position: "absolute", right: 0, top: -2, lineHeight: "12px",
-                    ...numeric("chip", { fontSize: 13, color: mineC }) }}>{a}</span>
-                  <span style={{ position: "absolute", right: 0, top: 11, lineHeight: "12px",
-                    ...numeric("chip", { fontSize: 13, color: theirsC }) }}>{b}</span>
-                </>
-              )}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
+function seasonLine(c, run, round, playerId) {
+  const f = {
+    won: c.outcome === "won", lost: c.outcome === "lost", drew: c.outcome === "drew",
+    margin: Math.abs(c.margin), bbDecided: c.cause && c.cause.kind === "boxbox",
+    round, run,
+  };
+  const group = SEASON_LINES.find(g => g.when(f));
+  if (!group) return "";
+  let h = 5381;
+  const key = `${playerId}|${round}|${group.k}`;
+  for (let i = 0; i < key.length; i++) h = ((h * 33) ^ key.charCodeAt(i)) >>> 0;
+  // Whichever number the line is about. Every group names at most one.
+  const n = group.k === "hot10" || group.k === "cold10" ? run.last10.w
+    : group.k.startsWith("loss") ? run.losses
+    : run.wins;
+  const out = group.lines[h % group.lines.length]
+    .replace(/\{team\}/g, c.myTeam.name)
+    .replace(/\{opp\}/g, c.oppTeam.name)
+    // A margin of one is one point, not one points.
+    .replace(/\{pts\}/g, `${apNum(f.margin)} ${f.margin === 1 ? "point" : "points"}`)
+    .replace(/\{margin\}/g, apNum(f.margin))
+    .replace(/\{n\}/g, apNum(n));
+  // A spelled number that lands at the start of a sentence still takes a
+  // capital, and apNum has no way to know where the word ended up.
+  return out.charAt(0).toUpperCase() + out.slice(1);
 }
 
 function CardResult({ d }) {
-  const [view, setView] = useState("scores");
   const c = d.card1;
   const won = c.outcome === "won", lost = c.outcome === "lost";
-  const mColor = won ? MINE_C : lost ? THEIRS_C : V.text2;
-  const best = c.bestDriver;
-  const bCol = best ? dColor(best.driver) : V.text3;
+  const mColor = won ? MINE_C : lost ? V.text2 : V.text2;
+  const me = d.card2.you;
+  const line = seasonLine(c, d.context.teamRun, d.round, me ? me.id : "");
 
   return (
     <>
       <Kicker>ROUND {d.round} · {d.raceName.toUpperCase()}</Kicker>
-      <Head color={mColor} glow size="h1">
-        {won ? "Your team won." : lost ? "Your team lost." : "Your team drew."}
+      <Head color={mColor} glow={won} size="h1">
+        {won ? `${c.myTeam.name} won! Congrats!`
+          : lost ? `${c.myTeam.name} lost this week. Tough one.`
+          : `${c.myTeam.name} drew this week.`}
       </Head>
 
       <Scoreboard M={d.card2.matchup} />
 
-      {best && (
-        <Panel pad={12}>
-          <div style={{ ...label({ fontSize: 13, color: V.text3, textAlign: "left",
-            marginBottom: 9 }) }}>YOUR BEST DRIVER</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Face src={dShot(best.driver)} size={54} ring={bCol} width={3} />
-            <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-              <div style={{ ...display("h3", { fontSize: 22, color: V.text,
-                lineHeight: 1.25, textAlign: "left" }) }}>{best.driver}</div>
-              <div style={{ ...label({ fontSize: 14, color: bCol, textAlign: "left",
-                marginTop: 2 }) }}>
-                {dTeam(best.driver)}{best.pos ? ` · P${best.pos}` : ""}
-              </div>
-            </div>
-            <div style={{ ...numeric("stat", { fontSize: 40, color: V.blue }),
-              ...textGlow(V.blue, 0.8), flexShrink: 0 }}>
-              <Count to={best.pts} dur={720} />
-            </div>
-          </div>
-        </Panel>
-      )}
-
-      <Panel>
-        <ChartHead n={1}
-          title={won ? "How you won" : lost ? "How you lost" : "How it ended level"}
-          action={view === "scores" ? "Show the gaps" : "Show the scores"}
-          onAction={() => setView(view === "scores" ? "gaps" : "scores")} />
-        <PartsChart parts={c.parts} view={view} outcome={c.outcome} />
-        <div style={{ display: "flex", gap: 14, justifyContent: "center",
-          marginTop: 10, flexWrap: "wrap" }}>
-          {(view === "gaps"
-            ? [["You gained", MINE_C], ["They gained", THEIRS_C]]
-            : [["Yours", won ? MINE_C : V.text2], ["Theirs", lost ? THEIRS_C : V.text2]]).map(([t, col]) => (
-            <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 10, height: 10, borderRadius: 3, background: col }} />
-              <span style={{ ...label({ fontSize: 13, color: V.text2 }) }}>{t}</span>
-            </span>
-          ))}
-        </div>
-        <div style={{ ...body("bodySm", { fontSize: 14, color: V.text3,
-          marginTop: 8 }) }}>
-          {view === "gaps"
-            ? `The five add up to ${signed(c.margin)}, the margin on the scoreboard.`
-            : "What each side scored on each part of the team game."}
-        </div>
-      </Panel>
-
-      <Line color={V.text}>{because(c)}</Line>
+      {line && <Line color={V.text}>{line}</Line>}
 
       <Ask>And how did you do yourself?</Ask>
     </>
