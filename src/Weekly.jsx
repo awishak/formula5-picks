@@ -1476,12 +1476,19 @@ function CardRace({ d, stage = 0 }) {
     : stage === S_POOL ? (x.bestSwap
         ? `You should have taken ${lastName(x.bestSwap.in.driver)} over ${lastName(x.bestSwap.out.driver)}.`
         : "You took the best hand available.")
+    // Every headline is a sentence that says who, what and by how much. A bare
+    // score with a direction on the end ("60 to 54, your way") names two
+    // numbers and leaves the reader to work out what they are.
     : stage === S_TEAM ? (netDrivers === 0
-        ? "You picked the same race as they did."
-        : split ? `${lastName(split.driver)} is what split you.`
-        : preLead ? `${M.myPreBB} to ${M.oppPreBB}, your way.`
-        : `${M.oppPreBB} to ${M.myPreBB}, their way.`)
-    : M.myBB > 0 ? "BOX BOX came your way." : "BOX BOX went to them.";
+        ? `All four of you held the same drivers, so the hands were level at ${M.myPreBB}.`
+        : split
+          ? `${lastName(split.driver)} is the driver the two teams did not share, and he was worth ${Math.abs(split.net)}.`
+        : preLevel ? `Before BOX BOX the two teams were level at ${M.myPreBB}.`
+        : preLead ? `Before BOX BOX you were ahead, ${M.myPreBB} to ${M.oppPreBB}.`
+        : `Before BOX BOX they were ahead, ${M.oppPreBB} to ${M.myPreBB}.`)
+    : M.myBB > 0
+      ? `You won the BOX BOX line, worth five points to you and one off them.`
+      : `They won the BOX BOX line, worth five points to them and one off you.`;
 
   return (
     <>
@@ -2670,6 +2677,26 @@ function StandingsTable({ rows, kind, value = r => r.pts, unit = "PTS" }) {
   );
 }
 
+// Where you are and where the team is, joined by whichever conjunction the two
+// facts have earned. They disagree more often than not: a bad week for you on a
+// team that is winning, or the reverse.
+function standingsHead(ind, iMove, t, divName) {
+  if (!ind) return "Here is where the season stands.";
+  // One place, not one places, and both directions read the same way.
+  const places = n => `${apNum(n)} ${n === 1 ? "place" : "places"}`;
+  const you = iMove > 0 ? `You moved up ${places(iMove)} to ${apOrdinal(ind.place)}`
+    : iMove < 0 ? `You dropped ${places(-iMove)} to ${apOrdinal(ind.place)}`
+    : `You held ${apOrdinal(ind.place)} of ${ind.of}`;
+  if (!t) return `${you} this week.`;
+  const team = `your team is ${apOrdinal(t.place)} in the ${divName}`;
+  // Top third of the division is doing well, bottom third is not, and the
+  // middle takes "and" because there is nothing to contrast.
+  const high = t.place <= Math.ceil(t.of / 3);
+  const low = t.place > t.of - Math.ceil(t.of / 3);
+  const opposed = (iMove < 0 && high) || (iMove > 0 && low);
+  return `${you} this week, ${opposed ? "but" : "and"} ${team}.`;
+}
+
 function CardStandings({ d }) {
   const [metric, setMetric] = useState("avg");
   const c = d.card7;
@@ -2680,11 +2707,10 @@ function CardStandings({ d }) {
   return (
     <>
       <Kicker>WHERE YOU STAND</Kicker>
-      <Head lines={2}>
-        {iMove > 0 ? `Up ${apNum(iMove)} to ${apOrdinal(ind.place)}.`
-          : iMove < 0 ? `Down ${apNum(-iMove)} to ${apOrdinal(ind.place)}.`
-          : ind ? `Still ${apOrdinal(ind.place)} of ${ind.of}.` : "Where you stand."}
-      </Head>
+      {/* Both halves of the week in one sentence, because the card shows both
+          tables. "Down three to seventh" names one number, says nothing about
+          which table, and leaves out the team entirely. */}
+      <Head lines={2}>{standingsHead(ind, iMove, t, divName)}</Head>
 
       {ind && (
         <Panel pad={13}>

@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "peek:heads": "esbuild scripts/peek-heads.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/peek-heads.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error && node node_modules/.cache/peek-heads.cjs",
     "peek:lines": "esbuild scripts/peek-lines.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/peek-lines.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error && node node_modules/.cache/peek-lines.cjs",
     "dev": "vite",
     "build": "vite build",
