@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
+import { currentRace, raceStartMs } from "./raceTimes";
 import { Flagged } from "./Flag.jsx";
 import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
@@ -13,18 +14,15 @@ import { displayOf } from "./teams";
 const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 
 // The name column is whatever is left after the place, the logo, the gaps, the
-// points and now the last result, which works out at roughly the viewport minus
-// 266px. The longest name in the league costs about 11.3px per point of type in
-// Encode, so the size that just fits is (viewport - 266) / 11.3.
+// flag and the points. The longest name in the league costs about 11.3px per
+// point of type in Encode, so the size that just fits is what is left over
+// divided by 11.3.
 //
-// The last-result column cost 48px of that budget and the type is what paid:
-// 15px on a 393 phone where it used to be 18. Measured rather than reasoned
-// about, at 430/393/375/360, and the floor is what the last two widths land on.
-// Two names ellipsise at 393 and five at 360, against one at both before the
-// column existed. Nothing crosses the viewport edge at any width. If those
-// names matter more than the result does, the result goes under the points
-// instead and the whole 48px comes back.
-const NAME_SIZE = "clamp(13px, calc(8.9vw - 19.9px), 19px)";
+// The last result moved under the name and gave its 48px column back, and the
+// flag took 36px of that, so the type is a point bigger than it was. Measured
+// at 430/393/375/360 rather than reasoned about, and the floor is what the last
+// two widths land on.
+const NAME_SIZE = "clamp(13px, calc(8.9vw - 18.8px), 19px)";
 
 const TITLE_SIZE = titleFit("TEAM STANDINGS");
 
@@ -147,24 +145,11 @@ const rec = s => (s.d > 0 ? `${s.w}-${s.l}-${s.d}` : `${s.w}-${s.l}`);
 // The last matchup played, beside the points it paid. Won is green, lost is
 // pink, drawn is grey, and the two totals sit under the letter in the order
 // they belong to: this team first, then whoever they played.
-function LastResult({ week }) {
-  if (!week) return null;
-  const letter = week.won === true ? "W" : week.won === false ? "L" : "D";
-  const c = week.won === true ? V.green : week.won === false ? V.pink : V.silver;
-  return (
-    <div style={{ flexShrink: 0, width: 38, textAlign: "center" }}>
-      <div style={{
-        fontFamily: FD, fontWeight: 700, fontSize: 17, lineHeight: 1.1,
-        ...textGlow(c, 0.55),
-      }}>{letter}</div>
-      <div style={numeric("chip", {
-        fontSize: 11, color: V.text2, marginTop: 1, whiteSpace: "nowrap",
-      })}>{week.score}&ndash;{week.oppScore}</div>
-    </div>
-  );
-}
-
-function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {
+function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank, soon }) {
+  const last = row.weeks[row.weeks.length - 1] || null;
+  const lastLetter = !last ? "" : last.won === true ? "W" : last.won === false ? "L" : "D";
+  const lastColor = !last ? V.text2
+    : last.won === true ? V.green : last.won === false ? V.pink : V.silver;
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 8,
@@ -180,11 +165,14 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {
           that supports it goes on the second. That is what gives a full team
           name the room to stay whole. */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <Flagged name={displayOf(row.name)} nation={row.nation} size={16}
+        <Flagged name={row.name} nation={row.nation}
           style={display("h3", {
             fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text,
             letterSpacing: "0.01em",
           })} />
+        {/* The second line answers whichever question is live. Most of the week
+            that is "what happened last time"; inside three days of a race it is
+            "who is next". Same row, same height, one thing at a time. */}
         <div style={{
           display: "flex", gap: 8, alignItems: "baseline", marginTop: 1,
           whiteSpace: "nowrap", overflow: "hidden",
@@ -192,22 +180,35 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank }) {
           {/* Season record, not the half. The team game's points reset at the
               break; what a team has won across the year does not. */}
           <span style={body("bodySm", { color: V.text2, fontVariantNumeric: "tabular-nums", flexShrink: 0 })}>{record}</span>
-          {nextOpp && (
-            <span style={{
-              fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.04em",
-              textTransform: "uppercase", color: V.text2, flexShrink: 0,
-            }}>
-              {/* Both ranks are on scoring average across all 24 teams, never
-                  within a division. A place in this table is noise while
-                  everybody is level on nought. */}
-              #{rank} VS {nextOppRank ? `#${nextOppRank} ` : ""}{nextOpp}
-            </span>
+          {soon ? (
+            nextOpp && (
+              <span style={{
+                fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.04em",
+                textTransform: "uppercase", color: V.text2, flexShrink: 0,
+              }}>
+                {/* Both ranks are on scoring average across all 24 teams, never
+                    within a division. A place in this table is noise while
+                    everybody is level on nought. */}
+                #{rank} VS {nextOppRank ? `#${nextOppRank} ` : ""}{nextOpp}
+              </span>
+            )
+          ) : (
+            last && (
+              <span style={{ display: "inline-flex", alignItems: "baseline", gap: 5,
+                flexShrink: 0 }}>
+                <span style={{
+                  fontFamily: FD, fontWeight: 700, fontSize: 14, letterSpacing: "0.04em",
+                  color: lastColor, ...textGlow(lastColor, 0.5),
+                }}>{lastLetter}</span>
+                <span style={numeric("chip", { fontSize: 13, color: V.text2 })}>
+                  {last.score}&ndash;{last.oppScore}
+                </span>
+              </span>
+            )
           )}
         </div>
       </div>
       <div style={numeric("stat", { fontSize: 28, color: V.text, flexShrink: 0, width: 56, textAlign: "center", ...textGlow(V.blue, 0.7) })}>{row.pts}</div>
-      {/* The second-half table, so this is the last week the points came off. */}
-      <LastResult week={row.weeks[row.weeks.length - 1]} />
     </div>
   );
 }
@@ -250,7 +251,12 @@ export default function TeamsPage({ currentUser }) {
         const mateId = myTeam ? [myTeam.player1_id, myTeam.player2_id].find(id => id !== me.id) : null;
         const teammate = mateId ? players.find(p => p.id === mateId) || null : null;
 
-        setState({ loading: false, rows, seasonOf, avgRankOf, fixtures, teammate, myTeamId: myTeam ? myTeam.id : null, teams });
+        // When the next race actually starts, for the 72-hour switch.
+        const scoredIds = new Set(scores.map(x => x.race_id));
+        const upcoming = currentRace(races.filter(r => r.season === 2026), scoredIds);
+        const nextStart = upcoming ? raceStartMs(upcoming) : null;
+
+        setState({ loading: false, rows, seasonOf, avgRankOf, fixtures, teammate, myTeamId: myTeam ? myTeam.id : null, teams, nextStart });
       } catch (e) {
         console.error(e);
         setState({ loading: false, error: true });
@@ -263,7 +269,10 @@ export default function TeamsPage({ currentUser }) {
   if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
   if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Standings did not load.</div>;
 
-  const { rows, seasonOf, avgRankOf, fixtures, teammate, myTeamId } = state;
+  const { rows, seasonOf, avgRankOf, fixtures, teammate, myTeamId, nextStart } = state;
+  // Inside three days of lights out the fixture is the live question; before
+  // that, the week just gone is. One threshold, read once, so every row agrees.
+  const soon = nextStart != null && nextStart - Date.now() <= 72 * 3600 * 1000;
   const byId = Object.fromEntries(rows.map(r => [r.id, r]));
   const mine = rows.find(r => r.id === myTeamId);
 
@@ -310,6 +319,14 @@ export default function TeamsPage({ currentUser }) {
                   letterSpacing: "0.05em", textTransform: "uppercase", color: g.color,
                 }}>{g.name}</span>
               </div>
+              {/* The column heading sits over the column and above P1, because
+                  a number this big with no name on it is just a number. */}
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+                <span style={{ flex: 1 }} />
+                <span style={{ ...label({ fontSize: 10, color: V.blue }),
+                  width: 56, textAlign: "center", flexShrink: 0,
+                  marginRight: 10 }}>CHAMP PTS</span>
+              </div>
               {list.map((r, i) => {
                 const oppId = fixtures.opponentOf[r.id];
                 const opp = oppId ? byId[oppId] : null;
@@ -320,6 +337,7 @@ export default function TeamsPage({ currentUser }) {
                     rank={avgRankOf[r.id]}
                     nextOpp={opp ? opp.code : null}
                     nextOppRank={opp ? avgRankOf[opp.id] : null}
+                    soon={soon}
                   />
                 );
               })}

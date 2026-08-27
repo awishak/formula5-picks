@@ -122,13 +122,17 @@ const emojiFlag = code => (/^[A-Z]{2}$/.test(code)
  * The name truncates and the flag does not, so a long name gives way rather
  * than pushing the flag off the row.
  */
-export function Flagged({ name, nation, size = 17, style, gap = 7 }) {
+export function Flagged({ name, nation, size = "1.5em", style, gap = 7 }) {
+  // The font size moves to the wrapper so an em-sized flag resolves against the
+  // name rather than against whatever the row happens to be set in. Default
+  // 1.5em is a 3:2 flag exactly one line of text tall.
+  const { fontSize, ...rest } = style || {};
   return (
-    <span style={{ display: "flex", alignItems: "center", gap, minWidth: 0 }}>
+    <span style={{ display: "flex", alignItems: "center", gap, minWidth: 0, fontSize }}>
       <span style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden",
-        textOverflow: "ellipsis", ...style }}>{name}</span>
+        textOverflow: "ellipsis", ...rest }}>{name}</span>
       {nation ? (
-        <span style={{ flexShrink: 0, display: "inline-flex" }}>
+        <span style={{ flexShrink: 0, display: "inline-flex", lineHeight: 0 }}>
           <Flag nation={nation} size={size} />
         </span>
       ) : null}
@@ -147,7 +151,12 @@ export function Flagged({ name, nation, size = 17, style, gap = 7 }) {
  */
 export default function Flag({ nation, size = 20, wave = false, title }) {
   const want = nation == null ? DEFAULT_NATION : nation;
-  const h = (size / 30) * 20;
+  // A number is pixels. A string is any CSS length, so a caller can ask for
+  // "1.5em" and get a flag the height of the text beside it whatever that text
+  // resolves to. The 3:2 field holds either way.
+  const px = typeof size === "number";
+  const h = px ? (size / 30) * 20 : `calc(${size} * 0.6667)`;
+  const emojiSize = px ? size / EMOJI_ART_W : `calc(${size} / ${EMOJI_ART_W})`;
 
   // No flag is a real choice, and it draws nothing.
   if (want === "") return null;
@@ -172,7 +181,7 @@ export default function Flag({ nation, size = 20, wave = false, title }) {
           <span style={{
             position: "absolute", left: "50%", top: "50%",
             transform: "translate(-50%, -50%)",
-            fontSize: size / EMOJI_ART_W, lineHeight: 1, whiteSpace: "nowrap",
+            fontSize: emojiSize, lineHeight: 1, whiteSpace: "nowrap",
           }}>{emoji}</span>
         </span>
       );
@@ -203,7 +212,8 @@ export default function Flag({ nation, size = 20, wave = false, title }) {
           width: size, height: h, borderRadius: 2, background: "#1d1d2b",
           border: "1px solid rgba(255,255,255,0.22)",
           fontFamily: "'Encode Sans Semi Condensed', sans-serif", fontWeight: 700,
-          fontSize: Math.max(8, h * 0.62), letterSpacing: "0.02em", color: "#a8a8c0",
+          fontSize: px ? Math.max(8, h * 0.62) : `calc(${size} * 0.41)`,
+          letterSpacing: "0.02em", color: "#a8a8c0",
         }}>{short}</span>
     );
   }

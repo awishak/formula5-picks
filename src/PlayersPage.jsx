@@ -62,6 +62,35 @@ function Face({ name, photo, size }) {
 //
 // The mark a finish earns. Anything in the top ten is worth showing; only the
 // first three get metal.
+// The four ways to read this table.
+//
+// Spot 1 is the big blue number on the right. Spot 2 is the line under it.
+// `sort` is what the table is ordered by and what P1 counts; trophies
+// deliberately does not re-sort, because a trophy count is a thing you look up
+// against the order you already know rather than a second ranking.
+const MODES = [
+  {
+    id: "ppr", label: "PPR", sort: r => r.avg,
+    spot1: r => r.avg.toFixed(1),
+    spot2: r => (r.last != null ? `Last ${r.last}` : null),
+  },
+  {
+    id: "last", label: "Last race", sort: r => (r.last == null ? -1 : r.last),
+    spot1: r => (r.last == null ? "\u2013" : r.last),
+    spot2: r => `Total ${r.pts}`,
+  },
+  {
+    id: "overall", label: "Overall", sort: r => r.pts,
+    spot1: r => r.pts,
+    spot2: r => (r.last != null ? `Last ${r.last}` : null),
+  },
+  {
+    id: "trophies", label: "Trophies", sort: null,
+    spot1: null,                                    // drawn, not a number
+    spot2: r => `${r.avg.toFixed(1)} PPR`,
+  },
+];
+
 const markFor = place =>
   place === 1 ? "\u{1F3C6}" : place === 2 ? "\u{1F948}" : place === 3 ? "\u{1F949}" : null;
 
@@ -143,7 +172,28 @@ function Move({ n }) {
   );
 }
 
-function Row({ row, place, mine, move }) {
+// Every trophy a player has, in the column where a number usually sits. Gold,
+// silver and bronze get their mark; a top ten that was not a podium gets a dot,
+// so nothing is counted twice.
+function TrophyRow({ row }) {
+  const marks = row.finishes.map((f, i) => (
+    markFor(f.place)
+      ? <span key={i} title={`P${f.place} ${f.where}`}
+          style={{ fontSize: 15, lineHeight: 1 }}>{markFor(f.place)}</span>
+      : <span key={i} title={`P${f.place} ${f.where}`}
+          style={{ width: 8, height: 8, borderRadius: "50%", background: V.blue,
+            boxShadow: `0 0 5px ${V.blue}90`, display: "inline-block" }} />
+  ));
+  if (!marks.length) {
+    return <div style={{ ...body("bodySm", { fontSize: 13, color: V.text3 }) }}>&ndash;</div>;
+  }
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center",
+      alignItems: "center", minHeight: 26 }}>{marks}</div>
+  );
+}
+
+function Row({ row, place, mine, move, mode }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 8,
@@ -159,7 +209,7 @@ function Row({ row, place, mine, move }) {
 
       {/* Who they are. */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <Flagged name={row.name} nation={row.nation} size={16}
+        <Flagged name={row.name} nation={row.nation}
           style={display("h3", {
             fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text,
             letterSpacing: "0.01em",
@@ -171,14 +221,18 @@ function Row({ row, place, mine, move }) {
         }}>{row.teamName || "No team"}</div>
       </div>
 
-      {/* How they are scoring. */}
-      <div style={{ flexShrink: 0, width: 56, textAlign: "center" }}>
-        <div style={numeric("stat", { fontSize: 26, color: V.text, ...textGlow(V.blue, 0.7) })}>{row.avg.toFixed(1)}</div>
-        {row.last != null && (
+      {/* How they are scoring, in whichever way the table is being read. */}
+      <div style={{ flexShrink: 0, width: mode.id === "trophies" ? 92 : 56,
+        textAlign: "center" }}>
+        {mode.id === "trophies"
+          ? <TrophyRow row={row} />
+          : <div style={numeric("stat", { fontSize: 26, color: V.text,
+              ...textGlow(V.blue, 0.7) })}>{mode.spot1(row)}</div>}
+        {mode.spot2(row) && (
           <div style={{
             fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.04em",
             textTransform: "uppercase", color: V.text2, marginTop: 1, whiteSpace: "nowrap",
-          }}>Last {row.last}</div>
+          }}>{mode.spot2(row)}</div>
         )}
       </div>
 
@@ -188,6 +242,7 @@ function Row({ row, place, mine, move }) {
 
 export default function PlayersPage({ currentUser }) {
   const [state, setState] = useState({ loading: true });
+  const [modeId, setModeId] = useState("ppr");
 
   useEffect(() => {
     (async () => {
@@ -233,6 +288,14 @@ export default function PlayersPage({ currentUser }) {
 
   const { rows, place, move } = state;
   const me = rows.find(r => r.name === currentUser);
+  const mode = MODES.find(m => m.id === modeId) || MODES[0];
+
+  // Trophies keeps the PPR order and the PPR places on purpose. Every other
+  // mode re-sorts on what it is showing, and P1 is whoever leads that column.
+  const shown = mode.sort
+    ? [...rows].sort((a, b) => mode.sort(b) - mode.sort(a) || a.name.localeCompare(b.name))
+    : rows;
+  const shownPlace = mode.sort ? placesBy(shown, mode.sort) : place;
 
   return (
     <div style={{ background: V.bg, minHeight: "100vh" }}>
@@ -241,13 +304,34 @@ export default function PlayersPage({ currentUser }) {
         <Title />
         <YouAre row={me} place={me ? place[me.id] : 0} total={rows.length} />
 
-        {rows.map(r => (
-          <Row key={r.id} row={r} place={place[r.id]} mine={me && r.id === me.id}
-               move={move[r.id]} />
+        {/* How to read the table. Same pill as the toggles everywhere else, and
+            it sits above P1 because it changes what P1 means. */}
+        <div className="v-scroll" style={{ display: "flex", gap: 6, overflowX: "auto",
+          padding: "0 0 10px" }}>
+          {MODES.map(m => (
+            <button key={m.id} onClick={() => setModeId(m.id)} style={{
+              flexShrink: 0, ...label({ fontSize: 11,
+                color: modeId === m.id ? V.bg : V.blue }),
+              background: modeId === m.id ? V.blue : "transparent",
+              border: `1px solid ${V.blue}`, borderRadius: 999,
+              padding: "6px 13px", cursor: "pointer",
+            }}>{m.label}</button>
+          ))}
+        </div>
+
+        {shown.map(r => (
+          <Row key={r.id} row={r} place={shownPlace[r.id]} mine={me && r.id === me.id}
+               move={mode.id === "ppr" ? move[r.id] : undefined} mode={mode} />
         ))}
 
         <div style={body("bodySm", { color: V.text2, textAlign: "center", padding: "6px 0 0" })}>
-          Ranked on points a race. The individual game runs all 23 rounds and does not reset at the half.
+          {mode.id === "trophies"
+            ? "Trophies, in the order they happened, against the points-a-race order."
+            : mode.id === "last"
+              ? "Ranked on the last race that was scored."
+              : mode.id === "overall"
+                ? "Ranked on total points across all 23 rounds."
+                : "Ranked on points a race. The individual game runs all 23 rounds and does not reset at the half."}
         </div>
       </div>
     </div>
