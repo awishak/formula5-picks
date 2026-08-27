@@ -10,6 +10,19 @@
   const paths = (q.get("paths") || "/teams,/players").split(",");
   const widths = (q.get("widths") || "430,393,375,360").split(",").map(Number);
   const player = q.get("player") || "Andrew Ishak";
+
+  // Mark every round's deck as seen before anything loads.
+  //
+  // Without this the week-in-review gate returns instead of the page, so every
+  // route measured the deck and the run reported a clean /teams while a team
+  // name was being cut by 45px. A harness that silently measures a different
+  // screen is worse than no harness. ?gate=1 to measure the gate itself.
+  if (!q.get("gate")) {
+    try {
+      localStorage.setItem("f1_user", player);
+      for (let r = 1; r < 30; r++) localStorage.setItem(`f5_week_seen_r${r}_${player}`, "1");
+    } catch (e) {}
+  }
   const f = document.getElementById("f");
   const wait = ms => new Promise(r => setTimeout(r, ms));
 

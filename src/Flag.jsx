@@ -122,15 +122,22 @@ const emojiFlag = code => (/^[A-Z]{2}$/.test(code)
  * The name truncates and the flag does not, so a long name gives way rather
  * than pushing the flag off the row.
  */
-export function Flagged({ name, nation, size = "1.5em", style, gap = 7 }) {
+export function Flagged({ name, nation, size = "1.5em", style, gap = 7, wrap = false }) {
   // The font size moves to the wrapper so an em-sized flag resolves against the
   // name rather than against whatever the row happens to be set in. Default
   // 1.5em is a 3:2 flag exactly one line of text tall.
   const { fontSize, ...rest } = style || {};
+  // wrap: a name too long for one line takes a second one instead of losing
+  // its end. Shortening a name is the other way out and Andrew ruled it out on
+  // 2026-08-26: a name gets fitted, not cut and not abbreviated. Sizing the
+  // whole column to the longest name is the third, and it costs every other
+  // row four points of type to rescue one.
+  const line = wrap
+    ? { minWidth: 0, overflowWrap: "anywhere" }
+    : { minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
   return (
     <span style={{ display: "flex", alignItems: "center", gap, minWidth: 0, fontSize }}>
-      <span style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden",
-        textOverflow: "ellipsis", ...rest }}>{name}</span>
+      <span style={{ ...line, ...rest }}>{name}</span>
       {nation ? (
         <span style={{ flexShrink: 0, display: "inline-flex", lineHeight: 0 }}>
           <Flag nation={nation} size={size} />

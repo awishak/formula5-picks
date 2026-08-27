@@ -13,6 +13,15 @@
   const w = +(q.get("w") || 375), h = +(q.get("h") || 667);
   const card = q.get("card") || "1";
   const player = q.get("player") || "Andrew Ishak";
+
+  // Same reason as check.html: without this the week gate returns instead of
+  // the route being measured. ?gate=1 to look at the gate on purpose.
+  if (!q.get("gate")) {
+    try {
+      localStorage.setItem("f1_user", player);
+      for (let r = 1; r < 30; r++) localStorage.setItem(`f5_week_seen_r${r}_${player}`, "1");
+    } catch (e) {}
+  }
   // ?bare=1 drops the readout so the screenshot is exactly the phone.
   if (q.get("bare")) {
     document.getElementById("out").style.display = "none";

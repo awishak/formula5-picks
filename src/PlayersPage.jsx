@@ -221,9 +221,12 @@ function Row({ row, place, mine, move, mode }) {
         }}>{row.teamName || "No team"}</div>
       </div>
 
-      {/* How they are scoring, in whichever way the table is being read. */}
-      <div style={{ flexShrink: 0, width: mode.id === "trophies" ? 92 : 56,
-        textAlign: "center" }}>
+      {/* How they are scoring, in whichever way the table is being read.
+          Right aligned against the edge of the row rather than centred in a box
+          of its own. A centred number leaves dead space on its right that no
+          name can use, and the names are what needed the room. */}
+      <div style={{ flexShrink: 0, textAlign: "right",
+        minWidth: mode.id === "trophies" ? 92 : 40 }}>
         {mode.id === "trophies"
           ? <TrophyRow row={row} />
           : <div style={numeric("stat", { fontSize: 26, color: V.text,

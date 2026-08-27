@@ -4,7 +4,6 @@ import { currentRace, raceStartMs } from "./raceTimes";
 import { Flagged } from "./Flag.jsx";
 import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
-import { displayOf } from "./teams";
 
 // The team standings, second half. Deliberately thin: position, who you are,
 // your record, who you play next, and the number the title is won on.
@@ -13,16 +12,17 @@ import { displayOf } from "./teams";
 
 const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 
-// The name column is whatever is left after the place, the logo, the gaps, the
-// flag and the points. The longest name in the league costs about 11.3px per
-// point of type in Encode, so the size that just fits is what is left over
-// divided by 11.3.
+// Names are never cut and never shortened, so the size is set by how many of
+// the 24 have to take a second line. Counted in the browser at 430/393/375/360
+// for every size from 14 to 21: this is the largest at each width where the
+// only name on two lines is "Shoey Time! w/ Max and Danny", which is 28
+// characters and beats the next longest by six.
 //
-// The last result moved under the name and gave its 48px column back, and the
-// flag took 36px of that, so the type is a point bigger than it was. Measured
-// at 430/393/375/360 rather than reasoned about, and the floor is what the last
-// two widths land on.
-const NAME_SIZE = "clamp(13px, calc(8.9vw - 18.8px), 19px)";
+//   430  20px      393  17px      375  15px      360  13px
+//
+// Sizing the whole column to that one name instead would cost the other 23
+// four points of type to rescue one.
+const NAME_SIZE = "clamp(13px, calc(11.1vw - 26.7px), 20px)";
 
 const TITLE_SIZE = titleFit("TEAM STANDINGS");
 
@@ -104,7 +104,9 @@ function YourTeam({ row, season, place, avgRank, teammate }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {row.logo && <img src={row.logo} alt="" style={{ width: 42, height: 42, objectFit: "contain", flexShrink: 0 }} />}
-            <Flagged name={displayOf(row.name)} nation={row.nation} size={19}
+            {/* The whole name, wrapping if it has to. The short code is for a
+                column 120px wide, and this is not one. */}
+            <Flagged name={row.name} nation={row.nation} size={19} wrap
               style={display("h3", {
                 fontSize: "clamp(17px, 5.1vw, 23px)", lineHeight: 1.3, color: V.text,
               })} />
@@ -165,7 +167,7 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank, soon }) {
           that supports it goes on the second. That is what gives a full team
           name the room to stay whole. */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <Flagged name={row.name} nation={row.nation}
+        <Flagged name={row.name} nation={row.nation} wrap
           style={display("h3", {
             fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text,
             letterSpacing: "0.01em",
@@ -208,7 +210,9 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank, soon }) {
           )}
         </div>
       </div>
-      <div style={numeric("stat", { fontSize: 28, color: V.text, flexShrink: 0, width: 56, textAlign: "center", ...textGlow(V.blue, 0.7) })}>{row.pts}</div>
+      {/* Right aligned against the edge of the row. A centred number in a fixed
+          box leaves dead space on its right that the name cannot use. */}
+      <div style={numeric("stat", { fontSize: 28, color: V.text, flexShrink: 0, minWidth: 30, textAlign: "right", ...textGlow(V.blue, 0.7) })}>{row.pts}</div>
     </div>
   );
 }
@@ -321,11 +325,9 @@ export default function TeamsPage({ currentUser }) {
               </div>
               {/* The column heading sits over the column and above P1, because
                   a number this big with no name on it is just a number. */}
-              <div style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
-                <span style={{ flex: 1 }} />
-                <span style={{ ...label({ fontSize: 10, color: V.blue }),
-                  width: 56, textAlign: "center", flexShrink: 0,
-                  marginRight: 10 }}>CHAMP PTS</span>
+              <div style={{ display: "flex", justifyContent: "flex-end",
+                padding: "0 10px 4px" }}>
+                <span style={{ ...label({ fontSize: 10, color: V.blue }) }}>CHAMP PTS</span>
               </div>
               {list.map((r, i) => {
                 const oppId = fixtures.opponentOf[r.id];
