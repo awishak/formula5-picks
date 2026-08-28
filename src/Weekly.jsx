@@ -47,12 +47,19 @@ const RACE_STAGES = 5;
 const CARD_STAGES = [1, RACE_STAGES, 1, 1];
 const PAD = (h, extra = 0) =>
   (h < 740 ? { t: 54, b: 92 + extra } : { t: 64, b: 104 + extra });
-// What the theme button adds to the bottom bar on card 1, so the card is
-// measured against the room actually left rather than sliding under the bar.
-// Hardcoded the way the rest of PAD is: reading the bar's height would mean a
-// ref through two components to save a number that only changes if the button
-// changes.
-const THEME_BAR = 120;
+// What the theme button adds to the bottom bar, so a card is measured against
+// the room actually left rather than sliding under the bar. Hardcoded the way
+// the rest of PAD is: reading the bar's height would mean a ref through two
+// components to save a number that only changes if the button changes.
+//
+// Card 1 also carries the credit, which is two more lines. The other cards get
+// the button alone: the song is introduced once, and the cards behind card 1
+// have less height to give than any of them can spare.
+// Card 1 alone reserves height, for the full offer and the credit. Cards 2
+// and 3 cannot spare any: card 2 is 788px of card against 517px of room at
+// 375x667 and was already under the 0.72 floor before the music arrived, so its
+// pill goes beside NEXT in the row that is already there rather than above it.
+const THEME_BAR_CREDIT = 120;
 const MIN_SCALE = 0.72;
 
 // Wins against losses. Never green against pink: those two are the pair a
@@ -278,23 +285,26 @@ const PauseIcon = ({ color, size }) => (
  * whichever is showing. Sizing to the live label would move the card under it
  * on every tap, and deck rule 4 is that nothing changes height between presses.
  */
-function ThemeButton({ playing, onToggle, wide = false }) {
+function ThemeButton({ playing, onToggle, variant = "chrome" }) {
   const color = playing ? V.blue : V.text2;
   const Icon = playing ? PauseIcon : SpeakerIcon;
   const aria = playing ? THEME_PAUSE : THEME_PLAY;
 
-  // The chrome pill. A bare speaker up here read as decoration and nobody found
-  // the pause, so the track keeps its name on screen for the whole deck and the
-  // control sits inside the name.
+  // The short pill, in two places. `inline` sits beside NEXT on the cards that
+  // have no height to give; `chrome` is the same pill parked in the top bar on
+  // the last card, which has no bottom bar at all.
   //
-  // Only the title, not the full label the wide pill carries: at this size the
-  // sentence would run into SKIP on a 375px phone, and the name plus a pause
+  // Only the title, not the sentence the wide one carries: at this size the
+  // sentence would run into NEXT on a 375px phone, and the name beside a pause
   // mark already says what pressing does.
-  if (!wide) return (
+  if (variant !== "wide") return (
     <button onClick={onToggle} aria-label={aria} aria-pressed={playing} style={{
-      position: "fixed", top: 22, right: 62, zIndex: 31,
+      ...(variant === "chrome"
+        ? { position: "fixed", top: 22, right: 62, zIndex: 31 }
+        : { flexShrink: 0 }),
       display: "inline-flex", alignItems: "center", gap: 7,
-      background: V.bg2, cursor: "pointer", padding: "6px 12px 6px 10px",
+      background: V.bg2, cursor: "pointer", padding: "7px 12px 7px 10px",
+      whiteSpace: "nowrap",
       border: `1px solid ${playing ? V.blue : V.border2}`, borderRadius: 999,
       ...(playing ? edgeGlow(V.blue, 0.5) : {}),
     }}>
@@ -3089,37 +3099,40 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
         border: "none", cursor: "pointer", padding: "6px 4px",
       }}>SKIP</button>
 
-      {/* Card 1 carries the wide invitation, so the chrome only needs the
-          control from card 2 on. Looped, because four cards outlast most of a
+      {/* The last card has no bottom bar, so the chrome carries the control
+          there and nowhere else. Looped, because four cards outlast most of a
           track and the deck should not fall silent halfway through card 2. */}
-      {i > 0 && <ThemeButton playing={playing} onToggle={toggleTheme} />}
+      {last && <ThemeButton playing={playing} onToggle={toggleTheme} />}
       <audio ref={audio} src={THEME_SRC} preload="none" loop
         onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
 
       <Card dep={`${i}-${stage}-${data.player.name}`}
-        bottom={i === 0 ? THEME_BAR : 0}
+        bottom={i === 0 ? THEME_BAR_CREDIT : 0}
         scrolls={SCROLLS.has(i) || (i === 1 && stage === S_TEAM)}>
         <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit} />
       </Card>
 
       {!last && (
         <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 30,
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+          display: "flex", flexDirection: i === 0 ? "column" : "row",
+          alignItems: "center", justifyContent: "center", gap: 10,
           padding: "16px 16px 26px",
           background: `linear-gradient(transparent, ${V.bg} 46%)` }}>
-          {/* Card 1 offers the track here, beside the button everybody presses,
-              rather than inside the card where it read as a caption. Card 1 is
-              also the only card that has never heard of the song. */}
-          {i === 0 && <ThemeButton playing={playing} onToggle={toggleTheme} wide />}
+          {/* The track is on screen the whole way down, beside the button
+              everybody presses. Card 1 makes the offer in full and stacks it
+              above NEXT; the cards behind it get the short pill in the row,
+              because neither has the height to stack anything. */}
+          {i === 0 && <ThemeButton playing={playing} onToggle={toggleTheme} variant="wide" />}
           {/* The credit rides with the offer, and it is always here rather than
               appearing on play: the bar is fixed, so a line arriving on the tap
               would push NEXT down under the thumb that just pressed. */}
           {i === 0 && (
-            <div style={{ ...body("bodySm", { fontSize: 11, color: V.text3,
+            <div style={{ ...body("bodySm", { fontSize: 13, color: V.text2,
               lineHeight: 1.3 }), textAlign: "center", maxWidth: 340 }}>
               {THEME_CREDIT}
             </div>
           )}
+          {i > 0 && <ThemeButton playing={playing} onToggle={toggleTheme} variant="inline" />}
           <button onClick={advance} style={{
             ...display("h3", { color: V.bg }), background: V.blue, border: "none",
             borderRadius: 999, padding: "13px 44px", cursor: "pointer",
