@@ -73,6 +73,69 @@ export const raceStartMs = (race) => {
   return race.race_date ? Date.parse(race.race_date) : null;
 };
 
+// The Thursday a race week begins on, at midnight Pacific.
+//
+// Pacific rather than UTC because the league is: the rules say 5pm Pacific and
+// midnight UTC Thursday is 5pm Pacific Wednesday, which is a day early to
+// everybody reading it.
+const THURSDAY = 4;
+const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+// The UTC instant of midnight Pacific on whichever Pacific day `ms` falls on.
+// Pacific is -7 or -8 and never anything else, so both are tried and the one
+// that lands on hour zero is the right one. Round 21 is the reason this cannot
+// assume PDT: it is in November.
+function ptMidnight(ms) {
+  const [y, m, d] = new Intl.DateTimeFormat("en-CA", {
+    timeZone: PT, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date(ms)).split("-").map(Number);
+  for (const off of [7, 8]) {
+    const t = Date.UTC(y, m - 1, d, off);
+    const h = new Intl.DateTimeFormat("en-US", {
+      timeZone: PT, hour: "numeric", hourCycle: "h23",
+    }).format(new Date(t));
+    if (Number(h) === 0) return t;
+  }
+  return Date.UTC(y, m - 1, d, 8);
+}
+
+// Counted back from the race in Pacific days, so a race that runs Sunday
+// morning UTC but Saturday night Pacific gets the Thursday of the weekend it
+// is actually part of. Round 21 is exactly that race.
+export function raceWeekStartMs(race) {
+  const start = raceStartMs(race);
+  if (start == null) return null;
+  const wd = new Intl.DateTimeFormat("en-US", { timeZone: PT, weekday: "short" })
+    .format(new Date(start));
+  const idx = WD.indexOf(wd);
+  if (idx < 0) return null;
+  const back = idx >= THURSDAY ? idx - THURSDAY : idx + (7 - THURSDAY);
+  return ptMidnight(start - back * 86400e3);
+}
+
+/**
+ * Which round the schedule page opens on.
+ *
+ * Not currentRace. The schedule is where people come to read what happened, and
+ * currentRace hands over 48 hours after lights out, which is the Tuesday: it
+ * takes the result off the screen while it is still the thing being talked
+ * about, and with a fortnight between rounds it does that for twelve days.
+ *
+ * Here a round holds the page until the next race week starts, on its Thursday.
+ * Deliberately NOT wired into currentRace, which the home page reads: picks open
+ * on the Tuesday, and a home page still showing last week on the Tuesday is a
+ * home page with no way through to the picks that just opened.
+ */
+export function scheduleRace(races, nowMs = Date.now()) {
+  const list = [...races].sort((a, b) => a.round - b.round);
+  let cur = list[0] || null;
+  for (const r of list) {
+    const f = raceWeekStartMs(r);
+    if (f != null && nowMs >= f) cur = r;
+  }
+  return cur;
+}
+
 export function currentRace(races, scoredIds, nowMs = Date.now()) {
   const list = [...races].sort((a, b) => a.round - b.round);
   const done = (r) => {

@@ -4,7 +4,7 @@ import { V, display, numeric, body, label, card, textGlow, VEGAS_CSS } from "./t
 import { buildTeamTable, FIRST_H2_ROUND, ordinal } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { shortOf } from "./teams";
-import { raceTimePT, currentRace } from "./raceTimes";
+import { raceTimePT, scheduleRace } from "./raceTimes";
 
 // The round, every matchup in it.
 //
@@ -56,10 +56,11 @@ export default function SchedulePage({ currentUser }) {
         .filter(r => schedule.some(m => m.race_id === r.id))
         .sort((a, b) => a.round - b.round);
       const scored = new Set(scores.map(x => x.race_id));
-      // The week the app is on, not the last one scored. Between the deadline
-      // and the race there are two days where this round is the whole point,
-      // and opening on the last scored round skips straight past them.
-      const cur = currentRace(drawn, scored);
+      // The round whose week we are in. A round holds this page until the
+      // next race week starts on its Thursday, so the result of the race that
+      // just ran is what anybody arriving reads, all week, rather than a
+      // fixture list for a Grand Prix a fortnight out.
+      const cur = scheduleRace(drawn);
       const latest = cur || drawn[drawn.length - 1];
 
       setS({ loading: false, db, teams, races, schedule, drawn, scored, picks,
