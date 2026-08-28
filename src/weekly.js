@@ -1086,7 +1086,11 @@ export function buildWeekly(db, playerName, round = null) {
 
   return {
     round: race.round, raceName: race.race_name, raceDate: race.race_date,
-    player: { name: me.name, photo: me.photo_url || null },
+    // id and nation so card 4 can offer the flag and write the choice.
+    // nation is the raw column, NOT nationById: null there means never
+    // chosen, which is what the card needs to know to ask.
+    player: { id: me.id, name: me.name, photo: me.photo_url || null,
+              nation: me.nation === undefined ? null : me.nation },
     context,
     cards: [card1, card2, card3, card4, card5, card6, card7, card8],
     card1, card2, card3, card4, card5, card6, card7, card8,

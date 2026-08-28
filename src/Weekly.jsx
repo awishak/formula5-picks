@@ -23,6 +23,7 @@ import { buildWeekly, PIT_FLOOR, PIT_CEIL } from "./weekly.js";
 import { shortName } from "./names.js";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME, canonicalName } from "./drivers.js";
 import Flag, { Flagged } from "./Flag.jsx";
+import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
 // The same board the home page draws, from the same file.
 import HandsColumns from "./HandsColumns.jsx";
 import { F1_TEAM_COLORS } from "./theme";
@@ -2900,6 +2901,28 @@ function CardStandings({ d }) {
 function CardNext({ d, onPicks, onExit }) {
   const c = d.card8;
   const r = c.race;
+  // The flag. This is the only card in the deck that asks the reader for
+  // something, and the podium on card 2 is where a flag shows up, so this is
+  // where somebody who has just seen three flags and not their own can fix it.
+  //
+  // null is never chosen and "" is chose no flag, which is an answer. Only the
+  // first gets asked.
+  const [nation, setNation] = useState(d.player.nation);
+  const [picking, setPicking] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [flagErr, setFlagErr] = useState(null);
+  const chosen = nation != null;
+  const save = async code => {
+    setPicking(false);
+    if (!d.player.id) return;
+    setSaving(true);
+    // .select() or an RLS mismatch swallows the write and returns no error.
+    const { error } = await supabase.from("players")
+      .update({ nation: code }).eq("id", d.player.id).select();
+    setSaving(false);
+    if (error) setFlagErr(error.message);
+    else { setFlagErr(null); setNation(code); }
+  };
   const when = r && r.date
     ? new Date(r.date + "T12:00:00Z").toLocaleDateString(undefined,
       { weekday: "long", month: "long", day: "numeric" })
@@ -2937,6 +2960,30 @@ function CardNext({ d, onPicks, onExit }) {
       }}>
         {c.poolReady ? "MAKE YOUR PICKS" : "DONE"}
       </button>
+
+      {d.player.id && (
+        <div style={{ width: "100%", display: "grid", gap: 8 }}>
+          <Line color={V.text2}>
+            {chosen ? "Your flag flies over the podium and beside your name."
+              : "One more thing. Pick the flag that flies beside your name."}
+          </Line>
+          <FlagRow cap="YOUR FLAG" who={d.player.name} nation={nation}
+            disabled={saving} onOpen={() => setPicking(true)}
+            note="Tap to choose" />
+          {flagErr && (
+            <div style={{ ...body("bodySm", { fontSize: 12, color: V.pink }) }}>
+              {/^column .* does not exist/.test(flagErr)
+                ? "Flags are not switched on yet. Run scripts/nations.sql."
+                : flagErr}
+            </div>
+          )}
+        </div>
+      )}
+
+      {picking && (
+        <FlagPicker title={`${d.player.name}'s flag`} value={nation}
+          onPick={save} onClose={() => setPicking(false)} />
+      )}
     </>
   );
 }

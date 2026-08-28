@@ -58,12 +58,14 @@ try {
   console.log("  ok    unknown player returns null");
 } catch (e) { failed++; console.log(`  FAIL  unknown player\n        ${e.message}`); }
 
-// Every card except the last has to differ across players. Card 8 is the next
-// race and is the same for all 48 by design; card 6 is the league's difference
-// maker and is also deliberately flat. Identical output everywhere else means
-// the card is not reading the player at all, which is the failure that looks
-// like success.
-const FLAT = new Set(["3"]);   // 0-based: card 4, the next race
+// Every card has to differ across players. Identical output means the card is
+// not reading the player at all, which is the failure that looks like success.
+//
+// Card 4 was the exception: it is the next race, the same for all 48. It has
+// carried the flag row since 2026-08-28, so it names the reader and is covered
+// like the rest. Nothing is exempt now, and adding an exemption back means
+// being able to say why the card cannot know who is reading it.
+const FLAT = new Set();
 console.log("");
 for (const [key, set] of [...byCard.entries()].sort()) {
   const flat = FLAT.has(key);
