@@ -275,14 +275,27 @@ function ThemeButton({ playing, onToggle, wide = false }) {
   const Icon = playing ? PauseIcon : SpeakerIcon;
   const aria = playing ? THEME_PAUSE : THEME_PLAY;
 
+  // The chrome pill. A bare speaker up here read as decoration and nobody found
+  // the pause, so the track keeps its name on screen for the whole deck and the
+  // control sits inside the name.
+  //
+  // Only the title, not the full label the wide pill carries: at this size the
+  // sentence would run into SKIP on a 375px phone, and the name plus a pause
+  // mark already says what pressing does.
   if (!wide) return (
-    <button onClick={onToggle} aria-label={aria} aria-pressed={playing}
-      className={playing ? "v-pulse" : undefined} style={{
-        position: "fixed", top: 22, right: 58, zIndex: 31,
-        background: "transparent", border: "none", cursor: "pointer",
-        padding: "6px 8px", lineHeight: 0,
-      }}>
-      <Icon color={color} size={18} />
+    <button onClick={onToggle} aria-label={aria} aria-pressed={playing} style={{
+      position: "fixed", top: 22, right: 62, zIndex: 31,
+      display: "inline-flex", alignItems: "center", gap: 7,
+      background: V.bg2, cursor: "pointer", padding: "6px 12px 6px 10px",
+      border: `1px solid ${playing ? V.blue : V.border2}`, borderRadius: 999,
+      ...(playing ? edgeGlow(V.blue, 0.5) : {}),
+    }}>
+      <span className={playing ? "v-pulse" : undefined}
+        style={{ lineHeight: 0, flexShrink: 0 }}>
+        <Icon color={color} size={15} />
+      </span>
+      <span style={{ ...body("bodySm", { fontSize: 12, fontWeight: 600, color,
+        lineHeight: 1.35, whiteSpace: "nowrap" }) }}>Velvet Thunder</span>
     </button>
   );
 
