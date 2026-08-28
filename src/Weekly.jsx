@@ -740,7 +740,7 @@ const b0Wide = (r, stage) => r.me && stage <= S_COLOR;
 //
 // Heights: tall while the field is up, shorter once it is two team bars, and
 // shorter again on the drivers stage to make room for the board underneath.
-const CHART_H = 170;
+const CHART_H = 112;
 
 function raceLayout(c, stage, beat) {
   const lad = c.ladder;
@@ -1408,7 +1408,7 @@ function Scoreboard({ M }) {
 // on the right, on steps. Flags fly over each. The winner gets the cup and the
 // spray. Every driver carries their team's logo, and so does the team that
 // outscored the rest, because the week has two winners and only one is a person.
-const STEP = [{ h: 34, o: 1 }, { h: 56, o: 0 }, { h: 24, o: 2 }];  // left, middle, right
+const STEP = [{ h: 40, o: 1 }, { h: 66, o: 0 }, { h: 28, o: 2 }];  // left, middle, right
 
 const Cup = ({ color, size = 38 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
@@ -1481,23 +1481,23 @@ const Podium = ({ top3, meId, topTeam }) => {
                   </span>
                 </>
               )}
-              <Flag nation={p.nation} size={first ? 32 : 24} wave />
-              {first && <Cup color={c} size={34} />}
-              <Face src={p.photo} size={first ? 64 : 48} ring={mine ? V.amber : c}
-                width={first ? 3.5 : 2.5} />
-              <div style={{ marginTop: -9, padding: "3px 8px", borderRadius: 8,
+              <Flag nation={p.nation} size={first ? 38 : 30} wave />
+              {first && <Cup color={c} size={40} />}
+              <Face src={p.photo} size={first ? 78 : 58} ring={mine ? V.amber : c}
+                width={first ? 4 : 3} />
+              <div style={{ marginTop: -10, padding: "4px 10px", borderRadius: 8,
                 background: "#000", border: `1px solid ${mine ? V.amber : c}`,
                 whiteSpace: "nowrap", fontFamily: FD, fontWeight: 700,
-                fontSize: first ? 15 : 12, lineHeight: 1.3,
+                fontSize: first ? 18 : 15, lineHeight: 1.3,
                 color: mine ? V.amber : "#fff" }}>{shortName(p.name)}</div>
-              <TeamChip logo={p.teamLogo} size={first ? 22 : 18} />
-              <div style={{ ...numeric("stat", { fontSize: first ? 26 : 19, color: V.blue }),
+              <TeamChip logo={p.teamLogo} size={first ? 26 : 22} />
+              <div style={{ ...numeric("stat", { fontSize: first ? 34 : 25, color: V.blue }),
                 ...textGlow(V.blue, first ? 0.8 : 0.5) }}>{p.pts}</div>
               <div style={{ width: "100%", height: step.h, borderRadius: "8px 8px 0 0",
                 background: `linear-gradient(${c}3d, ${c}0f)`,
                 border: `1.5px solid ${c}77`, borderBottom: "none",
                 display: "grid", placeItems: "center" }}>
-                <span style={{ ...display("h1", { fontSize: first ? 30 : 22, color: c }),
+                <span style={{ ...display("h1", { fontSize: first ? 38 : 28, color: c }),
                   ...textGlow(c, first ? 0.7 : 0.4) }}>{p.place}</span>
               </div>
             </div>
@@ -1509,14 +1509,14 @@ const Podium = ({ top3, meId, topTeam }) => {
       {topTeam && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center",
           gap: 8, marginTop: 9 }}>
-          <span style={{ ...label({ fontSize: 10, color: V.text3 }) }}>TOP TEAM</span>
-          <Flag nation={topTeam.nation} size={20} />
-          <Logo src={topTeam.logo} size={26} />
-          <span style={{ ...body("bodySm", { fontSize: 14, color: V.text, fontWeight: 600 }),
+          <span style={{ ...label({ fontSize: 13, color: V.text3 }) }}>TOP TEAM</span>
+          <Flag nation={topTeam.nation} size={24} />
+          <Logo src={topTeam.logo} size={30} />
+          <span style={{ ...body("bodySm", { fontSize: 16, color: V.text, fontWeight: 600 }),
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {topTeam.name}
           </span>
-          <span style={{ ...numeric("chip", { fontSize: 17, color: V.blue }) }}>{topTeam.v}</span>
+          <span style={{ ...numeric("chip", { fontSize: 21, color: V.blue }) }}>{topTeam.v}</span>
         </div>
       )}
     </div>
@@ -1612,151 +1612,169 @@ function CardRace({ d, stage = 0 }) {
       ? `You won the BOX BOX line, worth five points to you and one off them.`
       : `They won the BOX BOX line, worth five points to them and one off you.`;
 
+  // The two panels, and which order they go in.
+  //
+  // The podium leads on the first two presses: the result of the race is what
+  // the reader came for, and the chart is what explains it. From the team press
+  // on, the chart IS the content and the panel under it is commentary, so they
+  // go back the other way round.
+  const chartPanel = (
+        /* One panel, always mounted. The chart shrinks to make room for the
+            driver board rather than being swapped out for it, so the two team
+            bars are the same two bars the whole way through. */
+        <Panel>
+          {stage >= S_TEAM && stage < S_POOL && (
+            <div style={{ paddingTop: 4 }}>
+              <TeamBarsH M={M} hands={M.hands} merged={stage > S_TEAM || teamBeat >= 4}
+                bb={stage === S_BB} />
+              {stage === S_TEAM && (
+                <div style={{ marginTop: 4, marginLeft: -10, marginRight: -10 }}>
+                  <HandsColumns seats={M.seats} under={M.seat === "UNDER" ? "mine" : "theirs"}
+                    driverPts={M.driverPtsMap} scored />
+                </div>
+              )}
+              {stage !== S_TEAM && (
+                <div style={{ ...body("bodySm", { fontSize: 14, color: V.text3, marginTop: 10,
+                  textAlign: "left", minHeight: 38 }) }}>{CHART_NOTE[stage]}</div>
+              )}
+            </div>
+          )}
+          {stage < S_TEAM && (
+            <>
+              <RaceChart c={c} stage={stage} beat={teamBeat} />
+              {/* Two lines reserved. A caption that is one line on one press and
+                  two on the next changes the card height, which changes the scale,
+                  which moves the chart. */}
+              <div style={{ ...body("bodySm", { fontSize: 14, color: V.text3, marginTop: 8,
+                textAlign: "left", minHeight: 38 }) }}>{CHART_NOTE[stage]}</div>
+            </>
+          )}
+          {stage === S_POOL && (
+            <div className="v-pop" style={{ marginTop: 2 }}>
+              <PoolBoard rows={x.poolBoard} />
+            </div>
+          )}
+        </Panel>
+  );
+  const notePanel = (
+        /* A floor under the panel, set to the tallest press. Every press of this
+            card is then the same height, so the card scales by the same amount
+            every time and the chart below sits in exactly the same place. Without
+            it the card rescaled on each click and every bar appeared to jump.
+
+            390 because that is what the podium measures now. It was 292, and
+            growing the podium past it put press one at 0.866 and press two at
+            0.978 on a 393px phone, which is the jump this floor exists to
+            stop. */
+        <Panel pad={12} style={{ minHeight: stage <= S_COLOR ? 390 : undefined,
+          display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          {stage === S_RACE && <Podium top3={c.top3} meId={me.id} topTeam={x.leagueScores[0]} />}
+
+          {stage === S_COLOR && (
+            <>
+              <div style={{ display: "flex", gap: 18, justifyContent: "center",
+                marginBottom: 8 }}>
+                {[["GREEN, TEAM WON", MINE_C], ["PINK, TEAM LOST", THEIRS_C]].map(([t, col]) => (
+                  <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ width: 12, height: 12, borderRadius: 3, background: col }} />
+                    <span style={{ ...label({ fontSize: 13, color: V.text2 }) }}>{t}</span>
+                  </span>
+                ))}
+              </div>
+              <Line color={V.text}>{rarity}</Line>
+            </>
+          )}
+
+          {stage === S_TEAM && (
+            <>
+              <Line color={V.text2}>
+                The needle and the weekly bonus are yours, not your team's. They come
+                off here, which is why these numbers are smaller than the ones you just saw.
+              </Line>
+            </>
+          )}
+
+          {false && (
+            <div style={{ display: "grid", gap: 7, marginBottom: 6 }}>
+              {[{ t: "PERFECT PICKS", v: x.perfect.total, col: V.blue },
+                { t: "YOU GOT", v: x.myHaul, col: V.amber }].map((r, i) => (
+                <div key={r.t} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                  <span style={{ width: 92, flexShrink: 0, textAlign: "left",
+                    ...label({ fontSize: 10, color: V.text3 }) }}>{r.t}</span>
+                  <span style={{ flex: 1, height: 12, borderRadius: 5, background: V.bg4,
+                    position: "relative" }}>
+                    <span className="v-seg" style={{ display: "block", height: "100%",
+                      width: `${Math.max(0, (r.v / Math.max(1, x.perfect.total)) * 100)}%`,
+                      borderRadius: 5, background: r.col,
+                      boxShadow: `0 0 8px ${r.col}88`,
+                      transitionDelay: `${300 + i * 260}ms` }} />
+
+                  </span>
+                  <span style={{ width: 26, textAlign: "right",
+                    ...numeric("chip", { fontSize: 15, color: r.col }) }}>{r.v}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {stage === S_POOL && (
+            <div style={{ display: "grid", gap: 6, marginTop: 2 }}>
+              {[
+                { t: "PERFECT PICKS", v: x.perfect.total, col: V.blue },
+                { t: `BEST, ${shortName(x.bestHaul.name).toUpperCase()}`, v: x.bestHaul.haul, col: V.text2 },
+                { t: "YOU", v: x.myHaul, col: V.amber },
+                ...(x.mateHaul != null
+                  ? [{ t: x.mateFirst.toUpperCase(), v: x.mateHaul, col: V.text2 }] : []),
+                { t: `LOWEST, ${shortName(x.worstHaul.name).toUpperCase()}`, v: x.worstHaul.haul, col: V.text3 },
+              ].map((r, i) => (
+                <div key={r.t} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                  <span style={{ width: 106, flexShrink: 0, textAlign: "left",
+                    ...label({ fontSize: 10, color: V.text3, lineHeight: 1.2 }) }}>{r.t}</span>
+                  <span style={{ flex: 1, height: 13, borderRadius: 5, background: V.bg4 }}>
+                    <span className="v-seg" style={{ display: "block", height: "100%",
+                      width: `${Math.max(2, (r.v / Math.max(1, x.perfect.total)) * 100)}%`,
+                      borderRadius: 5, background: r.col,
+                      boxShadow: r.col === V.amber ? `0 0 8px ${V.amber}` : "none",
+                      transitionDelay: `${240 + i * 150}ms` }} />
+                  </span>
+                  <span style={{ width: 26, textAlign: "right",
+                    ...numeric("chip", { fontSize: 16, color: r.col }) }}>{r.v}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {stage === S_BB && (
+            <>
+              <div style={{ display: "flex", justifyContent: "space-around", gap: 12,
+                marginBottom: 4 }}>
+                <Stat n={M.myTotal} cap={M.myTeam.code || M.myTeam.short}
+                  color={M.myTotal > M.oppTotal ? MINE_C : V.text2} size={32} />
+                <Stat n={M.oppTotal} cap={M.oppTeam.code || M.oppTeam.short}
+                  color={M.oppTotal > M.myTotal ? THEIRS_C : V.text2} size={32} />
+              </div>
+              <BoxBoxStrip M={M} mine={d.card4.guess} needlePts={d.card4.needlePts} />
+              <Line color={V.text2}>
+                {M.myBB > 0
+                  ? `The stop came in at ${M.pit}, above the line. Your side takes five and theirs drops one.`
+                  : `The stop came in at ${M.pit}, below the line. Their side takes five and yours drops one.`}
+                {d.card4.guess != null && (d.card4.needlePts > 0
+                  ? ` You guessed ${d.card4.guess} and scored ${apNum(d.card4.needlePts)} on the needle.`
+                  : ` You guessed ${d.card4.guess}, ${one(d.card4.off)} out, so you scored nothing on the needle.`)}
+              </Line>
+            </>
+          )}
+        </Panel>
+  );
+
   return (
     <>
       <Kicker>{stage >= S_TEAM ? "YOUR MATCHUP" : stage === S_POOL ? "WHAT WAS ON THE TABLE" : "YOUR RACE"}</Kicker>
       <Head lines={2}>{head}</Head>
 
-      {/* One panel, always mounted. The chart shrinks to make room for the
-          driver board rather than being swapped out for it, so the two team
-          bars are the same two bars the whole way through. */}
-      <Panel>
-        {stage >= S_TEAM && stage < S_POOL && (
-          <div style={{ paddingTop: 4 }}>
-            <TeamBarsH M={M} hands={M.hands} merged={stage > S_TEAM || teamBeat >= 4}
-              bb={stage === S_BB} />
-            {stage === S_TEAM && (
-              <div style={{ marginTop: 4, marginLeft: -10, marginRight: -10 }}>
-                <HandsColumns seats={M.seats} under={M.seat === "UNDER" ? "mine" : "theirs"}
-                  driverPts={M.driverPtsMap} scored />
-              </div>
-            )}
-            {stage !== S_TEAM && (
-              <div style={{ ...body("bodySm", { fontSize: 14, color: V.text3, marginTop: 10,
-                textAlign: "left", minHeight: 38 }) }}>{CHART_NOTE[stage]}</div>
-            )}
-          </div>
-        )}
-        {stage < S_TEAM && (
-          <>
-            <RaceChart c={c} stage={stage} beat={teamBeat} />
-            {/* Two lines reserved. A caption that is one line on one press and
-                two on the next changes the card height, which changes the scale,
-                which moves the chart. */}
-            <div style={{ ...body("bodySm", { fontSize: 14, color: V.text3, marginTop: 8,
-              textAlign: "left", minHeight: 38 }) }}>{CHART_NOTE[stage]}</div>
-          </>
-        )}
-        {stage === S_POOL && (
-          <div className="v-pop" style={{ marginTop: 2 }}>
-            <PoolBoard rows={x.poolBoard} />
-          </div>
-        )}
-      </Panel>
-
-      {/* A floor under the panel, set to the tallest press. Every press of this
-          card is then the same height, so the card scales by the same amount
-          every time and the chart above sits in exactly the same place. Without
-          it the card rescaled on each click and every bar appeared to jump. */}
-      <Panel pad={12} style={{ minHeight: stage <= S_COLOR ? 292 : undefined,
-        display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        {stage === S_RACE && <Podium top3={c.top3} meId={me.id} topTeam={x.leagueScores[0]} />}
-
-        {stage === S_COLOR && (
-          <>
-            <div style={{ display: "flex", gap: 18, justifyContent: "center",
-              marginBottom: 8 }}>
-              {[["GREEN, TEAM WON", MINE_C], ["PINK, TEAM LOST", THEIRS_C]].map(([t, col]) => (
-                <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ width: 12, height: 12, borderRadius: 3, background: col }} />
-                  <span style={{ ...label({ fontSize: 11, color: V.text2 }) }}>{t}</span>
-                </span>
-              ))}
-            </div>
-            <Line color={V.text}>{rarity}</Line>
-          </>
-        )}
-
-        {stage === S_TEAM && (
-          <>
-            <Line color={V.text2}>
-              The needle and the weekly bonus are yours, not your team's. They come
-              off here, which is why these numbers are smaller than the ones you just saw.
-            </Line>
-          </>
-        )}
-
-        {false && (
-          <div style={{ display: "grid", gap: 7, marginBottom: 6 }}>
-            {[{ t: "PERFECT PICKS", v: x.perfect.total, col: V.blue },
-              { t: "YOU GOT", v: x.myHaul, col: V.amber }].map((r, i) => (
-              <div key={r.t} style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                <span style={{ width: 92, flexShrink: 0, textAlign: "left",
-                  ...label({ fontSize: 10, color: V.text3 }) }}>{r.t}</span>
-                <span style={{ flex: 1, height: 12, borderRadius: 5, background: V.bg4,
-                  position: "relative" }}>
-                  <span className="v-seg" style={{ display: "block", height: "100%",
-                    width: `${Math.max(0, (r.v / Math.max(1, x.perfect.total)) * 100)}%`,
-                    borderRadius: 5, background: r.col,
-                    boxShadow: `0 0 8px ${r.col}88`,
-                    transitionDelay: `${300 + i * 260}ms` }} />
-
-                </span>
-                <span style={{ width: 26, textAlign: "right",
-                  ...numeric("chip", { fontSize: 15, color: r.col }) }}>{r.v}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {stage === S_POOL && (
-          <div style={{ display: "grid", gap: 6, marginTop: 2 }}>
-            {[
-              { t: "PERFECT PICKS", v: x.perfect.total, col: V.blue },
-              { t: `BEST, ${shortName(x.bestHaul.name).toUpperCase()}`, v: x.bestHaul.haul, col: V.text2 },
-              { t: "YOU", v: x.myHaul, col: V.amber },
-              ...(x.mateHaul != null
-                ? [{ t: x.mateFirst.toUpperCase(), v: x.mateHaul, col: V.text2 }] : []),
-              { t: `LOWEST, ${shortName(x.worstHaul.name).toUpperCase()}`, v: x.worstHaul.haul, col: V.text3 },
-            ].map((r, i) => (
-              <div key={r.t} style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                <span style={{ width: 106, flexShrink: 0, textAlign: "left",
-                  ...label({ fontSize: 10, color: V.text3, lineHeight: 1.2 }) }}>{r.t}</span>
-                <span style={{ flex: 1, height: 13, borderRadius: 5, background: V.bg4 }}>
-                  <span className="v-seg" style={{ display: "block", height: "100%",
-                    width: `${Math.max(2, (r.v / Math.max(1, x.perfect.total)) * 100)}%`,
-                    borderRadius: 5, background: r.col,
-                    boxShadow: r.col === V.amber ? `0 0 8px ${V.amber}` : "none",
-                    transitionDelay: `${240 + i * 150}ms` }} />
-                </span>
-                <span style={{ width: 26, textAlign: "right",
-                  ...numeric("chip", { fontSize: 16, color: r.col }) }}>{r.v}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {stage === S_BB && (
-          <>
-            <div style={{ display: "flex", justifyContent: "space-around", gap: 12,
-              marginBottom: 4 }}>
-              <Stat n={M.myTotal} cap={M.myTeam.code || M.myTeam.short}
-                color={M.myTotal > M.oppTotal ? MINE_C : V.text2} size={32} />
-              <Stat n={M.oppTotal} cap={M.oppTeam.code || M.oppTeam.short}
-                color={M.oppTotal > M.myTotal ? THEIRS_C : V.text2} size={32} />
-            </div>
-            <BoxBoxStrip M={M} mine={d.card4.guess} needlePts={d.card4.needlePts} />
-            <Line color={V.text2}>
-              {M.myBB > 0
-                ? `The stop came in at ${M.pit}, above the line. Your side takes five and theirs drops one.`
-                : `The stop came in at ${M.pit}, below the line. Their side takes five and yours drops one.`}
-              {d.card4.guess != null && (d.card4.needlePts > 0
-                ? ` You guessed ${d.card4.guess} and scored ${apNum(d.card4.needlePts)} on the needle.`
-                : ` You guessed ${d.card4.guess}, ${one(d.card4.off)} out, so you scored nothing on the needle.`)}
-            </Line>
-          </>
-        )}
-      </Panel>
+      {stage <= S_COLOR
+        ? <>{notePanel}{chartPanel}</>
+        : <>{chartPanel}{notePanel}</>}
 
       <Ask>{ASK[stage] || "Where does that leave you for the season?"}</Ask>
 
