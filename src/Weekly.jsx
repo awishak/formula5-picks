@@ -224,6 +224,92 @@ const ChartHead = ({ n, title, action, onAction }) => (
   </div>
 );
 
+/* ------------------------------------------------------------------- music */
+
+// The F5 theme, "Velvet Thunder". 1.9MB at /velvet-thunder.mp3, served out of
+// public/ ahead of the SPA rewrite in vercel.json.
+//
+// The deck opens without anyone touching the phone, since App.jsx returns it
+// straight out of the gate, and every browser blocks autoplay with sound until
+// a gesture. So there is no version of this that starts on its own: the tap on
+// the speaker IS the gesture. That is why the invitation sits on card 1 rather
+// than in the chrome, where nobody would find it.
+//
+// An iPhone's silent switch mutes an <audio> element and there is no web
+// workaround, so some of the league will tap and hear nothing. The control
+// glows while the track is playing, which is the only thing separating "my
+// phone is muted" from "this button is broken" on that phone.
+const THEME_SRC = "/velvet-thunder.mp3";
+const THEME_PLAY = "Play the F5 theme music, \u201CVelvet Thunder\u201D";
+const THEME_PAUSE = "Pause \u201CVelvet Thunder\u201D";
+
+const SpeakerIcon = ({ color, size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3.5 9.4h3.6L12 5.2v13.6L7.1 14.6H3.5z" fill={color} />
+    <path d="M15.3 9.3a3.9 3.9 0 0 1 0 5.4" fill="none" stroke={color}
+      strokeWidth="1.9" strokeLinecap="round" />
+    <path d="M18 6.7a7.5 7.5 0 0 1 0 10.6" fill="none" stroke={color}
+      strokeWidth="1.9" strokeLinecap="round" />
+  </svg>
+);
+
+const PauseIcon = ({ color, size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="6.4" y="4.8" width="4.1" height="14.4" rx="1.3" fill={color} />
+    <rect x="13.5" y="4.8" width="4.1" height="14.4" rx="1.3" fill={color} />
+  </svg>
+);
+
+/**
+ * Two shapes, one control. `wide` is the invitation on card 1; the bare icon
+ * rides in the top chrome from card 2 on, so the track can still be stopped
+ * from anywhere in the deck.
+ *
+ * Both labels are always in the DOM, stacked in one grid cell with the one that
+ * is not current hidden, so the box is the size of the longer of the two
+ * whichever is showing. Sizing to the live label would move the card under it
+ * on every tap, and deck rule 4 is that nothing changes height between presses.
+ */
+function ThemeButton({ playing, onToggle, wide = false }) {
+  const color = playing ? V.blue : V.text2;
+  const Icon = playing ? PauseIcon : SpeakerIcon;
+  const aria = playing ? THEME_PAUSE : THEME_PLAY;
+
+  if (!wide) return (
+    <button onClick={onToggle} aria-label={aria} aria-pressed={playing}
+      className={playing ? "v-pulse" : undefined} style={{
+        position: "fixed", top: 22, right: 58, zIndex: 31,
+        background: "transparent", border: "none", cursor: "pointer",
+        padding: "6px 8px", lineHeight: 0,
+      }}>
+      <Icon color={color} size={18} />
+    </button>
+  );
+
+  return (
+    <button onClick={onToggle} aria-label={aria} aria-pressed={playing} style={{
+      display: "inline-flex", alignItems: "center", gap: 10, maxWidth: "100%",
+      background: "transparent", cursor: "pointer", padding: "9px 16px",
+      border: `1px solid ${playing ? V.blue : V.border2}`, borderRadius: 999,
+      ...(playing ? edgeGlow(V.blue, 0.5) : {}),
+    }}>
+      <span className={playing ? "v-pulse" : undefined}
+        style={{ lineHeight: 0, flexShrink: 0 }}>
+        <Icon color={color} size={17} />
+      </span>
+      <span style={{ display: "grid", textAlign: "left", minWidth: 0 }}>
+        {[THEME_PLAY, THEME_PAUSE].map((t, k) => (
+          <span key={t} style={{
+            ...body("bodySm", { fontSize: 13, color, lineHeight: 1.35 }),
+            gridArea: "1 / 1", textWrap: "pretty",
+            visibility: (k === 1) === playing ? "visible" : "hidden",
+          }}>{t}</span>
+        ))}
+      </span>
+    </button>
+  );
+}
+
 /* ------------------------------------------------------------------ charts */
 
 // Chart 2. Every player as a dot: their own score against what their team put
@@ -2149,7 +2235,7 @@ function seasonLine(c, run, round, playerId) {
   };
 }
 
-function CardResult({ d }) {
+function CardResult({ d, themePlaying, onTheme }) {
   const c = d.card1;
   const won = c.outcome === "won", lost = c.outcome === "lost";
   const mColor = won ? MINE_C : lost ? V.text2 : V.text2;
@@ -2175,6 +2261,11 @@ function CardResult({ d }) {
           maxWidth: 460, textWrap: "pretty" }}>{say.fact}</div>
       )}
       {say.line && <Line color={V.text}>{say.line}</Line>}
+
+      {/* The one place the theme is named. Below the result, because the result
+          is what the card is for, and above the handoff, because the handoff is
+          the last thing on every card in the deck. */}
+      {onTheme && <ThemeButton playing={themePlaying} onToggle={onTheme} wide />}
 
       <Ask>And how did you do yourself?</Ask>
     </>
@@ -2811,6 +2902,22 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
   const [i, setI] = useState(Math.min(CARDS - 1, Math.max(0, initialCard)));
   const [stage, setStage] = useState(initialStage);
 
+  // The theme track. The element lives up here rather than inside card 1 so it
+  // survives the card changing, and unmounting the deck is what stops the
+  // music: leaving the deck by SKIP, by MAKE YOUR PICKS or by the last card all
+  // take the <audio> with them.
+  const audio = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const toggleTheme = () => {
+    const el = audio.current;
+    if (!el) return;
+    // Set the state before awaiting play(), or the button sits dead for as long
+    // as the first bytes take to arrive: preload is off, so the tap is what
+    // starts the download. onPlay and onPause below correct it either way.
+    if (el.paused) { setPlaying(true); el.play().catch(() => setPlaying(false)); }
+    else el.pause();
+  };
+
   useEffect(() => { window.scrollTo(0, 0); }, [i]);
 
   const stages = CARD_STAGES[i] || 1;
@@ -2961,9 +3068,17 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
         border: "none", cursor: "pointer", padding: "6px 4px",
       }}>SKIP</button>
 
+      {/* Card 1 carries the wide invitation, so the chrome only needs the
+          control from card 2 on. Looped, because four cards outlast most of a
+          track and the deck should not fall silent halfway through card 2. */}
+      {i > 0 && <ThemeButton playing={playing} onToggle={toggleTheme} />}
+      <audio ref={audio} src={THEME_SRC} preload="none" loop
+        onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
+
       <Card dep={`${i}-${stage}-${data.player.name}`}
         scrolls={SCROLLS.has(i) || (i === 1 && stage === S_TEAM)}>
-        <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit} />
+        <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit}
+          themePlaying={playing} onTheme={toggleTheme} />
       </Card>
 
       {!last && (
