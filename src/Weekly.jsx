@@ -300,19 +300,19 @@ function ThemeButton({ playing, onToggle, variant = "chrome" }) {
   if (variant !== "wide") return (
     <button onClick={onToggle} aria-label={aria} aria-pressed={playing} style={{
       ...(variant === "chrome"
-        ? { position: "fixed", top: 22, right: 62, zIndex: 31 }
+        ? { position: "fixed", top: 18, right: 62, zIndex: 31 }
         : { flexShrink: 0 }),
-      display: "inline-flex", alignItems: "center", gap: 7,
-      background: V.bg2, cursor: "pointer", padding: "7px 12px 7px 10px",
+      display: "inline-flex", alignItems: "center", gap: 8,
+      background: V.bg2, cursor: "pointer", padding: "10px 15px 10px 12px",
       whiteSpace: "nowrap",
       border: `1px solid ${playing ? V.blue : V.border2}`, borderRadius: 999,
       ...(playing ? edgeGlow(V.blue, 0.5) : {}),
     }}>
       <span className={playing ? "v-pulse" : undefined}
         style={{ lineHeight: 0, flexShrink: 0 }}>
-        <Icon color={color} size={15} />
+        <Icon color={color} size={18} />
       </span>
-      <span style={{ ...body("bodySm", { fontSize: 12, fontWeight: 600, color,
+      <span style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color,
         lineHeight: 1.35, whiteSpace: "nowrap" }) }}>Velvet Thunder</span>
     </button>
   );
@@ -3133,9 +3133,13 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
             </div>
           )}
           {i > 0 && <ThemeButton playing={playing} onToggle={toggleTheme} variant="inline" />}
+          {/* Wider when it is the only thing in the bar. On the cards that
+              share the row with the pill it gives back the width, or the two
+              together run past the edge of a 320px phone. */}
           <button onClick={advance} style={{
             ...display("h3", { color: V.bg }), background: V.blue, border: "none",
-            borderRadius: 999, padding: "13px 44px", cursor: "pointer",
+            borderRadius: 999, padding: i === 0 ? "13px 44px" : "13px 28px",
+            cursor: "pointer", flexShrink: 0,
             boxShadow: `0 0 18px ${V.blue}77`,
           }}>NEXT</button>
         </div>
