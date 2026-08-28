@@ -52,7 +52,7 @@ const PAD = (h, extra = 0) =>
 // Hardcoded the way the rest of PAD is: reading the bar's height would mean a
 // ref through two components to save a number that only changes if the button
 // changes.
-const THEME_BAR = 72;
+const THEME_BAR = 120;
 const MIN_SCALE = 0.72;
 
 // Wins against losses. Never green against pink: those two are the pair a
@@ -249,6 +249,7 @@ const ChartHead = ({ n, title, action, onAction }) => (
 const THEME_SRC = "/velvet-thunder.mp3";
 const THEME_PLAY = "Play the new F5 theme song, \u201CVelvet Thunder\u201D";
 const THEME_PAUSE = "Pause \u201CVelvet Thunder\u201D";
+const THEME_CREDIT = "Written by Andrea Buttacavoli, majority owner of Prestissimo Veloce";
 
 const SpeakerIcon = ({ color, size }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
@@ -3110,6 +3111,15 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
               rather than inside the card where it read as a caption. Card 1 is
               also the only card that has never heard of the song. */}
           {i === 0 && <ThemeButton playing={playing} onToggle={toggleTheme} wide />}
+          {/* The credit rides with the offer, and it is always here rather than
+              appearing on play: the bar is fixed, so a line arriving on the tap
+              would push NEXT down under the thumb that just pressed. */}
+          {i === 0 && (
+            <div style={{ ...body("bodySm", { fontSize: 11, color: V.text3,
+              lineHeight: 1.3 }), textAlign: "center", maxWidth: 340 }}>
+              {THEME_CREDIT}
+            </div>
+          )}
           <button onClick={advance} style={{
             ...display("h3", { color: V.bg }), background: V.blue, border: "none",
             borderRadius: 999, padding: "13px 44px", cursor: "pointer",
