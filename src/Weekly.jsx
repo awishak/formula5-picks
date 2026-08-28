@@ -45,7 +45,14 @@ const SCROLLS = new Set();
 const S_RACE = 0, S_COLOR = 1, S_TEAM = 2, S_BB = 3, S_POOL = 4;
 const RACE_STAGES = 5;
 const CARD_STAGES = [1, RACE_STAGES, 1, 1];
-const PAD = h => (h < 740 ? { t: 54, b: 92 } : { t: 64, b: 104 });
+const PAD = (h, extra = 0) =>
+  (h < 740 ? { t: 54, b: 92 + extra } : { t: 64, b: 104 + extra });
+// What the theme button adds to the bottom bar on card 1, so the card is
+// measured against the room actually left rather than sliding under the bar.
+// Hardcoded the way the rest of PAD is: reading the bar's height would mean a
+// ref through two components to save a number that only changes if the button
+// changes.
+const THEME_BAR = 72;
 const MIN_SCALE = 0.72;
 
 // Wins against losses. Never green against pink: those two are the pair a
@@ -81,7 +88,7 @@ const ordinal = n => {
 // here too. The wrapper has to be released before reading offsetHeight, or the
 // card is measured through the constraint left by the previous measurement and
 // converges on whatever it read first.
-function Card({ children, dep, scrolls }) {
+function Card({ children, dep, scrolls, bottom = 0 }) {
   const inner = useRef(null);
   const wrap = useRef(null);
   const [h, setH] = useState(null);
@@ -92,7 +99,7 @@ function Card({ children, dep, scrolls }) {
     const el = inner.current;
     if (!el || typeof window === "undefined") return;
     const measure = () => {
-      const p = PAD(window.innerHeight);
+      const p = PAD(window.innerHeight, bottom);
       setPad(p);
       const w = wrap.current;
       const held = w ? w.style.height : "";
@@ -129,7 +136,7 @@ function Card({ children, dep, scrolls }) {
       window.removeEventListener("resize", measure);
       window.removeEventListener("orientationchange", measure);
     };
-  }, [dep, scrolls]);
+  }, [dep, scrolls, bottom]);
 
   return (
     <div style={{
@@ -240,7 +247,7 @@ const ChartHead = ({ n, title, action, onAction }) => (
 // glows while the track is playing, which is the only thing separating "my
 // phone is muted" from "this button is broken" on that phone.
 const THEME_SRC = "/velvet-thunder.mp3";
-const THEME_PLAY = "Play the F5 theme music, \u201CVelvet Thunder\u201D";
+const THEME_PLAY = "Play the new F5 theme song, \u201CVelvet Thunder\u201D";
 const THEME_PAUSE = "Pause \u201CVelvet Thunder\u201D";
 
 const SpeakerIcon = ({ color, size }) => (
@@ -299,10 +306,15 @@ function ThemeButton({ playing, onToggle, wide = false }) {
     </button>
   );
 
+  // The wide one sits in the bottom bar on card 1, above NEXT and the same
+  // shape, because a second button beside the one everybody presses is the only
+  // placement anybody reads. Outlined rather than filled: NEXT is still what
+  // the card wants you to do.
   return (
     <button onClick={onToggle} aria-label={aria} aria-pressed={playing} style={{
-      display: "inline-flex", alignItems: "center", gap: 10, maxWidth: "100%",
-      background: "transparent", cursor: "pointer", padding: "9px 16px",
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      gap: 10, width: "100%", maxWidth: 380, background: "transparent",
+      cursor: "pointer", padding: "10px 18px",
       border: `1px solid ${playing ? V.blue : V.border2}`, borderRadius: 999,
       ...(playing ? edgeGlow(V.blue, 0.5) : {}),
     }}>
@@ -313,7 +325,7 @@ function ThemeButton({ playing, onToggle, wide = false }) {
       <span style={{ display: "grid", textAlign: "left", minWidth: 0 }}>
         {[THEME_PLAY, THEME_PAUSE].map((t, k) => (
           <span key={t} style={{
-            ...body("bodySm", { fontSize: 13, color, lineHeight: 1.35 }),
+            ...body("bodySm", { fontSize: 14, fontWeight: 600, color, lineHeight: 1.35 }),
             gridArea: "1 / 1", textWrap: "pretty",
             visibility: (k === 1) === playing ? "visible" : "hidden",
           }}>{t}</span>
@@ -2248,7 +2260,7 @@ function seasonLine(c, run, round, playerId) {
   };
 }
 
-function CardResult({ d, themePlaying, onTheme }) {
+function CardResult({ d }) {
   const c = d.card1;
   const won = c.outcome === "won", lost = c.outcome === "lost";
   const mColor = won ? MINE_C : lost ? V.text2 : V.text2;
@@ -2274,11 +2286,6 @@ function CardResult({ d, themePlaying, onTheme }) {
           maxWidth: 460, textWrap: "pretty" }}>{say.fact}</div>
       )}
       {say.line && <Line color={V.text}>{say.line}</Line>}
-
-      {/* The one place the theme is named. Below the result, because the result
-          is what the card is for, and above the handoff, because the handoff is
-          the last thing on every card in the deck. */}
-      {onTheme && <ThemeButton playing={themePlaying} onToggle={onTheme} wide />}
 
       <Ask>And how did you do yourself?</Ask>
     </>
@@ -3089,15 +3096,20 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
         onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
 
       <Card dep={`${i}-${stage}-${data.player.name}`}
+        bottom={i === 0 ? THEME_BAR : 0}
         scrolls={SCROLLS.has(i) || (i === 1 && stage === S_TEAM)}>
-        <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit}
-          themePlaying={playing} onTheme={toggleTheme} />
+        <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit} />
       </Card>
 
       {!last && (
         <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 30,
-          display: "flex", justifyContent: "center", padding: "16px 16px 26px",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+          padding: "16px 16px 26px",
           background: `linear-gradient(transparent, ${V.bg} 46%)` }}>
+          {/* Card 1 offers the track here, beside the button everybody presses,
+              rather than inside the card where it read as a caption. Card 1 is
+              also the only card that has never heard of the song. */}
+          {i === 0 && <ThemeButton playing={playing} onToggle={toggleTheme} wide />}
           <button onClick={advance} style={{
             ...display("h3", { color: V.bg }), background: V.blue, border: "none",
             borderRadius: 999, padding: "13px 44px", cursor: "pointer",
