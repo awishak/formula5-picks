@@ -123,12 +123,17 @@ speaker IS the gesture. An iPhone's silent switch mutes an `<audio>` element and
 there is no web workaround, so the control glows while the track plays, which is
 the only thing separating "my phone is muted" from "this button is broken".
 
-**Open, reported 2026-08-28 and not diagnosed:** Andrew reports that if the
-track is not started on card 1 it will not start later. The `<audio>` node is
-provably the same DOM node across all four cards, so it is not a remount. The
-two live candidates are iOS gesture locking and the 1.9MB download reading as a
-failure. Headless Chrome cannot separate them, because a scripted click is not a
-user gesture.
+**RESOLVED 2026-08-28.** Andrew reported that a track not started on card 1
+would not start later, and confirmed on his own phone the same day that starting
+from card 2 works. Not reproduced after the control became a 157x41 pill in the
+bottom bar; the version he hit it on was an 18px bare speaker icon in the top
+chrome, so the likely answer is that the tap was missing the target rather than
+anything in the audio. Recorded rather than proven: nothing was changed to fix
+this, so if it comes back the two live candidates are iOS gesture locking and
+the 1.9MB download reading as a failure, and the `<audio>` node is provably the
+same DOM node across all four cards so a remount is already ruled out. Headless
+Chrome cannot separate the other two, because a scripted click is not a user
+gesture.
 
 ### Which round /schedule opens on
 
