@@ -3020,42 +3020,12 @@ function CardNext({ d, onPicks, onExit }) {
     : null;
   return (
     <>
-      <Kicker>NEXT</Kicker>
-      <div style={titleBox({ width: "100%" })}>
-        <div style={{ fontFamily: FM, fontWeight: 400, lineHeight: 1.25,
-          fontSize: titleFit(r ? r.name : "SEASON", { min: 18, max: 38, fill: 0.96 }),
-          ...textGlow(V.pink, 0.9) }}>
-          {r ? r.name : "That is the season"}
-        </div>
-      </div>
-      {r && (
-        <Panel glow={V.pink}>
-          <div style={{ display: "flex", justifyContent: "space-around", alignItems: "center", gap: 12 }}>
-            <Stat n={r.round} cap="ROUND" color={V.pink} size={30} count={false} />
-            <div style={{ display: "grid", gap: 2, justifyItems: "center" }}>
-              <div style={{ ...body("bodyMd", { color: V.text }) }}>{when}</div>
-              <div style={{ ...label({ color: V.text3 }) }}>RACE DAY</div>
-            </div>
-          </div>
-        </Panel>
-      )}
-      <Line>
-        {c.poolReady
-          ? "The driver pools are up. Get your picks in."
-          : "Picks aren't open yet. Check back on the Tuesday before the race."}
-      </Line>
-      <button onClick={c.poolReady ? onPicks : onExit} className="v-pulse" style={{
-        ...display("h3", { color: V.bg }), background: c.poolReady ? V.green : V.blue,
-        border: "none", borderRadius: 999, padding: "15px 40px", cursor: "pointer",
-        boxShadow: `0 0 22px ${c.poolReady ? V.green : V.blue}88`,
-      }}>
-        {c.poolReady ? "MAKE YOUR PICKS" : "DONE"}
-      </button>
 
       {d.player.id && (
         <div style={{ ...vcard({ padding: 14, width: "100%" }), ...edgeGlow(V.green, 0.6),
           display: "grid", gap: 10 }}>
-          <div style={{ ...label({ fontSize: 12, color: V.green }) }}>CHOOSE YOUR FLAG</div>
+          <div style={{ ...display("h2", { fontSize: 27 }), ...textGlow(V.green, 0.8),
+            textAlign: "center" }}>CHOOSE YOUR FLAG</div>
           <Line color={V.text2}>
             You have the opportunity to choose the flag that flies next to your
             name. All countries, US states and Canadian provinces available.
@@ -3096,6 +3066,41 @@ function CardNext({ d, onPicks, onExit }) {
           boxShadow: `0 0 18px ${V.blue}77`,
         }}>DOWNLOAD THE SONG FOR FREE</a>
       </div>
+
+      {/* The race last. Andrew, 2026-08-30: the flag, then the record, then the
+          grand prix. The card closes on the thing that sends you back into the
+          app, which is where the button belongs anyway. */}
+      <Kicker>NEXT</Kicker>
+      <div style={titleBox({ width: "100%" })}>
+        <div style={{ fontFamily: FM, fontWeight: 400, lineHeight: 1.25,
+          fontSize: titleFit(r ? r.name : "SEASON", { min: 18, max: 38, fill: 0.96 }),
+          ...textGlow(V.pink, 0.9) }}>
+          {r ? r.name : "That is the season"}
+        </div>
+      </div>
+      {r && (
+        <Panel glow={V.pink}>
+          <div style={{ display: "flex", justifyContent: "space-around", alignItems: "center", gap: 12 }}>
+            <Stat n={r.round} cap="ROUND" color={V.pink} size={30} count={false} />
+            <div style={{ display: "grid", gap: 2, justifyItems: "center" }}>
+              <div style={{ ...body("bodyMd", { color: V.text }) }}>{when}</div>
+              <div style={{ ...label({ color: V.text3 }) }}>RACE DAY</div>
+            </div>
+          </div>
+        </Panel>
+      )}
+      <Line>
+        {c.poolReady
+          ? "The driver pools are up. Get your picks in."
+          : "Picks aren't open yet. Check back on the Tuesday before the race."}
+      </Line>
+      <button onClick={c.poolReady ? onPicks : onExit} className="v-pulse" style={{
+        ...display("h3", { color: V.bg }), background: c.poolReady ? V.green : V.blue,
+        border: "none", borderRadius: 999, padding: "15px 40px", cursor: "pointer",
+        boxShadow: `0 0 22px ${c.poolReady ? V.green : V.blue}88`,
+      }}>
+        {c.poolReady ? "MAKE YOUR PICKS" : "DONE"}
+      </button>
 
       {picking && (
         <FlagPicker title={`${d.player.name}'s flag`} value={nation}
