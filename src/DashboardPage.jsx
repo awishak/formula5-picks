@@ -7,6 +7,7 @@ import { displayOf, shortOf } from "./teams";
 import { shortName } from "./names";
 import { canonicalName } from "./drivers";
 import { currentRace } from "./raceTimes";
+import { PIT_FLOOR, PIT_CEIL } from "./weekly.js";
 import VegasHome from "./VegasHome.jsx";
 import PIT_TIMES from "./pitTimes.json";
 
@@ -380,9 +381,10 @@ function PodiumRuns({ rows, meId }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
             {r.top.map((p, i) => (
               <div key={p.id} style={{ display: "grid", gap: 3, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 5, minWidth: 0 }}>
-                  <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
-                    color: p.id === meId ? V.blue : V.text, minWidth: 0,
+                <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                  <Face name={p.name} photo={p.photo} size={22} />
+                  <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 14,
+                    color: p.id === meId ? V.blue : V.text, minWidth: 0, flex: 1,
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {shortName(p.name)}
                   </span>
@@ -402,11 +404,60 @@ function PodiumRuns({ rows, meId }) {
   );
 }
 
+// How far towards the ends of the dial each team is willing to go.
+//
+// The track runs the whole input, floor to ceiling. The bar is the range that
+// team's guesses cover and the tick is their average, so a team that lives at
+// one end reads as a bar pinned to that end rather than as a number.
+function EdgeTable({ rows, myTeamId }) {
+  if (!rows.length) return null;
+  const span = PIT_CEIL - PIT_FLOOR;
+  const at = v => ((v - PIT_FLOOR) / span) * 100;
+  return (
+    <div style={{ display: "grid", gap: 4 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 150px 62px", gap: 8,
+        ...label({ fontSize: 12, color: V.text3 }), paddingBottom: 2 }}>
+        <span>TEAM</span>
+        <span style={{ textAlign: "center" }}>{PIT_FLOOR} &ndash; {PIT_CEIL}</span>
+        <span style={{ textAlign: "right" }}>AT THE END</span>
+      </div>
+      {rows.map(r => (
+        <div key={r.id} style={{ display: "grid", gridTemplateColumns: "1fr 150px 62px",
+          gap: 8, alignItems: "center", padding: "4px 0" }}>
+          <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
+            color: r.id === myTeamId ? V.blue : V.text, minWidth: 0,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {shortOf(r.name)}
+          </span>
+          <span style={{ position: "relative", height: 14, borderRadius: 7,
+            background: V.bg4, overflow: "hidden" }}>
+            <span style={{ position: "absolute", top: 0, bottom: 0,
+              left: `${at(r.lo)}%`, width: `${Math.max(2, at(r.hi) - at(r.lo))}%`,
+              background: `${V.blue}55`, borderRadius: 7 }} />
+            <span style={{ position: "absolute", top: 1, bottom: 1, width: 2,
+              left: `${at(r.mean)}%`, background: V.blue }} />
+          </span>
+          <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right",
+            color: r.edgeCount ? V.amber : V.text3 }}>
+            {r.edgeCount}
+          </span>
+        </div>
+      ))}
+      <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, marginTop: 8 }}>
+        The bar is every guess that team has made, end to end, and the tick is
+        their average. The last column counts guesses within a fifth of a second
+        of {PIT_FLOOR} or {PIT_CEIL}. The ceiling was {PIT_CEIL - 0.5} until round 11,
+        so the top end is short in the early rounds.
+      </p>
+    </div>
+  );
+}
+
 // Where the panels start, before anybody moves one.
 const DEFAULT_LAYOUT = [
   ["home", "podiums"],
   ["championship", "second", "allplay", "drivers", "pits"],
-  ["players", "power", "value"],
+  ["players", "power", "edges", "value"],
 ];
 const STORE = "f5_dash_layout";
 
@@ -593,6 +644,50 @@ export default function DashboardPage({ currentUser, onNavigate }) {
         const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
         const nameOfId = Object.fromEntries(players.map(p => [p.id, p.name]));
         const photoOfId = Object.fromEntries(players.map(p => [p.id, p.photo_url]));
+        // ---- how hard each team plays the line ---------------------------
+        //
+        // The BOX BOX line is the average of the four guesses in a matchup, so
+        // a guess is two things at once: your own Needle score, and a lever on
+        // the line. A team that guesses 1.6 is not predicting a 1.6 second stop.
+        // It is dragging the average down.
+        //
+        // So this is not accuracy. It is how far towards the edges a team is
+        // willing to go, and the edges are the floor and ceiling of the input
+        // itself.
+        const teamOfPlayer = {};
+        teams.forEach(t => {
+          [t.player1_id, t.player2_id].forEach(id => { if (id) teamOfPlayer[id] = t; });
+        });
+        const guessRows = (await supabase.from("picks")
+          .select("player_id,race_id,pit_guess")).data || [];
+        const guessesByTeam = {};
+        guessRows.forEach(g => {
+          const v = g.pit_guess == null ? null : Number(g.pit_guess);
+          if (v == null || isNaN(v)) return;
+          const t = teamOfPlayer[g.player_id];
+          if (!t) return;
+          (guessesByTeam[t.id] = guessesByTeam[t.id] || { team: t, list: [] }).list.push(v);
+        });
+        // Within a fifth of a second of either end is "at the edge". That is
+        // closer than anybody guesses by accident.
+        const EDGE = 0.2;
+        const edges = Object.values(guessesByTeam).map(({ team, list }) => {
+          const lo = Math.min(...list), hi = Math.max(...list);
+          const atFloor = list.filter(v => v <= PIT_FLOOR + EDGE).length;
+          const atCeil = list.filter(v => v >= PIT_CEIL - EDGE).length;
+          // How far the average guess sits from the nearer end. Small means a
+          // team lives at the edges; the middle of the range is 1.5 away.
+          const mean = list.reduce((a, b) => a + b, 0) / list.length;
+          const toEdge = Math.min(mean - PIT_FLOOR, PIT_CEIL - mean);
+          return {
+            id: team.id, name: team.name, n: list.length,
+            lo: Math.round(lo * 100) / 100, hi: Math.round(hi * 100) / 100,
+            mean: Math.round(mean * 100) / 100,
+            atFloor, atCeil, edgeCount: atFloor + atCeil,
+            toEdge: Math.round(toEdge * 100) / 100,
+          };
+        }).sort((a, b) => b.edgeCount - a.edgeCount || a.toEdge - b.toEdge);
+
         // The podium of every round so far. Ties break on name, the same way
         // every other order in this app does: Postgres heap order is not
         // stable, and a shared score must not decide itself differently on two
@@ -630,7 +725,7 @@ export default function DashboardPage({ currentUser, onNavigate }) {
           byId: Object.fromEntries(half.map(r => [r.id, r])),
           myTeamId: myTeam ? myTeam.id : null,
           players: pt, place: placesBy(pt, r => r.avg), meId: me ? me.id : null, pickState,
-          drivers, luck, podiums, drivers2, power,
+          drivers, luck, podiums, drivers2, power, edges,
           week: {
             me: currentUser, teammate: mateId ? (players.find(p => p.id === mateId) || {}).name : null,
             race: { round: race.round, name: race.race_name, deadline: race.pick_deadline,
@@ -677,6 +772,8 @@ export default function DashboardPage({ currentUser, onNavigate }) {
       body: <PitTable data={PIT_TIMES} /> },
     podiums: { title: "The podium, race by race", accent: V.gold,
       body: <PodiumRuns rows={s.podiums} meId={s.meId} /> },
+    edges: { title: "Who plays the line hardest", accent: V.pink,
+      body: <EdgeTable rows={s.edges} myTeamId={s.myTeamId} /> },
     allplay: { title: "All-play and schedule luck", accent: V.amber,
       body: <AllPlayTable rows={s.luck} myTeamId={s.myTeamId} /> },
     value: { title: "What a driver has been worth", accent: V.blue,
