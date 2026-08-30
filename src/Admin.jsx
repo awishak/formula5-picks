@@ -7,6 +7,7 @@ import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, FD, FB, 
 
 import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
 import { NAME_OF as NATION_NAME } from "./nationList.js";
+import { drawPools, recentlyUsed } from "./pools.js";
 
 // Every player's flag and every team's flag, in one place, for the one person
 // who can set anybody's. Players set their own on the More page; this is the
@@ -157,6 +158,9 @@ export default function Admin() {
   const [midDrivers, setMidDrivers] = useState(["", "", "", "", "", "", ""]);
   const [driverPoolStatus, setDriverPoolStatus] = useState("");
   const [driverPoolSaving, setDriverPoolSaving] = useState(false);
+  // The deadline the "open picks now" button will write. Picks are open while
+  // now is before it, so opening the window is setting this to a future time.
+  const [openDeadline, setOpenDeadline] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -1350,6 +1354,70 @@ export default function Admin() {
           setDriverPoolSaving(false);
         }
 
+        // Draw the pools and open the window, in one press and without SQL.
+        //
+        // Everything here already existed: drawPools is the same function the
+        // Tuesday cron uses, the standings are the table the Monday cron
+        // writes, and Admin already writes races with the anon key. This only
+        // puts the three together.
+        //
+        // Picks are open while now is before pick_deadline, so "open the window"
+        // means writing a deadline in the future. An existing future deadline is
+        // left alone: the league's real one is better than anything invented
+        // here.
+        async function drawAndOpen() {
+          const race = races.find(r => r.round === driverPoolRound);
+          if (!race) return;
+          const already = (race.top_drivers || []).length && (race.mid_drivers || []).length;
+          const when = openDeadline ? new Date(openDeadline) : null;
+          if (openDeadline && (isNaN(when) || when <= new Date())) {
+            setDriverPoolStatus("That deadline is in the past, so picks would open closed.");
+            return;
+          }
+          if (!window.confirm(
+            `Round ${race.round}, ${race.race_name}.\n\n` +
+            `${already ? "Redraw the pools (this replaces the ten drivers already set) and open" : "Draw the pools and open"} picks` +
+            `${when ? ` until ${when.toLocaleString()}` : " on the deadline already set"}?`
+          )) return;
+
+          setDriverPoolSaving(true);
+          setDriverPoolStatus("drawing…");
+          try {
+            // The championship order the cron draws from. Empty means the Monday
+            // job has not run, and drawing off nothing would quietly produce a
+            // pool that ignores form.
+            const { data: standings, error: sErr } = await supabase
+              .from("driver_standings").select("driver,position").order("position");
+            if (sErr) throw new Error(sErr.message);
+            const order = (standings || []).map(r => r.driver);
+            if (order.length < 15) {
+              throw new Error(`only ${order.length} drivers in driver_standings, so there is nothing to draw from. Run the standings cron first.`);
+            }
+
+            const pools = drawPools(order, { avoid: recentlyUsed(races, race.round, 2) });
+            const patch = { top_drivers: pools.top, mid_drivers: pools.mid };
+            if (when) patch.pick_deadline = when.toISOString();
+
+            const { data: updated, error } = await supabase
+              .from("races").update(patch).eq("id", race.id).select();
+            if (error) throw new Error(error.message);
+            // RLS swallows a write and returns no error, so an empty result is
+            // a failure however healthy it looks.
+            if (!updated || !updated.length) {
+              throw new Error("the write returned no rows, so check RLS on races");
+            }
+
+            setTopDrivers([...pools.top]);
+            setMidDrivers([...pools.mid]);
+            setRaces(prev => prev.map(r => r.id === race.id ? { ...r, ...patch } : r));
+            setDriverPoolStatus(
+              `drawn and open${when ? ` until ${when.toLocaleString()}` : ""}`);
+          } catch (e) {
+            setDriverPoolStatus("Error: " + (e.message || String(e)));
+          }
+          setDriverPoolSaving(false);
+        }
+
         async function clearDriverPool() {
           const race = races.find(r => r.round === driverPoolRound);
           if (!race) return;
@@ -1429,7 +1497,19 @@ export default function Admin() {
               </label>
               <select
                 value={driverPoolRound || ""}
-                onChange={e => { const r = parseInt(e.target.value); setDriverPoolRound(r); loadDriverPool(r); }}
+                onChange={e => {
+                  const r = parseInt(e.target.value);
+                  setDriverPoolRound(r);
+                  loadDriverPool(r);
+                  // datetime-local wants local wall time with no zone, so the
+                  // offset comes off before slicing. Passing the ISO string
+                  // straight in shows UTC and writes back an hour or eight out.
+                  const race = races.find(x => x.round === r);
+                  const dl = race && race.pick_deadline ? new Date(race.pick_deadline) : null;
+                  setOpenDeadline(dl && !isNaN(dl)
+                    ? new Date(dl.getTime() - dl.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+                    : "");
+                }}
                 style={{ padding: "10px 12px", borderRadius: 10, border: `1px solid ${BORDER}`, fontFamily: FD, fontSize: 14, fontWeight: 700, color: TEXT, minWidth: 200, width: "100%" }}
               >
                 <option value="">Choose a round...</option>
@@ -1446,6 +1526,44 @@ export default function Admin() {
 
             {driverPoolRound && (
               <div>
+                {/* Draw and open, without going near SQL. The dropdowns below
+                    still work for setting a pool by hand; this is the one press
+                    that does the whole week. */}
+                <div style={{
+                  padding: "14px 16px", borderRadius: 12, marginBottom: 20,
+                  background: `${BLUE}08`, border: `1px solid ${BLUE}30`,
+                }}>
+                  <div style={{ fontFamily: FD, fontWeight: 900, fontSize: 14, color: BLUEDARK,
+                    marginBottom: 6 }}>OPEN THE WEEK</div>
+                  <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, margin: "0 0 12px",
+                    lineHeight: 1.45 }}>
+                    Draws ten drivers off the championship, avoiding the last two rounds'
+                    pools, and opens picks. Same draw the Tuesday cron uses.
+                  </p>
+                  <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2,
+                    textTransform: "uppercase", letterSpacing: "0.06em", display: "block",
+                    marginBottom: 4 }}>
+                    Picks close
+                  </label>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <input type="datetime-local" value={openDeadline}
+                      onChange={e => setOpenDeadline(e.target.value)}
+                      style={{ padding: "10px 12px", borderRadius: 10, border: `1px solid ${BORDER}`,
+                        fontFamily: FD, fontSize: 14, fontWeight: 700, color: TEXT, flex: "1 1 220px" }} />
+                    <button onClick={drawAndOpen} disabled={driverPoolSaving} style={{
+                      padding: "12px 18px", borderRadius: 10, border: "none", background: BLUE,
+                      color: "#fff", fontFamily: FD, fontWeight: 900, fontSize: 13,
+                      cursor: driverPoolSaving ? "default" : "pointer", opacity: driverPoolSaving ? 0.6 : 1,
+                    }}>{driverPoolSaving ? "WORKING…" : "DRAW POOLS & OPEN PICKS"}</button>
+                  </div>
+                  <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: "8px 0 0" }}>
+                    {selectedRacePool?.pick_deadline
+                      ? `Currently closes ${new Date(selectedRacePool.pick_deadline).toLocaleString()}${new Date(selectedRacePool.pick_deadline) > new Date() ? "" : ", which has passed"}.`
+                      : "No deadline set, so picks are open once a pool exists."}
+                    {" "}Leave the field empty to keep that.
+                  </p>
+                </div>
+
                 {/* Show saved pool status banner */}
                 {hasPool && driverPoolStatus === "" && (
                   <div style={{
