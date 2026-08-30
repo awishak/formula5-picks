@@ -4,6 +4,7 @@ import { V, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow 
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { displayOf, shortOf } from "./teams";
+import { shortName } from "./names";
 import { canonicalName } from "./drivers";
 import { currentRace } from "./raceTimes";
 import VegasHome from "./VegasHome.jsx";
@@ -298,45 +299,6 @@ function AllPlayTable({ rows, myTeamId }) {
   );
 }
 
-// Who can still win the half. 25 points for winning a round in your division,
-// so a team's ceiling is 25 a round left; anyone under the leader's total today
-// is out, and the leader adding to it only makes that truer.
-function TitleTable({ groups, myTeamId }) {
-  return (
-    <div style={{ display: "grid", gap: 12 }}>
-      {groups.map(g => (
-        <div key={g.div} style={{ display: "grid", gap: 3 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <span style={{ ...label({ fontSize: 13, color: g.div === "championship" ? V.gold : V.silver }) }}>
-              {g.div === "championship" ? "CHAMPIONSHIP" : "SECOND DIVISION"}
-            </span>
-            <span style={{ ...body("bodySm"), fontSize: 13, color: V.text3 }}>
-              {g.left} {g.left === 1 ? "round" : "rounds"} left
-            </span>
-          </div>
-          {g.rows.map(r => (
-            <div key={r.id} style={{ display: "grid", gridTemplateColumns: "1fr 44px 60px",
-              gap: 8, alignItems: "center", padding: "4px 0" }}>
-              <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
-                color: !r.alive ? V.text3 : r.id === myTeamId ? V.blue : V.text,
-                textDecoration: r.alive ? "none" : "line-through",
-                minWidth: 0, whiteSpace: "nowrap", overflow: "hidden",
-                textOverflow: "ellipsis" }}>{r.name}</span>
-              <span style={{ ...numeric("chip"), fontSize: 17, color: V.text, textAlign: "right" }}>
-                {r.pts}
-              </span>
-              <span style={{ ...body("bodySm"), fontSize: 13, textAlign: "right",
-                color: r.behind === 0 ? V.green : r.alive ? V.text3 : V.pink }}>
-                {r.behind === 0 ? "leads" : r.alive ? `${r.behind} back` : "out"}
-              </span>
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // What a driver has been worth, per round he was in the pool. The denominator
 // is the point: 48 people taking the same driver in one round is one race, not
 // 48 samples.
@@ -399,9 +361,50 @@ function PowerTable({ rows, meId }) {
   );
 }
 
+// Every round's podium, one row a race. Andrew, 2026-08-30: the top three
+// across, twelve bars. The bar under each name is that score against the best
+// of the same week, so a row reads as a week rather than as three numbers.
+const MEDALS = [V.gold, V.silver, V.bronze];
+
+function PodiumRuns({ rows, meId }) {
+  if (!rows.length) return null;
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      {rows.map(r => (
+        <div key={r.round} style={{ display: "grid", gap: 4 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span style={{ ...numeric("chip"), fontSize: 13, color: V.text3 }}>R{r.round}</span>
+            <span style={{ ...body("bodySm"), fontSize: 12, color: V.text3, minWidth: 0,
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.race}</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+            {r.top.map((p, i) => (
+              <div key={p.id} style={{ display: "grid", gap: 3, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 5, minWidth: 0 }}>
+                  <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
+                    color: p.id === meId ? V.blue : V.text, minWidth: 0,
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {shortName(p.name)}
+                  </span>
+                  <span style={{ ...numeric("chip"), fontSize: 15, color: MEDALS[i],
+                    flexShrink: 0 }}>{p.pts}</span>
+                </div>
+                <span style={{ height: 6, borderRadius: 3, background: V.bg4, overflow: "hidden" }}>
+                  <span style={{ display: "block", height: "100%", borderRadius: 3,
+                    width: `${Math.max(6, (p.pts / r.best) * 100)}%`, background: MEDALS[i] }} />
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Where the panels start, before anybody moves one.
 const DEFAULT_LAYOUT = [
-  ["home", "title"],
+  ["home", "podiums"],
   ["championship", "second", "allplay", "drivers", "pits"],
   ["players", "power", "value"],
 ];
@@ -534,31 +537,6 @@ export default function DashboardPage({ currentUser, onNavigate }) {
                    luckWins: Math.round((realWins - apPct * r.played) * 10) / 10 };
         }).sort((a, b) => b.apPct - a.apPct);
 
-        // ---- who can still win it ---------------------------------------
-        //
-        // 25 for winning a round in your division, so a team's ceiling is 25 a
-        // round left. Anybody whose ceiling is under the leader's total today
-        // is out, and the leader adding to that total only makes it truer.
-        const WIN_POINTS = 25;
-        const playedRounds = new Set(half.flatMap(r => r.weeks.map(w => w.round)));
-        const halfRounds = races
-          .filter(r => r.round >= FIRST_H2_ROUND && r.round <= 23)
-          .map(r => r.round);
-        const left = halfRounds.filter(r => !playedRounds.has(r)).length;
-        const title = ["championship", "second"].map(div => {
-          const rows = half.filter(r => r.division === div);
-          const lead = rows.length ? rows[0].pts : 0;
-          return {
-            div, left,
-            rows: rows.map(r => ({
-              id: r.id, name: r.name, code: r.code, logo: r.logo, pts: r.pts,
-              ceiling: r.pts + left * WIN_POINTS,
-              behind: lead - r.pts,
-              alive: r.pts + left * WIN_POINTS >= lead,
-            })),
-          };
-        });
-
         // ---- what a driver has been worth -------------------------------
         //
         // The denominator is rounds in the pool, not picks. Forty-eight people
@@ -615,6 +593,24 @@ export default function DashboardPage({ currentUser, onNavigate }) {
         const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
         const nameOfId = Object.fromEntries(players.map(p => [p.id, p.name]));
         const photoOfId = Object.fromEntries(players.map(p => [p.id, p.photo_url]));
+        // The podium of every round so far. Ties break on name, the same way
+        // every other order in this app does: Postgres heap order is not
+        // stable, and a shared score must not decide itself differently on two
+        // loads.
+        const roundNames = {}; races.forEach(r => { roundNames[r.round] = r.race_name; });
+        const perRound = {};
+        Object.entries(weeksOf).forEach(([id, ws]) => ws.forEach(w => {
+          (perRound[w.round] = perRound[w.round] || []).push({
+            id, name: nameOfId[id], photo: photoOfId[id], pts: w.pts });
+        }));
+        const podiums = Object.keys(perRound).map(Number).sort((a, b) => a - b).map(round => ({
+          round, race: roundNames[round] || "",
+          top: perRound[round]
+            .sort((a, b) => (b.pts - a.pts) || String(a.name).localeCompare(b.name))
+            .slice(0, 3),
+          best: Math.max(...perRound[round].map(x => x.pts), 1),
+        }));
+
         const power = Object.entries(weeksOf).map(([id, ws]) => {
           const sorted = ws.slice().sort((a, b) => a.round - b.round).map(w => w.pts);
           const rating = 0.75 * mean(sorted) + 0.20 * mean(sorted.slice(-5)) + 0.05 * mean(sorted.slice(-2));
@@ -634,7 +630,7 @@ export default function DashboardPage({ currentUser, onNavigate }) {
           byId: Object.fromEntries(half.map(r => [r.id, r])),
           myTeamId: myTeam ? myTeam.id : null,
           players: pt, place: placesBy(pt, r => r.avg), meId: me ? me.id : null, pickState,
-          drivers, luck, title, drivers2, power,
+          drivers, luck, podiums, drivers2, power,
           week: {
             me: currentUser, teammate: mateId ? (players.find(p => p.id === mateId) || {}).name : null,
             race: { round: race.round, name: race.race_name, deadline: race.pick_deadline,
@@ -679,10 +675,10 @@ export default function DashboardPage({ currentUser, onNavigate }) {
       body: <DriverTable rows={s.drivers} /> },
     pits: { title: "Pit stops this season", accent: V.green,
       body: <PitTable data={PIT_TIMES} /> },
+    podiums: { title: "The podium, race by race", accent: V.gold,
+      body: <PodiumRuns rows={s.podiums} meId={s.meId} /> },
     allplay: { title: "All-play and schedule luck", accent: V.amber,
       body: <AllPlayTable rows={s.luck} myTeamId={s.myTeamId} /> },
-    title: { title: "Who can still win it", accent: V.gold,
-      body: <TitleTable groups={s.title} myTeamId={s.myTeamId} /> },
     value: { title: "What a driver has been worth", accent: V.blue,
       body: <DriverValue rows={s.drivers2} /> },
     power: { title: "Power index", accent: V.purple,
