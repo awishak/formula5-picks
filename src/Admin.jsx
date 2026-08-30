@@ -12,7 +12,36 @@ import { F1_TEAM_COLORS } from "./theme";
 // table header. V.text does both on a dark ground: as a colour it is the text,
 // and as `${DARK}08` it is white at 3%, which lifts a row rather than sinking
 // it.
-import { V, FD as FD_V, FB as FB_V } from "./theme.vegas";
+import { V, FD as FD_V, FB as FB_V, label as vlabel, display as vdisplay } from "./theme.vegas";
+
+// A pill, outlined when off and filled with dark ink when on. PlayersPage calls
+// this "the same pill as the toggles everywhere else", so it is.
+const pill = (on, color = V.blue) => ({
+  flexShrink: 0, ...vlabel({ fontSize: 11, color: on ? V.bg : color }),
+  background: on ? color : "transparent",
+  border: `1px solid ${color}`, borderRadius: 999,
+  padding: "6px 13px", cursor: "pointer",
+});
+// The primary button: pill, display type, dark ink on neon, and the glow that
+// says it is the thing to press.
+const action = (color, { wide = true, off = false, size = 15 } = {}) => ({
+  // Uppercase, like every other primary in the app. The labels in this file are
+  // written in sentence case, so the transform does it rather than nine edits.
+  ...vdisplay("h3", { fontSize: size, color: off ? V.text3 : V.bg }),
+  textTransform: "uppercase", letterSpacing: "0.04em",
+  width: wide ? "100%" : undefined,
+  background: off ? V.bg4 : color,
+  border: "none", borderRadius: 999, padding: "14px 26px",
+  cursor: off ? "default" : "pointer",
+  boxShadow: off ? "none" : `0 0 18px ${color}66`,
+});
+// Destructive, and never filled: an outline says the same thing without
+// looking like the button you are meant to press.
+const ghost = (color) => ({
+  ...vlabel({ fontSize: 11, color }), width: "100%",
+  background: "transparent", border: `1px solid ${color}55`,
+  borderRadius: 999, padding: "10px 14px", cursor: "pointer",
+});
 const DARK = V.text;
 const BLUE = V.blue, BLUEDARK = V.blueDim;
 const GREEN = V.green, RED = V.pink, ORANGE = V.amber;
@@ -983,14 +1012,7 @@ export default function Admin() {
       <div className="v-scroll" style={{ display: "flex", gap: 6, marginBottom: 20,
         overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
         {[{ id: "scoring", label: "Score Race" }, { id: "missing", label: "Missing Picks" }, { id: "drivers", label: "Driver Pools" }, { id: "news", label: "News" }, { id: "export", label: "Export" }, { id: "logos", label: "Logos" }, { id: "photos", label: "Photos" }, { id: "flags", label: "Flags" }].map(tab => (
-          <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{
-            flexShrink: 0, padding: "10px 14px", borderRadius: 8,
-            border: `1px solid ${adminTab === tab.id ? BLUEDARK : BORDER}`,
-            background: adminTab === tab.id ? BLUEDARK : SURFACE,
-            fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase",
-            letterSpacing: "0.06em", color: adminTab === tab.id ? ONNEON : TEXT2,
-            whiteSpace: "nowrap", cursor: "pointer"
-          }}>{tab.label}</button>
+          <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{ ...pill(adminTab === tab.id) }}>{tab.label}</button>
         ))}
       </div>
 
@@ -1138,15 +1160,7 @@ export default function Admin() {
                 <button
                   onClick={copied}
                   disabled={missingEmails.length === 0}
-                  style={{
-                    width: "100%", padding: "12px", borderRadius: 12,
-                    background: missingEmails.length > 0 ? BLUEDARK : BORDER,
-                    border: "none", color: ONNEON,
-                    fontFamily: FD, fontWeight: 800, fontSize: 13,
-                    textTransform: "uppercase", letterSpacing: "0.06em",
-                    cursor: missingEmails.length > 0 ? "pointer" : "default",
-                    marginBottom: 8
-                  }}
+                  style={{ ...action(BLUE, { off: missingEmails.length === 0 }) }}
                 >
                   Copy {missingEmails.length} Email{missingEmails.length !== 1 ? "s" : ""} to Clipboard
                 </button>
@@ -1167,14 +1181,7 @@ export default function Admin() {
                   <button
                     onClick={generateRandomPicks}
                     disabled={randomGenerating}
-                    style={{
-                      width: "100%", padding: "12px", borderRadius: 12,
-                      background: randomGenerating ? BORDER : ORANGE,
-                      border: "none", color: ONNEON,
-                      fontFamily: FD, fontWeight: 800, fontSize: 13,
-                      textTransform: "uppercase", letterSpacing: "0.06em",
-                      cursor: randomGenerating ? "default" : "pointer"
-                    }}
+                    style={{ ...action(ORANGE, { off: randomGenerating }) }}
                   >
                     {randomGenerating ? "Assigning…" : `Assign Random Picks to ${missingPlayers.length} Player${missingPlayers.length !== 1 ? "s" : ""}`}
                   </button>
@@ -1583,9 +1590,7 @@ export default function Admin() {
                       style={{ padding: "10px 12px", borderRadius: 10, border: `1px solid ${BORDER}`,
                         fontFamily: FD, fontSize: 14, fontWeight: 700, color: TEXT, flex: "1 1 220px" }} />
                     <button onClick={drawAndOpen} disabled={driverPoolSaving} style={{
-                      padding: "12px 18px", borderRadius: 10, border: "none", background: BLUE,
-                      color: ONNEON, fontFamily: FD, fontWeight: 900, fontSize: 13,
-                      cursor: driverPoolSaving ? "default" : "pointer", opacity: driverPoolSaving ? 0.6 : 1,
+                      ...action(BLUE, { wide: false, off: driverPoolSaving, size: 14 }),
                     }}>{driverPoolSaving ? "WORKING…" : "DRAW POOLS & OPEN PICKS"}</button>
                   </div>
                   <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: "8px 0 0" }}>
@@ -1710,15 +1715,7 @@ export default function Admin() {
                 <button
                   onClick={saveDriverPool}
                   disabled={driverPoolSaving || topFilled !== 3 || midFilled !== 7}
-                  style={{
-                    width: "100%", padding: "14px", borderRadius: 12, marginTop: 12,
-                    background: (driverPoolSaving || topFilled !== 3 || midFilled !== 7) ? BORDER : BLUEDARK,
-                    border: "none", color: ONNEON,
-                    fontFamily: FD, fontWeight: 800, fontSize: 14,
-                    textTransform: "uppercase", letterSpacing: "0.06em",
-                    cursor: (driverPoolSaving || topFilled !== 3 || midFilled !== 7) ? "default" : "pointer",
-                    opacity: driverPoolSaving ? 0.6 : 1,
-                  }}
+                  style={{ ...action(BLUE, { off: driverPoolSaving || topFilled !== 3 || midFilled !== 7 }), marginTop: 12 }}
                 >
                   {driverPoolSaving ? "Saving..." : topFilled !== 3 || midFilled !== 7 ? `Select All Drivers (${topFilled + midFilled}/10)` : hasPool ? "Update Driver Pool" : "Save Driver Pool"}
                 </button>
@@ -1728,13 +1725,7 @@ export default function Admin() {
                   <button
                     onClick={clearDriverPool}
                     disabled={driverPoolSaving}
-                    style={{
-                      width: "100%", padding: "10px", borderRadius: 12, marginTop: 8,
-                      background: "transparent", border: `1px solid ${RED}30`, color: RED,
-                      fontFamily: FD, fontWeight: 700, fontSize: 11,
-                      textTransform: "uppercase", letterSpacing: "0.06em",
-                      cursor: driverPoolSaving ? "default" : "pointer",
-                    }}
+                    style={{ ...ghost(RED), marginTop: 8 }}
                   >
                     Clear Pool
                   </button>
@@ -1827,13 +1818,7 @@ export default function Admin() {
             </p>
             <button
               onClick={exportData}
-              style={{
-                width: "100%", padding: "14px", borderRadius: 12,
-                background: BLUEDARK, border: "none", color: ONNEON,
-                fontFamily: FD, fontWeight: 800, fontSize: 14,
-                textTransform: "uppercase", letterSpacing: "0.06em",
-                cursor: "pointer", marginBottom: 16
-              }}
+              style={{ ...action(BLUE) }}
             >
               📦 Export All Data
             </button>
@@ -1880,13 +1865,7 @@ export default function Admin() {
         <button
           onClick={fetchFromF1API}
           disabled={fetching || !selectedRace}
-          style={{
-            width: "100%", padding: "12px", borderRadius: 10,
-            border: "none", background: fetching ? BORDER : BLUEDARK,
-            fontFamily: FD, fontWeight: 700, fontSize: 13, color: ONNEON,
-            cursor: fetching ? "wait" : "pointer", textTransform: "uppercase",
-            letterSpacing: "0.06em", marginBottom: fetchStatus ? 10 : 0
-          }}
+          style={{ ...action(BLUE, { off: fetching }) }}
         >
           {fetching ? "Fetching from OpenF1..." : "Auto-Fill from F1 API"}
         </button>
@@ -2028,14 +2007,7 @@ export default function Admin() {
       <button
         onClick={scoreRace}
         disabled={scoring}
-        style={{
-          width: "100%", padding: "14px", borderRadius: 12,
-          background: BLUEDARK, border: "none", color: ONNEON,
-          fontFamily: FD, fontWeight: 800, fontSize: 14,
-          textTransform: "uppercase", letterSpacing: "0.06em",
-          cursor: scoring ? "wait" : "pointer", opacity: scoring ? 0.6 : 1,
-          marginBottom: 20
-        }}
+        style={{ ...action(BLUE) }}
       >
         {scoring ? "Scoring..." : "Preview Scores"}
       </button>
@@ -2248,14 +2220,7 @@ export default function Admin() {
           <button
             onClick={saveScores}
             disabled={saving || saved}
-            style={{
-              width: "100%", padding: "14px", borderRadius: 12,
-              background: saved ? GREEN : ORANGE, border: "none", color: ONNEON,
-              fontFamily: FD, fontWeight: 800, fontSize: 14,
-              textTransform: "uppercase", letterSpacing: "0.06em",
-              cursor: saving || saved ? "default" : "pointer",
-              opacity: saving ? 0.6 : 1
-            }}
+            style={{ ...action(saved ? GREEN : ORANGE) }}
           >
             {saved ? "✓ Saved!" : saving ? "Saving..." : isAlreadyScored ? "⚠️ Overwrite & Save Scores" : "Save Scores"}
           </button>
