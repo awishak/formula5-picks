@@ -22,8 +22,11 @@ import { writeFileSync } from "node:fs";
 import { DRIVER_TEAMS } from "../src/drivers.js";
 
 const YEAR = 2026;
-// A stationary stop. Anything above this is lane time or a drive-through.
-const MIN_STOP = 1.2, MAX_STOP = 8;
+// A tyre change, and nothing else. The data has 19.8s, 26.9s and 16.9s in it
+// under the same field: those are stops with a problem, a repair or a penalty
+// served, and they measure a bad afternoon rather than how quick a crew is.
+// Seventeen of the first seventy-seven timed stops were over five seconds.
+const MIN_STOP = 1.5, MAX_STOP = 5;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -76,16 +79,19 @@ const pct = (list, p) => {
 };
 const round2 = n => Math.round(n * 100) / 100;
 
+// The median leads, not the mean. Nine to sixteen stops a team is a small
+// sample and one slow one moves a mean further than it should; the median is
+// what "how quick are they normally" is actually asking.
 const teams = Object.entries(byTeam)
   .map(([team, stops]) => ({
     team,
     stops: stops.length,
-    avg: round2(stops.reduce((a, b) => a + b, 0) / stops.length),
     median: round2(pct(stops, 50)),
+    avg: round2(stops.reduce((a, b) => a + b, 0) / stops.length),
     fastest: round2(Math.min(...stops)),
     slowest: round2(Math.max(...stops)),
   }))
-  .sort((a, b) => a.avg - b.avg);
+  .sort((a, b) => a.median - b.median);
 
 const all = Object.values(byTeam).flat();
 const out = {
@@ -94,8 +100,8 @@ const out = {
   skipped,
   stops: all.length,
   league: all.length ? {
-    avg: round2(all.reduce((a, b) => a + b, 0) / all.length),
     median: round2(pct(all, 50)),
+    avg: round2(all.reduce((a, b) => a + b, 0) / all.length),
     fastest: round2(Math.min(...all)),
     slowest: round2(Math.max(...all)),
   } : null,

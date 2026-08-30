@@ -3,7 +3,7 @@ import { supabase } from "./supabaseClient";
 import { V, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow } from "./theme.vegas";
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
-import { displayOf } from "./teams";
+import { displayOf, shortOf } from "./teams";
 import { canonicalName } from "./drivers";
 import { currentRace } from "./raceTimes";
 import VegasHome from "./VegasHome.jsx";
@@ -186,10 +186,14 @@ function DriverTable({ rows }) {
 // What a stop has actually looked like per team this season, which is the
 // reference the Needle guess wants. Cached by scripts/pit-times.mjs, because
 // this is one request a race against an API that rate limits.
+//
+// The median, not the mean. Seven to fifteen stops a team is a small sample and
+// one slow one moves a mean further than it should.
 function PitTable({ data }) {
   if (!data || !data.teams.length) return null;
-  const slowest = Math.max(...data.teams.map(t => t.avg), 1);
+  const slowest = Math.max(...data.teams.map(t => t.median), 1);
   const races = parseInt(data.builtFrom, 10) || 0;
+  const par = data.league ? data.league.median : null;
   return (
     <div style={{ display: "grid", gap: 4 }}>
       <div style={{ ...body("bodySm"), fontSize: 14, color: V.amber, lineHeight: 1.45,
@@ -200,30 +204,32 @@ function PitTable({ data }) {
       </div>
       {data.teams.map(t => (
         <div key={t.team} style={{ display: "grid",
-          gridTemplateColumns: "1fr 70px 46px 46px", alignItems: "center", gap: 8 }}>
-          <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text, minWidth: 0,
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.team}</span>
+          gridTemplateColumns: "1fr 70px 52px 42px", alignItems: "center", gap: 8,
+          padding: "3px 0" }}>
+          <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text,
+            minWidth: 0, whiteSpace: "nowrap", overflow: "hidden",
+            textOverflow: "ellipsis" }}>{t.team}</span>
           <span style={{ height: 8, borderRadius: 4, background: V.bg4, overflow: "hidden" }}>
             <span style={{ display: "block", height: "100%", borderRadius: 4,
-              width: `${Math.max(4, (t.avg / slowest) * 100)}%`,
-              background: t.avg <= (data.league ? data.league.avg : t.avg) ? V.green : V.pink }} />
+              width: `${Math.max(4, (t.median / slowest) * 100)}%`,
+              background: par == null || t.median <= par ? V.green : V.pink }} />
           </span>
           <span style={{ ...numeric("chip"), fontSize: 17, color: V.text, textAlign: "right" }}>
-            {t.avg.toFixed(2)}
+            {t.median.toFixed(2)}
           </span>
           <span style={{ ...body("bodySm"), fontSize: 13, color: V.text3, textAlign: "right" }}>
-            {t.fastest.toFixed(1)}
+            {t.stops}
           </span>
         </div>
       ))}
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6,
-        paddingTop: 6, borderTop: `1px solid ${V.border}` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8,
+        paddingTop: 8, borderTop: `1px solid ${V.border}` }}>
         <span style={{ ...body("bodySm"), fontSize: 13, color: V.text3 }}>
-          {data.stops} stops from {data.builtFrom}
+          Median stop, and how many stops it is off
         </span>
-        {data.league && (
+        {par != null && (
           <span style={{ ...body("bodySm"), fontSize: 13, color: V.text2 }}>
-            League average {data.league.avg.toFixed(2)}
+            League {par.toFixed(2)}
           </span>
         )}
       </div>
@@ -234,36 +240,59 @@ function PitTable({ data }) {
 // What the same scores would have done against the whole league, beside what
 // they actually did. A team can score the fourth best number of the week and
 // lose, and over a season that is a table of its own.
+//
+// Both sides are win percentages, so they are the same measure and the gap
+// between them means something: luck is real minus all-play, in points of win
+// percentage. Plus twelve is a team winning twelve percent more often than its
+// scores were worth.
+//
+// Sortable on all three, because which column you care about depends on the
+// argument you are having.
 function AllPlayTable({ rows, myTeamId }) {
+  const [sort, setSort] = useState("ap");
+  const dir = { ap: -1, real: -1, luck: -1 };
+  const key = { ap: r => r.apPct, real: r => r.realPct, luck: r => r.luckPts };
+  const sorted = [...rows].sort((a, b) => (key[sort](b) - key[sort](a)) * -dir[sort]);
+  const pct = v => `${Math.round(v * 100)}%`;
+  const Head = ({ id, children }) => (
+    <button onClick={() => setSort(id)} style={{
+      ...label({ fontSize: 12, color: sort === id ? V.blue : V.text3 }),
+      background: "none", border: "none", padding: 0, cursor: "pointer",
+      textAlign: "right", width: "100%" }}>{children}{sort === id ? " \u25be" : ""}</button>
+  );
   return (
     <div style={{ display: "grid", gap: 3 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 104px 62px 52px", gap: 8,
-        ...label({ fontSize: 12, color: V.text3 }), paddingBottom: 4 }}>
-        <span>TEAM</span><span style={{ textAlign: "right" }}>ALL-PLAY</span>
-        <span style={{ textAlign: "right" }}>REAL</span><span style={{ textAlign: "right" }}>LUCK</span>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 74px 66px 62px", gap: 8,
+        paddingBottom: 4 }}>
+        <span style={{ ...label({ fontSize: 12, color: V.text3 }) }}>TEAM</span>
+        <Head id="ap">ALL-PLAY</Head>
+        <Head id="real">REAL</Head>
+        <Head id="luck">LUCK</Head>
       </div>
-      {rows.map(r => (
-        <div key={r.id} style={{ display: "grid", gridTemplateColumns: "1fr 104px 62px 52px",
+      {sorted.map(r => (
+        <div key={r.id} style={{ display: "grid", gridTemplateColumns: "1fr 74px 66px 62px",
           gap: 8, alignItems: "center", padding: "5px 0",
           borderTop: `1px solid ${V.border}` }}>
           <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
             color: r.id === myTeamId ? V.blue : V.text, minWidth: 0,
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</span>
-          <span style={{ ...numeric("chip"), fontSize: 15, color: V.text2, textAlign: "right" }}>
-            {r.ap.w}&ndash;{r.ap.l}{r.ap.d ? `\u2013${r.ap.d}` : ""}
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {shortOf(r.name)}
           </span>
-          <span style={{ ...numeric("chip"), fontSize: 15, color: V.text2, textAlign: "right" }}>
-            {r.w}&ndash;{r.l}{r.d ? `\u2013${r.d}` : ""}
+          <span style={{ ...numeric("chip"), fontSize: 17, color: V.text2, textAlign: "right" }}>
+            {pct(r.apPct)}
+          </span>
+          <span style={{ ...numeric("chip"), fontSize: 17, color: V.text, textAlign: "right" }}>
+            {pct(r.realPct)}
           </span>
           <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right",
-            color: r.luck > 0.5 ? V.green : r.luck < -0.5 ? V.pink : V.text3 }}>
-            {r.luck > 0 ? `+${r.luck}` : r.luck}
+            color: r.luckPts >= 8 ? V.green : r.luckPts <= -8 ? V.pink : V.text3 }}>
+            {r.luckPts > 0 ? `+${r.luckPts}` : r.luckPts}
           </span>
         </div>
       ))}
       <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, marginTop: 8 }}>
-        All-play is every week against all 23 others. Luck is wins above or below
-        what those scores were worth.
+        All-play is how often those scores would have beaten all 23 others. Luck
+        is the gap between that and how often they actually won, in points.
       </p>
     </div>
   );
@@ -490,13 +519,15 @@ export default function DashboardPage({ currentUser, onNavigate }) {
         const luck = season.map(r => {
           const ap = allPlay[r.id] || { w: 0, l: 0, d: 0 };
           const games = ap.w + ap.l + ap.d;
-          // What the same scores would have won against the whole league, put
-          // back on the scale of matchups actually played.
-          const expected = games ? (ap.w / games) * r.played : 0;
+          // Both sides as win percentages, so the gap between them is one
+          // number in one unit. A draw counts as half a win on both sides, or a
+          // team that draws often looks worse than one that loses often.
+          const apPct = games ? (ap.w + ap.d / 2) / games : 0;
+          const realPct = r.played ? (r.w + r.d / 2) / r.played : 0;
           return { id: r.id, name: r.name, code: r.code, logo: r.logo,
                    division: r.division, w: r.w, l: r.l, d: r.d, played: r.played,
-                   ap, apPct: games ? ap.w / games : 0,
-                   luck: Math.round((r.w - expected) * 10) / 10 };
+                   ap, apPct, realPct,
+                   luckPts: Math.round((realPct - apPct) * 100) };
         }).sort((a, b) => b.apPct - a.apPct);
 
         // ---- who can still win it ---------------------------------------
