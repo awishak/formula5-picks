@@ -251,7 +251,7 @@ function PitTable({ data }) {
 function AllPlayTable({ rows, myTeamId }) {
   const [sort, setSort] = useState("ap");
   const dir = { ap: -1, real: -1, luck: -1 };
-  const key = { ap: r => r.apPct, real: r => r.realPct, luck: r => r.luckPts };
+  const key = { ap: r => r.apPct, real: r => r.realPct, luck: r => r.luckWins };
   const sorted = [...rows].sort((a, b) => (key[sort](b) - key[sort](a)) * -dir[sort]);
   const pct = v => `${Math.round(v * 100)}%`;
   const Head = ({ id, children }) => (
@@ -285,14 +285,14 @@ function AllPlayTable({ rows, myTeamId }) {
             {pct(r.realPct)}
           </span>
           <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right",
-            color: r.luckPts >= 8 ? V.green : r.luckPts <= -8 ? V.pink : V.text3 }}>
-            {r.luckPts > 0 ? `+${r.luckPts}` : r.luckPts}
+            color: r.luckWins >= 1.5 ? V.green : r.luckWins <= -1.5 ? V.pink : V.text3 }}>
+            {r.luckWins > 0 ? `+${r.luckWins.toFixed(1)}` : r.luckWins.toFixed(1)}
           </span>
         </div>
       ))}
       <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, marginTop: 8 }}>
         All-play is how often those scores would have beaten all 23 others. Luck
-        is the gap between that and how often they actually won, in points.
+        is wins above what those scores were worth.
       </p>
     </div>
   );
@@ -523,11 +523,15 @@ export default function DashboardPage({ currentUser, onNavigate }) {
           // number in one unit. A draw counts as half a win on both sides, or a
           // team that draws often looks worse than one that loses often.
           const apPct = games ? (ap.w + ap.d / 2) / games : 0;
-          const realPct = r.played ? (r.w + r.d / 2) / r.played : 0;
+          const realWins = r.w + r.d / 2;
+          const realPct = r.played ? realWins / r.played : 0;
           return { id: r.id, name: r.name, code: r.code, logo: r.logo,
                    division: r.division, w: r.w, l: r.l, d: r.d, played: r.played,
                    ap, apPct, realPct,
-                   luckPts: Math.round((realPct - apPct) * 100) };
+                   // Wins above what those scores were worth. The rate is what
+                   // the whole league would have done to them; times the games
+                   // played, it is the wins they should have had.
+                   luckWins: Math.round((realWins - apPct * r.played) * 10) / 10 };
         }).sort((a, b) => b.apPct - a.apPct);
 
         // ---- who can still win it ---------------------------------------
