@@ -1250,6 +1250,14 @@ function TeamBarsH({ M, hands, merged, bb = false }) {
 
 // A driver both teams picked is worth the same to both, so those copies pair off
 // and count for nobody. Whatever is left over is what actually split the two.
+// "Lawson and Gasly", "Lawson, Gasly and Piastri", and "nobody" when a side
+// held nothing the other side did not.
+const listOf = names => {
+  if (!names.length) return "nobody";
+  if (names.length === 1) return names[0];
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+};
+
 function handRows(M) {
   const count = ours => {
     const out = {};
@@ -1374,6 +1382,19 @@ function HandBoard({ M, beat }) {
 // `beat` is the matchup press's own beat, so this strip and the team bars above
 // it move together. With no beat passed everything is on, which is the state
 // any press after the matchup arrives in.
+const BoxBoxRow = ({ pts, mirror }) => (
+  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8,
+    flexDirection: mirror ? "row-reverse" : "row" }}>
+    <span style={{ ...display("chip"), fontSize: 14, color: V.text3,
+      letterSpacing: "0.04em", flex: "1 1 0", minWidth: 0,
+      textAlign: mirror ? "right" : "left" }}>BOX BOX</span>
+    <span style={{ ...numeric("chip"), fontSize: 15, flexShrink: 0,
+      color: pts > 0 ? MINE_C : V.text2 }}>
+      {pts > 0 ? `+${pts}` : pts}
+    </span>
+  </div>
+);
+
 function BoxBoxStrip({ M, mine = null, needlePts = 0, four = null, beat = 99 }) {
   const MIN = PIT_FLOOR, MAX = PIT_CEIL;
   const pct = v => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
@@ -1450,6 +1471,15 @@ function BoxBoxStrip({ M, mine = null, needlePts = 0, four = null, beat = 99 }) 
         ...label({ fontSize: 11, color: V.text3 }) }}>
         <span>{MIN}</span><span>{MAX}</span>
       </div>
+      {/* Finished, it reads the way the matchup card reads on a race weekend. */}
+      {showStop && (
+        <div className="v-pop" style={{ display: "flex", alignItems: "center", gap: 10,
+          marginTop: 10, paddingTop: 8, borderTop: `1px solid ${V.border}` }}>
+          <BoxBoxRow pts={M.myBB} mirror={false} />
+          <div style={{ width: 1, alignSelf: "stretch", background: V.border }} />
+          <BoxBoxRow pts={M.oppBB} mirror />
+        </div>
+      )}
     </div>
   );
 }
@@ -1672,6 +1702,10 @@ function CardRace({ d, stage = 0 }) {
   const teamBeat = stage === S_TEAM ? beat : stage > S_TEAM ? BEAT_STOP : 0;
   const rows = handRows(M);
   const split = rows.find(r => r.net !== 0);
+  // The drivers each side held that the other did not. A shared driver cancels,
+  // so these are the names that actually separated the two teams.
+  const onlyMine = rows.filter(r => r.mineN > r.theirsN).map(r => lastName(r.driver));
+  const onlyTheirs = rows.filter(r => r.theirsN > r.mineN).map(r => lastName(r.driver));
   const netDrivers = rows.reduce((a, r) => a + r.net, 0);
   // How unusual your own result is, measured against every round so far rather
   // than asserted. A place in the bottom 12 winning its matchup happens about a
@@ -1697,7 +1731,7 @@ function CardRace({ d, stage = 0 }) {
   const beatN = c.ladder.filter(r => !r.me && me.pts > r.pts).length;
   const lostN = c.ladder.filter(r => !r.me && me.pts < r.pts).length;
   const head = stage === S_RACE
-      ? `This week's winner: ${top.name}.`
+      ? `This week's winner: ${top.name}!`
     : stage === S_POOL ? (x.bestSwap
         ? `You should have taken ${lastName(x.bestSwap.in.driver)} over ${lastName(x.bestSwap.out.driver)}.`
         : "You took the best hand available.")
@@ -1706,8 +1740,9 @@ function CardRace({ d, stage = 0 }) {
     // numbers and leaves the reader to work out what they are.
     : stage === S_TEAM ? (netDrivers === 0
         ? `As for the matchup, here's how it shook out: all four of you chose the same drivers, so the hands were level at ${M.myPreBB}.`
-        : split
-          ? `As for the matchup, here's how it shook out: ${lastName(split.driver)} is the driver the two teams did not share, and he was worth ${Math.abs(split.net)}.`
+        : onlyMine.length || onlyTheirs.length
+          ? `Here's why you ${iWon ? "won" : "lost"} this week: your team had ` +
+            `${listOf(onlyMine)}, they had ${listOf(onlyTheirs)}.`
         : preLevel ? `As for the matchup, here's how it shook out: the two teams were level at ${M.myPreBB} on drivers.`
         : preLead ? `As for the matchup, here's how it shook out: you were ahead on drivers, ${M.myPreBB} to ${M.oppPreBB}.`
         : `As for the matchup, here's how it shook out: they were ahead on drivers, ${M.oppPreBB} to ${M.myPreBB}.`)
@@ -1858,9 +1893,7 @@ function CardRace({ d, stage = 0 }) {
       <Kicker>{stage >= S_TEAM ? "YOUR MATCHUP" : stage === S_POOL ? "WHAT WAS ON THE TABLE" : "YOUR RACE"}</Kicker>
       <Head lines={2}>{head}</Head>
 
-      {stage === S_RACE
-        ? <>{notePanel}{chartPanel}</>
-        : <>{chartPanel}{notePanel}</>}
+      {stage === S_RACE ? notePanel : <>{chartPanel}{notePanel}</>}
 
       <Ask>{ASK[stage] || "Where does that leave you for the season?"}</Ask>
 
@@ -3054,7 +3087,7 @@ function CardNext({ d, onPicks, onExit }) {
           background: "none", border: "none", padding: 0, cursor: "pointer",
           display: "grid", gap: 6, justifyItems: "center" }}>
           <span style={{ ...display("h2", { fontSize: 24 }), ...textGlow(V.blue, 0.8) }}>
-            BUY VELVET THUNDER NOW
+            GET VELVET THUNDER NOW
           </span>
           <span style={{ ...body("bodySm", { fontSize: 14, color: V.text2 }) }}>
             Available on Winamp, MiniDisc and Zune
