@@ -163,10 +163,10 @@ function DriverTable({ rows }) {
       {rows.map((r, i) => (
         <div key={r.driver} style={{ display: "grid",
           gridTemplateColumns: "22px 1fr 64px 44px", alignItems: "center", gap: 8 }}>
-          <span style={{ ...numeric("chip"), fontSize: 13, color: V.text3, textAlign: "right" }}>
+          <span style={{ ...numeric("chip"), fontSize: 15, color: V.text3, textAlign: "right" }}>
             {r.position || i + 1}
           </span>
-          <span style={{ ...body("bodySm"), fontSize: 13, color: V.text, minWidth: 0,
+          <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text, minWidth: 0,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {r.driver}
           </span>
@@ -174,7 +174,7 @@ function DriverTable({ rows }) {
             <span style={{ display: "block", height: "100%", borderRadius: 4,
               width: `${Math.max(2, ((r.points || 0) / most) * 100)}%`, background: V.blue }} />
           </span>
-          <span style={{ ...numeric("chip"), fontSize: 14, color: V.blue, textAlign: "right" }}>
+          <span style={{ ...numeric("chip"), fontSize: 17, color: V.blue, textAlign: "right" }}>
             {r.points ?? "\u2013"}
           </span>
         </div>
@@ -192,7 +192,7 @@ function PitTable({ data }) {
   const races = parseInt(data.builtFrom, 10) || 0;
   return (
     <div style={{ display: "grid", gap: 4 }}>
-      <div style={{ ...body("bodySm"), fontSize: 13, color: V.amber, lineHeight: 1.4,
+      <div style={{ ...body("bodySm"), fontSize: 14, color: V.amber, lineHeight: 1.45,
         marginBottom: 6, padding: "8px 10px", borderRadius: 8,
         background: `${V.amber}12`, border: `1px solid ${V.amber}33` }}>
         From {races} races only. F1 publishes a stationary stop time for some
@@ -201,28 +201,28 @@ function PitTable({ data }) {
       {data.teams.map(t => (
         <div key={t.team} style={{ display: "grid",
           gridTemplateColumns: "1fr 70px 46px 46px", alignItems: "center", gap: 8 }}>
-          <span style={{ ...body("bodySm"), fontSize: 13, color: V.text, minWidth: 0,
+          <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text, minWidth: 0,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.team}</span>
           <span style={{ height: 8, borderRadius: 4, background: V.bg4, overflow: "hidden" }}>
             <span style={{ display: "block", height: "100%", borderRadius: 4,
               width: `${Math.max(4, (t.avg / slowest) * 100)}%`,
               background: t.avg <= (data.league ? data.league.avg : t.avg) ? V.green : V.pink }} />
           </span>
-          <span style={{ ...numeric("chip"), fontSize: 14, color: V.text, textAlign: "right" }}>
+          <span style={{ ...numeric("chip"), fontSize: 17, color: V.text, textAlign: "right" }}>
             {t.avg.toFixed(2)}
           </span>
-          <span style={{ ...body("bodySm"), fontSize: 12, color: V.text3, textAlign: "right" }}>
+          <span style={{ ...body("bodySm"), fontSize: 13, color: V.text3, textAlign: "right" }}>
             {t.fastest.toFixed(1)}
           </span>
         </div>
       ))}
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6,
         paddingTop: 6, borderTop: `1px solid ${V.border}` }}>
-        <span style={{ ...body("bodySm"), fontSize: 12, color: V.text3 }}>
+        <span style={{ ...body("bodySm"), fontSize: 13, color: V.text3 }}>
           {data.stops} stops from {data.builtFrom}
         </span>
         {data.league && (
-          <span style={{ ...body("bodySm"), fontSize: 12, color: V.text2 }}>
+          <span style={{ ...body("bodySm"), fontSize: 13, color: V.text2 }}>
             League average {data.league.avg.toFixed(2)}
           </span>
         )}
@@ -237,31 +237,31 @@ function PitTable({ data }) {
 function AllPlayTable({ rows, myTeamId }) {
   return (
     <div style={{ display: "grid", gap: 3 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 74px 52px 52px", gap: 8,
-        ...label({ fontSize: 10, color: V.text3 }), paddingBottom: 4 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 104px 62px 52px", gap: 8,
+        ...label({ fontSize: 12, color: V.text3 }), paddingBottom: 4 }}>
         <span>TEAM</span><span style={{ textAlign: "right" }}>ALL-PLAY</span>
         <span style={{ textAlign: "right" }}>REAL</span><span style={{ textAlign: "right" }}>LUCK</span>
       </div>
       {rows.map(r => (
-        <div key={r.id} style={{ display: "grid", gridTemplateColumns: "1fr 74px 52px 52px",
-          gap: 8, alignItems: "center", padding: "3px 0",
+        <div key={r.id} style={{ display: "grid", gridTemplateColumns: "1fr 104px 62px 52px",
+          gap: 8, alignItems: "center", padding: "5px 0",
           borderTop: `1px solid ${V.border}` }}>
-          <span style={{ ...body("bodySm"), fontSize: 13,
+          <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
             color: r.id === myTeamId ? V.blue : V.text, minWidth: 0,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</span>
-          <span style={{ ...numeric("chip"), fontSize: 13, color: V.text2, textAlign: "right" }}>
+          <span style={{ ...numeric("chip"), fontSize: 15, color: V.text2, textAlign: "right" }}>
             {r.ap.w}&ndash;{r.ap.l}{r.ap.d ? `\u2013${r.ap.d}` : ""}
           </span>
-          <span style={{ ...numeric("chip"), fontSize: 13, color: V.text2, textAlign: "right" }}>
+          <span style={{ ...numeric("chip"), fontSize: 15, color: V.text2, textAlign: "right" }}>
             {r.w}&ndash;{r.l}{r.d ? `\u2013${r.d}` : ""}
           </span>
-          <span style={{ ...numeric("chip"), fontSize: 14, textAlign: "right",
+          <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right",
             color: r.luck > 0.5 ? V.green : r.luck < -0.5 ? V.pink : V.text3 }}>
             {r.luck > 0 ? `+${r.luck}` : r.luck}
           </span>
         </div>
       ))}
-      <p style={{ ...body("bodySm"), fontSize: 12, color: V.text3, marginTop: 6 }}>
+      <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, marginTop: 8 }}>
         All-play is every week against all 23 others. Luck is wins above or below
         what those scores were worth.
       </p>
@@ -278,25 +278,25 @@ function TitleTable({ groups, myTeamId }) {
       {groups.map(g => (
         <div key={g.div} style={{ display: "grid", gap: 3 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <span style={{ ...label({ fontSize: 11, color: g.div === "championship" ? V.gold : V.silver }) }}>
+            <span style={{ ...label({ fontSize: 13, color: g.div === "championship" ? V.gold : V.silver }) }}>
               {g.div === "championship" ? "CHAMPIONSHIP" : "SECOND DIVISION"}
             </span>
-            <span style={{ ...body("bodySm"), fontSize: 12, color: V.text3 }}>
+            <span style={{ ...body("bodySm"), fontSize: 13, color: V.text3 }}>
               {g.left} {g.left === 1 ? "round" : "rounds"} left
             </span>
           </div>
           {g.rows.map(r => (
             <div key={r.id} style={{ display: "grid", gridTemplateColumns: "1fr 44px 60px",
-              gap: 8, alignItems: "center", padding: "2px 0" }}>
-              <span style={{ ...body("bodySm"), fontSize: 13,
+              gap: 8, alignItems: "center", padding: "4px 0" }}>
+              <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
                 color: !r.alive ? V.text3 : r.id === myTeamId ? V.blue : V.text,
                 textDecoration: r.alive ? "none" : "line-through",
                 minWidth: 0, whiteSpace: "nowrap", overflow: "hidden",
                 textOverflow: "ellipsis" }}>{r.name}</span>
-              <span style={{ ...numeric("chip"), fontSize: 14, color: V.text, textAlign: "right" }}>
+              <span style={{ ...numeric("chip"), fontSize: 17, color: V.text, textAlign: "right" }}>
                 {r.pts}
               </span>
-              <span style={{ ...body("bodySm"), fontSize: 11, textAlign: "right",
+              <span style={{ ...body("bodySm"), fontSize: 13, textAlign: "right",
                 color: r.behind === 0 ? V.green : r.alive ? V.text3 : V.pink }}>
                 {r.behind === 0 ? "leads" : r.alive ? `${r.behind} back` : "out"}
               </span>
@@ -318,22 +318,22 @@ function DriverValue({ rows }) {
     <div style={{ display: "grid", gap: 3 }}>
       {rows.slice(0, 14).map(r => (
         <div key={r.driver} style={{ display: "grid", gridTemplateColumns: "1fr 56px 46px 30px",
-          gap: 8, alignItems: "center" }}>
-          <span style={{ ...body("bodySm"), fontSize: 13, color: V.text, minWidth: 0,
+          gap: 8, alignItems: "center", padding: "3px 0" }}>
+          <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text, minWidth: 0,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.driver}</span>
           <span style={{ height: 8, borderRadius: 4, background: V.bg4, overflow: "hidden" }}>
             <span style={{ display: "block", height: "100%", borderRadius: 4,
               width: `${Math.max(3, (Math.abs(r.per) / best) * 100)}%`,
               background: r.per >= 0 ? V.blue : V.pink }} />
           </span>
-          <span style={{ ...numeric("chip"), fontSize: 14, textAlign: "right",
+          <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right",
             color: r.per >= 0 ? V.blue : V.pink }}>{r.per}</span>
-          <span style={{ ...body("bodySm"), fontSize: 11, color: V.text3, textAlign: "right" }}>
+          <span style={{ ...body("bodySm"), fontSize: 13, color: V.text3, textAlign: "right" }}>
             {r.pool}
           </span>
         </div>
       ))}
-      <p style={{ ...body("bodySm"), fontSize: 12, color: V.text3, marginTop: 6 }}>
+      <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, marginTop: 8 }}>
         Points a round in the pool. The last column is rounds offered, not picks.
       </p>
     </div>
@@ -347,22 +347,22 @@ function PowerTable({ rows, meId }) {
     <div style={{ display: "grid", gap: 3 }}>
       {rows.slice(0, 12).map(r => (
         <div key={r.id} style={{ display: "grid", gridTemplateColumns: "22px 1fr 48px 44px",
-          gap: 8, alignItems: "center", padding: "2px 0" }}>
-          <span style={{ ...numeric("chip"), fontSize: 13, color: V.text3, textAlign: "right" }}>
+          gap: 8, alignItems: "center", padding: "4px 0" }}>
+          <span style={{ ...numeric("chip"), fontSize: 15, color: V.text3, textAlign: "right" }}>
             {r.place}
           </span>
-          <span style={{ ...body("bodySm"), fontSize: 13,
+          <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
             color: r.id === meId ? V.blue : V.text, minWidth: 0,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</span>
-          <span style={{ ...numeric("chip"), fontSize: 14, color: V.blue, textAlign: "right" }}>
+          <span style={{ ...numeric("chip"), fontSize: 17, color: V.blue, textAlign: "right" }}>
             {r.rating}
           </span>
-          <span style={{ ...body("bodySm"), fontSize: 11, color: V.text3, textAlign: "right" }}>
+          <span style={{ ...body("bodySm"), fontSize: 13, color: V.text3, textAlign: "right" }}>
             {r.recent}
           </span>
         </div>
       ))}
-      <p style={{ ...body("bodySm"), fontSize: 12, color: V.text3, marginTop: 6 }}>
+      <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, marginTop: 8 }}>
         75% the season, 20% the last five, 5% the last two. Right column is the
         last five on its own.
       </p>
