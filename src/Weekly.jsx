@@ -3093,6 +3093,16 @@ function CardNext({ d, onPicks, onExit }) {
             Available on Winamp, MiniDisc and Zune
           </span>
         </button>
+        {/* The review. Andrew's copy, punctuation and all. */}
+        <div style={{ display: "grid", gap: 3, justifyItems: "center", maxWidth: 330 }}>
+          <span style={{ ...body("bodySm", { fontSize: 14, color: V.text, lineHeight: 1.4 }),
+            fontStyle: "italic" }}>
+            &ldquo;an instant classic in the field of made up songs about made up games&rdquo;
+          </span>
+          <span style={{ ...label({ fontSize: 11, color: V.text3 }) }}>
+            -Fantasy Games Weekly
+          </span>
+        </div>
         <a href={THEME_SRC} download="velvet-thunder.mp3" style={{
           ...display("h3", { fontSize: 15, color: V.bg }), background: V.blue,
           borderRadius: 999, padding: "11px 26px", textDecoration: "none",
