@@ -1,6 +1,15 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
-import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, FD, FB } from "./theme";
+// The Vegas kit under the names this file already uses, the same remap Admin
+// takes. DARK is heading ink and a faint tint in the same file, and V.text is
+// both on a dark ground.
+import { V, FD as FD_V, FB as FB_V } from "./theme.vegas";
+const DARK = V.text;
+const BLUE = V.blue, BLUEDARK = V.blueDim;
+const GREEN = V.green, RED = V.pink, ORANGE = V.amber;
+const TEXT = V.text, TEXT2 = V.text2, BORDER = V.border;
+const FD = FD_V, FB = FB_V;
+const SURFACE = V.bg2, ONNEON = V.bg;
 import { NEWS } from "./news";
 
 // Prose blocks are editable as plain fields. Matchup blocks expose the parts
@@ -8,9 +17,9 @@ import { NEWS } from "./news";
 // not prose, so they get a raw JSON escape hatch rather than a fake form.
 const PROSE = { p: "Paragraph", h: "Section header", sub: "Subheader", note: "Callout" };
 
-const inp = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${BORDER}`, fontFamily: FB, fontSize: 13, color: TEXT, background: "#fff", outline: "none", boxSizing: "border-box" };
+const inp = { width: "100%", padding: "8px 10px", borderRadius: 8, border: `1px solid ${BORDER}`, fontFamily: FB, fontSize: 13, color: TEXT, background: SURFACE, outline: "none", boxSizing: "border-box" };
 const lbl = { fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.07em", display: "block", margin: "10px 0 4px" };
-const btn = (bg) => ({ padding: "8px 12px", borderRadius: 8, border: "none", background: bg, color: "#fff", fontFamily: FD, fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer" });
+const btn = (bg) => ({ padding: "8px 12px", borderRadius: 8, border: "none", background: bg, color: ONNEON, fontFamily: FD, fontWeight: 700, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer" });
 
 function Textarea({ value, onChange, rows = 3 }) {
   return <textarea value={value} onChange={e => onChange(e.target.value)} rows={rows} style={{ ...inp, resize: "vertical", lineHeight: 1.5 }} />;
@@ -38,7 +47,7 @@ function BlockEditor({ block, onChange, onDelete, onMove, index, total }) {
   };
 
   return (
-    <div style={{ border: `1px solid ${BORDER}`, borderRadius: 10, padding: "10px 12px", marginBottom: 10, background: "#fff" }}>
+    <div style={{ border: `1px solid ${BORDER}`, borderRadius: 10, padding: "10px 12px", marginBottom: 10, background: SURFACE }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
         <span style={{ fontFamily: FD, fontWeight: 800, fontSize: 10, color: BLUEDARK, textTransform: "uppercase", letterSpacing: "0.07em", flex: 1 }}>
           {PROSE[block.t] || (isMatchup ? `Matchup — ${block.title}` : `Chart (${block.t})`)}
@@ -204,7 +213,7 @@ export default function NewsAdmin() {
       </div>
 
       {stories.map(s => (
-        <div key={s.id} style={{ border: `1px solid ${sel === s.id ? BLUE : BORDER}`, borderRadius: 10, padding: "10px 12px", marginBottom: 8, background: "#fff" }}>
+        <div key={s.id} style={{ border: `1px solid ${sel === s.id ? BLUE : BORDER}`, borderRadius: 10, padding: "10px 12px", marginBottom: 8, background: SURFACE }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 13, color: DARK, margin: 0 }}>{s.headline}</p>

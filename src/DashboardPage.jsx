@@ -167,8 +167,15 @@ function DriverTable({ rows }) {
 function PitTable({ data }) {
   if (!data || !data.teams.length) return null;
   const slowest = Math.max(...data.teams.map(t => t.avg), 1);
+  const races = parseInt(data.builtFrom, 10) || 0;
   return (
     <div style={{ display: "grid", gap: 4 }}>
+      <div style={{ ...body("bodySm"), fontSize: 13, color: V.amber, lineHeight: 1.4,
+        marginBottom: 6, padding: "8px 10px", borderRadius: 8,
+        background: `${V.amber}12`, border: `1px solid ${V.amber}33` }}>
+        From {races} races only. F1 publishes a stationary stop time for some
+        rounds and not others, so this is a sample, not the season.
+      </div>
       {data.teams.map(t => (
         <div key={t.team} style={{ display: "grid",
           gridTemplateColumns: "1fr 70px 46px 46px", alignItems: "center", gap: 8 }}>

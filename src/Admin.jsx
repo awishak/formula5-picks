@@ -3,7 +3,24 @@ import { supabase } from "./supabaseClient";
 import NewsAdmin from "./NewsAdmin.jsx";
 
 
-import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, FD, FB, F1_TEAM_COLORS } from "./theme";
+import { F1_TEAM_COLORS } from "./theme";
+// Admin on the Vegas look, 2026-08-30. The page was written against the light
+// theme's tokens and uses them almost everywhere, so the re-skin is a remap of
+// the names rather than a rewrite of the layout.
+//
+// DARK carried two jobs in the old theme, heading ink and a 3% tint behind a
+// table header. V.text does both on a dark ground: as a colour it is the text,
+// and as `${DARK}08` it is white at 3%, which lifts a row rather than sinking
+// it.
+import { V, FD as FD_V, FB as FB_V } from "./theme.vegas";
+const DARK = V.text;
+const BLUE = V.blue, BLUEDARK = V.blueDim;
+const GREEN = V.green, RED = V.pink, ORANGE = V.amber;
+const TEXT = V.text, TEXT2 = V.text2, BORDER = V.border;
+const FD = FD_V, FB = FB_V;
+// A surface, and the ink that goes on a neon button. In the light theme both
+// were "#fff", which is a card here and unreadable there.
+const SURFACE = V.bg2, INPUT = V.bg3, ONNEON = V.bg;
 
 import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
 import { NAME_OF as NATION_NAME } from "./nationList.js";
@@ -61,7 +78,7 @@ function FlagsAdmin() {
   const unsetT = teams.filter(t => t.nation == null).length;
 
   if (err && /column .* does not exist/.test(err)) return (
-    <div style={{ padding: 16, background: "#fff", borderRadius: 10, border: `1px solid ${BORDER}` }}>
+    <div style={{ padding: 16, background: SURFACE, borderRadius: 10, border: `1px solid ${BORDER}` }}>
       <p style={{ fontFamily: FB, fontSize: 14, color: TEXT }}>
         Flags are not switched on yet. Run <code>scripts/nations.sql</code>, which adds a
         nullable <code>nation</code> column to players and teams and changes nothing else.
@@ -77,7 +94,7 @@ function FlagsAdmin() {
       </p>
       <div style={{ display: "grid", gap: 6 }}>
         {rows.map(row => (
-          <div key={row.id} style={{ background: "#0e0e17", borderRadius: 12 }}>
+          <div key={row.id} style={{ background: V.bg3, borderRadius: 12 }}>
             <FlagRow who={row.name} nation={row.nation}
               onOpen={() => setPicking({ kind, row })} />
           </div>
@@ -929,14 +946,29 @@ export default function Admin() {
 
   if (loading) {
     return (
-      <div style={{ padding: "60px 20px", textAlign: "center" }}>
+      <div style={{ padding: "60px 20px", textAlign: "center", background: V.bg,
+        minHeight: "100dvh" }}>
         <p style={{ fontFamily: FB, fontSize: 14, color: TEXT2 }}>Loading...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "20px 20px 100px" }}>
+    <div className="adm" style={{ padding: "20px 20px 100px", background: V.bg,
+      minHeight: "100dvh", color: V.text }}>
+      <style>{`
+        .adm input, .adm textarea, .adm select {
+          background: ${V.bg3}; color: ${V.text};
+          border: 1px solid ${V.border2}; border-radius: 10px;
+          font-family: ${FB}; outline: none;
+        }
+        .adm input::placeholder, .adm textarea::placeholder { color: ${V.text3}; }
+        .adm option { background: ${V.bg3}; color: ${V.text}; }
+        .adm input:focus, .adm textarea:focus, .adm select:focus {
+          border-color: ${V.blue};
+        }
+        .adm table { color: ${V.text}; }
+      `}</style>
       <p style={{
         fontFamily: FD, fontWeight: 900, fontSize: 22, color: DARK,
         textTransform: "uppercase", letterSpacing: "0.03em", margin: "0 0 16px"
@@ -954,9 +986,9 @@ export default function Admin() {
           <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{
             flexShrink: 0, padding: "10px 14px", borderRadius: 8,
             border: `1px solid ${adminTab === tab.id ? BLUEDARK : BORDER}`,
-            background: adminTab === tab.id ? BLUEDARK : "#fff",
+            background: adminTab === tab.id ? BLUEDARK : SURFACE,
             fontFamily: FD, fontWeight: 700, fontSize: 12, textTransform: "uppercase",
-            letterSpacing: "0.06em", color: adminTab === tab.id ? "#fff" : TEXT2,
+            letterSpacing: "0.06em", color: adminTab === tab.id ? ONNEON : TEXT2,
             whiteSpace: "nowrap", cursor: "pointer"
           }}>{tab.label}</button>
         ))}
@@ -1046,7 +1078,7 @@ export default function Admin() {
                 style={{
                   width: "100%", padding: "10px 12px", borderRadius: 10,
                   border: `1px solid ${BORDER}`, fontFamily: FB, fontSize: 13, color: TEXT,
-                  background: "#fff"
+                  background: SURFACE
                 }}
               >
                 {races.map(r => (
@@ -1091,7 +1123,7 @@ export default function Admin() {
                     </thead>
                     <tbody>
                       {missingPlayers.map((p, i) => (
-                        <tr key={p.id} style={{ background: i % 2 === 0 ? "#fff" : `${DARK}03`, borderBottom: `1px solid ${BORDER}30` }}>
+                        <tr key={p.id} style={{ background: i % 2 === 0 ? SURFACE : `${DARK}03`, borderBottom: `1px solid ${BORDER}30` }}>
                           <td style={{ padding: "8px 10px", fontWeight: 600, color: TEXT }}>{p.name}</td>
                           <td style={{ padding: "8px 10px", color: p.email ? TEXT2 : `${RED}80`, fontSize: 11 }}>
                             {p.email || "No email on file"}
@@ -1109,7 +1141,7 @@ export default function Admin() {
                   style={{
                     width: "100%", padding: "12px", borderRadius: 12,
                     background: missingEmails.length > 0 ? BLUEDARK : BORDER,
-                    border: "none", color: "#fff",
+                    border: "none", color: ONNEON,
                     fontFamily: FD, fontWeight: 800, fontSize: 13,
                     textTransform: "uppercase", letterSpacing: "0.06em",
                     cursor: missingEmails.length > 0 ? "pointer" : "default",
@@ -1138,7 +1170,7 @@ export default function Admin() {
                     style={{
                       width: "100%", padding: "12px", borderRadius: 12,
                       background: randomGenerating ? BORDER : ORANGE,
-                      border: "none", color: "#fff",
+                      border: "none", color: ONNEON,
                       fontFamily: FD, fontWeight: 800, fontSize: 13,
                       textTransform: "uppercase", letterSpacing: "0.06em",
                       cursor: randomGenerating ? "default" : "pointer"
@@ -1181,7 +1213,7 @@ export default function Admin() {
             {teams.map(t => (
               <div key={t.id} style={{
                 display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
-                borderRadius: 12, border: `1px solid ${BORDER}`, background: "#fff"
+                borderRadius: 12, border: `1px solid ${BORDER}`, background: SURFACE
               }}>
                 {/* Current logo or placeholder */}
                 {t.logo_url ? (
@@ -1205,7 +1237,7 @@ export default function Admin() {
                 <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                   <label style={{
                     padding: "6px 12px", borderRadius: 8,
-                    background: BLUE, color: "#fff",
+                    background: BLUE, color: ONNEON,
                     fontFamily: FD, fontWeight: 700, fontSize: 10, textTransform: "uppercase",
                     cursor: uploading === t.id ? "wait" : "pointer",
                     opacity: uploading === t.id ? 0.5 : 1
@@ -1248,7 +1280,7 @@ export default function Admin() {
             {allPlayers.map(p => (
               <div key={p.id} style={{
                 display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
-                borderRadius: 12, border: `1px solid ${BORDER}`, background: "#fff"
+                borderRadius: 12, border: `1px solid ${BORDER}`, background: SURFACE
               }}>
                 {p.photo_url ? (
                   <img src={p.photo_url} alt={p.name} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
@@ -1268,7 +1300,7 @@ export default function Admin() {
                 <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                   <label style={{
                     padding: "6px 12px", borderRadius: 8,
-                    background: BLUE, color: "#fff",
+                    background: BLUE, color: ONNEON,
                     fontFamily: FD, fontWeight: 700, fontSize: 10, textTransform: "uppercase",
                     cursor: uploading === "p-" + p.id ? "wait" : "pointer",
                     opacity: uploading === "p-" + p.id ? 0.5 : 1
@@ -1453,7 +1485,7 @@ export default function Admin() {
                     border: `2px solid ${value ? color : BORDER}`,
                     fontFamily: FB, fontSize: 14, fontWeight: value ? 600 : 400,
                     color: value ? TEXT : TEXT2,
-                    background: value ? `${color}08` : "#fff",
+                    background: value ? `${color}08` : SURFACE,
                     boxSizing: "border-box",
                     appearance: "auto",
                   }}
@@ -1552,7 +1584,7 @@ export default function Admin() {
                         fontFamily: FD, fontSize: 14, fontWeight: 700, color: TEXT, flex: "1 1 220px" }} />
                     <button onClick={drawAndOpen} disabled={driverPoolSaving} style={{
                       padding: "12px 18px", borderRadius: 10, border: "none", background: BLUE,
-                      color: "#fff", fontFamily: FD, fontWeight: 900, fontSize: 13,
+                      color: ONNEON, fontFamily: FD, fontWeight: 900, fontSize: 13,
                       cursor: driverPoolSaving ? "default" : "pointer", opacity: driverPoolSaving ? 0.6 : 1,
                     }}>{driverPoolSaving ? "WORKING…" : "DRAW POOLS & OPEN PICKS"}</button>
                   </div>
@@ -1681,7 +1713,7 @@ export default function Admin() {
                   style={{
                     width: "100%", padding: "14px", borderRadius: 12, marginTop: 12,
                     background: (driverPoolSaving || topFilled !== 3 || midFilled !== 7) ? BORDER : BLUEDARK,
-                    border: "none", color: "#fff",
+                    border: "none", color: ONNEON,
                     fontFamily: FD, fontWeight: 800, fontSize: 14,
                     textTransform: "uppercase", letterSpacing: "0.06em",
                     cursor: (driverPoolSaving || topFilled !== 3 || midFilled !== 7) ? "default" : "pointer",
@@ -1797,7 +1829,7 @@ export default function Admin() {
               onClick={exportData}
               style={{
                 width: "100%", padding: "14px", borderRadius: 12,
-                background: BLUEDARK, border: "none", color: "#fff",
+                background: BLUEDARK, border: "none", color: ONNEON,
                 fontFamily: FD, fontWeight: 800, fontSize: 14,
                 textTransform: "uppercase", letterSpacing: "0.06em",
                 cursor: "pointer", marginBottom: 16
@@ -1827,7 +1859,7 @@ export default function Admin() {
           style={{
             width: "100%", padding: "10px 12px", borderRadius: 10,
             border: `1px solid ${BORDER}`, fontFamily: FB, fontSize: 13,
-            color: TEXT, background: "#fff"
+            color: TEXT, background: SURFACE
           }}
         >
           {races.map(r => (
@@ -1844,14 +1876,14 @@ export default function Admin() {
       </div>
 
       {/* Auto-fetch from OpenF1 */}
-      <div style={{ marginBottom: 20, padding: "14px 16px", background: "#fff", borderRadius: 12, border: `1px solid ${BORDER}` }}>
+      <div style={{ marginBottom: 20, padding: "14px 16px", background: SURFACE, borderRadius: 12, border: `1px solid ${BORDER}` }}>
         <button
           onClick={fetchFromF1API}
           disabled={fetching || !selectedRace}
           style={{
             width: "100%", padding: "12px", borderRadius: 10,
             border: "none", background: fetching ? BORDER : BLUEDARK,
-            fontFamily: FD, fontWeight: 700, fontSize: 13, color: "#fff",
+            fontFamily: FD, fontWeight: 700, fontSize: 13, color: ONNEON,
             cursor: fetching ? "wait" : "pointer", textTransform: "uppercase",
             letterSpacing: "0.06em", marginBottom: fetchStatus ? 10 : 0
           }}
@@ -1875,7 +1907,7 @@ export default function Admin() {
             <strong>Fields:</strong> {rawApiDump.fields.join(", ") || "none"}
           </p>
           <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 10, color: TEXT2, margin: "0 0 4px" }}>First 5 raw entries:</p>
-          <div style={{ maxHeight: 300, overflowY: "auto", background: "#fff", borderRadius: 8, padding: "8px 10px", border: `1px solid ${BORDER}` }}>
+          <div style={{ maxHeight: 300, overflowY: "auto", background: SURFACE, borderRadius: 8, padding: "8px 10px", border: `1px solid ${BORDER}` }}>
             {rawApiDump.first5.map((entry, i) => (
               <pre key={i} style={{ fontFamily: "monospace", fontSize: 11, color: TEXT, margin: "0 0 8px", whiteSpace: "pre-wrap", wordBreak: "break-all", borderBottom: i < rawApiDump.first5.length - 1 ? `1px solid ${BORDER}30` : "none", paddingBottom: 8 }}>
                 {JSON.stringify(entry, null, 2)}
@@ -1950,7 +1982,7 @@ export default function Admin() {
           <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 8 }}>
             All Pit Stops — Chronological ({allPitStops.length} stops)
           </label>
-          <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${BORDER}`, overflow: "hidden", maxHeight: 500, overflowY: "auto" }}>
+          <div style={{ background: SURFACE, borderRadius: 12, border: `1px solid ${BORDER}`, overflow: "hidden", maxHeight: 500, overflowY: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: FB, fontSize: 11 }}>
               <thead>
                 <tr style={{ background: `${DARK}08`, position: "sticky", top: 0 }}>
@@ -1967,7 +1999,7 @@ export default function Admin() {
                   const isSelected = selectedPitIdx === p.idx;
                   return (
                     <tr key={i} style={{
-                      background: isSelected ? `${GREEN}12` : i % 2 === 0 ? "#fff" : `${DARK}03`,
+                      background: isSelected ? `${GREEN}12` : i % 2 === 0 ? SURFACE : `${DARK}03`,
                       borderBottom: `1px solid ${BORDER}20`,
                       cursor: "pointer",
                     }} onClick={() => {
@@ -1998,7 +2030,7 @@ export default function Admin() {
         disabled={scoring}
         style={{
           width: "100%", padding: "14px", borderRadius: 12,
-          background: BLUEDARK, border: "none", color: "#fff",
+          background: BLUEDARK, border: "none", color: ONNEON,
           fontFamily: FD, fontWeight: 800, fontSize: 14,
           textTransform: "uppercase", letterSpacing: "0.06em",
           cursor: scoring ? "wait" : "pointer", opacity: scoring ? 0.6 : 1,
@@ -2052,7 +2084,7 @@ export default function Admin() {
               <tbody>
                 {preview.playerScores.map((s, i) => (
                   <tr key={s.playerId} style={{
-                    background: s.noPick ? `${RED}06` : i % 2 === 0 ? "#fff" : `${DARK}03`,
+                    background: s.noPick ? `${RED}06` : i % 2 === 0 ? SURFACE : `${DARK}03`,
                     borderBottom: `1px solid ${BORDER}30`
                   }}>
                     <td style={{ ...tdStyle, fontWeight: 600, minWidth: 90 }}>
@@ -2218,7 +2250,7 @@ export default function Admin() {
             disabled={saving || saved}
             style={{
               width: "100%", padding: "14px", borderRadius: 12,
-              background: saved ? GREEN : ORANGE, border: "none", color: "#fff",
+              background: saved ? GREEN : ORANGE, border: "none", color: ONNEON,
               fontFamily: FD, fontWeight: 800, fontSize: 14,
               textTransform: "uppercase", letterSpacing: "0.06em",
               cursor: saving || saved ? "default" : "pointer",
@@ -2239,8 +2271,8 @@ const thStyle = {
   padding: "6px 8px", textAlign: "left",
   fontFamily: "'Geologica', sans-serif",
   fontWeight: 700, fontSize: 9,
-  color: "#6b6b80", textTransform: "uppercase",
-  letterSpacing: "0.06em", borderBottom: `1px solid #d8d2c4`
+  color: TEXT2, textTransform: "uppercase",
+  letterSpacing: "0.06em", borderBottom: `1px solid ${BORDER}`
 };
 
 const tdStyle = {
