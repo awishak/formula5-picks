@@ -4,6 +4,7 @@ import { V, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow 
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { displayOf } from "./teams";
+import { canonicalName } from "./drivers";
 import { currentRace } from "./raceTimes";
 import VegasHome from "./VegasHome.jsx";
 import PIT_TIMES from "./pitTimes.json";
@@ -230,8 +231,151 @@ function PitTable({ data }) {
   );
 }
 
+// What the same scores would have done against the whole league, beside what
+// they actually did. A team can score the fourth best number of the week and
+// lose, and over a season that is a table of its own.
+function AllPlayTable({ rows, myTeamId }) {
+  return (
+    <div style={{ display: "grid", gap: 3 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 74px 52px 52px", gap: 8,
+        ...label({ fontSize: 10, color: V.text3 }), paddingBottom: 4 }}>
+        <span>TEAM</span><span style={{ textAlign: "right" }}>ALL-PLAY</span>
+        <span style={{ textAlign: "right" }}>REAL</span><span style={{ textAlign: "right" }}>LUCK</span>
+      </div>
+      {rows.map(r => (
+        <div key={r.id} style={{ display: "grid", gridTemplateColumns: "1fr 74px 52px 52px",
+          gap: 8, alignItems: "center", padding: "3px 0",
+          borderTop: `1px solid ${V.border}` }}>
+          <span style={{ ...body("bodySm"), fontSize: 13,
+            color: r.id === myTeamId ? V.blue : V.text, minWidth: 0,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</span>
+          <span style={{ ...numeric("chip"), fontSize: 13, color: V.text2, textAlign: "right" }}>
+            {r.ap.w}&ndash;{r.ap.l}{r.ap.d ? `\u2013${r.ap.d}` : ""}
+          </span>
+          <span style={{ ...numeric("chip"), fontSize: 13, color: V.text2, textAlign: "right" }}>
+            {r.w}&ndash;{r.l}{r.d ? `\u2013${r.d}` : ""}
+          </span>
+          <span style={{ ...numeric("chip"), fontSize: 14, textAlign: "right",
+            color: r.luck > 0.5 ? V.green : r.luck < -0.5 ? V.pink : V.text3 }}>
+            {r.luck > 0 ? `+${r.luck}` : r.luck}
+          </span>
+        </div>
+      ))}
+      <p style={{ ...body("bodySm"), fontSize: 12, color: V.text3, marginTop: 6 }}>
+        All-play is every week against all 23 others. Luck is wins above or below
+        what those scores were worth.
+      </p>
+    </div>
+  );
+}
+
+// Who can still win the half. 25 points for winning a round in your division,
+// so a team's ceiling is 25 a round left; anyone under the leader's total today
+// is out, and the leader adding to it only makes that truer.
+function TitleTable({ groups, myTeamId }) {
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      {groups.map(g => (
+        <div key={g.div} style={{ display: "grid", gap: 3 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <span style={{ ...label({ fontSize: 11, color: g.div === "championship" ? V.gold : V.silver }) }}>
+              {g.div === "championship" ? "CHAMPIONSHIP" : "SECOND DIVISION"}
+            </span>
+            <span style={{ ...body("bodySm"), fontSize: 12, color: V.text3 }}>
+              {g.left} {g.left === 1 ? "round" : "rounds"} left
+            </span>
+          </div>
+          {g.rows.map(r => (
+            <div key={r.id} style={{ display: "grid", gridTemplateColumns: "1fr 44px 60px",
+              gap: 8, alignItems: "center", padding: "2px 0" }}>
+              <span style={{ ...body("bodySm"), fontSize: 13,
+                color: !r.alive ? V.text3 : r.id === myTeamId ? V.blue : V.text,
+                textDecoration: r.alive ? "none" : "line-through",
+                minWidth: 0, whiteSpace: "nowrap", overflow: "hidden",
+                textOverflow: "ellipsis" }}>{r.name}</span>
+              <span style={{ ...numeric("chip"), fontSize: 14, color: V.text, textAlign: "right" }}>
+                {r.pts}
+              </span>
+              <span style={{ ...body("bodySm"), fontSize: 11, textAlign: "right",
+                color: r.behind === 0 ? V.green : r.alive ? V.text3 : V.pink }}>
+                {r.behind === 0 ? "leads" : r.alive ? `${r.behind} back` : "out"}
+              </span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// What a driver has been worth, per round he was in the pool. The denominator
+// is the point: 48 people taking the same driver in one round is one race, not
+// 48 samples.
+function DriverValue({ rows }) {
+  if (!rows.length) return null;
+  const best = Math.max(...rows.map(r => Math.abs(r.per)), 1);
+  return (
+    <div style={{ display: "grid", gap: 3 }}>
+      {rows.slice(0, 14).map(r => (
+        <div key={r.driver} style={{ display: "grid", gridTemplateColumns: "1fr 56px 46px 30px",
+          gap: 8, alignItems: "center" }}>
+          <span style={{ ...body("bodySm"), fontSize: 13, color: V.text, minWidth: 0,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.driver}</span>
+          <span style={{ height: 8, borderRadius: 4, background: V.bg4, overflow: "hidden" }}>
+            <span style={{ display: "block", height: "100%", borderRadius: 4,
+              width: `${Math.max(3, (Math.abs(r.per) / best) * 100)}%`,
+              background: r.per >= 0 ? V.blue : V.pink }} />
+          </span>
+          <span style={{ ...numeric("chip"), fontSize: 14, textAlign: "right",
+            color: r.per >= 0 ? V.blue : V.pink }}>{r.per}</span>
+          <span style={{ ...body("bodySm"), fontSize: 11, color: V.text3, textAlign: "right" }}>
+            {r.pool}
+          </span>
+        </div>
+      ))}
+      <p style={{ ...body("bodySm"), fontSize: 12, color: V.text3, marginTop: 6 }}>
+        Points a round in the pool. The last column is rounds offered, not picks.
+      </p>
+    </div>
+  );
+}
+
+// Form, on the same 75/20/5 the weekly deck's index uses, so the two cannot
+// disagree about who is in form.
+function PowerTable({ rows, meId }) {
+  return (
+    <div style={{ display: "grid", gap: 3 }}>
+      {rows.slice(0, 12).map(r => (
+        <div key={r.id} style={{ display: "grid", gridTemplateColumns: "22px 1fr 48px 44px",
+          gap: 8, alignItems: "center", padding: "2px 0" }}>
+          <span style={{ ...numeric("chip"), fontSize: 13, color: V.text3, textAlign: "right" }}>
+            {r.place}
+          </span>
+          <span style={{ ...body("bodySm"), fontSize: 13,
+            color: r.id === meId ? V.blue : V.text, minWidth: 0,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</span>
+          <span style={{ ...numeric("chip"), fontSize: 14, color: V.blue, textAlign: "right" }}>
+            {r.rating}
+          </span>
+          <span style={{ ...body("bodySm"), fontSize: 11, color: V.text3, textAlign: "right" }}>
+            {r.recent}
+          </span>
+        </div>
+      ))}
+      <p style={{ ...body("bodySm"), fontSize: 12, color: V.text3, marginTop: 6 }}>
+        75% the season, 20% the last five, 5% the last two. Right column is the
+        last five on its own.
+      </p>
+    </div>
+  );
+}
+
 // Where the panels start, before anybody moves one.
-const DEFAULT_LAYOUT = [["home"], ["championship", "second", "drivers", "pits"], ["players"]];
+const DEFAULT_LAYOUT = [
+  ["home", "title"],
+  ["championship", "second", "allplay", "drivers", "pits"],
+  ["players", "power", "value"],
+];
 const STORE = "f5_dash_layout";
 
 export default function DashboardPage({ currentUser, onNavigate }) {
@@ -324,6 +468,127 @@ export default function DashboardPage({ currentUser, onNavigate }) {
 
         const pt = buildPlayerTable({ players, teams, races, scores });
 
+        // ---- all-play, and what the schedule was worth -------------------
+        //
+        // Every team's score is already on the table row, round by round, with
+        // BOX BOX in it. So this counts rather than scores: nothing here is a
+        // second copy of the matchup rules.
+        const byRound = {};
+        season.forEach(r => r.weeks.forEach(w => {
+          (byRound[w.round] = byRound[w.round] || []).push({ id: r.id, score: w.score });
+        }));
+        const allPlay = {};
+        Object.values(byRound).forEach(list => list.forEach(a => {
+          const rec = allPlay[a.id] = allPlay[a.id] || { w: 0, l: 0, d: 0 };
+          list.forEach(b => {
+            if (b.id === a.id) return;
+            if (a.score > b.score) rec.w += 1;
+            else if (a.score < b.score) rec.l += 1;
+            else rec.d += 1;
+          });
+        }));
+        const luck = season.map(r => {
+          const ap = allPlay[r.id] || { w: 0, l: 0, d: 0 };
+          const games = ap.w + ap.l + ap.d;
+          // What the same scores would have won against the whole league, put
+          // back on the scale of matchups actually played.
+          const expected = games ? (ap.w / games) * r.played : 0;
+          return { id: r.id, name: r.name, code: r.code, logo: r.logo,
+                   division: r.division, w: r.w, l: r.l, d: r.d, played: r.played,
+                   ap, apPct: games ? ap.w / games : 0,
+                   luck: Math.round((r.w - expected) * 10) / 10 };
+        }).sort((a, b) => b.apPct - a.apPct);
+
+        // ---- who can still win it ---------------------------------------
+        //
+        // 25 for winning a round in your division, so a team's ceiling is 25 a
+        // round left. Anybody whose ceiling is under the leader's total today
+        // is out, and the leader adding to that total only makes it truer.
+        const WIN_POINTS = 25;
+        const playedRounds = new Set(half.flatMap(r => r.weeks.map(w => w.round)));
+        const halfRounds = races
+          .filter(r => r.round >= FIRST_H2_ROUND && r.round <= 23)
+          .map(r => r.round);
+        const left = halfRounds.filter(r => !playedRounds.has(r)).length;
+        const title = ["championship", "second"].map(div => {
+          const rows = half.filter(r => r.division === div);
+          const lead = rows.length ? rows[0].pts : 0;
+          return {
+            div, left,
+            rows: rows.map(r => ({
+              id: r.id, name: r.name, code: r.code, logo: r.logo, pts: r.pts,
+              ceiling: r.pts + left * WIN_POINTS,
+              behind: lead - r.pts,
+              alive: r.pts + left * WIN_POINTS >= lead,
+            })),
+          };
+        });
+
+        // ---- what a driver has been worth -------------------------------
+        //
+        // The denominator is rounds in the pool, not picks. Forty-eight people
+        // taking the same driver in one round is one race, not forty-eight
+        // samples, and points-per-pick read off picks was wrong on sight.
+        const scoredIds = new Set(scores.map(x => x.race_id));
+        const byRace = {};
+        scores.forEach(x => { (byRace[x.race_id] = byRace[x.race_id] || []).push(x); });
+        const driverRows = {};
+        races.forEach(race => {
+          if (!scoredIds.has(race.id)) return;
+          const pool = [...(race.top_drivers || []).map(d => [d, "top"]),
+                        ...(race.mid_drivers || []).map(d => [d, "mid"])];
+          if (!pool.length) return;
+          const rows = byRace[race.id] || [];
+          // driver_pts is stored as a JSON string and has to be parsed.
+          const parsed = rows.map(x => {
+            try { return typeof x.driver_pts === "string" ? JSON.parse(x.driver_pts) : (x.driver_pts || {}); }
+            catch (e) { return {}; }
+          });
+          pool.forEach(([raw, kind]) => {
+            const driver = canonicalName(raw) || raw;
+            const rec = driverRows[driver] = driverRows[driver] ||
+              { driver, pool: 0, picks: 0, points: 0, kind };
+            rec.pool += 1;
+            rec.kind = kind;
+            // Every picker gets the same number, so the first one who held him
+            // is as good as an average.
+            // Both spellings have to be looked for, since the column holds
+            // whichever one Admin wrote that week.
+            const keyIn = m => Object.keys(m).find(k => (canonicalName(k) || k) === driver);
+            const held = parsed.map(m => ({ m, k: keyIn(m) })).filter(x => x.k);
+            rec.picks += held.length;
+            if (held.length) rec.points += held[0].m[held[0].k] || 0;
+          });
+        });
+        const drivers2 = Object.values(driverRows)
+          .map(r => ({ ...r, per: r.pool ? Math.round((r.points / r.pool) * 10) / 10 : 0 }))
+          .sort((a, b) => b.per - a.per);
+
+        // ---- form ---------------------------------------------------------
+        //
+        // The same 75/20/5 the weekly deck's index uses, so the two cannot
+        // disagree about who is in form.
+        const roundOfRace = {}; races.forEach(r => { roundOfRace[r.id] = r.round; });
+        const weeksOf = {};
+        scores.forEach(x => {
+          const rd = roundOfRace[x.race_id];
+          if (rd == null) return;
+          const v = (x.top_pick_pts || 0) + (x.midfield_pts || 0) + (x.best_finish_bonus || 0)
+            + (x.order_bonus || 0) + (x.pit_individual_pts || 0) + (x.weekly_bonus_pts || 0);
+          (weeksOf[x.player_id] = weeksOf[x.player_id] || []).push({ round: rd, pts: v });
+        });
+        const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
+        const nameOfId = Object.fromEntries(players.map(p => [p.id, p.name]));
+        const photoOfId = Object.fromEntries(players.map(p => [p.id, p.photo_url]));
+        const power = Object.entries(weeksOf).map(([id, ws]) => {
+          const sorted = ws.slice().sort((a, b) => a.round - b.round).map(w => w.pts);
+          const rating = 0.75 * mean(sorted) + 0.20 * mean(sorted.slice(-5)) + 0.05 * mean(sorted.slice(-2));
+          return { id, name: nameOfId[id], photo: photoOfId[id],
+                   rating: Math.round(rating * 10) / 10, avg: Math.round(mean(sorted) * 10) / 10,
+                   recent: Math.round(mean(sorted.slice(-5)) * 10) / 10 };
+        }).filter(r => r.name).sort((a, b) => b.rating - a.rating);
+        power.forEach((r, i) => { r.place = i + 1; });
+
         // The drivers' championship, written by the Monday cron. Empty is fine
         // and says so on the page rather than inventing a number.
         const drivers = (await supabase.from("driver_standings")
@@ -334,7 +599,7 @@ export default function DashboardPage({ currentUser, onNavigate }) {
           byId: Object.fromEntries(half.map(r => [r.id, r])),
           myTeamId: myTeam ? myTeam.id : null,
           players: pt, place: placesBy(pt, r => r.avg), meId: me ? me.id : null, pickState,
-          drivers,
+          drivers, luck, title, drivers2, power,
           week: {
             me: currentUser, teammate: mateId ? (players.find(p => p.id === mateId) || {}).name : null,
             race: { round: race.round, name: race.race_name, deadline: race.pick_deadline,
@@ -379,6 +644,14 @@ export default function DashboardPage({ currentUser, onNavigate }) {
       body: <DriverTable rows={s.drivers} /> },
     pits: { title: "Pit stops this season", accent: V.green,
       body: <PitTable data={PIT_TIMES} /> },
+    allplay: { title: "All-play and schedule luck", accent: V.amber,
+      body: <AllPlayTable rows={s.luck} myTeamId={s.myTeamId} /> },
+    title: { title: "Who can still win it", accent: V.gold,
+      body: <TitleTable groups={s.title} myTeamId={s.myTeamId} /> },
+    value: { title: "What a driver has been worth", accent: V.blue,
+      body: <DriverValue rows={s.drivers2} /> },
+    power: { title: "Power index", accent: V.purple,
+      body: <PowerTable rows={s.power} meId={s.meId} /> },
     players: { title: `Players — ${Object.keys(s.pickState).length} of ${s.players.length} in`,
       accent: V.blue,
       body: <PlayerTable rows={s.players} place={s.place} meId={s.meId} pickState={s.pickState} /> },
