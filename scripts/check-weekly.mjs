@@ -16,7 +16,7 @@ const run = promisify(execFile);
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const BASE = process.env.F5_BASE || "http://localhost:5173";
 const PLAYER = process.argv[2] || "Andrew Ishak";
-const STAGES = [1, 5, 1, 1];
+const STAGES = [1, 3, 1, 1];
 
 let failed = 0;
 for (let card = 0; card < STAGES.length; card++) {

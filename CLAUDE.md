@@ -35,7 +35,9 @@ MorePage.jsx: the fifth tab at /. A holding page: coming soon, and a link to Adm
 ViewingAs.jsx: who you are looking at the app as. Top right of every page, rendered by the app shell. Used to live inside HomePage, so switching player meant going home first.
 VegasNav.jsx: the bottom nav on the Vegas look. Five starting lights, same five slots and the same order as the old one so the positions stay where people's thumbs expect. Home, Teams, Picks, Players, Schedule. The middle light reports the week rather than the route: green when picks are in, pink and pulsing when they are not.
 Recap.jsx: the 18-card first-half recap deck. No longer routed and no longer the gate; it opens at `?page=recap`. Superseded by the weekly deck.
-weekly.js: one player's week, computed. Pure, no React and no Supabase, the same shape as playerTable.js and teamTable.js. buildWeekly(db, name, round) returns every card's data plus a `context` block of league-wide stats. Mirrors scoreRace() in Admin.jsx; if the two disagree the deck is wrong.
+weekly.js: one player's week, computed. `context.week` is what made this round different from the eleven before it (records, upsets, how tight, how the line fell) and `context.power` is the Power Index, 75% season, 20% the last five rounds and 5% the last two, built for this round and the one before so a place carries its move; both exist for the Paddock and neither is a new scoring rule. Pure, no React and no Supabase, the same shape as playerTable.js and teamTable.js. buildWeekly(db, name, round) returns every card's data plus a `context` block of league-wide stats. Mirrors scoreRace() in Admin.jsx; if the two disagree the deck is wrong.
+wire.js: the week, written up. Pure, no React and no Supabase. buildWire(buildWeekly(...)) returns nine cards: seven stories, an advertisement and two closers. Decides which angle runs in each slot by weight and keeps the reason on the story as `why`. Holds TEAM_PUN and DRIVER_PUN, the two headline banks. Computes nothing.
+Paddock.jsx: the alternate weekly at /week2, dark, on ESPN's shape. A contents page and then 21 fixed pages, nothing scrolling, each measured and scaled to fit. Draws the album sleeve and plays Velvet Thunder. PaddockPaper is the presentational half, split out so the smoke script can render all 48 papers without a network.
 Weekly.jsx: the weekly deck itself, four cards and nine presses, Vegas throughout. Also the theme music control and card 4's flag row. Computed in the browser from the round's rows, so a deck exists the moment Admin writes the scores and changes if a round is rescored. WeeklyDeck is the presentational half, split out so the smoke script can render all 48 without a network.
 HandsColumns.jsx: the four-hand board, lifted out of VegasHome.jsx so the home page and the weekly deck draw the same board from the same code. A driver cancels COPY FOR COPY, not driver for driver.
 nations.js: the fallback map for nationality, and the default. A player who has picked a flag beats it; see the flags section below.
@@ -69,8 +71,8 @@ and `?round=` overrides so every press can be photographed.
 
 | card | what |
 |---|---|
-| 1 | The team's result. Matchup box, then all 24 team scores as horizontal bars with the ones you outscored marked. |
-| 2 | Five presses: your score against the field, recoloured by who won, the matchup as the shared HandsColumns board, BOX BOX, then the pools and what you left behind. **The podium leads on the first two presses and the chart sits under it**; from the team press on they swap, because there the chart is the content and the panel is commentary. |
+| 1 | The team's result, then the **Velvet Thunder box**: the offer in the body rather than a control in the chrome, with CONTINUE WITH THE MUSIC and CONTINUE WITHOUT under it. Those two buttons are the only way on from card 1, so it carries no bottom bar. WITH THE MUSIC starts the track and then advances, in that order, because the tap is the gesture browsers require before they will play sound, and it never toggles. |
+| 2 | **Four presses**, cut from five on 2026-08-29: the podium and your place in the field, the matchup as the shared HandsColumns board, BOX BOX, then the pools and what you left behind. **The podium leads on the first press and the chart sits under it**; from the team press on they swap, because there the chart is the content and the panel is commentary. |
 | 3 | Where you stand. Both tables, scrollable, ranked on points a race. |
 | 4 | Next race, picks, and the flag. |
 
@@ -83,6 +85,20 @@ Rules this deck holds:
 3. **One scale for the whole of card 2.** The chart height used to change between
    presses, so a 26-point bar was drawn four different heights and its height
    stopped meaning a number.
+
+3a. **The recolour press is gone, 2026-08-29.** It ran the same 48 bars again in
+   win and loss colours, which the podium above it had already said. Its rarity
+   line survived and now runs under the podium. Cutting it also freed the 390px
+   floor that had been holding the podium panel level with it, which was 100px
+   of dead space inside a card that was scaling to 0.75.
+
+3b. **A scaled card is narrower as well as shorter.** `transform: scale()` takes
+   both dimensions, so a card at 0.75 rendered at 75% width and left an eighth
+   of the screen empty down each side. `Card` widens the inner element by 1/k
+   before the transform, which lands it back at full width, and loops because a
+   wider line wraps less text and changes the height. Two things clamp that and
+   both had to go: `maxWidth: 100%` on the inner, and flex-shrink from the
+   wrapper being a flex row.
 4. **Nothing may change height between presses**, or the card rescales to fit and
    every bar appears to jump on the click. The headline reserves two lines, the
    caption reserves two lines, and the panel under the chart has a floor.
@@ -224,6 +240,11 @@ loading each page in turn proves nothing; the mismatch needs `activePage` to
 change WITHOUT a remount. **`npm run check:nav` taps through the app the way a
 person does** and is the only check that sees this class of bug. Reloading is
 not tapping.
+
+**Screenshot the deck with `--force-prefers-reduced-motion`.** `Count` animates
+on `requestAnimationFrame`, which headless Chrome's virtual time does not drive,
+so every counter in a screenshot reads 0 and looks like a data bug. The BOX BOX
+press showed "0 0" for a 60 to 54 matchup on exactly this.
 
 The smoke runs prove a card renders and differs across players. They cannot see
 that a chart drew the wrong bars. A renumber on 2026-08-24 widened a `stage <=`
@@ -537,18 +558,156 @@ RESOLVED. Cron automation shipped and kept the veto: `api/cron/pools.js` runs Tu
 
 RESOLVED 2026-08-19: Admin now writes the full finishing order. Rounds 3-11 keep the five they were written with; nothing rewrote history.
 
-### Next: an Athletic-style alternate deck
+## The Paddock, the alternate weekly
 
-**Agreed 2026-08-28, not started.** A second weekly UI that reads like a run of
-theathletic.com news stories, to try against the Vegas deck rather than to
-replace it. Editorial register: headline, byline, body copy, photography over
-glow.
+**Built 2026-08-28, rebuilt on ESPN's shape 2026-08-29, at `/week2`.** The same
+week as the Vegas deck, in the opposite register: dark, full-bleed photography,
+serif headlines, one red.
 
-`src/weekly.js` already computes every number, including the league-wide
-`context` block, and is pure. The alternate is a new presentational component
-over the same `buildWeekly(db, name, round)` output, the way `WeeklyDeck` is
-split out of `Weekly`. **Do not fork the maths.** Route it in parallel and leave
-`/week` alone until Andrew has both in front of him and picks.
+**Nothing scrolls.** Andrew, 2026-08-29: everything has to appear as a story on
+its own page. So the paper is a run of 22 fixed pages with a contents page in
+front, and every page measures itself and scales to fit.
+
+**`/week` is untouched and neither one gates the app.** The deck is still what
+opens after a round is scored. The Paddock exists to be put next to the deck so
+Andrew can pick, and until he does it is reachable only by URL.
+
+    src/weekly.js    the maths. Shared with the deck. NEVER forked.
+    src/wire.js      which story runs, why, and in what words.
+    src/Paddock.jsx  the paper. Nothing in here computes a score.
+
+Overrides: `?player=`, `?round=`, `?story=4` opens a story on its cover, and
+`?story=4&frame=2` opens page 2 of that story, so every page can be
+photographed.
+
+### ESPN's shape
+
+Taken from ESPN's own F1 recaps, which run: the winner card, then the headline
+and byline, then an opening paragraph carrying the result, then **Key points**
+as a bullet list, then the report, then what it means for the championship.
+
+The lead story lays its pages out explicitly to hold that order, in `pageSpec`:
+
+| page | what |
+|---|---|
+| cover | the bleed: kicker, headline, standfirst, byline |
+| 1 | the winner card, and the result in a sentence |
+| 2 | **KEY POINTS**, five bullets, no prose under them |
+| 3 | the report: the graphic that proves the angle, and the angle |
+
+Everything else zips its frames against its paragraphs, one graphic and one
+paragraph a page, capped at two content pages. A slot that needs a different
+pairing declares its own `pageSpec`, which is also what keeps the Power Index
+board on a page of its own.
+
+### The running order, and why each story is in the paper
+
+Nine slots, fixed, in Andrew's order. What runs *inside* a slot is chosen by
+weight: every slot builds each angle it could run, the strongest prints, and the
+reason is kept on the story as `why`. `npm run peek:wire` prints the reason
+under every headline, so the paper can be argued with.
+
+| # | slot | what decides the angle |
+|---|---|---|
+| 1 | Your matchup | **Always the lead.** The angle is whatever decided the matchup: `cause` in weekly.js, which is the line, one driver, one of the two of you, or nothing in particular. An upset your team was in outranks the last two. |
+| 2 | Around the league | The week's own story, the same for everybody. A record score beats an upset beats a tight week beats the line splitting the league beats a blowout. The fallback is the closest matchup, which always exists. |
+| 3 | The pit lane | Two questions, four stories: did the team win the line, and did you score on the Needle. |
+| 4 | Your points | Your score, where it ranked, the driver you walked past, the week's podium and who leads the season. |
+| 5 | Power Index | See below. |
+| 6 | The album | The advertisement. |
+| 7 | The notebook | The flex slot: best or worst week of the season, a perfect hand, a run of wins, the week's trap driver, schedule luck, a lopsided teammate split, or the driver who moved the round. |
+| 8 | Your flag | The same write and precedence as the deck's card 4. |
+| 9 | Next | Round, deadline, and the button to the picks. |
+
+### The Power Index
+
+**Weights set by Andrew 2026-08-29: 75% season average, 20% the last five
+rounds, 5% the last two.** Three windows, not two, and they sum to 1.
+
+It is **not the standings**. The standings answer who has scored most all
+season; the index answers who you would least like to draw next week. Built
+twice in `weekly.js`, this round and the round before, so a place carries its
+own movement.
+
+**The ratings stay off the page.** Andrew: no need for all the numbers. The
+board shows the top ten, the move since last week, and where that player sits in
+the player standings, and nothing else.
+
+### Rules these files exist to hold
+
+1. **Every headline carries a pun or an angle**, and stops there. Andrew,
+   2026-08-29, on "Cal Aggie bring in the harvest, on one pit stop": leave it at
+   that. No tails. The angle still picks the story; it does not get appended to
+   the headline.
+2. **The puns come off the two vocabularies the league already has.** `TEAM_PUN`
+   is keyed on the three-letter code from teams.js, `DRIVER_PUN` on all 22
+   canonical names. A missing team or driver falls through to a plain line.
+   Andrew wrote most of the 164 team lines himself on 2026-08-29, team by team,
+   and his wording is used verbatim including the punctuation.
+   - **`{t}` goes wherever the team belongs in the sentence**, not only at the
+     front. "Forecast for {t}: cloudy with a chance of losing" is a headline and
+     "{t} deliver" is a headline, and both are the same field. A line with no
+     `{t}` at all prints as written.
+   - **The placeholder holds the short name**, so a line that wants the part the
+     short name drops carries it: `{t}.com`, `{t} 1851`.
+   - **A line that says "you" only runs over the reader's own team.** The same
+     bank writes headlines about somebody else's upset, and "You put the W in
+     Wildcat" over a team the reader is not on is addressed to nobody.
+     `ADDRESSES_READER` gates those, and `teamLine` takes a `self` argument.
+   - **A line that names a player goes stale when that player moves.** Three do:
+     TNT Roku's Thompson line, and AgSlipstream's Dan and Brian. Check the
+     roster before writing one, the way "the Luxor boys" was checked.
+3. **A pun that claims a rout cannot run over a one-point win.** `BIG_ONLY`
+   holds the overstating lines, filtered out under a ten-point margin.
+4. **The choice of line is hashed off the reader and the round, never random.**
+5. **No two stories in one paper may headline the same driver.**
+6. **A headline names somebody by surname unless the league holds two of them**,
+   and then it uses the whole name. Chart labels are narrow and take an initial
+   instead: `shortNames` for charts, `nameIn` for headlines.
+7. **Players are people and nobody's pronouns are recorded.** They/them for a
+   player. The 22 drivers are a known grid and take he/him.
+8. **A number has to be worth printing.** A swap gains at least five points
+   before it is called the one you walked past.
+9. **The reader is in every chart of their own week.**
+10. **Nothing here computes a score.**
+
+### Fit, and why a page clips
+
+Every page is measured and scaled, floored at `MIN_SCALE = 0.74`. **The lever is
+page height, not font size**, the same as the deck: a page that is already
+scaling gets taller when you raise a font and the scale drops by about as much.
+
+**Measure with a ResizeObserver, not a timer.** A headshot off a CDN has no
+height until it lands, so a page full of faces measures short, scales to 1 and
+then clips when the images arrive. That is exactly how the Power Index board
+shipped clipped at the top and bottom. A CSS transform is paint-time, so
+`scrollHeight` already reports the untransformed height and nothing has to be
+released to read it.
+
+`document.documentElement.dataset.fit`, `.natural` and `.have` carry the last
+measurement, so a headless browser can read what a page actually did. At 393x852
+the page area is **617px**; anything over that scales.
+
+### Checking it
+
+`npm run peek:wire` prints every headline for all 48 with the reason underneath,
+and `npm run peek:wire "Andrew Ishak"` prints one whole paper. Headlines are the
+point of this UI and they get read as copy, not reviewed as template strings.
+
+`npm run smoke:paddock` renders every page for all 48 through react-dom/server
+and fails if a story is identical across players. **Rendered HTML cannot be that
+test on its own**: the pager draws one page at a time, so the check hashes the
+story rather than the markup. `ad` and `flag` are flat by design and say so.
+
+`npm run check:paddock` loads the pages in a real browser with `npm run dev` in
+another shell, because **the bundled smoke run is not the browser**: esbuild
+reorders module-level constants.
+
+**An infinite CSS animation hangs that check rather than failing it.** A page
+that never settles never returns from `--dump-dom`. The album sleeve was drawn
+spinning as artwork and did exactly that; it turns only while the track plays
+now. Both browser checks carry a hard timeout, because
+`--virtual-time-budget` does not bound a page waiting on a slow CDN image.
 
 Announced to the league in the deck, so these are now promises:
 - The pit stop input must accept up to 4.5 seconds. **Done 2026-08-18.** Raised in MyPicks.jsx, PracticePicks.jsx, the Schedule.jsx guess bar and Admin's random-pick generator. Driven to the stop in the browser: the dial reads "4.5 or above".

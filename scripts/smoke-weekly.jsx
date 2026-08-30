@@ -16,7 +16,7 @@ const CARDS = 4;
 // Card 2 plays out in five presses. A stage that is never rendered here is
 // silently untested, which is the whole reason this script exists, so the loop
 // walks every stage of every card.
-const STAGES = [1, 5, 1, 1];
+const STAGES = [1, 3, 1, 1];
 const names = DB.players.map(p => p.name);
 
 // Compare CONTENT, not output length. Two cards that differ only in which row

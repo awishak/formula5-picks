@@ -53,9 +53,16 @@ for (const walk of WALKS) {
     const r = await run(CHROME, ["--headless=new", "--disable-gpu",
       `--virtual-time-budget=${5000 + walk.length * 2600}`,
       "--enable-logging=stderr", "--v=0", `${BASE}/__nav.html`],
-      { maxBuffer: 40 * 1024 * 1024 });
+      // A hard timeout, because --virtual-time-budget alone does not bound
+      // this. Chrome holds virtual time while a network fetch is outstanding,
+      // and the app pulls photos and logos off two external CDNs, so one slow
+      // image hangs the run rather than failing it.
+      { maxBuffer: 40 * 1024 * 1024, timeout: 90000, killSignal: "SIGKILL" });
     out = `${r.stdout}\n${r.stderr}`;
-  } catch (e) { out = `${e.stdout || ""}\n${e.stderr || ""}`; }
+  } catch (e) {
+    if (e.killed) { console.log(`  FAIL  ${walk.join(" -> ")}  (timed out)`); failed++; continue; }
+    out = `${e.stdout || ""}\n${e.stderr || ""}`;
+  }
   finally { try { unlinkSync(tmp); } catch (e) {} }
 
   const errs = out.split("\n").filter(l => /CONSOLE.*(Uncaught|Error|Rendered (fewer|more) hooks)/i.test(l));

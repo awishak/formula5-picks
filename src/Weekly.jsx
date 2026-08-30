@@ -43,8 +43,13 @@ const SCROLLS = new Set();
 // browser while the bundled smoke run reorders it and passes.
 // The presses of card 2, named. Renumbering these by hand across a dozen
 // comparisons is how an off-by-one gets into a deck.
-const S_RACE = 0, S_COLOR = 1, S_TEAM = 2, S_BB = 3, S_POOL = 4;
-const RACE_STAGES = 5;
+// The recolour press was cut 2026-08-29: the podium says who won, and a
+// second pass over the same 48 bars in win and loss colours said it again.
+// BOX BOX stopped being a press of its own on 2026-08-29 and became the tail
+// of the matchup animation: the four guesses, the line as their average, the
+// stop, then the points going to a side.
+const S_RACE = 0, S_TEAM = 1, S_POOL = 2;
+const RACE_STAGES = 3;
 const CARD_STAGES = [1, RACE_STAGES, 1, 1];
 const PAD = (h, extra = 0) =>
   (h < 740 ? { t: 54, b: 92 + extra } : { t: 64, b: 104 + extra });
@@ -112,12 +117,31 @@ function Card({ children, dep, scrolls, bottom = 0 }) {
       const w = wrap.current;
       const held = w ? w.style.height : "";
       if (w) w.style.height = "auto";
-      el.style.transform = "none";
-      const natural = el.offsetHeight;
-      if (w) w.style.height = held;
       const avail = window.innerHeight - p.t - p.b - 4;
-      const k = scrolls || natural <= avail ? 1 : Math.max(MIN_SCALE, avail / natural);
+
+      // A scaled card is narrower as well as shorter, because a transform takes
+      // both dimensions. At 0.75 that left an eighth of the screen empty down
+      // each side and gave every line an eighth less room to wrap in.
+      //
+      // So the card is widened by 1/k before the transform, which lands it back
+      // at the full width once scaled. The wider line then wraps less text and
+      // the card gets shorter, which raises k, which widens it again: hence the
+      // loop rather than a single pass. It settles in two or three.
+      let k = 1, natural = 0;
+      el.style.maxWidth = "none";
+      el.style.flexShrink = "0";
+      for (let pass = 0; pass < 4; pass++) {
+        el.style.transform = "none";
+        el.style.width = k < 1 ? `${100 / k}%` : "100%";
+        natural = el.offsetHeight;
+        const next = scrolls || natural <= avail ? 1 : Math.max(MIN_SCALE, avail / natural);
+        if (Math.abs(next - k) < 0.004) { k = next; break; }
+        k = next;
+      }
+      el.style.width = k < 1 ? `${100 / k}%` : "100%";
+      natural = el.offsetHeight;
       el.style.transform = k < 1 ? `scale(${k})` : "";
+      if (w) w.style.height = held;
       setH(natural * k);
       setFit(k);
       // Published so a headless run can read how far each card had to shrink
@@ -163,7 +187,7 @@ function Card({ children, dep, scrolls, bottom = 0 }) {
         display: "flex", justifyContent: "center",
       }}>
         <div ref={inner} className="f5card" style={{
-          width: "100%", maxWidth: "100%", transformOrigin: "top center",
+          width: "100%", transformOrigin: "top center", flexShrink: 0,
           display: "flex", flexDirection: "column", alignItems: "center",
           textAlign: "center", gap: 12,
         }}>{children}</div>
@@ -286,6 +310,51 @@ const PauseIcon = ({ color, size }) => (
  * whichever is showing. Sizing to the live label would move the card under it
  * on every tap, and deck rule 4 is that nothing changes height between presses.
  */
+// The theme offer, boxed. Andrew, 2026-08-29: highlight Velvet Thunder in a box
+// like the ones on the player pages, with two buttons.
+//
+// Card 1 makes the offer once, in the body, and the two buttons under it are the
+// only way on from that card. A NEXT beside them would be a third control for
+// the same tap.
+//
+// The tap on WITH THE MUSIC is what unlocks audio: every browser blocks sound
+// until a gesture, so that button starts the track and then advances, in that
+// order, or the deck moves on and the track never plays.
+function ThemeOffer({ won, onWith, onWithout }) {
+  return (
+    <div style={{ ...vcard({ padding: 16, width: "100%" }), ...edgeGlow(V.blue, 0.7),
+      display: "grid", gap: 12, justifyItems: "center", textAlign: "center",
+      position: "relative", overflow: "hidden" }}>
+      {/* The shine, off the sweep the theme already ships. */}
+      <span className="v-sweep" aria-hidden="true" style={{ position: "absolute",
+        top: 0, bottom: 0, width: 90, pointerEvents: "none",
+        background: `linear-gradient(100deg, transparent, ${V.blue}22, transparent)` }} />
+      <div style={{ ...label({ fontSize: 12, color: V.text3 }) }}>THE NEW F5 THEME SONG</div>
+      <div style={{ ...display("h2", { fontSize: 27 }), ...textGlow(V.blue, 0.8) }}>
+        VELVET THUNDER
+      </div>
+      <div style={{ ...body("bodySm", { fontSize: 14, color: V.text2, lineHeight: 1.4 }),
+        maxWidth: 320 }}>
+        {won
+          ? "Congrats! For your victory, please enjoy the new F5 theme song, written by Prestissimo Veloce team boss Andrea Buttacavoli."
+          : "But cheer up by listening to the new F5 theme song, written by Prestissimo Veloce team boss Andrea Buttacavoli."}
+      </div>
+      <div style={{ display: "grid", gap: 8, width: "100%", maxWidth: 320 }}>
+        <button onClick={onWith} style={{
+          ...display("h3", { fontSize: 17, color: V.bg }), background: V.blue,
+          border: "none", borderRadius: 999, padding: "13px 20px", cursor: "pointer",
+          boxShadow: `0 0 18px ${V.blue}77`,
+        }}>CONTINUE WITH THE MUSIC</button>
+        <button onClick={onWithout} style={{
+          ...display("h3", { fontSize: 17, color: V.blue }), background: V.bg,
+          border: `1.5px solid ${V.blue}`, borderRadius: 999, padding: "13px 20px",
+          cursor: "pointer",
+        }}>CONTINUE WITHOUT</button>
+      </div>
+    </div>
+  );
+}
+
 function ThemeButton({ playing, onToggle, variant = "chrome" }) {
   const color = playing ? V.blue : V.text2;
   const Icon = playing ? PauseIcon : SpeakerIcon;
@@ -726,13 +795,16 @@ const Face = ({ src, size = 34, ring = V.border2, width = 2 }) => (
 // Every stage renders complete. Movement is CSS, so react-dom/server sees the
 // finished picture and a reader on reduced motion gets there without the trip.
 // The beats each self-playing stage walks through once you arrive.
-const TEAM_BEATS = [0, 700, 1400, 2100, 2850];
+// Seven steps, deliberately slow: the hands, the drivers cancelling, the two
+// team bars, then the pit lane one piece at a time.
+const TEAM_BEATS = [0, 800, 1700, 2600, 3800, 5000, 6200];
+const BEAT_MERGE = 3, BEAT_GUESSES = 4, BEAT_LINE = 5, BEAT_STOP = 6;
 const HAND_BEATS = [0, 900, 1750];
 
 const MINE_C = V.green, THEIRS_C = V.pink;
 
 // Wider bar for you, on the stages where the field is on screen.
-const b0Wide = (r, stage) => r.me && stage <= S_COLOR;
+const b0Wide = (r, stage) => r.me && stage === S_RACE;
 
 // Every one of the 48 bars is rendered on every stage and never unmounted, so a
 // bar that is on screen twice in a row moves between the two rather than
@@ -759,7 +831,7 @@ function raceLayout(c, stage, beat) {
 
   // Which players have a place on screen, and in what order.
   let shown, n;
-  if (stage <= S_COLOR) { shown = lad.map(r => r.id); n = lad.length; }
+  if (stage === S_RACE) { shown = lad.map(r => r.id); n = lad.length; }
   // Only the zoom press. This was a `<=` against the pool press, and moving the
   // pool press to the end quietly widened it to catch team mode as well, which
   // drew the matchup with 11 bars. A range test whose meaning depends on the
@@ -802,7 +874,7 @@ function raceLayout(c, stage, beat) {
       ? (lad.find(x => x.id === shown[groupStart]).teamPart * unit) : 0;
 
     let color = V.blue;
-    if (stage >= S_COLOR) color = r.result === "won" ? MINE_C : r.result === "lost" ? THEIRS_C : V.text3;
+    if (stage >= S_TEAM) color = r.result === "won" ? MINE_C : r.result === "lost" ? THEIRS_C : V.text3;
     if (teamMode) color = isMine ? MINE_C : THEIRS_C;
 
     // Off-screen bars park just outside, on the side they came from, at the
@@ -827,7 +899,6 @@ function raceLayout(c, stage, beat) {
       // Stage 0 draws you first and then sweeps the field. After that nothing
       // is drawn again; it only moves.
       delay: stage === S_RACE ? (r.me ? 60 : 1150 + r.place * 24)
-        : stage === S_COLOR ? r.place * 26
         : on ? 0 : 60,
     };
   });
@@ -885,27 +956,6 @@ function RaceChart({ c, stage, beat }) {
       {/* The best score of the week, named on the chart. Whether that player
           won or lost is the whole point of recolouring, and two averages a
           point apart never was the finding. */}
-      {stage === S_COLOR && bars.filter(b => b.place === 1).map(b => {
-        // The pill hangs off whichever side keeps it on the chart. A fixed
-        // shift put the best score of the week over the axis numbers as soon
-        // as the type grew, and the best score is usually the leftmost bar.
-        const at = b.left + b.width / 2;
-        const shift = at < 30 ? "0%" : at > 70 ? "-100%" : "-50%";
-        return (
-        <div key="best" className="v-pop" style={{
-          position: "absolute", left: `${at}%`,
-          bottom: BOTTOM + b.teamH + 8, animationDelay: "600ms", pointerEvents: "none",
-        }}>
-          <span style={{ display: "block", transform: `translateX(${shift})`,
-            padding: "2px 7px", borderRadius: 7, background: "#000",
-            border: `1px solid ${b.color}`, whiteSpace: "nowrap",
-            fontFamily: FD, fontWeight: 700, fontSize: 13, color: b.color }}>
-            {shortName(b.name)} {b.pts} · {b.color === MINE_C ? "WON" : "LOST"}
-          </span>
-        </div>
-        );
-      })}
-
       {bars.map(b => (
         <div key={b.id} className="v-move" style={{
           position: "absolute", bottom: BOTTOM + b.bottom, left: `${b.left}%`,
@@ -936,7 +986,7 @@ function RaceChart({ c, stage, beat }) {
               background: beat >= 1 && stage >= S_TEAM ? V.amber : b.color,
               opacity: b.indH ? (beat >= 1 && stage >= S_TEAM ? 1 : 0.5) : 0,
             }} />
-            <div className={`v-seg${b.me && stage === S_COLOR ? " v-flash" : ""}`} style={{
+            <div className="v-seg" style={{
               height: b.teamH, borderRadius: b.indH ? 0 : "3px 3px 0 0",
               background: b.color,
               transitionDelay: `${b.delay}ms`,
@@ -987,7 +1037,7 @@ function RaceChart({ c, stage, beat }) {
         </div>
       ))}
 
-      {stage >= S_BB && merged && bars.filter(b => b.on && b.bottom > 0).map(b => {
+      {beat >= BEAT_STOP && merged && bars.filter(b => b.on && b.bottom > 0).map(b => {
         const won = b.isMine ? M.myBB > 0 : M.oppBB > 0;
         const v = b.isMine ? M.myBB : M.oppBB;
         const h = Math.max(5, Math.abs(v) * unit);
@@ -1044,6 +1094,13 @@ const dTeam = n => TEAM_BY_NAME[canonicalName(n)] || "";
 const dShot = n => DRIVER_HEADSHOTS[canonicalName(n)] || null;
 
 function PoolBoard({ rows }) {
+  // One driver, one full-width row, with the headshot at the size it is on the
+  // picks screen. Andrew, 2026-08-29: full width boxes, not boxes three across.
+  //
+  // Ten of these do not fit a phone at their natural height, so the row is the
+  // thing that gives: the face stays at picks size and everything around it is
+  // laid out along the row rather than stacked under the face.
+  //
   // Split by pool, because the rule is the point: one from the top three, four
   // from the seven midfielders. A flat list of ten hides the constraint that
   // decides whether leaving points behind was a mistake or was never on offer.
@@ -1051,66 +1108,66 @@ function PoolBoard({ rows }) {
     { k: "top", head: "TOP POOL", take: 1 },
     { k: "mid", head: "MIDFIELD", take: 4 },
   ];
-  const Row = ({ r, i }) => {
+  const DriverRow = ({ r, i }) => {
     const col = dColor(r.driver);
+    const first = String(r.driver).split(/\s+/)[0];
     return (
       <div className="v-pop" style={{
-        display: "grid", gridTemplateColumns: "24px 26px 1fr 42px 32px", gap: 7,
-        alignItems: "center", padding: "2px 6px", borderRadius: 7,
-        background: r.mine ? V.bg4 : "transparent",
-        border: `1px solid ${r.mine ? V.amber : "transparent"}`,
-        animationDelay: `${i * 55}ms`,
+        display: "flex", alignItems: "center", gap: 10, width: "100%",
+        padding: "2px 10px 2px 4px", borderRadius: 12,
+        border: `1.5px solid ${r.mine ? V.amber : r.best ? MINE_C : V.border}`,
+        background: r.mine ? V.bg4 : V.bg3,
+        animationDelay: `${i * 45}ms`,
       }}>
-        <span style={{ textAlign: "right",
-          ...numeric("chip", { fontSize: 13, color: V.text3 }) }}>
-          {r.pos ? `P${r.pos}` : "\u2013"}
-        </span>
-        <Face src={dShot(r.driver)} size={23} ring={col} />
-        <span style={{ minWidth: 0, textAlign: "left" }}>
-          <span style={{ display: "block", ...body("bodySm", { fontSize: 12,
-            lineHeight: 1.2, color: r.mine ? V.text : V.text2,
-            fontWeight: r.mine ? 700 : 500 }),
+        <Face src={dShot(r.driver)} size={52} ring={col} width={2} />
+        <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+          <div style={{ ...body("bodySm", { fontSize: 12, lineHeight: 1.15, color: V.text3 }),
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{first}</div>
+          <div style={{ ...display("chip", { fontSize: 19, lineHeight: 1.2,
+            color: r.mine ? V.text : V.text2 }),
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {lastName(r.driver)}
-          </span>
-          <span style={{ display: "block", ...body("bodySm", { fontSize: 10,
-            lineHeight: 1.2, color: col }),
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {dTeam(r.driver)}
-          </span>
+          </div>
+        </div>
+        <span style={{ ...label({ fontSize: 10, color: V.text3 }), flexShrink: 0 }}>
+          {r.pos ? `P${r.pos}` : "DNF"}
         </span>
-        <span style={{ textAlign: "right",
-          ...numeric("chip", { fontSize: 14, color: V.blue }),
-          ...(r.mine ? textGlow(V.blue, 0.5) : {}) }}>
+        <span style={{ flexShrink: 0, minWidth: 44, textAlign: "right",
+          ...numeric("stat", { fontSize: 24, color: V.blue }),
+          ...(r.mine ? textGlow(V.blue, 0.6) : {}) }}>
           {r.pts > 0 ? `+${r.pts}` : r.pts}
-        </span>
-        <span style={{ textAlign: "right", ...label({ fontSize: 9,
-          color: r.mine ? V.amber : r.best ? MINE_C : V.border2 }) }}>
-          {r.mine ? "YOURS" : r.best ? "BEST" : ""}
         </span>
       </div>
     );
   };
   let n = 0;
   return (
-    <div style={{ display: "grid", gap: 2, width: "100%" }}>
+    <div style={{ display: "grid", gap: 5, width: "100%" }}>
       {groups.map(g => {
         const list = rows.filter(r => r.pool === g.k);
         if (!list.length) return null;
         return (
           <Fragment key={g.k}>
             <div style={{ display: "flex", justifyContent: "space-between",
-              alignItems: "baseline", padding: "6px 6px 3px",
-              borderBottom: `1px solid ${V.border}` }}>
+              alignItems: "baseline", padding: "3px 2px 1px" }}>
               <span style={{ ...label({ fontSize: 10, color: V.text2 }) }}>{g.head}</span>
               <span style={{ ...label({ fontSize: 10, color: V.text3 }) }}>
                 PICK {g.take} OF {list.length}
               </span>
             </div>
-            {list.map(r => <Row key={r.driver} r={r} i={n++} />)}
+            {list.map(r => <DriverRow key={r.driver} r={r} i={n++} />)}
           </Fragment>
         );
       })}
+      {/* One key for the board, rather than a word on every row. */}
+      <div style={{ display: "flex", gap: 14, justifyContent: "center", paddingTop: 2 }}>
+        {[["YOURS", V.amber], ["BEST AVAILABLE", MINE_C]].map(([t, col]) => (
+          <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 9, height: 9, borderRadius: 3, border: `1.5px solid ${col}` }} />
+            <span style={{ ...label({ fontSize: 9, color: V.text3 }) }}>{t}</span>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1309,52 +1366,84 @@ function HandBoard({ M, beat }) {
 // The BOX BOX line, drawn the way the home page draws one: the line on a plate,
 // the actual stop on another, and colour spreading out of the line so the half
 // your side needs is obvious.
-function BoxBoxStrip({ M, mine = null, needlePts = 0 }) {
+// The pit lane, one piece at a time. Andrew, 2026-08-29: animate it slowly, all
+// four picks, then the line as their average, then the stop, then the points to
+// one side.
+//
+// `beat` is the matchup press's own beat, so this strip and the team bars above
+// it move together. With no beat passed everything is on, which is the state
+// any press after the matchup arrives in.
+function BoxBoxStrip({ M, mine = null, needlePts = 0, four = null, beat = 99 }) {
   const MIN = PIT_FLOOR, MAX = PIT_CEIL;
   const pct = v => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
   const c = M.myBB > 0 ? MINE_C : THEIRS_C;
   const leftC = M.seat === "UNDER" ? MINE_C : THEIRS_C;
   const rightC = M.seat === "OVER" ? MINE_C : THEIRS_C;
+  const showLine = beat >= 5;
+  const showStop = beat >= 6;
+  // Four guesses on one axis collide, so they alternate high and low. Sorted
+  // first, or the alternation is by seat rather than by position on the line.
+  const guesses = (four || []).filter(g => g.guess != null)
+    .slice().sort((a, b) => a.guess - b.guess);
+
   return (
     <div style={{ width: "100%" }}>
-      <div style={{ position: "relative", height: 74, margin: "6px 2px 0" }}>
-        <div style={{ position: "absolute", left: 0, width: `${pct(M.line)}%`, top: 42,
-          height: 14, borderRadius: "7px 0 0 7px",
-          background: `linear-gradient(to left, ${leftC}4d, transparent)` }} />
-        <div style={{ position: "absolute", left: `${pct(M.line)}%`, right: 0, top: 42,
-          height: 14, borderRadius: "0 7px 7px 0",
-          background: `linear-gradient(to right, ${rightC}4d, transparent)` }} />
-        <div style={{ position: "absolute", left: `${pct(M.line)}%`, top: 36, width: 2,
-          height: 26, background: V.blue, transform: "translateX(-1px)" }} />
-        <div style={{ position: "absolute", top: 22, left: `${pct(M.line)}%`,
-          transform: "translateX(-50%)", padding: "2px 6px", borderRadius: 7,
-          background: "#000", border: `1px solid ${V.blue}`, whiteSpace: "nowrap",
-          fontFamily: FD, fontWeight: 700, fontSize: 11, color: V.blue }}>
-          LINE {one(M.line)}
-        </div>
-        {mine != null && (
-          <div className="v-pop" style={{ position: "absolute", top: 20,
-            left: `${pct(mine)}%`, transform: "translateX(-50%)",
-            animationDelay: "250ms" }}>
-            <span style={{ display: "block", width: 2, height: 18,
-              background: V.amber, margin: "0 auto" }} />
+      <div style={{ position: "relative", height: 96, margin: "6px 2px 0" }}>
+        {/* The two sides of the line, which only mean anything once the line
+            is on screen. */}
+        {showLine && (
+          <>
+            <div className="v-pop" style={{ position: "absolute", left: 0,
+              width: `${pct(M.line)}%`, top: 64, height: 14, borderRadius: "7px 0 0 7px",
+              background: `linear-gradient(to left, ${leftC}4d, transparent)` }} />
+            <div className="v-pop" style={{ position: "absolute", left: `${pct(M.line)}%`,
+              right: 0, top: 64, height: 14, borderRadius: "0 7px 7px 0",
+              background: `linear-gradient(to right, ${rightC}4d, transparent)` }} />
+            <div className="v-pop" style={{ position: "absolute", left: `${pct(M.line)}%`,
+              top: 58, width: 2, height: 26, background: V.blue, transform: "translateX(-1px)" }} />
+            <div className="v-pop" style={{ position: "absolute", top: 44,
+              left: `${pct(M.line)}%`, transform: "translateX(-50%)", padding: "2px 6px",
+              borderRadius: 7, background: "#000", border: `1px solid ${V.blue}`,
+              whiteSpace: "nowrap", fontFamily: FD, fontWeight: 700, fontSize: 11,
+              color: V.blue }}>
+              LINE {one(M.line)}
+            </div>
+          </>
+        )}
+        {!showLine && (
+          <div style={{ position: "absolute", left: 0, right: 0, top: 64, height: 14,
+            borderRadius: 7, background: V.bg4 }} />
+        )}
+
+        {/* The four guesses. Yours is amber and named, the rest carry a first
+            name, so the average below has four visible parents. */}
+        {guesses.map((g, i) => {
+          const own = g.me;
+          const col = own ? V.amber : g.mine ? MINE_C : THEIRS_C;
+          const top = i % 2 ? 22 : 0;
+          return (
+            <div key={g.id} className="v-pop" style={{ position: "absolute",
+              left: `${pct(g.guess)}%`, top, transform: "translateX(-50%)",
+              animationDelay: `${i * 140}ms`, display: "grid", justifyItems: "center" }}>
+              <span style={{ padding: "1px 5px", borderRadius: 6, background: "#000",
+                border: `1px solid ${col}`, whiteSpace: "nowrap", fontFamily: FD,
+                fontWeight: 700, fontSize: 11, color: col }}>
+                {own ? `YOU ${g.guess}` : `${shortName(g.name).split(" ").pop()} ${g.guess}`}
+              </span>
+              <span style={{ width: 2, height: 64 - top - 18, background: `${col}88` }} />
+            </div>
+          );
+        })}
+
+        {showStop && (
+          <div className="v-drop" style={{ position: "absolute", top: 82,
+            left: `${pct(M.pit)}%`, transform: "translateX(-50%)", padding: "2px 6px",
+            borderRadius: 7, background: "#000", border: `1px solid ${c}`,
+            whiteSpace: "nowrap", fontFamily: FD, fontWeight: 700, fontSize: 12,
+            color: c }}>
+            STOP {M.pit}
           </div>
         )}
-        {mine != null && (
-          <div className="v-pop" style={{ position: "absolute", top: 0,
-            left: `${pct(mine)}%`, transform: "translateX(-50%)",
-            animationDelay: "250ms", padding: "2px 6px", borderRadius: 7,
-            background: "#000", border: `1px solid ${V.amber}`, whiteSpace: "nowrap",
-            fontFamily: FD, fontWeight: 700, fontSize: 11, color: V.amber }}>
-            YOU {mine}
-          </div>
-        )}
-        <div className="v-drop" style={{ position: "absolute", top: 62, left: `${pct(M.pit)}%`,
-          transform: "translateX(-50%)", padding: "2px 6px", borderRadius: 7,
-          background: "#000", border: `1px solid ${c}`, whiteSpace: "nowrap",
-          fontFamily: FD, fontWeight: 700, fontSize: 11, color: c }}>
-          STOP {M.pit}
-        </div>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4,
         ...label({ fontSize: 11, color: V.text3 }) }}>
@@ -1409,7 +1498,6 @@ function Scoreboard({ M }) {
 // on the right, on steps. Flags fly over each. The winner gets the cup and the
 // spray. Every driver carries their team's logo, and so does the team that
 // outscored the rest, because the week has two winners and only one is a person.
-const STEP = [{ h: 40, o: 1 }, { h: 66, o: 0 }, { h: 28, o: 2 }];  // left, middle, right
 
 const Cup = ({ color, size = 38 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
@@ -1456,69 +1544,86 @@ const TeamChip = ({ logo, name, size = 20 }) => (
   </span>
 );
 
+// The podium, stacked. Andrew, 2026-08-29: three cards on top of each other,
+// gold silver bronze, and the highest scoring team as well, in the style of the
+// player page with some animated shine.
+//
+// It was a three-column podium with step blocks, which is the shape a podium
+// takes in life and the wrong one on a phone: the two outside columns get a
+// third of the width each to hold a name, a flag, a crest and a score.
+// Stacked, every row is full width and reads like the standings the league
+// already knows.
+const PodiumRow = ({ accent, mine, rank, face, flag, name, sub, chip, score, i }) => (
+  <div className="v-pop" style={{
+    display: "flex", alignItems: "center", gap: 9,
+    padding: "8px 10px", borderRadius: 14,
+    background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
+    border: `1px solid ${mine ? V.blue : accent}`,
+    position: "relative", overflow: "hidden",
+    animationDelay: `${900 + i * 220}ms`,
+  }}>
+    {/* The shine, off the sweep the theme already ships. One element a row, and
+        it is the only thing moving once the rows have landed. */}
+    <span className="v-sweep" aria-hidden="true" style={{ position: "absolute",
+      top: 0, bottom: 0, width: 80, pointerEvents: "none",
+      background: `linear-gradient(100deg, transparent, ${accent}2e, transparent)`,
+      animationDelay: `${i * 700}ms` }} />
+    <div style={{ flexShrink: 0, minWidth: 26, textAlign: "center",
+      ...numeric("stat", { fontSize: 20, color: accent }), ...textGlow(accent, 0.5) }}>
+      {rank}
+    </div>
+    {face}
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+        {flag}
+        <span style={{ ...display("h3", { fontSize: 17, lineHeight: 1.3,
+          color: mine ? V.blue : V.text }),
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+      </div>
+      {sub && (
+        <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 12,
+          letterSpacing: "0.01em", textTransform: "uppercase", color: V.text2,
+          marginTop: 1, whiteSpace: "nowrap", overflow: "hidden",
+          textOverflow: "ellipsis" }}>{sub}</div>
+      )}
+    </div>
+    {chip}
+    <div style={{ flexShrink: 0, textAlign: "right",
+      ...numeric("stat", { fontSize: 26, color: V.text }), ...textGlow(V.blue, 0.7) }}>
+      {score}
+    </div>
+  </div>
+);
+
 const Podium = ({ top3, meId, topTeam }) => {
   const medal = [V.gold, V.silver, V.bronze];
   return (
-    <div style={{ width: "100%" }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center",
-        gap: 5 }}>
-        {STEP.map((step, col) => {
-          const p = top3[step.o];
-          if (!p) return <div key={col} style={{ flex: 1 }} />;
-          const c = medal[step.o];
-          const first = step.o === 0;
-          const mine = p.id === meId;
-          return (
-            <div key={p.id} className="v-pop" style={{ flex: first ? 1.25 : 1,
-              display: "grid", justifyItems: "center", gap: 4, position: "relative",
-              animationDelay: `${1400 + col * 190}ms` }}>
-              {first && (
-                <>
-                  <span style={{ position: "absolute", left: -18, top: 26, opacity: 0.9 }}>
-                    <Spray color={c} side={-1} />
-                  </span>
-                  <span style={{ position: "absolute", right: -18, top: 26, opacity: 0.9 }}>
-                    <Spray color={c} side={1} />
-                  </span>
-                </>
-              )}
-              <Flag nation={p.nation} size={first ? 38 : 30} wave />
-              {first && <Cup color={c} size={40} />}
-              <Face src={p.photo} size={first ? 78 : 58} ring={mine ? V.amber : c}
-                width={first ? 4 : 3} />
-              <div style={{ marginTop: -10, padding: "4px 10px", borderRadius: 8,
-                background: "#000", border: `1px solid ${mine ? V.amber : c}`,
-                whiteSpace: "nowrap", fontFamily: FD, fontWeight: 700,
-                fontSize: first ? 18 : 15, lineHeight: 1.3,
-                color: mine ? V.amber : "#fff" }}>{shortName(p.name)}</div>
-              <TeamChip logo={p.teamLogo} size={first ? 26 : 22} />
-              <div style={{ ...numeric("stat", { fontSize: first ? 34 : 25, color: V.blue }),
-                ...textGlow(V.blue, first ? 0.8 : 0.5) }}>{p.pts}</div>
-              <div style={{ width: "100%", height: step.h, borderRadius: "8px 8px 0 0",
-                background: `linear-gradient(${c}3d, ${c}0f)`,
-                border: `1.5px solid ${c}77`, borderBottom: "none",
-                display: "grid", placeItems: "center" }}>
-                <span style={{ ...display("h1", { fontSize: first ? 38 : 28, color: c }),
-                  ...textGlow(c, first ? 0.7 : 0.4) }}>{p.place}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div style={{ height: 4, background: V.border2, borderRadius: 2 }} />
+    <div style={{ width: "100%", display: "grid", gap: 6 }}>
+      {top3.map((p, i) => {
+        if (!p) return null;
+        const c = medal[i] || V.border2;
+        const mine = p.id === meId;
+        return (
+          <PodiumRow key={p.id} accent={c} mine={mine} i={i}
+            rank={`P${p.place}`}
+            face={<Face src={p.photo} size={42} ring={mine ? V.amber : c} width={3} />}
+            flag={<Flag nation={p.nation} size={17} />}
+            name={shortName(p.name)}
+            sub={p.team}
+            chip={<Logo src={p.teamLogo} size={24} />}
+            score={p.pts} />
+        );
+      })}
 
       {topTeam && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 8, marginTop: 9 }}>
-          <span style={{ ...label({ fontSize: 13, color: V.text3 }) }}>TOP TEAM</span>
-          <Flag nation={topTeam.nation} size={24} />
-          <Logo src={topTeam.logo} size={30} />
-          <span style={{ ...body("bodySm", { fontSize: 16, color: V.text, fontWeight: 600 }),
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {topTeam.name}
-          </span>
-          <span style={{ ...numeric("chip", { fontSize: 21, color: V.blue }) }}>{topTeam.v}</span>
-        </div>
+        <PodiumRow accent={V.blue} mine={false} i={3}
+          rank="TOP"
+          face={<Logo src={topTeam.logo} size={42} />}
+          flag={<Flag nation={topTeam.nation} size={17} />}
+          name={topTeam.name}
+          sub="HIGHEST SCORING TEAM"
+          chip={null}
+          score={topTeam.v} />
       )}
     </div>
   );
@@ -1528,9 +1633,7 @@ const Podium = ({ top3, meId, topTeam }) => {
 // answers, so the deck reads as one thing rather than a stack of screens.
 // Indexed by the press it sits under, and answered by the press after it.
 const ASK = [
-  "Who won and who lost?",
   "So what happened in your own matchup?",
-  "What settled it?",
   "Could you have done any better?",
   "Where does that leave you for the season?",
 ];
@@ -1539,9 +1642,7 @@ const ASK = [
 // this says what you are looking at.
 const CHART_NOTE = [
   "",
-  "The same bars, now coloured by whether that player's team won.",
-  "Four players, then two teams. Shared drivers cancel out.",
-  "The matchup score, after BOX BOX.",
+  "Four players, then two teams. Shared drivers cancel out, and then the pit lane settles it.",
   "Both pools, split by the rule, each in the order they finished.",
 ];
 
@@ -1556,13 +1657,13 @@ function CardRace({ d, stage = 0 }) {
   // Stages 3 and 4 play themselves out. Arriving from later leaves them settled.
   useEffect(() => {
     const beats = stage === S_TEAM ? TEAM_BEATS : null;
-    if (!beats) { setBeat(stage > S_TEAM ? 4 : 0); return; }
+    if (!beats) { setBeat(stage > S_TEAM ? BEAT_STOP : 0); return; }
     setBeat(0);
     const t = beats.slice(1).map((ms, i) => setTimeout(() => setBeat(i + 1), ms));
     return () => t.forEach(clearTimeout);
   }, [stage]);
 
-  const teamBeat = stage === S_TEAM ? beat : stage > S_TEAM ? 4 : 0;
+  const teamBeat = stage === S_TEAM ? beat : stage > S_TEAM ? BEAT_STOP : 0;
   const rows = handRows(M);
   const split = rows.find(r => r.net !== 0);
   const netDrivers = rows.reduce((a, r) => a + r.net, 0);
@@ -1572,15 +1673,16 @@ function CardRace({ d, stage = 0 }) {
   const h = x.history;
   const bandPct = h.band.played ? Math.round((h.band.won / h.band.played) * 100) : null;
   const iWon = me.result === "won";
+  // The recolour press carried this and the recolour press is gone, so it runs
+  // under the podium instead, where the reader's own result already is. The
+  // place is not repeated: the line above the podium has already said it.
   const rarity = (() => {
     if (top.result === "lost" && me.id === top.id) {
       return `You outscored all ${c.ladder.length} and still lost. That has happened ${apNum(h.topScorerLost)} times in ${apNum(h.rounds)} rounds.`;
     }
-    if (bandPct == null) return "Green won their matchup this week. Pink lost.";
+    if (bandPct == null) return null;
     const band = `${apOrdinal(h.band.lo)} to ${apOrdinal(h.band.hi)}`;
-    return iWon
-      ? `You finished ${apOrdinal(me.place)} and won anyway. Players in the ${band} band win ${bandPct} percent of the time.`
-      : `You finished ${apOrdinal(me.place)} and lost. Players in the ${band} band win ${bandPct} percent of the time.`;
+    return `Players in the ${band} band win ${bandPct} percent of the time, and you ${iWon ? "won" : "lost"}.`;
   })();
 
   const preLevel = M.myPreBB === M.oppPreBB;
@@ -1589,13 +1691,7 @@ function CardRace({ d, stage = 0 }) {
   const beatN = c.ladder.filter(r => !r.me && me.pts > r.pts).length;
   const lostN = c.ladder.filter(r => !r.me && me.pts < r.pts).length;
   const head = stage === S_RACE
-      ? `You scored ${me.pts} points, good for ${apOrdinal(me.place)} out of ${c.ladder.length}.`
-    // A sentence is not a label, so it gets the whole name. And the team it
-    // belongs to rather than a pronoun: half the league is women and this line
-    // said "his" for all of them.
-    : stage === S_COLOR ? (top.result === "lost"
-        ? `${top.name} scored the most and still lost.`
-        : `${top.name} scored the most, and the team won.`)
+      ? `This week's winner: ${top.name}.`
     : stage === S_POOL ? (x.bestSwap
         ? `You should have taken ${lastName(x.bestSwap.in.driver)} over ${lastName(x.bestSwap.out.driver)}.`
         : "You took the best hand available.")
@@ -1603,12 +1699,12 @@ function CardRace({ d, stage = 0 }) {
     // score with a direction on the end ("60 to 54, your way") names two
     // numbers and leaves the reader to work out what they are.
     : stage === S_TEAM ? (netDrivers === 0
-        ? `All four of you held the same drivers, so the hands were level at ${M.myPreBB}.`
+        ? `As for the matchup, here's how it shook out: all four of you chose the same drivers, so the hands were level at ${M.myPreBB}.`
         : split
-          ? `${lastName(split.driver)} is the driver the two teams did not share, and he was worth ${Math.abs(split.net)}.`
-        : preLevel ? `Before BOX BOX the two teams were level at ${M.myPreBB}.`
-        : preLead ? `Before BOX BOX you were ahead, ${M.myPreBB} to ${M.oppPreBB}.`
-        : `Before BOX BOX they were ahead, ${M.oppPreBB} to ${M.myPreBB}.`)
+          ? `As for the matchup, here's how it shook out: ${lastName(split.driver)} is the driver the two teams did not share, and he was worth ${Math.abs(split.net)}.`
+        : preLevel ? `As for the matchup, here's how it shook out: the two teams were level at ${M.myPreBB} on drivers.`
+        : preLead ? `As for the matchup, here's how it shook out: you were ahead on drivers, ${M.myPreBB} to ${M.oppPreBB}.`
+        : `As for the matchup, here's how it shook out: they were ahead on drivers, ${M.oppPreBB} to ${M.myPreBB}.`)
     : M.myBB > 0
       ? `You won the BOX BOX line, worth five points to you and one off them.`
       : `They won the BOX BOX line, worth five points to them and one off you.`;
@@ -1626,8 +1722,15 @@ function CardRace({ d, stage = 0 }) {
         <Panel>
           {stage >= S_TEAM && stage < S_POOL && (
             <div style={{ paddingTop: 4 }}>
-              <TeamBarsH M={M} hands={M.hands} merged={stage > S_TEAM || teamBeat >= 4}
-                bb={stage === S_BB} />
+              <TeamBarsH M={M} hands={M.hands}
+                merged={stage > S_TEAM || teamBeat >= BEAT_MERGE}
+                bb={teamBeat >= BEAT_STOP} />
+              {stage === S_TEAM && teamBeat >= BEAT_GUESSES && (
+                <div className="v-pop">
+                  <BoxBoxStrip M={M} mine={d.card4.guess} needlePts={d.card4.needlePts}
+                    four={d.card4.four} beat={teamBeat} />
+                </div>
+              )}
               {stage === S_TEAM && (
                 <div style={{ marginTop: 4, marginLeft: -10, marginRight: -10 }}>
                   <HandsColumns seats={M.seats} under={M.seat === "UNDER" ? "mine" : "theirs"}
@@ -1640,7 +1743,7 @@ function CardRace({ d, stage = 0 }) {
               )}
             </div>
           )}
-          {stage < S_TEAM && (
+          {stage === S_RACE && (
             <>
               <RaceChart c={c} stage={stage} beat={teamBeat} />
               {/* Two lines reserved. A caption that is one line on one press and
@@ -1667,30 +1770,34 @@ function CardRace({ d, stage = 0 }) {
             growing the podium past it put press one at 0.866 and press two at
             0.978 on a 393px phone, which is the jump this floor exists to
             stop. */
-        <Panel pad={12} style={{ minHeight: stage <= S_COLOR ? 390 : undefined,
-          display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          {stage === S_RACE && <Podium top3={c.top3} meId={me.id} topTeam={x.leagueScores[0]} />}
-
-          {stage === S_COLOR && (
+        <Panel pad={12} style={{ display: "flex", flexDirection: "column",
+          justifyContent: "center" }}>
+          {stage === S_RACE && (
             <>
-              <div style={{ display: "flex", gap: 18, justifyContent: "center",
-                marginBottom: 8 }}>
-                {[["GREEN, TEAM WON", MINE_C], ["PINK, TEAM LOST", THEIRS_C]].map(([t, col]) => (
-                  <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ width: 12, height: 12, borderRadius: 3, background: col }} />
-                    <span style={{ ...label({ fontSize: 13, color: V.text2 }) }}>{t}</span>
-                  </span>
-                ))}
-              </div>
-              <Line color={V.text}>{rarity}</Line>
+              {/* The reader's own week, under the winner. A place on the podium
+                  gets said out loud rather than left for them to spot. */}
+              <Line color={V.text}>
+                You scored {me.pts} points, good for {apOrdinal(me.place)} out
+                of {c.ladder.length}.
+                {me.place <= 3 ? " And here's how everyone else did." : ""}
+              </Line>
+              {rarity && <Line color={V.text2}>{rarity}</Line>}
+              <Podium top3={c.top3} meId={me.id} topTeam={x.leagueScores[0]} />
             </>
           )}
 
           {stage === S_TEAM && (
             <>
-              <Line color={V.text2}>
-                The needle and the weekly bonus are yours, not your team's. They come
-                off here, which is why these numbers are smaller than the ones you just saw.
+              <Line color={teamBeat >= BEAT_STOP ? V.text : V.text2}>
+                {teamBeat < BEAT_GUESSES
+                  ? "The needle and the weekly bonus are yours, not your team's. They come off here, which is why these numbers are smaller than the ones you just saw."
+                  : teamBeat < BEAT_LINE
+                  ? "All four of you guessed the pit stop."
+                  : teamBeat < BEAT_STOP
+                  ? `The line sits on the average of the four, ${one(M.line)}.`
+                  : M.myBB > 0
+                  ? `The stop came in at ${M.pit}, above the line. Your side takes five and theirs drops one.`
+                  : `The stop came in at ${M.pit}, below the line. Their side takes five and yours drops one.`}
               </Line>
             </>
           )}
@@ -1719,52 +1826,24 @@ function CardRace({ d, stage = 0 }) {
           )}
 
           {stage === S_POOL && (
-            <div style={{ display: "grid", gap: 6, marginTop: 2 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 14px",
+              justifyContent: "center", alignItems: "baseline" }}>
               {[
-                { t: "PERFECT PICKS", v: x.perfect.total, col: V.blue },
-                { t: `BEST, ${shortName(x.bestHaul.name).toUpperCase()}`, v: x.bestHaul.haul, col: V.text2 },
+                { t: "PERFECT", v: x.perfect.total, col: V.blue },
                 { t: "YOU", v: x.myHaul, col: V.amber },
+                { t: `BEST, ${shortName(x.bestHaul.name).toUpperCase()}`, v: x.bestHaul.haul, col: V.text2 },
                 ...(x.mateHaul != null
                   ? [{ t: x.mateFirst.toUpperCase(), v: x.mateHaul, col: V.text2 }] : []),
-                { t: `LOWEST, ${shortName(x.worstHaul.name).toUpperCase()}`, v: x.worstHaul.haul, col: V.text3 },
-              ].map((r, i) => (
-                <div key={r.t} style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                  <span style={{ width: 106, flexShrink: 0, textAlign: "left",
-                    ...label({ fontSize: 10, color: V.text3, lineHeight: 1.2 }) }}>{r.t}</span>
-                  <span style={{ flex: 1, height: 13, borderRadius: 5, background: V.bg4 }}>
-                    <span className="v-seg" style={{ display: "block", height: "100%",
-                      width: `${Math.max(2, (r.v / Math.max(1, x.perfect.total)) * 100)}%`,
-                      borderRadius: 5, background: r.col,
-                      boxShadow: r.col === V.amber ? `0 0 8px ${V.amber}` : "none",
-                      transitionDelay: `${240 + i * 150}ms` }} />
-                  </span>
-                  <span style={{ width: 26, textAlign: "right",
-                    ...numeric("chip", { fontSize: 16, color: r.col }) }}>{r.v}</span>
-                </div>
+              ].map(r => (
+                <span key={r.t} style={{ display: "inline-flex", alignItems: "baseline", gap: 5 }}>
+                  <span style={{ ...label({ fontSize: 10, color: V.text3 }) }}>{r.t}</span>
+                  <span style={{ ...numeric("chip", { fontSize: 17, color: r.col }),
+                    ...(r.col === V.amber ? textGlow(V.amber, 0.5) : {}) }}>{r.v}</span>
+                </span>
               ))}
             </div>
           )}
 
-          {stage === S_BB && (
-            <>
-              <div style={{ display: "flex", justifyContent: "space-around", gap: 12,
-                marginBottom: 4 }}>
-                <Stat n={M.myTotal} cap={M.myTeam.code || M.myTeam.short}
-                  color={M.myTotal > M.oppTotal ? MINE_C : V.text2} size={32} />
-                <Stat n={M.oppTotal} cap={M.oppTeam.code || M.oppTeam.short}
-                  color={M.oppTotal > M.myTotal ? THEIRS_C : V.text2} size={32} />
-              </div>
-              <BoxBoxStrip M={M} mine={d.card4.guess} needlePts={d.card4.needlePts} />
-              <Line color={V.text2}>
-                {M.myBB > 0
-                  ? `The stop came in at ${M.pit}, above the line. Your side takes five and theirs drops one.`
-                  : `The stop came in at ${M.pit}, below the line. Their side takes five and yours drops one.`}
-                {d.card4.guess != null && (d.card4.needlePts > 0
-                  ? ` You guessed ${d.card4.guess} and scored ${apNum(d.card4.needlePts)} on the needle.`
-                  : ` You guessed ${d.card4.guess}, ${one(d.card4.off)} out, so you scored nothing on the needle.`)}
-              </Line>
-            </>
-          )}
         </Panel>
   );
 
@@ -1773,7 +1852,7 @@ function CardRace({ d, stage = 0 }) {
       <Kicker>{stage >= S_TEAM ? "YOUR MATCHUP" : stage === S_POOL ? "WHAT WAS ON THE TABLE" : "YOUR RACE"}</Kicker>
       <Head lines={2}>{head}</Head>
 
-      {stage <= S_COLOR
+      {stage === S_RACE
         ? <>{notePanel}{chartPanel}</>
         : <>{chartPanel}{notePanel}</>}
 
@@ -2290,7 +2369,7 @@ function seasonLine(c, run, round, playerId) {
   };
 }
 
-function CardResult({ d }) {
+function CardResult({ d, theme }) {
   const c = d.card1;
   const won = c.outcome === "won", lost = c.outcome === "lost";
   const mColor = won ? MINE_C : lost ? V.text2 : V.text2;
@@ -2316,6 +2395,10 @@ function CardResult({ d }) {
           maxWidth: 460, textWrap: "pretty" }}>{say.fact}</div>
       )}
       {say.line && <Line color={V.text}>{say.line}</Line>}
+
+      {theme && (
+        <ThemeOffer won={won} onWith={theme.onWith} onWithout={theme.onWithout} />
+      )}
 
       <Ask>And how did you do yourself?</Ask>
     </>
@@ -3013,6 +3096,15 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
     if (el.paused) { setPlaying(true); el.play().catch(() => setPlaying(false)); }
     else el.pause();
   };
+  // Card 1's offer starts the track and never stops it, so the two buttons
+  // there cannot be a toggle: tapping WITH THE MUSIC on a deck that is already
+  // playing would turn the song off on the way to card 2.
+  const playTheme = () => {
+    const el = audio.current;
+    if (!el || !el.paused) return;
+    setPlaying(true);
+    el.play().catch(() => setPlaying(false));
+  };
 
   useEffect(() => { window.scrollTo(0, 0); }, [i]);
 
@@ -3172,12 +3264,16 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
         onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
 
       <Card dep={`${i}-${stage}-${data.player.name}`}
-        bottom={i === 0 ? THEME_BAR_CREDIT : 0}
-        scrolls={SCROLLS.has(i) || (i === 1 && stage === S_TEAM)}>
-        <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit} />
+        bottom={0}
+        scrolls={SCROLLS.has(i) || (i === 1 && (stage === S_TEAM || stage === S_POOL))}>
+        <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit}
+          theme={i === 0 ? {
+            onWith: () => { playTheme(); advance(); },
+            onWithout: advance,
+          } : undefined} />
       </Card>
 
-      {!last && (
+      {!last && i !== 0 && (
         <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 30,
           display: "flex", flexDirection: i === 0 ? "column" : "row",
           alignItems: "center", justifyContent: "center", gap: 10,

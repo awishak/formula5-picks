@@ -850,7 +850,7 @@ export function buildWeekly(db, playerName, round = null) {
   const teamStreak = teamRun.wins;
 
   const margins = fixtures.map(f => ({
-    home: f.home, away: f.away, homeTotal: f.homeTotal, awayTotal: f.awayTotal,
+    home: teamCard(f.home), away: teamCard(f.away), homeTotal: f.homeTotal, awayTotal: f.awayTotal,
     margin: Math.abs(f.homeTotal - f.awayTotal),
   })).sort((a, b) => a.margin - b.margin);
 
@@ -973,8 +973,204 @@ export function buildWeekly(db, playerName, round = null) {
     };
   })();
 
+  /* --------------------------------------- the week, against every other week */
+
+  // A story needs a reason to be in the paper. These are the things that make
+  // one round different from the eleven before it, each carrying the number
+  // that says how unusual it was, so the front page can rank its candidates
+  // rather than printing whichever one is written first.
+  //
+  // Nothing here is a new scoring rule. Every number is the same INDIVIDUAL()
+  // and the same fixture totals the rest of the file already built, counted a
+  // different way.
+  const week = (() => {
+    const scoredRounds = races
+      .filter(r => r.round <= race.round && scores.some(x => x.race_id === r.id))
+      .sort((a, b) => a.round - b.round);
+
+    // Every individual score of the season, so this week's best and worst can
+    // be called a record or called ordinary with a number behind either word.
+    let bestEver = null, worstEver = null;
+    scoredRounds.forEach(r => {
+      if (r.round === race.round) return;
+      scores.filter(x => x.race_id === r.id).forEach(x => {
+        const v = INDIVIDUAL(x);
+        if (!bestEver || v > bestEver.pts) bestEver = { pts: v, round: r.round, name: nameOf[x.player_id] };
+        if (!worstEver || v < worstEver.pts) worstEver = { pts: v, round: r.round, name: nameOf[x.player_id] };
+      });
+    });
+    const top = ladder[0], bottom = ladder[ladder.length - 1];
+    const record = !bestEver ? null
+      : top && top.pts > bestEver.pts ? { kind: "high", row: top, prev: bestEver }
+      : bottom && bottom.pts < worstEver.pts ? { kind: "low", row: bottom, prev: worstEver }
+      : null;
+
+    // How tight the round was, against the rounds before it. An average margin
+    // is the honest measure: three one-point matchups in a round of blowouts is
+    // not a close week.
+    const margs = fixtures.map(f => Math.abs(f.homeTotal - f.awayTotal));
+    const thisAvg = margs.length ? round1(avg(margs)) : null;
+    const priorMargins = [];
+    scoredRounds.forEach(r => {
+      if (r.round === race.round) return;
+      const rows = scores.filter(x => x.race_id === r.id);
+      const rr = results.find(x => x.race_id === r.id);
+      if (!rows.length || !rr) return;
+      const stop = num(rr.pit_stop_time);
+      schedule.filter(f => f.race_id === r.id).forEach(f => {
+        const ids = t => (teamById[t] ? [teamById[t].player1_id, teamById[t].player2_id].filter(Boolean) : []);
+        const home = ids(f.home_team_id), away = ids(f.away_team_id);
+        const gs = [...home, ...away].map(id => {
+          const pk = picks.find(x => x.race_id === r.id && x.player_id === id);
+          return num(pk && pk.pit_guess);
+        }).filter(v => v != null && !isNaN(v));
+        const line = gs.length ? avg(gs) : null;
+        let ob = 0, ub = 0;
+        if (line != null && stop != null) {
+          if (stop > line) { ob = BB_WIN; ub = BB_LOSS; }
+          else if (stop < line) { ob = BB_LOSS; ub = BB_WIN; }
+        }
+        const half2 = list => list.reduce((a, id) => {
+          const row = rows.find(x => x.player_id === id);
+          return a + (row ? TEAM_HALF(row) : 0);
+        }, 0);
+        priorMargins.push(Math.abs((half2(home) + ob) - (half2(away) + ub)));
+      });
+    });
+    const seasonAvgMargin = priorMargins.length ? round1(avg(priorMargins)) : null;
+
+    // The line, and how many teams it nearly went the other way for. A stop
+    // that lands in the middle of the twelve lines is the round's own story.
+    const lines = fixtures.map(f => f.line).filter(v => v != null);
+    const lineSplit = pit == null || !lines.length ? null : {
+      stop: pit,
+      over: lines.filter(v => v < pit).length,     // the stop above the line: OVER seat wins
+      under: lines.filter(v => v > pit).length,
+      // Within a tenth either way, which is closer than anybody can guess.
+      knife: fixtures.filter(f => f.line != null && Math.abs(f.line - pit) <= 0.1).length,
+      lo: round1(Math.min(...lines)), hi: round1(Math.max(...lines)),
+    };
+
+    // The upset: a team beating one that stood well above it going in. Places
+    // come off the same table the standings card uses, cut to the round before.
+    const upsetHalf = race.round >= FIRST_H2_ROUND
+      ? { fromRound: FIRST_H2_ROUND, toRound: race.round - 1 }
+      : { fromRound: 1, toRound: race.round - 1 };
+    const beforePlace = (() => {
+      if (race.round <= upsetHalf.fromRound) return null;
+      const rows = buildTeamTable({ teams, races, scores, schedule }, upsetHalf);
+      const out = {};
+      rows.forEach(r => {
+        const div = rows.filter(x => x.division === r.division);
+        out[r.id] = div.findIndex(x => x.id === r.id) + 1;
+      });
+      return out;
+    })();
+    const upset = !beforePlace ? null : fixtures
+      .map(f => {
+        const winner = f.winner === f.home.id ? f.home : f.winner === f.away.id ? f.away : null;
+        if (!winner) return null;
+        const loser = winner.id === f.home.id ? f.away : f.home;
+        const wp = beforePlace[winner.id], lp = beforePlace[loser.id];
+        if (!wp || !lp || wp <= lp) return null;
+        return { winner: teamCard(winner), loser: teamCard(loser),
+                 winnerPlace: wp, loserPlace: lp, drop: wp - lp,
+                 score: winner.id === f.home.id ? f.homeTotal : f.awayTotal,
+                 against: winner.id === f.home.id ? f.awayTotal : f.homeTotal,
+                 mine: winner.id === myTeam.id || loser.id === myTeam.id };
+      })
+      .filter(Boolean)
+      .sort((a, b) => (b.drop - a.drop) || (b.score - a.score))[0] || null;
+
+    return {
+      rounds: scoredRounds.length,
+      record,
+      top, bottom,
+      close: margs.filter(m => m <= 3).length,
+      draws: margs.filter(m => m === 0).length,
+      blowouts: margs.filter(m => m >= 20).length,
+      avgMargin: thisAvg, seasonAvgMargin,
+      widest: margins[margins.length - 1] || null,
+      tightest: margins[0] || null,
+      lineSplit, upset,
+      fixtures: fixtures.length,
+    };
+  })();
+
+  /* ------------------------------------------------------- power rankings */
+
+  // Not the standings. The standings answer who has scored the most all season;
+  // a power ranking answers who you would least like to draw next week, which
+  // is a season average pulled towards the last three rounds.
+  //
+  // 60/40, and the split is printed on the card rather than hidden: a ranking
+  // nobody can check is a ranking nobody believes.
+  // Weights set by Andrew 2026-08-29. Three windows, not two: the season is
+  // most of the answer, the last five rounds are the form, and the last two are
+  // the twitch. They sum to 1 and a player with fewer rounds than a window
+  // simply gets the rounds they have.
+  const POWER = [
+    { weight: 0.75, window: null, label: "season" },
+    { weight: 0.20, window: 5, label: "last 5" },
+    { weight: 0.05, window: 2, label: "last 2" },
+  ];
+
+  // The Power Index. Not the standings: the standings answer who has scored
+  // most all season, and this answers who you would least like to draw next
+  // week. Built twice, this round and the round before, so a place can carry
+  // its own movement rather than only its destination.
+  const powerAt = cutoff => {
+    const roundsUpTo = races
+      .filter(r => r.round <= cutoff && scores.some(x => x.race_id === r.id))
+      .sort((a, b) => a.round - b.round);
+    const byPlayer = {};
+    roundsUpTo.forEach(r => {
+      scores.filter(x => x.race_id === r.id).forEach(x => {
+        (byPlayer[x.player_id] = byPlayer[x.player_id] || []).push({ round: r.round, pts: INDIVIDUAL(x) });
+      });
+    });
+    const rows = Object.entries(byPlayer).map(([id, weeks]) => {
+      const sorted = weeks.slice().sort((a, b) => a.round - b.round);
+      const partOf = w => avg((w == null ? sorted : sorted.slice(-w)).map(x => x.pts));
+      const rating = POWER.reduce((a, p) => a + p.weight * (partOf(p.window) || 0), 0);
+      return {
+        id, name: nameOf[id], photo: photoOf[id],
+        team: teamOfPlayer[id] ? teamOfPlayer[id].name : null,
+        teamLogo: teamOfPlayer[id] ? teamOfPlayer[id].logo_url : null,
+        rating: round1(rating), played: sorted.length,
+      };
+    });
+    // Equal ratings break on name, the same way every other order in this file
+    // does, so the board is the same on every load.
+    rows.sort((a, b) => (b.rating - a.rating) || a.name.localeCompare(b.name));
+    rows.forEach((r, i) => { r.place = i + 1; });
+    return rows;
+  };
+
+  const power = (() => {
+    const rows = powerAt(race.round);
+    const before = race.round > 1 ? powerAt(race.round - 1) : [];
+    const wasAt = {}; before.forEach(r => { wasAt[r.id] = r.place; });
+    const standing = placesBy(seasonRows(race.round), r => r.avg);
+
+    rows.forEach(r => {
+      r.was = wasAt[r.id] || null;
+      // Up is a smaller number, so the move is the old place minus the new.
+      r.move = r.was ? r.was - r.place : null;
+      r.standing = standing[r.id] || null;
+      r.me = r.id === me.id;
+    });
+
+    const mineRow = rows.find(r => r.me) || null;
+    // The biggest climber inside the top ten, which is the only part of the
+    // board anybody is shown.
+    const climber = rows.filter(r => r.place <= 10 && r.move != null && r.move > 0)
+      .sort((a, b) => (b.move - a.move) || a.name.localeCompare(b.name))[0] || null;
+    return { rows, top: rows.slice(0, 10), me: mineRow, climber, weights: POWER };
+  })();
+
   const context = {
-    history,
+    history, week, power,
     allPlay, luck, perfect, myHaul, poolBoard, leagueScores, bestSwap,
     tied: leagueScores.filter(t => !t.me && !t.beat && !t.lostTo).length,
     left: round1(perfect.total - myHaul),

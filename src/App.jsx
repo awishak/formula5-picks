@@ -26,6 +26,7 @@ import HandsIdeas from "./HandsIdeas.jsx";
 import VegasNav from "./VegasNav.jsx";
 import Recap from "./Recap.jsx";
 import Weekly from "./Weekly.jsx";
+import Paddock from "./Paddock.jsx";
 import { NEWS } from "./news";
 
 
@@ -819,7 +820,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
   "dashboard", "hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
-  "f1-calendar", "season-preview", "recaps", "admin", "recap",
+  "f1-calendar", "season-preview", "recaps", "admin", "recap", "paddock", "paddock-vegas",
 ]);
 
 // ── Routing ──────────────────────────────────────────────
@@ -854,6 +855,13 @@ const ROUTES = [
   { path: "/admin", page: "admin" },
   // The weekly deck. Same three ways in as /deck, so ?week and #week also work.
   { path: "/week", page: "weekly" },
+  // The Paddock: the same week written up as news stories. An alternate to the
+  // Vegas deck, not a replacement, so /week is untouched and neither one gates
+  // the app. Both read the same buildWeekly() output.
+  { path: "/week2", page: "paddock" },
+  // The same paper in the Vegas kit. One structure, two skins, so a change to
+  // the stories lands on both.
+  { path: "/week3", page: "paddock-vegas" },
 
 ];
 const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
@@ -907,6 +915,8 @@ export default function App() {
     // The first-half deck is no longer routed. ?page=recap still opens it.
     if (window.location.hash === "#recap" || q.has("recap")) return "recap";
     if (path === "/week" || window.location.hash === "#week" || q.has("week")) return "weekly";
+    if (path === "/week2" || q.has("week2")) return "paddock";
+    if (path === "/week3" || q.has("week3")) return "paddock-vegas";
     // /newui is the shareable path for the second-half look. ?vegas and #vegas
     // still work, and the query param is what the mockup's own controls use.
     if (path === "/newui" || window.location.hash === "#vegas" || q.has("vegas")) return "vegas";
@@ -1043,6 +1053,29 @@ export default function App() {
         round={Number.isFinite(roundParam) ? roundParam : null}
         initialCard={card}
         initialStage={Number.isFinite(stageParam) ? Math.max(0, stageParam - 1) : 0}
+        onPicks={() => { window.history.replaceState(null, "", "/picks"); navigateTo("picks"); }}
+        onExit={() => { window.history.replaceState(null, "", "/"); navigateTo("home"); }}
+      />
+    );
+  }
+
+  // The Paddock, at /week2. Same overrides as the deck, so every screen can be
+  // photographed: ?player= reads somebody else's week, ?round= goes back,
+  // ?story=4 opens on a story and ?frame=2&mode=reel opens on one of its frames.
+  if (activePage === "paddock" || activePage === "paddock-vegas") {
+    const q = new URLSearchParams(window.location.search);
+    const who = q.get("player") || currentUser;
+    const roundParam = parseInt(q.get("round") || "", 10);
+    const storyParam = parseInt(q.get("story") || "", 10);
+    const frameParam = parseInt(q.get("frame") || "", 10);
+    if (who) return (
+      <Paddock
+        playerName={who}
+        skin={activePage === "paddock-vegas" ? "vegas" : "paper"}
+        round={Number.isFinite(roundParam) ? roundParam : null}
+        initialStory={Number.isFinite(storyParam) ? Math.max(0, storyParam - 1) : null}
+        initialFrame={Number.isFinite(frameParam) ? Math.max(0, frameParam - 1) : 0}
+        initialMode={q.get("mode") === "reel" || Number.isFinite(frameParam) ? "reel" : "front"}
         onPicks={() => { window.history.replaceState(null, "", "/picks"); navigateTo("picks"); }}
         onExit={() => { window.history.replaceState(null, "", "/"); navigateTo("home"); }}
       />
