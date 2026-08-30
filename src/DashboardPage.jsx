@@ -17,14 +17,35 @@ import PIT_TIMES from "./pitTimes.json";
 
 const MAX = 1360;
 
-const Panel = ({ title, accent = V.blue, children, style }) => (
-  <section style={{ ...card({ padding: 16 }), display: "flex", flexDirection: "column", minWidth: 0, ...style }}>
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+// A panel. The header is the handle: grab it to move the panel between the
+// three columns, click the caret to fold the panel away. Both are remembered
+// per browser, so a dashboard somebody has arranged stays arranged.
+//
+// HTML5 drag rather than a library: three columns and a dozen panels is not
+// worth a dependency, and dragging a section by its header is the one gesture
+// this needs.
+const Panel = ({ id, title, accent = V.blue, children, style, folded, onFold,
+                 onDragStart, onDragEnd, dragging }) => (
+  <section draggable={Boolean(id)}
+    onDragStart={e => { if (onDragStart) { e.dataTransfer.effectAllowed = "move"; onDragStart(id); } }}
+    onDragEnd={onDragEnd}
+    style={{ ...card({ padding: 16 }), display: "flex", flexDirection: "column",
+      minWidth: 0, opacity: dragging ? 0.4 : 1,
+      cursor: id ? "grab" : undefined, ...style }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8,
+      marginBottom: folded ? 0 : 12 }}>
       <span style={{ width: 10, height: 10, borderRadius: 5, background: accent, flexShrink: 0 }} />
       <h2 style={{ fontFamily: FD, fontWeight: 700, fontSize: 16, letterSpacing: "0.08em",
-        textTransform: "uppercase", color: accent, margin: 0 }}>{title}</h2>
+        textTransform: "uppercase", color: accent, margin: 0, flex: 1, minWidth: 0 }}>{title}</h2>
+      {onFold && (
+        <button onClick={() => onFold(id)} aria-label={folded ? "Open" : "Fold away"}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 6px",
+            color: V.text3, fontSize: 15, lineHeight: 1, fontFamily: FB }}>
+          {folded ? "+" : "\u2013"}
+        </button>
+      )}
     </div>
-    {children}
+    {!folded && children}
   </section>
 );
 
@@ -209,8 +230,58 @@ function PitTable({ data }) {
   );
 }
 
+// Where the panels start, before anybody moves one.
+const DEFAULT_LAYOUT = [["home"], ["championship", "second", "drivers", "pits"], ["players"]];
+const STORE = "f5_dash_layout";
+
 export default function DashboardPage({ currentUser, onNavigate }) {
   const [s, setS] = useState({ loading: true });
+  // The reader's own arrangement, kept in this browser. A saved layout from
+  // before a panel existed would silently hide the new one, so anything missing
+  // is appended rather than dropped.
+  const [layout, setLayout] = useState(DEFAULT_LAYOUT);
+  const [folded, setFolded] = useState([]);
+  const [drag, setDrag] = useState(null);
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORE) || "null");
+      if (!saved || !Array.isArray(saved.layout)) return;
+      const seen = new Set(saved.layout.flat());
+      const missing = DEFAULT_LAYOUT.flat().filter(id => !seen.has(id));
+      const next = saved.layout.map(c => c.filter(Boolean));
+      if (missing.length) next[next.length - 1].push(...missing);
+      setLayout(next);
+      setFolded(saved.folded || []);
+      setDirty(true);
+    } catch (e) {}
+  }, []);
+
+  const save = (next, foldedNext) => {
+    setDirty(true);
+    try {
+      localStorage.setItem(STORE, JSON.stringify({
+        layout: next || layout, folded: foldedNext || folded }));
+    } catch (e) {}
+  };
+  const fold = id => {
+    const next = folded.includes(id) ? folded.filter(x => x !== id) : [...folded, id];
+    setFolded(next); save(null, next);
+  };
+  // Dropping on a panel puts the dragged one before it; dropping on the column
+  // puts it at the end.
+  const drop = (col, beforeId) => {
+    if (!drag) return;
+    const next = layout.map(c => c.filter(id => id !== drag));
+    const at = beforeId ? next[col].indexOf(beforeId) : next[col].length;
+    next[col].splice(at < 0 ? next[col].length : at, 0, drag);
+    setLayout(next); setDrag(null); save(next);
+  };
+  const reset = () => {
+    setLayout(DEFAULT_LAYOUT); setFolded([]); setDirty(false);
+    try { localStorage.removeItem(STORE); } catch (e) {}
+  };
 
   useEffect(() => {
     (async () => {
@@ -292,48 +363,79 @@ export default function DashboardPage({ currentUser, onNavigate }) {
     list.forEach((r, i) => { posOf[r.id] = (i > 0 && list[i - 1].pts === r.pts) ? posOf[list[i - 1].id] : i + 1; });
   });
 
-  const teamPanels = ["championship", "second"].map(d => (
-    <Panel key={d} title={d === "championship" ? "Championship Division" : "Second Division"}
-           accent={d === "championship" ? V.gold : V.silver}>
-      <TeamTable rows={s.half.filter(r => r.division === d)} posOf={posOf} myTeamId={s.myTeamId}
-                 avgRank={s.avgRank} fixtures={s.fixtures} byId={s.byId} />
-    </Panel>
-  ));
+  // Every panel, named once. The layout below is a list of ids per column, so
+  // moving a panel is moving a string and nothing re-renders that did not have
+  // to.
+  const PANELS = {
+    home: { title: "This week", accent: V.blue,
+      body: <VegasHome currentUser={currentUser} onNavigate={onNavigate} />, bare: true },
+    championship: { title: "Championship Division", accent: V.gold,
+      body: <TeamTable rows={s.half.filter(r => r.division === "championship")} posOf={posOf}
+        myTeamId={s.myTeamId} avgRank={s.avgRank} fixtures={s.fixtures} byId={s.byId} /> },
+    second: { title: "Second Division", accent: V.silver,
+      body: <TeamTable rows={s.half.filter(r => r.division === "second")} posOf={posOf}
+        myTeamId={s.myTeamId} avgRank={s.avgRank} fixtures={s.fixtures} byId={s.byId} /> },
+    drivers: { title: "Drivers' championship", accent: V.purple,
+      body: <DriverTable rows={s.drivers} /> },
+    pits: { title: "Pit stops this season", accent: V.green,
+      body: <PitTable data={PIT_TIMES} /> },
+    players: { title: `Players — ${Object.keys(s.pickState).length} of ${s.players.length} in`,
+      accent: V.blue,
+      body: <PlayerTable rows={s.players} place={s.place} meId={s.meId} pickState={s.pickState} /> },
+  };
+
+  const column = (ids, col) => (
+    <div key={col}
+      onDragOver={e => { if (drag) e.preventDefault(); }}
+      onDrop={e => { e.preventDefault(); drop(col, null); }}
+      style={{ display: "grid", gap: 14, alignContent: "start", minHeight: 80,
+        minWidth: 0, borderRadius: 16,
+        outline: drag ? `1px dashed ${V.border2}` : "none",
+        outlineOffset: 6 }}>
+      {ids.map(id => {
+        const p = PANELS[id];
+        if (!p) return null;
+        // The home page brings its own ground and its own 480px cap, so it sits
+        // in a panel with no padding rather than being restyled.
+        return (
+          <div key={id} onDragOver={e => { if (drag) e.preventDefault(); }}
+            onDrop={e => { e.preventDefault(); e.stopPropagation(); drop(col, id); }}>
+            <Panel id={id} title={p.title} accent={p.accent}
+              folded={folded.includes(id)} onFold={fold}
+              onDragStart={setDrag} onDragEnd={() => setDrag(null)} dragging={drag === id}
+              style={p.bare && !folded.includes(id) ? { padding: 0, overflow: "hidden" } : undefined}>
+              {p.bare && !folded.includes(id)
+                ? <div style={{ padding: 0 }}>{p.body}</div>
+                : p.body}
+            </Panel>
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div style={{ background: V.bg, minHeight: "100vh" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');`}</style>
       <div style={wrap}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: 12, marginBottom: 12 }}>
+          <span style={{ ...body("bodySm"), color: V.text3 }}>
+            Drag a panel by its heading to move it. The minus folds one away.
+          </span>
+          {(dirty || folded.length) ? (
+            <button onClick={reset} style={{ ...label({ fontSize: 11, color: V.blue }),
+              background: "transparent", border: `1px solid ${V.blue}`, borderRadius: 999,
+              padding: "6px 13px", cursor: "pointer" }}>RESET LAYOUT</button>
+          ) : null}
+        </div>
         <div style={{
           display: "grid",
           gridTemplateColumns: "minmax(340px, 0.95fr) minmax(340px, 1.1fr) minmax(340px, 1.1fr)",
           gap: 14, alignItems: "start",
         }}>
-          {/* The phone's home page, exactly as it is. It brings its own dark
-              ground and its own 480px cap, which is a column here. */}
-          <div style={{ ...card({ padding: 0, overflow: "hidden" }), minWidth: 0 }}>
-            <VegasHome currentUser={currentUser} onNavigate={onNavigate} />
-          </div>
-          {/* The two reference panels go under the divisions rather than under
-              the players: the player table is 48 rows, and anything after it is
-              two thousand pixels down a page nobody scrolls that far. */}
-          <div style={{ display: "grid", gap: 14 }}>
-            {teamPanels}
-            <Panel title="Drivers' championship" accent={V.purple}>
-              <DriverTable rows={s.drivers} />
-            </Panel>
-            <Panel title="Pit stops this season" accent={V.green}>
-              <PitTable data={PIT_TIMES} />
-            </Panel>
-          </div>
-          <Panel title={`Players — ${Object.keys(s.pickState).length} of ${s.players.length} in`} accent={V.blue}>
-            <PlayerTable rows={s.players} place={s.place} meId={s.meId} pickState={s.pickState} />
-          </Panel>
+          {layout.map((ids, col) => column(ids, col))}
         </div>
-
-        <p style={{ ...body("bodySm"), color: V.text2, textAlign: "center", marginTop: 20 }}>
-          Desktop mockup. The left column is the phone home page itself.
-        </p>
       </div>
     </div>
   );
