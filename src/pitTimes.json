@@ -1,0 +1,102 @@
+{
+  "season": 2026,
+  "builtFrom": "6 races",
+  "skipped": 19,
+  "stops": 135,
+  "league": {
+    "avg": 3.42,
+    "median": 3,
+    "fastest": 2,
+    "slowest": 8
+  },
+  "teams": [
+    {
+      "team": "Mercedes",
+      "stops": 12,
+      "avg": 2.64,
+      "median": 2.6,
+      "fastest": 2.2,
+      "slowest": 3.2
+    },
+    {
+      "team": "Ferrari",
+      "stops": 13,
+      "avg": 2.67,
+      "median": 2.5,
+      "fastest": 2,
+      "slowest": 3.8
+    },
+    {
+      "team": "Alpine",
+      "stops": 12,
+      "avg": 3.12,
+      "median": 3,
+      "fastest": 2.6,
+      "slowest": 3.8
+    },
+    {
+      "team": "Red Bull",
+      "stops": 16,
+      "avg": 3.23,
+      "median": 3,
+      "fastest": 2.3,
+      "slowest": 5.7
+    },
+    {
+      "team": "Aston Martin",
+      "stops": 11,
+      "avg": 3.32,
+      "median": 2.8,
+      "fastest": 2.4,
+      "slowest": 5.6
+    },
+    {
+      "team": "Audi",
+      "stops": 9,
+      "avg": 3.33,
+      "median": 2.6,
+      "fastest": 2.1,
+      "slowest": 5.8
+    },
+    {
+      "team": "McLaren",
+      "stops": 8,
+      "avg": 3.39,
+      "median": 2.8,
+      "fastest": 2.2,
+      "slowest": 7.8
+    },
+    {
+      "team": "Racing Bulls",
+      "stops": 11,
+      "avg": 3.4,
+      "median": 2.9,
+      "fastest": 2.4,
+      "slowest": 6.3
+    },
+    {
+      "team": "Williams",
+      "stops": 16,
+      "avg": 3.47,
+      "median": 3.2,
+      "fastest": 2.1,
+      "slowest": 8
+    },
+    {
+      "team": "Haas",
+      "stops": 11,
+      "avg": 4.33,
+      "median": 3.9,
+      "fastest": 3.3,
+      "slowest": 6.7
+    },
+    {
+      "team": "Cadillac",
+      "stops": 16,
+      "avg": 4.53,
+      "median": 4.2,
+      "fastest": 2.9,
+      "slowest": 7.4
+    }
+  ]
+}

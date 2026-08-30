@@ -6,6 +6,7 @@ import { buildPlayerTable, placesBy } from "./playerTable";
 import { displayOf } from "./teams";
 import { currentRace } from "./raceTimes";
 import VegasHome from "./VegasHome.jsx";
+import PIT_TIMES from "./pitTimes.json";
 
 // Desktop mockup. Everything the phone spreads over five tabs, on one screen.
 //
@@ -125,6 +126,82 @@ function PlayerTable({ rows, place, meId, limit, pickState = {} }) {
 }
 
 // ── page ─────────────────────────────────────────────────
+// The drivers' championship, as the Monday cron leaves it. Points come off the
+// real season, not off F5 scoring: this is the table you look at to decide who
+// is worth taking out of a pool.
+function DriverTable({ rows }) {
+  if (!rows.length) return (
+    <p style={{ ...body("bodySm"), color: V.text2, margin: 0 }}>
+      No standings yet. The Monday job writes them.
+    </p>
+  );
+  const most = Math.max(...rows.map(r => r.points || 0), 1);
+  return (
+    <div style={{ display: "grid", gap: 3 }}>
+      {rows.map((r, i) => (
+        <div key={r.driver} style={{ display: "grid",
+          gridTemplateColumns: "22px 1fr 64px 44px", alignItems: "center", gap: 8 }}>
+          <span style={{ ...numeric("chip"), fontSize: 13, color: V.text3, textAlign: "right" }}>
+            {r.position || i + 1}
+          </span>
+          <span style={{ ...body("bodySm"), fontSize: 13, color: V.text, minWidth: 0,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {r.driver}
+          </span>
+          <span style={{ height: 8, borderRadius: 4, background: V.bg4, overflow: "hidden" }}>
+            <span style={{ display: "block", height: "100%", borderRadius: 4,
+              width: `${Math.max(2, ((r.points || 0) / most) * 100)}%`, background: V.blue }} />
+          </span>
+          <span style={{ ...numeric("chip"), fontSize: 14, color: V.blue, textAlign: "right" }}>
+            {r.points ?? "\u2013"}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// What a stop has actually looked like per team this season, which is the
+// reference the Needle guess wants. Cached by scripts/pit-times.mjs, because
+// this is one request a race against an API that rate limits.
+function PitTable({ data }) {
+  if (!data || !data.teams.length) return null;
+  const slowest = Math.max(...data.teams.map(t => t.avg), 1);
+  return (
+    <div style={{ display: "grid", gap: 4 }}>
+      {data.teams.map(t => (
+        <div key={t.team} style={{ display: "grid",
+          gridTemplateColumns: "1fr 70px 46px 46px", alignItems: "center", gap: 8 }}>
+          <span style={{ ...body("bodySm"), fontSize: 13, color: V.text, minWidth: 0,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.team}</span>
+          <span style={{ height: 8, borderRadius: 4, background: V.bg4, overflow: "hidden" }}>
+            <span style={{ display: "block", height: "100%", borderRadius: 4,
+              width: `${Math.max(4, (t.avg / slowest) * 100)}%`,
+              background: t.avg <= (data.league ? data.league.avg : t.avg) ? V.green : V.pink }} />
+          </span>
+          <span style={{ ...numeric("chip"), fontSize: 14, color: V.text, textAlign: "right" }}>
+            {t.avg.toFixed(2)}
+          </span>
+          <span style={{ ...body("bodySm"), fontSize: 12, color: V.text3, textAlign: "right" }}>
+            {t.fastest.toFixed(1)}
+          </span>
+        </div>
+      ))}
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6,
+        paddingTop: 6, borderTop: `1px solid ${V.border}` }}>
+        <span style={{ ...body("bodySm"), fontSize: 12, color: V.text3 }}>
+          {data.stops} stops from {data.builtFrom}
+        </span>
+        {data.league && (
+          <span style={{ ...body("bodySm"), fontSize: 12, color: V.text2 }}>
+            League average {data.league.avg.toFixed(2)}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage({ currentUser, onNavigate }) {
   const [s, setS] = useState({ loading: true });
 
@@ -169,11 +246,17 @@ export default function DashboardPage({ currentUser, onNavigate }) {
 
         const pt = buildPlayerTable({ players, teams, races, scores });
 
+        // The drivers' championship, written by the Monday cron. Empty is fine
+        // and says so on the page rather than inventing a number.
+        const drivers = (await supabase.from("driver_standings")
+          .select("driver,points,position").order("position")).data || [];
+
         setS({
           loading: false, half, season, avgRank, fixtures,
           byId: Object.fromEntries(half.map(r => [r.id, r])),
           myTeamId: myTeam ? myTeam.id : null,
           players: pt, place: placesBy(pt, r => r.avg), meId: me ? me.id : null, pickState,
+          drivers,
           week: {
             me: currentUser, teammate: mateId ? (players.find(p => p.id === mateId) || {}).name : null,
             race: { round: race.round, name: race.race_name, deadline: race.pick_deadline,
@@ -224,7 +307,18 @@ export default function DashboardPage({ currentUser, onNavigate }) {
           <div style={{ ...card({ padding: 0, overflow: "hidden" }), minWidth: 0 }}>
             <VegasHome currentUser={currentUser} onNavigate={onNavigate} />
           </div>
-          <div style={{ display: "grid", gap: 14 }}>{teamPanels}</div>
+          {/* The two reference panels go under the divisions rather than under
+              the players: the player table is 48 rows, and anything after it is
+              two thousand pixels down a page nobody scrolls that far. */}
+          <div style={{ display: "grid", gap: 14 }}>
+            {teamPanels}
+            <Panel title="Drivers' championship" accent={V.purple}>
+              <DriverTable rows={s.drivers} />
+            </Panel>
+            <Panel title="Pit stops this season" accent={V.green}>
+              <PitTable data={PIT_TIMES} />
+            </Panel>
+          </div>
           <Panel title={`Players — ${Object.keys(s.pickState).length} of ${s.players.length} in`} accent={V.blue}>
             <PlayerTable rows={s.players} place={s.place} meId={s.meId} pickState={s.pickState} />
           </Panel>
