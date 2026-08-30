@@ -26,6 +26,7 @@ import Flag, { Flagged } from "./Flag.jsx";
 import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
 // The same board the home page draws, from the same file.
 import HandsColumns from "./HandsColumns.jsx";
+import { shortOf } from "./teams.js";
 import { F1_TEAM_COLORS } from "./theme";
 import {
   V, FM, FD, FN, FB, TYPE, display, numeric, body, label,
@@ -34,7 +35,7 @@ import {
 
 const CARDS = 4;
 // Nothing needs a scroll.
-const SCROLLS = new Set();
+const SCROLLS = new Set([2]);   // where you stand: two tables, at full size
 // How many presses a card takes before the deck moves on. Card 2 plays itself
 // out in five, everything else is one.
 //
@@ -1553,10 +1554,10 @@ const TeamChip = ({ logo, name, size = 20 }) => (
 // third of the width each to hold a name, a flag, a crest and a score.
 // Stacked, every row is full width and reads like the standings the league
 // already knows.
-const PodiumRow = ({ accent, mine, rank, face, flag, name, sub, chip, score, i }) => (
+const PodiumRow = ({ accent, mine, rank, face, name, nation, sub, chip, score, i, tall }) => (
   <div className="v-pop" style={{
-    display: "flex", alignItems: "center", gap: 9,
-    padding: "8px 10px", borderRadius: 14,
+    display: "flex", alignItems: "center", gap: 10,
+    padding: tall ? "11px 12px" : "9px 11px", borderRadius: 14,
     background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
     border: `1px solid ${mine ? V.blue : accent}`,
     position: "relative", overflow: "hidden",
@@ -1568,28 +1569,26 @@ const PodiumRow = ({ accent, mine, rank, face, flag, name, sub, chip, score, i }
       top: 0, bottom: 0, width: 80, pointerEvents: "none",
       background: `linear-gradient(100deg, transparent, ${accent}2e, transparent)`,
       animationDelay: `${i * 700}ms` }} />
-    <div style={{ flexShrink: 0, minWidth: 26, textAlign: "center",
-      ...numeric("stat", { fontSize: 20, color: accent }), ...textGlow(accent, 0.5) }}>
+    <div style={{ flexShrink: 0, minWidth: 30, textAlign: "center",
+      ...numeric("stat", { fontSize: 22, color: accent }), ...textGlow(accent, 0.5) }}>
       {rank}
     </div>
     {face}
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-        {flag}
-        <span style={{ ...display("h3", { fontSize: 17, lineHeight: 1.3,
-          color: mine ? V.blue : V.text }),
-          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
-      </div>
+    <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+      {/* The flag goes after the name and is sized off it, which is where the
+          player standings put one. Flagged does both. */}
+      <Flagged name={name} nation={nation} wrap
+        style={display("h3", { fontSize: 22, lineHeight: 1.25,
+          color: mine ? V.blue : V.text })} />
       {sub && (
-        <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 12,
+        <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
           letterSpacing: "0.01em", textTransform: "uppercase", color: V.text2,
-          marginTop: 1, whiteSpace: "nowrap", overflow: "hidden",
-          textOverflow: "ellipsis" }}>{sub}</div>
+          marginTop: 2, overflowWrap: "anywhere" }}>{sub}</div>
       )}
     </div>
     {chip}
     <div style={{ flexShrink: 0, textAlign: "right",
-      ...numeric("stat", { fontSize: 26, color: V.text }), ...textGlow(V.blue, 0.7) }}>
+      ...numeric("stat", { fontSize: 30, color: V.text }), ...textGlow(V.blue, 0.7) }}>
       {score}
     </div>
   </div>
@@ -1598,32 +1597,39 @@ const PodiumRow = ({ accent, mine, rank, face, flag, name, sub, chip, score, i }
 const Podium = ({ top3, meId, topTeam }) => {
   const medal = [V.gold, V.silver, V.bronze];
   return (
-    <div style={{ width: "100%", display: "grid", gap: 6 }}>
+    <div style={{ width: "100%", display: "grid", gap: 7 }}>
       {top3.map((p, i) => {
         if (!p) return null;
         const c = medal[i] || V.border2;
         const mine = p.id === meId;
         return (
-          <PodiumRow key={p.id} accent={c} mine={mine} i={i}
+          <PodiumRow key={p.id} accent={c} mine={mine} i={i} tall
             rank={`P${p.place}`}
-            face={<Face src={p.photo} size={42} ring={mine ? V.amber : c} width={3} />}
-            flag={<Flag nation={p.nation} size={17} />}
-            name={shortName(p.name)}
+            face={<Face src={p.photo} size={52} ring={mine ? V.amber : c} width={3} />}
+            name={shortName(p.name)} nation={p.nation}
             sub={p.team}
-            chip={<Logo src={p.teamLogo} size={24} />}
+            chip={null}
             score={p.pts} />
         );
       })}
 
+      {/* The top team is not a fourth place, so it does not sit in the same run
+          as the three. Its own heading, and the two people on it named. */}
       {topTeam && (
-        <PodiumRow accent={V.blue} mine={false} i={3}
-          rank="TOP"
-          face={<Logo src={topTeam.logo} size={42} />}
-          flag={<Flag nation={topTeam.nation} size={17} />}
-          name={topTeam.name}
-          sub="HIGHEST SCORING TEAM"
-          chip={null}
-          score={topTeam.v} />
+        <div style={{ display: "grid", gap: 5, marginTop: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ height: 1, flex: 1, background: V.border }} />
+            <span style={{ ...label({ fontSize: 12, color: V.text3 }) }}>TOP TEAM</span>
+            <span style={{ height: 1, flex: 1, background: V.border }} />
+          </div>
+          <PodiumRow accent={V.blue} mine={false} i={3} tall
+            rank={<Logo src={topTeam.logo} size={30} />}
+            face={null}
+            name={topTeam.name} nation={topTeam.nation}
+            sub={(topTeam.players || []).join(" · ")}
+            chip={null}
+            score={topTeam.v} />
+        </div>
       )}
     </div>
   );
@@ -2880,17 +2886,23 @@ function StandingsTable({ rows, kind, value = r => r.pts, unit = "PTS" }) {
               border: `1px solid ${r.me ? V.amber : "transparent"}`,
             }}>
               <span style={{ textAlign: "right",
-                ...numeric("chip", { fontSize: 16, color: r.me ? V.amber : V.text3 }) }}>
+                ...numeric("chip", { fontSize: 20, color: r.me ? V.amber : V.text3 }) }}>
                 {r.place}
               </span>
               {kind === "team"
-                ? <Logo src={r.logo} size={22} />
-                : <Face src={r.photo} size={22} ring={r.me ? V.amber : V.border2} />}
-              <Flagged name={r.name} nation={r.nation} size={15} gap={6} wrap
-                style={{ ...body("bodySm", { fontSize: 15,
-                  color: r.me ? V.text : V.text2, fontWeight: r.me ? 700 : 400 }) }} />
+                ? <Logo src={r.logo} size={30} />
+                : <Face src={r.photo} size={30} ring={r.me ? V.amber : V.border2} />}
+              {(() => {
+                const label = kind === "team" ? shortOf(r.name) : r.name;
+                const longest = Math.max(...String(label).split(/\s+/).map(w => w.length));
+                return (
+                  <Flagged name={label} nation={r.nation} gap={7} wrap
+                    style={{ ...display("h3", { fontSize: longest > 11 ? 17 : 20,
+                      lineHeight: 1.2, color: r.me ? V.text : V.text2 }) }} />
+                );
+              })()}
               <span style={{ textAlign: "right",
-                ...numeric("chip", { fontSize: 16, color: V.blue }),
+                ...numeric("chip", { fontSize: 21, color: V.blue }),
                 ...(r.me ? textGlow(V.blue, 0.6) : {}) }}>{value(r)}</span>
               <span style={{ textAlign: "right" }}><MoveMark m={r.move} /></span>
             </div>
@@ -3062,6 +3074,30 @@ function CardNext({ d, onPicks, onExit }) {
           )}
         </div>
       )}
+
+      <div style={{ ...vcard({ padding: 14, width: "100%" }), ...edgeGlow(V.pink, 0.6),
+        position: "relative", overflow: "hidden", display: "grid", gap: 10,
+        justifyItems: "center", textAlign: "center" }}>
+        <span className="v-sweep" aria-hidden="true" style={{ position: "absolute",
+          top: 0, bottom: 0, width: 90, pointerEvents: "none",
+          background: `linear-gradient(100deg, transparent, ${V.pink}22, transparent)` }} />
+        <div style={{ ...label({ fontSize: 11, color: V.text3 }) }}>ADVERTISEMENT</div>
+        <button onClick={c.poolReady ? onPicks : onExit} style={{
+          background: "none", border: "none", padding: 0, cursor: "pointer",
+          display: "grid", gap: 6, justifyItems: "center" }}>
+          <span style={{ ...display("h2", { fontSize: 24 }), ...textGlow(V.pink, 0.8) }}>
+            BUY VELVET THUNDER NOW
+          </span>
+          <span style={{ ...body("bodySm", { fontSize: 14, color: V.text2 }) }}>
+            Available on Winamp, MiniDisc and Zune
+          </span>
+        </button>
+        <a href={THEME_SRC} download="velvet-thunder.mp3" style={{
+          ...display("h3", { fontSize: 15, color: V.bg }), background: V.pink,
+          borderRadius: 999, padding: "11px 26px", textDecoration: "none",
+          boxShadow: `0 0 18px ${V.pink}77`,
+        }}>DOWNLOAD THE SONG</a>
+      </div>
 
       {picking && (
         <FlagPicker title={`${d.player.name}'s flag`} value={nation}
@@ -3265,7 +3301,7 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
 
       <Card dep={`${i}-${stage}-${data.player.name}`}
         bottom={0}
-        scrolls={SCROLLS.has(i) || (i === 1 && (stage === S_TEAM || stage === S_POOL))}>
+        scrolls={SCROLLS.has(i) || i === 1}>
         <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit}
           theme={i === 0 ? {
             onWith: () => { playTheme(); advance(); },

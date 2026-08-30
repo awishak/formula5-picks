@@ -884,6 +884,11 @@ export function buildWeekly(db, playerName, round = null) {
   });
   const leagueScores = teamRank.map(t => ({
     id: t.id, name: t.name, code: codeOf(t.name), v: t.v,
+    // Who is on it. The deck names the two players under the top team, and a
+    // team row with no roster on it can only say "highest scoring team".
+    players: (teamById[t.id]
+      ? [teamById[t.id].player1_id, teamById[t.id].player2_id]
+      : []).filter(Boolean).map(id => nameOf[id]).filter(Boolean),
     logo: (teamById[t.id] || {}).logo_url || null,
     nation: nationOfTeam(teamById[t.id]),
     drivers: teamDriverPts[t.id] || 0,
