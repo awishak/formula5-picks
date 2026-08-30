@@ -1586,8 +1586,8 @@ const TeamChip = ({ logo, name, size = 20 }) => (
 // already knows.
 const PodiumRow = ({ accent, mine, rank, face, name, nation, sub, chip, score, i, tall }) => (
   <div className="v-pop" style={{
-    display: "flex", alignItems: "center", gap: 10,
-    padding: tall ? "11px 12px" : "9px 11px", borderRadius: 14,
+    display: "flex", alignItems: "center", gap: 8,
+    padding: tall ? "11px 10px" : "9px 10px", borderRadius: 14,
     background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
     border: `1px solid ${mine ? V.blue : accent}`,
     position: "relative", overflow: "hidden",
@@ -1599,17 +1599,22 @@ const PodiumRow = ({ accent, mine, rank, face, name, nation, sub, chip, score, i
       top: 0, bottom: 0, width: 80, pointerEvents: "none",
       background: `linear-gradient(100deg, transparent, ${accent}2e, transparent)`,
       animationDelay: `${i * 700}ms` }} />
-    <div style={{ flexShrink: 0, minWidth: 30, textAlign: "center",
-      ...numeric("stat", { fontSize: 22, color: accent }), ...textGlow(accent, 0.5) }}>
+    <div style={{ flexShrink: 0, minWidth: 26, textAlign: "center",
+      ...numeric("stat", { fontSize: 21, color: accent }), ...textGlow(accent, 0.5) }}>
       {rank}
     </div>
     {face}
     <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
       {/* The flag goes after the name and is sized off it, which is where the
-          player standings put one. Flagged does both. */}
+          player standings put one. Flagged does both.
+          
+          The name is sized to the room it has. A row gives about 155px to the
+          name and the flag together, and "S. Michaelsen" at 22 needs 180, so on
+          an iPhone it took a second line and made that row taller than the one
+          above it. Three points off is the fix that keeps the name whole. */}
       <Flagged name={name} nation={nation} wrap
-        style={display("h3", { fontSize: 22, lineHeight: 1.25,
-          color: mine ? V.blue : V.text })} />
+        style={display("h3", { fontSize: name.length > 14 ? 17 : name.length > 10 ? 19 : 22,
+          lineHeight: 1.25, color: mine ? V.blue : V.text })} />
       {sub && (
         <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
           letterSpacing: "0.01em", textTransform: "uppercase", color: V.text2,
@@ -1618,7 +1623,7 @@ const PodiumRow = ({ accent, mine, rank, face, name, nation, sub, chip, score, i
     </div>
     {chip}
     <div style={{ flexShrink: 0, textAlign: "right",
-      ...numeric("stat", { fontSize: 30, color: V.text }), ...textGlow(V.blue, 0.7) }}>
+      ...numeric("stat", { fontSize: 27, color: V.text }), ...textGlow(V.blue, 0.7) }}>
       {score}
     </div>
   </div>
