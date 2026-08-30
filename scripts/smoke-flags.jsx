@@ -55,7 +55,7 @@ ok(`all ${DRAWN.length} drawn flags emit valid paths`, badPath === 0);
 // broken image where a flag should be.
 import { existsSync } from "node:fs";
 let missingArt = 0;
-for (const it of [...STATES, ...TERRITORIES]) {
+for (const it of [...STATES, ...TERRITORIES, ...PROVINCES]) {
   const svg = renderToString(<Flag nation={it.code} size={20} />);
   const m = svg.match(/src="([^"]+)"/);
   if (!m) { missingArt++; console.log(`  FAIL  ${it.code} did not render an image`); continue; }
@@ -64,17 +64,7 @@ for (const it of [...STATES, ...TERRITORIES]) {
     console.log(`  FAIL  ${it.code} points at public${m[1]}, which is not there`);
   }
 }
-ok(`all ${STATES.length + TERRITORIES.length} state and territory flags have a file`, missingArt === 0);
-
-// The Canadian provinces have no artwork and no emoji, so they land on the
-// code plate. That is a deliberate state, not a hole: this asserts they render
-// something rather than nothing, so the day artwork arrives the count moves.
-let plateOnly = 0;
-for (const it of PROVINCES) {
-  const svg = renderToString(<Flag nation={it.code} size={20} />);
-  if (!svg || svg.length < 20) { plateOnly++; console.log(`  FAIL  ${it.code} rendered nothing`); }
-}
-ok(`all ${PROVINCES.length} Canadian provinces render`, plateOnly === 0);
+ok(`all ${STATES.length + TERRITORIES.length + PROVINCES.length} subdivision flags have a file`, missingArt === 0);
 
 console.log(`\n  countries ${COUNTRIES.length}, states ${STATES.length}, territories ${TERRITORIES.length}, provinces ${PROVINCES.length}, groups ${GROUPS.length}`);
 console.log(`\n${failed ? "FAILED" : "OK"}  flag picker`);

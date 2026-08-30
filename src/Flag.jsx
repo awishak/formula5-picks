@@ -193,12 +193,17 @@ export default function Flag({ nation, size = 20, wave = false, title }) {
         </span>
       );
     }
-    // States, D.C. and the territories: real artwork, served as a file.
+    // Subdivisions: real artwork, served as a file.
     //
-    // A file rather than a bundled component because a state flag is a seal on
-    // blue. Pennsylvania is 119KB and the 56 together are 2.5MB, which nobody
-    // should download to see one of them. Extracted by scripts/state-flags.mjs.
-    if (/^US-[A-Z]{2}$/.test(want)) {
+    // A file rather than a bundled component because these are seals and
+    // shields on a field. Pennsylvania is 119KB, Prince Edward Island is 466KB,
+    // and the seventy of them are 3.3MB, which nobody should download to see
+    // one of them.
+    //
+    // US states, D.C. and the territories come from scripts/state-flags.mjs.
+    // The thirteen Canadian provinces and territories come from
+    // scripts/ca-flags.mjs, and neither is fetched at run time.
+    if (/^(US|CA)-[A-Z]{2}$/.test(want)) {
       return (
         <span title={label} style={{ display: "inline-block", lineHeight: 0 }}>
           <img src={`/flags/${want.toLowerCase()}.svg`} alt={label}
