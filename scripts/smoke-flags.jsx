@@ -3,7 +3,7 @@
 import { renderToString } from "react-dom/server";
 import FlagPicker, { FlagRow } from "../src/FlagPicker.jsx";
 import Flag from "../src/Flag.jsx";
-import { ALL, GROUPS, COUNTRIES, STATES, TERRITORIES } from "../src/nationList.js";
+import { ALL, GROUPS, COUNTRIES, STATES, TERRITORIES, PROVINCES } from "../src/nationList.js";
 
 let failed = 0;
 const ok = (name, cond) => {
@@ -66,6 +66,16 @@ for (const it of [...STATES, ...TERRITORIES]) {
 }
 ok(`all ${STATES.length + TERRITORIES.length} state and territory flags have a file`, missingArt === 0);
 
-console.log(`\n  countries ${COUNTRIES.length}, states ${STATES.length}, territories ${TERRITORIES.length}, groups ${GROUPS.length}`);
+// The Canadian provinces have no artwork and no emoji, so they land on the
+// code plate. That is a deliberate state, not a hole: this asserts they render
+// something rather than nothing, so the day artwork arrives the count moves.
+let plateOnly = 0;
+for (const it of PROVINCES) {
+  const svg = renderToString(<Flag nation={it.code} size={20} />);
+  if (!svg || svg.length < 20) { plateOnly++; console.log(`  FAIL  ${it.code} rendered nothing`); }
+}
+ok(`all ${PROVINCES.length} Canadian provinces render`, plateOnly === 0);
+
+console.log(`\n  countries ${COUNTRIES.length}, states ${STATES.length}, territories ${TERRITORIES.length}, provinces ${PROVINCES.length}, groups ${GROUPS.length}`);
 console.log(`\n${failed ? "FAILED" : "OK"}  flag picker`);
 process.exit(failed ? 1 : 0);

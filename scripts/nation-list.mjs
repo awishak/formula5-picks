@@ -46,6 +46,17 @@ const STATES = [
   ["WI", "Wisconsin"], ["WY", "Wyoming"],
   ["DC", "Washington, D.C."],
 ];
+// Canada, added 2026-08-29. ISO 3166-2:CA, so the prefix is CA- for the same
+// reason the states carry US-: ON is Ontario here and nothing in ISO 3166-1.
+// Ten provinces and three territories, in the order Canadians list them.
+const PROVINCES = [
+  ["AB", "Alberta"], ["BC", "British Columbia"], ["MB", "Manitoba"],
+  ["NB", "New Brunswick"], ["NL", "Newfoundland and Labrador"],
+  ["NS", "Nova Scotia"], ["ON", "Ontario"], ["PE", "Prince Edward Island"],
+  ["QC", "Quebec"], ["SK", "Saskatchewan"],
+  ["NT", "Northwest Territories"], ["NU", "Nunavut"], ["YT", "Yukon"],
+];
+
 const TERRITORIES = [
   ["PR", "Puerto Rico"], ["GU", "Guam"], ["VI", "U.S. Virgin Islands"],
   ["AS", "American Samoa"], ["MP", "Northern Mariana Islands"],
@@ -71,6 +82,10 @@ export const TERRITORIES = [
 ${TERRITORIES.map(([c, n]) => `  { code: "US-${c}", name: ${JSON.stringify(n)} },`).join("\n")}
 ];
 
+export const PROVINCES = [
+${PROVINCES.map(([c, n]) => `  { code: "CA-${c}", name: ${JSON.stringify(n)} },`).join("\n")}
+];
+
 export const NO_FLAG = { code: "", name: "No flag" };
 
 // One list for the picker, in the order it reads best: nothing, then countries,
@@ -80,11 +95,12 @@ export const GROUPS = [
   { label: "Countries", items: COUNTRIES },
   { label: "US states", items: STATES },
   { label: "US territories", items: TERRITORIES },
+  { label: "Canadian provinces", items: PROVINCES },
 ];
 
-export const ALL = [NO_FLAG, ...COUNTRIES, ...STATES, ...TERRITORIES];
+export const ALL = [NO_FLAG, ...COUNTRIES, ...STATES, ...TERRITORIES, ...PROVINCES];
 export const NAME_OF = Object.fromEntries(ALL.map(x => [x.code, x.name]));
 `;
 
 writeFileSync("src/nationList.js", out);
-console.log(`countries ${countries.length}, states ${STATES.length}, territories ${TERRITORIES.length}, total ${countries.length + STATES.length + TERRITORIES.length + 1}`);
+console.log(`countries ${countries.length}, states ${STATES.length}, territories ${TERRITORIES.length}, provinces ${PROVINCES.length}, total ${countries.length + STATES.length + TERRITORIES.length + PROVINCES.length + 1}`);

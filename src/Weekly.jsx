@@ -1648,8 +1648,8 @@ const ASK = [
 // this says what you are looking at.
 const CHART_NOTE = [
   "",
-  "Four players, then two teams. Shared drivers cancel out, and then the pit lane settles it.",
-  "Both pools, split by the rule, each in the order they finished.",
+  "Four players, then two teams. Shared drivers cancel out.",
+  "Both pools, in the order they finished.",
 ];
 
 function CardRace({ d, stage = 0 }) {
@@ -1796,14 +1796,14 @@ function CardRace({ d, stage = 0 }) {
             <>
               <Line color={teamBeat >= BEAT_STOP ? V.text : V.text2}>
                 {teamBeat < BEAT_GUESSES
-                  ? "The needle and the weekly bonus are yours, not your team's. They come off here, which is why these numbers are smaller than the ones you just saw."
+                  ? "Drivers only. The needle and the weekly bonus are yours, not the team's."
                   : teamBeat < BEAT_LINE
-                  ? "All four of you guessed the pit stop."
+                  ? "All four guesses."
                   : teamBeat < BEAT_STOP
-                  ? `The line sits on the average of the four, ${one(M.line)}.`
+                  ? `The line, ${one(M.line)}.`
                   : M.myBB > 0
-                  ? `The stop came in at ${M.pit}, above the line. Your side takes five and theirs drops one.`
-                  : `The stop came in at ${M.pit}, below the line. Their side takes five and yours drops one.`}
+                  ? `The stop, ${M.pit}. Five to you, one off them.`
+                  : `The stop, ${M.pit}. Five to them, one off you.`}
               </Line>
             </>
           )}
@@ -2235,15 +2235,11 @@ const SEASON_LINES = [
     fact: "Your team won the matchup by winning the BOX BOX line.", lines: [
     "That's the team game, and it takes both of you pulling the same way.",
     "Six points for putting the team ahead of your own needle.",
-    "The line sits on the average of all four numbers, and your two pushed the average your way.",
     "Take BOX BOX out and you lose that one.",
     "That's a pit wall call, and both of you made the call.",
-    "Somebody gave up needle points to move the line. That's how the line is won.",
   ] },
   { k: "bbLost", when: f => f.bbDecided && f.lost,
     fact: "Your team lost the matchup on the BOX BOX line.", lines: [
-    "Their two numbers moved the average further than yours did.",
-    "The other pair gave up more of their own needle to move the line.",
     "Six points, and they played the line harder. That's the trade.",
     "Take BOX BOX out and you win that one.",
     "Their pit wall made the better call this week.",
@@ -3057,10 +3053,12 @@ function CardNext({ d, onPicks, onExit }) {
       </button>
 
       {d.player.id && (
-        <div style={{ width: "100%", display: "grid", gap: 8 }}>
+        <div style={{ ...vcard({ padding: 14, width: "100%" }), ...edgeGlow(V.green, 0.6),
+          display: "grid", gap: 10 }}>
+          <div style={{ ...label({ fontSize: 12, color: V.green }) }}>CHOOSE YOUR FLAG</div>
           <Line color={V.text2}>
-            {chosen ? "Your flag flies over the podium and beside your name."
-              : "One more thing. Pick the flag that flies beside your name."}
+            You have the opportunity to choose the flag that flies next to your
+            name. All countries, US states and Canadian provinces available.
           </Line>
           <FlagRow cap="YOUR FLAG" who={d.player.name} nation={nation}
             disabled={saving} onOpen={() => setPicking(true)}
@@ -3075,17 +3073,17 @@ function CardNext({ d, onPicks, onExit }) {
         </div>
       )}
 
-      <div style={{ ...vcard({ padding: 14, width: "100%" }), ...edgeGlow(V.pink, 0.6),
+      <div style={{ ...vcard({ padding: 14, width: "100%" }), ...edgeGlow(V.blue, 0.6),
         position: "relative", overflow: "hidden", display: "grid", gap: 10,
         justifyItems: "center", textAlign: "center" }}>
         <span className="v-sweep" aria-hidden="true" style={{ position: "absolute",
           top: 0, bottom: 0, width: 90, pointerEvents: "none",
-          background: `linear-gradient(100deg, transparent, ${V.pink}22, transparent)` }} />
+          background: `linear-gradient(100deg, transparent, ${V.blue}22, transparent)` }} />
         <div style={{ ...label({ fontSize: 11, color: V.text3 }) }}>ADVERTISEMENT</div>
         <button onClick={c.poolReady ? onPicks : onExit} style={{
           background: "none", border: "none", padding: 0, cursor: "pointer",
           display: "grid", gap: 6, justifyItems: "center" }}>
-          <span style={{ ...display("h2", { fontSize: 24 }), ...textGlow(V.pink, 0.8) }}>
+          <span style={{ ...display("h2", { fontSize: 24 }), ...textGlow(V.blue, 0.8) }}>
             BUY VELVET THUNDER NOW
           </span>
           <span style={{ ...body("bodySm", { fontSize: 14, color: V.text2 }) }}>
@@ -3093,10 +3091,10 @@ function CardNext({ d, onPicks, onExit }) {
           </span>
         </button>
         <a href={THEME_SRC} download="velvet-thunder.mp3" style={{
-          ...display("h3", { fontSize: 15, color: V.bg }), background: V.pink,
+          ...display("h3", { fontSize: 15, color: V.bg }), background: V.blue,
           borderRadius: 999, padding: "11px 26px", textDecoration: "none",
-          boxShadow: `0 0 18px ${V.pink}77`,
-        }}>DOWNLOAD THE SONG</a>
+          boxShadow: `0 0 18px ${V.blue}77`,
+        }}>DOWNLOAD THE SONG FOR FREE</a>
       </div>
 
       {picking && (

@@ -339,6 +339,22 @@ export const TERRITORIES = [
   { code: "US-MP", name: "Northern Mariana Islands" },
 ];
 
+export const PROVINCES = [
+  { code: "CA-AB", name: "Alberta" },
+  { code: "CA-BC", name: "British Columbia" },
+  { code: "CA-MB", name: "Manitoba" },
+  { code: "CA-NB", name: "New Brunswick" },
+  { code: "CA-NL", name: "Newfoundland and Labrador" },
+  { code: "CA-NS", name: "Nova Scotia" },
+  { code: "CA-ON", name: "Ontario" },
+  { code: "CA-PE", name: "Prince Edward Island" },
+  { code: "CA-QC", name: "Quebec" },
+  { code: "CA-SK", name: "Saskatchewan" },
+  { code: "CA-NT", name: "Northwest Territories" },
+  { code: "CA-NU", name: "Nunavut" },
+  { code: "CA-YT", name: "Yukon" },
+];
+
 export const NO_FLAG = { code: "", name: "No flag" };
 
 // One list for the picker, in the order it reads best: nothing, then countries,
@@ -348,7 +364,8 @@ export const GROUPS = [
   { label: "Countries", items: COUNTRIES },
   { label: "US states", items: STATES },
   { label: "US territories", items: TERRITORIES },
+  { label: "Canadian provinces", items: PROVINCES },
 ];
 
-export const ALL = [NO_FLAG, ...COUNTRIES, ...STATES, ...TERRITORIES];
+export const ALL = [NO_FLAG, ...COUNTRIES, ...STATES, ...TERRITORIES, ...PROVINCES];
 export const NAME_OF = Object.fromEntries(ALL.map(x => [x.code, x.name]));
