@@ -1036,6 +1036,18 @@ export default function App() {
   // With no signed-in player it falls through to WelcomeScreen below, and once a
   // name is picked this branch catches the re-render and opens the deck. So a
   // cold visit to /deck is: pick your name, then your recap.
+  // A Vegas page paints its own ground past the 480px wrap, so the body has to
+  // match or a light strip shows down both sides.
+  //
+  // ABOVE THE EARLY RETURNS, like every other hook here. Below them it renders
+  // on a normal page and not on the deck, so tapping into the deck drops a hook
+  // and React throws #300. That is the second time this exact bug has shipped.
+  useEffect(() => {
+    const dark = VEGAS_PAGES.has(activePage);
+    document.body.classList.toggle("v-dark", dark);
+    return () => document.body.classList.remove("v-dark");
+  }, [activePage]);
+
   // The weekly deck, at /week. Same overrides as /deck: ?player= looks at
   // somebody else's week, ?card= opens on a card so every one can be
   // screenshotted, and ?round= goes back to an earlier week.
@@ -1151,10 +1163,6 @@ export default function App() {
   );
 
   const onVegas = VEGAS_PAGES.has(activePage);
-  useEffect(() => {
-    document.body.classList.toggle("v-dark", onVegas);
-    return () => document.body.classList.remove("v-dark");
-  }, [onVegas]);
 
 
 
