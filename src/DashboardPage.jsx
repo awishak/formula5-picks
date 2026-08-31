@@ -417,16 +417,13 @@ function PodiumRuns({ rows, meId }) {
 // The track runs the whole input, floor to ceiling. The bar is the range that
 // team's guesses cover and the tick is their average, so a team that lives at
 // one end reads as a bar pinned to that end rather than as a number.
-function EdgeTable({ rows, myTeamId }) {
+function EdgeTable({ rows, myTeamId, summary }) {
   if (!rows.length) return null;
-  const span = PIT_CEIL - PIT_FLOOR;
-  const at = v => ((v - PIT_FLOOR) / span) * 100;
-  const COLS = "1fr 52px 52px 168px 58px";
-  const Dot = ({ v, color }) => (
-    <span style={{ position: "absolute", top: "50%", left: `${at(v)}%`,
-      width: 10, height: 10, marginTop: -5, marginLeft: -5, borderRadius: "50%",
-      background: color, boxShadow: `0 0 6px ${color}` }} />
-  );
+  // The track that used to sit between the two averages said the same thing as
+  // the spread column beside it, and it was 168px of a 400px panel. The names
+  // took that width: a team is who they are called, not an abbreviation.
+  const COLS = "1fr 44px 44px 50px 54px";
+  const pctColor = p => (p == null ? V.text3 : p >= 0.6 ? V.green : p <= 0.4 ? V.pink : V.text);
   return (
     <div style={{ display: "grid", gap: 4 }}>
       <div style={{ display: "grid", gridTemplateColumns: COLS, gap: 8,
@@ -434,45 +431,33 @@ function EdgeTable({ rows, myTeamId }) {
         <span>TEAM</span>
         <span style={{ textAlign: "right", color: V.blue }}>OVER</span>
         <span style={{ textAlign: "right", color: V.amber }}>UNDER</span>
-        <span style={{ textAlign: "center" }}>{PIT_FLOOR} &ndash; {PIT_CEIL}</span>
         <span style={{ textAlign: "right" }}>SPREAD</span>
+        <span style={{ textAlign: "right" }}>LINE</span>
       </div>
       {rows.map(r => {
-        const both = r.over != null && r.under != null;
-        // Pink is a team guessing high on the over and low on the under,
-        // which lifts the line they need dragged down. Everything else is a
-        // measurement, so it takes the score colour rather than a verdict.
         const dir = r.spread == null ? V.text3 : r.spread > 0 ? V.blue : V.pink;
-        const lo = both ? Math.min(r.over, r.under) : null;
-        const hi = both ? Math.max(r.over, r.under) : null;
         return (
           <div key={r.id} style={{ display: "grid", gridTemplateColumns: COLS,
             gap: 8, alignItems: "center", padding: "4px 0" }}>
-            <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
+            <span title={r.name} style={{ fontFamily: FD, fontWeight: 600, fontSize: 14,
               color: r.id === myTeamId ? V.blue : V.text, minWidth: 0,
               whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {shortOf(r.name)}
+              {r.name}
             </span>
-            <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right",
+            <span style={{ ...numeric("chip"), fontSize: 16, textAlign: "right",
               color: r.over == null ? V.text3 : V.blue }}>
               {r.over == null ? "\u2014" : r.over.toFixed(2)}
             </span>
-            <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right",
+            <span style={{ ...numeric("chip"), fontSize: 16, textAlign: "right",
               color: r.under == null ? V.text3 : V.amber }}>
               {r.under == null ? "\u2014" : r.under.toFixed(2)}
             </span>
-            <span style={{ position: "relative", height: 14, borderRadius: 7,
-              background: V.bg4 }}>
-              {both && (
-                <span style={{ position: "absolute", top: 5, bottom: 5,
-                  left: `${at(lo)}%`, width: `${Math.max(1, at(hi) - at(lo))}%`,
-                  background: `${dir}66`, borderRadius: 2 }} />
-              )}
-              {r.over != null && <Dot v={r.over} color={V.blue} />}
-              {r.under != null && <Dot v={r.under} color={V.amber} />}
-            </span>
-            <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right", color: dir }}>
+            <span style={{ ...numeric("chip"), fontSize: 16, textAlign: "right", color: dir }}>
               {r.spread == null ? "\u2014" : `${r.spread > 0 ? "+" : ""}${r.spread.toFixed(2)}`}
+            </span>
+            <span style={{ ...numeric("chip"), fontSize: 16, textAlign: "right",
+              color: pctColor(r.pct) }}>
+              {r.won + r.lost ? `${r.won}\u2013${r.lost}` : "\u2014"}
             </span>
           </div>
         );
@@ -481,11 +466,24 @@ function EdgeTable({ rows, myTeamId }) {
         The line is the average of all four guesses in a matchup, so a guess is
         a lever on it as well as your own Needle score. On the OVER you guess
         low to drag the line under the real stop; on the UNDER you guess high.
-        These are a team&rsquo;s average guess in each seat, and the spread
-        between them is how hard they play it. A negative spread, in pink, is a
-        team playing its own seat backwards. The round in progress is left out
-        until its deadline has gone. The input floor is {PIT_FLOOR} and the
-        ceiling is {PIT_CEIL}, which was {PIT_CEIL - 0.5} until round 11.
+        These are a team&rsquo;s average guess in each seat, the spread between
+        them is how hard they play it, and LINE is their BOX BOX record.
+        {summary && summary.hard != null && summary.soft != null && (
+          <>
+            {" "}
+            <strong style={{ color: V.text2 }}>
+              It is worth doing: the {summary.n} teams with the widest spread win{" "}
+              {Math.round(summary.hard * 100)}% of their lines, the {summary.n} tightest{" "}
+              {Math.round(summary.soft * 100)}%.
+            </strong>{" "}
+            It is not the whole story, though, and the table has both a team
+            playing it hard and losing and a team barely playing it and winning.
+          </>
+        )}{" "}
+        A negative spread, in pink, would be a team playing its own seat
+        backwards. The round in progress is left out until its deadline has
+        gone. The input floor is {PIT_FLOOR} and the ceiling is {PIT_CEIL},
+        which was {PIT_CEIL - 0.5} until round 11.
       </p>
     </div>
   );
@@ -734,19 +732,52 @@ export default function DashboardPage({ currentUser, onNavigate }) {
         // plays. A team that guesses the same number whatever seat it is in
         // has a spread of nothing, and a negative spread is a team playing its
         // own line backwards.
+        // Whether they won the line, which is the thing the guessing is for.
+        // pit_matchup_pts is +5 to the winner and -1 to the loser, and only one
+        // of a team's two players carries it: the teammate row is 0. So the
+        // pair is summed rather than read off whichever row arrives first.
+        const boxOf = {};
+        scores.forEach(x => {
+          const t = teamOfPlayer[x.player_id];
+          if (!t || !settled.has(x.race_id)) return;
+          const k = `${t.id}_${x.race_id}`;
+          boxOf[k] = (boxOf[k] || 0) + (Number(x.pit_matchup_pts) || 0);
+        });
+        const lineRec = {};
+        Object.entries(boxOf).forEach(([k, v]) => {
+          const id = k.slice(0, k.lastIndexOf("_"));
+          const r = lineRec[id] = lineRec[id] || { won: 0, lost: 0 };
+          if (v > 0) r.won++; else if (v < 0) r.lost++;
+        });
         const edges = Object.values(guessesByTeam).map(({ team, over, under }) => {
           const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
           const o = over.length ? avg(over) : null;
           const u = under.length ? avg(under) : null;
           const r2 = v => (v == null ? null : Math.round(v * 100) / 100);
+          const rec = lineRec[team.id] || { won: 0, lost: 0 };
+          const played = rec.won + rec.lost;
           return {
             id: team.id, name: team.name,
             over: r2(o), under: r2(u), nOver: over.length, nUnder: under.length,
             spread: o != null && u != null ? Math.round((u - o) * 100) / 100 : null,
+            won: rec.won, lost: rec.lost, pct: played ? rec.won / played : null,
           };
         }).sort((a, b) =>
           (b.spread == null ? -Infinity : b.spread) - (a.spread == null ? -Infinity : a.spread)
           || a.name.localeCompare(b.name));
+        // Does playing it hard actually win it? Split the table down the middle
+        // on spread and compare how often each half takes the line. Computed
+        // rather than written down, so it stays true as rounds are added.
+        const ranked = edges.filter(e => e.spread != null && e.pct != null);
+        const halfAt = Math.floor(ranked.length / 2);
+        const rate = list => (list.length
+          ? list.reduce((a, b) => a + b.won, 0)
+            / list.reduce((a, b) => a + b.won + b.lost, 0) : null);
+        const edgeSummary = halfAt ? {
+          hard: rate(ranked.slice(0, halfAt)),
+          soft: rate(ranked.slice(-halfAt)),
+          n: halfAt,
+        } : null;
 
         // The podium of every round so far. Ties break on name, the same way
         // every other order in this app does: Postgres heap order is not
@@ -785,7 +816,7 @@ export default function DashboardPage({ currentUser, onNavigate }) {
           byId: Object.fromEntries(half.map(r => [r.id, r])),
           myTeamId: myTeam ? myTeam.id : null,
           players: pt, place: placesBy(pt, r => r.avg), meId: me ? me.id : null, pickState,
-          drivers, luck, podiums, drivers2, power, edges,
+          drivers, luck, podiums, drivers2, power, edges, edgeSummary,
           week: {
             me: currentUser, teammate: mateId ? (players.find(p => p.id === mateId) || {}).name : null,
             race: { round: race.round, name: race.race_name, deadline: race.pick_deadline,
@@ -833,7 +864,7 @@ export default function DashboardPage({ currentUser, onNavigate }) {
     podiums: { title: "The podium, race by race", accent: V.gold,
       body: <PodiumRuns rows={s.podiums} meId={s.meId} /> },
     edges: { title: "Who plays the line hardest", accent: V.pink,
-      body: <EdgeTable rows={s.edges} myTeamId={s.myTeamId} /> },
+      body: <EdgeTable rows={s.edges} myTeamId={s.myTeamId} summary={s.edgeSummary} /> },
     allplay: { title: "All-play and schedule luck", accent: V.amber,
       body: <AllPlayTable rows={s.luck} myTeamId={s.myTeamId} /> },
     value: { title: "What a driver has been worth", accent: V.blue,
