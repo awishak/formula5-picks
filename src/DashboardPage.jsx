@@ -35,16 +35,24 @@ const Panel = ({ id, title, accent = V.blue, children, style, folded, onFold,
     style={{ ...card({ padding: 16 }), display: "flex", flexDirection: "column",
       minWidth: 0, opacity: dragging ? 0.4 : 1,
       cursor: id ? "grab" : undefined, ...style }}>
-    <div style={{ display: "flex", alignItems: "center", gap: 8,
-      marginBottom: folded ? 0 : 12 }}>
+    {/* The whole heading opens the panel, not just the button. A dashboard of
+        closed panels is a page made of controls, and a 15px glyph in the
+        corner is a control the reader has to find. Dragging still works: a
+        drag is not a click. */}
+    <div onClick={onFold ? () => onFold(id) : undefined}
+      style={{ display: "flex", alignItems: "center", gap: 8,
+        cursor: onFold ? "pointer" : undefined, marginBottom: folded ? 0 : 12 }}>
       <span style={{ width: 10, height: 10, borderRadius: 5, background: accent, flexShrink: 0 }} />
       <h2 style={{ fontFamily: FD, fontWeight: 700, fontSize: 16, letterSpacing: "0.08em",
         textTransform: "uppercase", color: accent, margin: 0, flex: 1, minWidth: 0 }}>{title}</h2>
       {onFold && (
-        <button onClick={() => onFold(id)} aria-label={folded ? "Open" : "Fold away"}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 6px",
-            color: V.text3, fontSize: 15, lineHeight: 1, fontFamily: FB }}>
-          {folded ? "+" : "\u2013"}
+        <button onClick={e => { e.stopPropagation(); onFold(id); }}
+          aria-expanded={!folded}
+          style={{ ...label({ fontSize: 11, color: folded ? accent : V.text3 }),
+            background: "transparent", flexShrink: 0,
+            border: `1px solid ${folded ? accent : V.border}`, borderRadius: 999,
+            padding: "5px 12px", cursor: "pointer" }}>
+          {folded ? "EXPAND" : "CLOSE"}
         </button>
       )}
     </div>
@@ -413,41 +421,71 @@ function EdgeTable({ rows, myTeamId }) {
   if (!rows.length) return null;
   const span = PIT_CEIL - PIT_FLOOR;
   const at = v => ((v - PIT_FLOOR) / span) * 100;
+  const COLS = "1fr 52px 52px 168px 58px";
+  const Dot = ({ v, color }) => (
+    <span style={{ position: "absolute", top: "50%", left: `${at(v)}%`,
+      width: 10, height: 10, marginTop: -5, marginLeft: -5, borderRadius: "50%",
+      background: color, boxShadow: `0 0 6px ${color}` }} />
+  );
   return (
     <div style={{ display: "grid", gap: 4 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 150px 62px", gap: 8,
+      <div style={{ display: "grid", gridTemplateColumns: COLS, gap: 8,
         ...label({ fontSize: 12, color: V.text3 }), paddingBottom: 2 }}>
         <span>TEAM</span>
+        <span style={{ textAlign: "right", color: V.blue }}>OVER</span>
+        <span style={{ textAlign: "right", color: V.amber }}>UNDER</span>
         <span style={{ textAlign: "center" }}>{PIT_FLOOR} &ndash; {PIT_CEIL}</span>
-        <span style={{ textAlign: "right" }}>AT THE END</span>
+        <span style={{ textAlign: "right" }}>SPREAD</span>
       </div>
-      {rows.map(r => (
-        <div key={r.id} style={{ display: "grid", gridTemplateColumns: "1fr 150px 62px",
-          gap: 8, alignItems: "center", padding: "4px 0" }}>
-          <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
-            color: r.id === myTeamId ? V.blue : V.text, minWidth: 0,
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {shortOf(r.name)}
-          </span>
-          <span style={{ position: "relative", height: 14, borderRadius: 7,
-            background: V.bg4, overflow: "hidden" }}>
-            <span style={{ position: "absolute", top: 0, bottom: 0,
-              left: `${at(r.lo)}%`, width: `${Math.max(2, at(r.hi) - at(r.lo))}%`,
-              background: `${V.blue}55`, borderRadius: 7 }} />
-            <span style={{ position: "absolute", top: 1, bottom: 1, width: 2,
-              left: `${at(r.mean)}%`, background: V.blue }} />
-          </span>
-          <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right",
-            color: r.edgeCount ? V.amber : V.text3 }}>
-            {r.edgeCount}
-          </span>
-        </div>
-      ))}
+      {rows.map(r => {
+        const both = r.over != null && r.under != null;
+        // Pink is a team guessing high on the over and low on the under,
+        // which lifts the line they need dragged down. Everything else is a
+        // measurement, so it takes the score colour rather than a verdict.
+        const dir = r.spread == null ? V.text3 : r.spread > 0 ? V.blue : V.pink;
+        const lo = both ? Math.min(r.over, r.under) : null;
+        const hi = both ? Math.max(r.over, r.under) : null;
+        return (
+          <div key={r.id} style={{ display: "grid", gridTemplateColumns: COLS,
+            gap: 8, alignItems: "center", padding: "4px 0" }}>
+            <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15,
+              color: r.id === myTeamId ? V.blue : V.text, minWidth: 0,
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {shortOf(r.name)}
+            </span>
+            <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right",
+              color: r.over == null ? V.text3 : V.blue }}>
+              {r.over == null ? "\u2014" : r.over.toFixed(2)}
+            </span>
+            <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right",
+              color: r.under == null ? V.text3 : V.amber }}>
+              {r.under == null ? "\u2014" : r.under.toFixed(2)}
+            </span>
+            <span style={{ position: "relative", height: 14, borderRadius: 7,
+              background: V.bg4 }}>
+              {both && (
+                <span style={{ position: "absolute", top: 5, bottom: 5,
+                  left: `${at(lo)}%`, width: `${Math.max(1, at(hi) - at(lo))}%`,
+                  background: `${dir}66`, borderRadius: 2 }} />
+              )}
+              {r.over != null && <Dot v={r.over} color={V.blue} />}
+              {r.under != null && <Dot v={r.under} color={V.amber} />}
+            </span>
+            <span style={{ ...numeric("chip"), fontSize: 17, textAlign: "right", color: dir }}>
+              {r.spread == null ? "\u2014" : `${r.spread > 0 ? "+" : ""}${r.spread.toFixed(2)}`}
+            </span>
+          </div>
+        );
+      })}
       <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, marginTop: 8 }}>
-        The bar is every guess that team has made, end to end, and the tick is
-        their average. The last column counts guesses within a fifth of a second
-        of {PIT_FLOOR} or {PIT_CEIL}. The ceiling was {PIT_CEIL - 0.5} until round 11,
-        so the top end is short in the early rounds.
+        The line is the average of all four guesses in a matchup, so a guess is
+        a lever on it as well as your own Needle score. On the OVER you guess
+        low to drag the line under the real stop; on the UNDER you guess high.
+        These are a team&rsquo;s average guess in each seat, and the spread
+        between them is how hard they play it. A negative spread, in pink, is a
+        team playing its own seat backwards. The round in progress is left out
+        until its deadline has gone. The input floor is {PIT_FLOOR} and the
+        ceiling is {PIT_CEIL}, which was {PIT_CEIL - 0.5} until round 11.
       </p>
     </div>
   );
@@ -459,7 +497,7 @@ const DEFAULT_LAYOUT = [
   ["championship", "second", "allplay", "drivers", "pits"],
   ["players", "power", "edges", "value"],
 ];
-const STORE = "f5_dash_layout";
+const STORE = "f5_dash_layout2";
 
 export default function DashboardPage({ currentUser, onNavigate }) {
   const [s, setS] = useState({ loading: true });
@@ -467,7 +505,9 @@ export default function DashboardPage({ currentUser, onNavigate }) {
   // before a panel existed would silently hide the new one, so anything missing
   // is appended rather than dropped.
   const [layout, setLayout] = useState(DEFAULT_LAYOUT);
-  const [folded, setFolded] = useState([]);
+  // Closed to start, all of them. The dashboard is a dozen panels deep and
+  // opening on all of it is a wall; the headings are the menu.
+  const [folded, setFolded] = useState(() => DEFAULT_LAYOUT.flat());
   const [drag, setDrag] = useState(null);
   const [dirty, setDirty] = useState(false);
 
@@ -480,7 +520,7 @@ export default function DashboardPage({ currentUser, onNavigate }) {
       const next = saved.layout.map(c => c.filter(Boolean));
       if (missing.length) next[next.length - 1].push(...missing);
       setLayout(next);
-      setFolded(saved.folded || []);
+      setFolded([...(saved.folded || []), ...missing]);
       setDirty(true);
     } catch (e) {}
   }, []);
@@ -658,35 +698,55 @@ export default function DashboardPage({ currentUser, onNavigate }) {
         teams.forEach(t => {
           [t.player1_id, t.player2_id].forEach(id => { if (id) teamOfPlayer[id] = t; });
         });
+        // Which seat a team took in a round. home_team_id IS the OVER seat, in
+        // both halves, and it carries no other meaning.
+        const sideOf = {};
+        schedule.forEach(m => {
+          if (m.home_team_id) sideOf[`${m.home_team_id}_${m.race_id}`] = "over";
+          if (m.away_team_id) sideOf[`${m.away_team_id}_${m.race_id}`] = "under";
+        });
+        // A round whose window is still open is left out. Averaging this
+        // week's guesses in would put live picks on a page the whole league can
+        // read, which is the same reason ownership and the Needle spread are
+        // not on here until the deadline has gone.
+        const settled = new Set(races
+          .filter(r => r.pick_deadline && new Date(r.pick_deadline) <= new Date())
+          .map(r => r.id));
         const guessRows = (await supabase.from("picks")
           .select("player_id,race_id,pit_guess")).data || [];
         const guessesByTeam = {};
         guessRows.forEach(g => {
           const v = g.pit_guess == null ? null : Number(g.pit_guess);
           if (v == null || isNaN(v)) return;
+          if (!settled.has(g.race_id)) return;
           const t = teamOfPlayer[g.player_id];
           if (!t) return;
-          (guessesByTeam[t.id] = guessesByTeam[t.id] || { team: t, list: [] }).list.push(v);
+          const side = sideOf[`${t.id}_${g.race_id}`];
+          if (!side) return; // a pick in a round the team had no fixture for
+          const e = guessesByTeam[t.id] = guessesByTeam[t.id]
+            || { team: t, over: [], under: [] };
+          e[side].push(v);
         });
-        // Within a fifth of a second of either end is "at the edge". That is
-        // closer than anybody guesses by accident.
-        const EDGE = 0.2;
-        const edges = Object.values(guessesByTeam).map(({ team, list }) => {
-          const lo = Math.min(...list), hi = Math.max(...list);
-          const atFloor = list.filter(v => v <= PIT_FLOOR + EDGE).length;
-          const atCeil = list.filter(v => v >= PIT_CEIL - EDGE).length;
-          // How far the average guess sits from the nearer end. Small means a
-          // team lives at the edges; the middle of the range is 1.5 away.
-          const mean = list.reduce((a, b) => a + b, 0) / list.length;
-          const toEdge = Math.min(mean - PIT_FLOOR, PIT_CEIL - mean);
+        // Playing the line is guessing against your own seat. On the OVER you
+        // guess low, to drag the average the real stop has to beat down under
+        // it; on the UNDER you guess high. So the two averages should sit apart
+        // and in that order, and the distance between them is how hard a team
+        // plays. A team that guesses the same number whatever seat it is in
+        // has a spread of nothing, and a negative spread is a team playing its
+        // own line backwards.
+        const edges = Object.values(guessesByTeam).map(({ team, over, under }) => {
+          const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+          const o = over.length ? avg(over) : null;
+          const u = under.length ? avg(under) : null;
+          const r2 = v => (v == null ? null : Math.round(v * 100) / 100);
           return {
-            id: team.id, name: team.name, n: list.length,
-            lo: Math.round(lo * 100) / 100, hi: Math.round(hi * 100) / 100,
-            mean: Math.round(mean * 100) / 100,
-            atFloor, atCeil, edgeCount: atFloor + atCeil,
-            toEdge: Math.round(toEdge * 100) / 100,
+            id: team.id, name: team.name,
+            over: r2(o), under: r2(u), nOver: over.length, nUnder: under.length,
+            spread: o != null && u != null ? Math.round((u - o) * 100) / 100 : null,
           };
-        }).sort((a, b) => b.edgeCount - a.edgeCount || a.toEdge - b.toEdge);
+        }).sort((a, b) =>
+          (b.spread == null ? -Infinity : b.spread) - (a.spread == null ? -Infinity : a.spread)
+          || a.name.localeCompare(b.name));
 
         // The podium of every round so far. Ties break on name, the same way
         // every other order in this app does: Postgres heap order is not
@@ -822,9 +882,9 @@ export default function DashboardPage({ currentUser, onNavigate }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
           gap: 12, marginBottom: 12 }}>
           <span style={{ ...body("bodySm"), color: V.text3 }}>
-            Drag a panel by its heading to move it. The minus folds one away.
+            Everything starts closed. Tap a heading to open it, and drag one to move it.
           </span>
-          {(dirty || folded.length) ? (
+          {dirty ? (
             <button onClick={reset} style={{ ...label({ fontSize: 11, color: V.blue }),
               background: "transparent", border: `1px solid ${V.blue}`, borderRadius: 999,
               padding: "6px 13px", cursor: "pointer" }}>RESET LAYOUT</button>
