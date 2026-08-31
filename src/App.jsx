@@ -1068,7 +1068,7 @@ export default function App() {
         round={Number.isFinite(roundParam) ? roundParam : null}
         initialCard={card}
         initialStage={Number.isFinite(stageParam) ? Math.max(0, stageParam - 1) : 0}
-        onPicks={() => { window.history.replaceState(null, "", "/picks"); navigateTo("picks"); }}
+        onPicks={() => { window.history.replaceState(null, "", "/"); navigateTo("vegas"); }}
         onExit={() => { window.history.replaceState(null, "", "/"); navigateTo("home"); }}
       />
     );
@@ -1091,7 +1091,7 @@ export default function App() {
         initialStory={Number.isFinite(storyParam) ? Math.max(0, storyParam - 1) : null}
         initialFrame={Number.isFinite(frameParam) ? Math.max(0, frameParam - 1) : 0}
         initialMode={q.get("mode") === "reel" || Number.isFinite(frameParam) ? "reel" : "front"}
-        onPicks={() => { window.history.replaceState(null, "", "/picks"); navigateTo("picks"); }}
+        onPicks={() => { window.history.replaceState(null, "", "/"); navigateTo("vegas"); }}
         onExit={() => { window.history.replaceState(null, "", "/"); navigateTo("home"); }}
       />
     );
@@ -1152,8 +1152,8 @@ export default function App() {
       onPicks={() => {
         try { localStorage.setItem(weekKey, "1"); } catch (e) {}
         setWeekSeen(true);
-        window.history.replaceState(null, "", "/picks");
-        navigateTo("picks");
+        window.history.replaceState(null, "", "/");
+        navigateTo("vegas");
       }}
       onExit={() => {
         try { localStorage.setItem(weekKey, "1"); } catch (e) {}

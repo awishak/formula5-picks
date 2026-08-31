@@ -17,20 +17,32 @@ const BASE = process.env.F5_BASE || "http://localhost:5173";
 const PLAYER = process.argv[2] || "Andrew Ishak";
 
 // Each walk is a list of button labels to tap in order, from a cold "/".
+//
+// `gate: true` leaves the week unseen, so the deck opens over the app the way
+// it does for somebody who has not closed it yet, and the walk taps its way
+// out. That crossing is the whole point of this check: it is where activePage
+// changes without a remount. The walks used to open by tapping a "WEEK IN
+// REVIEW" button that no longer exists, so every one of them missed the gate,
+// logged NOTFOUND, and passed anyway. That is how #300 shipped twice.
 const WALKS = [
-  ["WEEK IN REVIEW"],
-  ["WEEK IN REVIEW", "SKIP"],
-  ["WEEK IN REVIEW", "SKIP", "PLAYERS"],
-  ["PLAYERS", "TEAMS", "MORE", "HOME"],
-  ["TEAMS", "SCHEDULE", "HOME", "WEEK IN REVIEW"],
+  { gate: true, taps: ["SKIP"] },
+  { gate: true, taps: ["SKIP", "PLAYERS"] },
+  { gate: true, taps: ["SKIP", "PLAYERS", "TEAMS", "HOME"] },
+  // Out of the deck by its own button, which lands on the new home.
+  // Card 1 offers the music instead of NEXT, then card 2's three presses and
+  // card 3 before card 4's button, which hands off to the new home.
+  { gate: true, taps: ["CONTINUE WITHOUT", "NEXT", "NEXT", "NEXT", "NEXT", "MAKE YOUR PICKS"] },
+  { taps: ["PLAYERS", "TEAMS", "MORE", "HOME"] },
+  { taps: ["TEAMS", "SCHEDULE", "HOME", "PLAYERS"] },
 ];
 
 const page = walk => `<meta charset="utf-8"><body style="margin:0">
 <iframe id="f" style="width:393px;height:820px;border:0"></iframe>
 <script>
 try{localStorage.setItem("f1_user",${JSON.stringify(PLAYER)});
-localStorage.setItem("f5_week_seen_r12_"+${JSON.stringify(PLAYER)},"1")}catch(e){}
-const steps=${JSON.stringify(walk)};
+for(let r=1;r<40;r++){const k="f5_week_seen_r"+r+"_"+${JSON.stringify(PLAYER)};
+${walk.gate ? "localStorage.removeItem(k)" : 'localStorage.setItem(k,"1")'};}}catch(e){}
+const steps=${JSON.stringify(walk.taps)};
 const f=document.getElementById("f"); f.src="/";
 let i=0;
 const tap=()=>{
@@ -51,7 +63,7 @@ for (const walk of WALKS) {
   let out = "";
   try {
     const r = await run(CHROME, ["--headless=new", "--disable-gpu",
-      `--virtual-time-budget=${5000 + walk.length * 2600}`,
+      `--virtual-time-budget=${5000 + walk.taps.length * 2600}`,
       "--enable-logging=stderr", "--v=0", `${BASE}/__nav.html`],
       // A hard timeout, because --virtual-time-budget alone does not bound
       // this. Chrome holds virtual time while a network fetch is outstanding,
@@ -67,13 +79,14 @@ for (const walk of WALKS) {
 
   const errs = out.split("\n").filter(l => /CONSOLE.*(Uncaught|Error|Rendered (fewer|more) hooks)/i.test(l));
   const notFound = out.split("\n").filter(l => /NOTFOUND/.test(l));
-  const label = walk.join(" -> ");
+  const label = (walk.gate ? "GATE -> " : "") + walk.taps.join(" -> ");
   if (errs.length) {
     failed++;
     console.log(`  FAIL  ${label}`);
     console.log(`        ${errs[0].trim().slice(0, 150)}`);
   } else if (notFound.length) {
-    console.log(`  warn  ${label}  (${notFound[0].trim()})`);
+    failed++;
+    console.log(`  FAIL  ${label}  (${notFound[0].trim()})`);
   } else {
     console.log(`  ok    ${label}`);
   }

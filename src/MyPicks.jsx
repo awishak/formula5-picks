@@ -1479,46 +1479,48 @@ function MyPicksInner({ currentUser, onNavigate }) {
   }
 
   // ── Check if picks window is open ─────────────────────
-  // Opens Tuesday 5pm Pacific of race week
-  // Race date is Sunday (or Saturday for some), so Tuesday = race_date - 5 days (Sun) or - 4 (Sat)
-  // Simplest: find the Tuesday before the race at 5pm Pacific (UTC-7 PDT / UTC-8 PST)
+  // The pool is the signal. Both ways a window opens — the Tuesday cron and
+  // Admin's "draw the pools and open the window" — draw the pools and set
+  // pick_deadline in the same move, so a round holding a pool is a round you
+  // can pick. Closing stays where it was, on the deadline at submit.
+  //
+  // This used to derive its own Tuesday 5pm Pacific from race_date and read
+  // neither column, so a window opened by hand still told everybody picks were
+  // shut until the following Tuesday. That is what people hit on 2026-08-30.
   const picksNotOpenYet = (() => {
     if (submitted) return false; // Already submitted, don't block
-    if (!race.race_date) return false;
     if (race.round === 1 || race.round === 2) return false; // First two races — picks open immediately
-    const raceDate = new Date(race.race_date + "T00:00:00Z");
-    const dayOfWeek = raceDate.getUTCDay(); // 0=Sun, 6=Sat
-    // Days to go back to reach Tuesday (2)
-    let daysBack = dayOfWeek >= 2 ? dayOfWeek - 2 : dayOfWeek + 5;
-    const tuesday = new Date(raceDate);
-    tuesday.setUTCDate(tuesday.getUTCDate() - daysBack);
-    // Tuesday 5pm Pacific = Wed 00:00 UTC (during PDT)
-    const openTime = new Date(tuesday);
-    openTime.setUTCHours(0, 0, 0, 0); // Midnight UTC Wednesday = 5pm PDT Tuesday
-    openTime.setUTCDate(openTime.getUTCDate() + 1); // Move to Wednesday 00:00 UTC
-    return new Date() < openTime;
+    const pooled = (race.top_drivers || []).length > 0 && (race.mid_drivers || []).length > 0;
+    return !pooled;
   })();
 
   if (picksNotOpenYet) {
-    const raceDate = new Date(race.race_date + "T00:00:00Z");
-    const dayOfWeek = raceDate.getUTCDay();
-    let daysBack = dayOfWeek >= 2 ? dayOfWeek - 2 : dayOfWeek + 5;
-    const tuesday = new Date(raceDate);
-    tuesday.setUTCDate(tuesday.getUTCDate() - daysBack);
-    const openTime = new Date(tuesday);
-    openTime.setUTCHours(0, 0, 0, 0);
-    openTime.setUTCDate(openTime.getUTCDate() + 1);
-    const openStr = openTime.toLocaleString(undefined, { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    // The pools are drawn on the Tuesday, so that is the date to name. Only an
+    // estimate: Admin can draw them early, and then this screen is already gone.
+    const openStr = (() => {
+      if (!race.race_date) return null;
+      const raceDate = new Date(race.race_date + "T00:00:00Z");
+      const dayOfWeek = raceDate.getUTCDay();
+      let daysBack = dayOfWeek >= 2 ? dayOfWeek - 2 : dayOfWeek + 5;
+      const tuesday = new Date(raceDate);
+      tuesday.setUTCDate(tuesday.getUTCDate() - daysBack);
+      const openTime = new Date(tuesday);
+      openTime.setUTCHours(0, 0, 0, 0);
+      openTime.setUTCDate(openTime.getUTCDate() + 1);
+      return openTime.toLocaleString(undefined, { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    })();
     const deadlineStr = race.pick_deadline ? new Date(race.pick_deadline).toLocaleString(undefined, { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null;
     return (
       <div style={{ padding: "40px 20px 100px", textAlign: "center" }}>
         <p style={{ fontFamily: FD, fontWeight: 900, fontSize: 20, color: DARK, textTransform: "uppercase", marginBottom: 6 }}>Picks Not Open Yet</p>
         <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, marginBottom: 20 }}>{race.race_name} — Round {race.round}</p>
         <div style={{ background: "#fff", borderRadius: 14, border: `1px solid ${BORDER}`, padding: "16px 20px", maxWidth: 320, margin: "0 auto" }}>
-          <div style={{ marginBottom: 12 }}>
-            <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 4px" }}>Opens</p>
-            <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 14, color: BLUEDARK, margin: 0 }}>{openStr}</p>
-          </div>
+          {openStr && (
+            <div style={{ marginBottom: 12 }}>
+              <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 4px" }}>Opens</p>
+              <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 14, color: BLUEDARK, margin: 0 }}>{openStr}</p>
+            </div>
+          )}
           {deadlineStr && (
             <div>
               <p style={{ fontFamily: FB, fontSize: 10, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 4px" }}>Closes</p>

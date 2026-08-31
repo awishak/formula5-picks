@@ -151,6 +151,20 @@ same DOM node across all four cards so a remount is already ruled out. Headless
 Chrome cannot separate the other two, because a scripted click is not a user
 gesture.
 
+### Where "make your picks" goes
+
+**Changed 2026-08-30.** The deck's card 4, and the gate, hand off to the new
+home at `/`, not to `/picks`. Picks are made on the new home; `/picks` is the
+old light page and it gated on its own clock, telling people the window was
+shut. Anthony Zamary hit that on the Sunday of round 13, with the window open.
+
+**The pool is what says picks are open**, on both pages. The Tuesday cron and
+Admin's "draw the pools and open the window" each draw the pool and set
+`pick_deadline` in one move, so a round holding a pool is a round you can pick.
+MyPicks used to derive its own Tuesday 5pm Pacific out of `race_date` and read
+neither column, so opening a window by hand could not be seen. Closing is
+unchanged: the deadline, checked at submit.
+
 ### Which round /schedule opens on
 
 **Changed 2026-08-28.** `scheduleRace()` in raceTimes.js: a round holds the page
@@ -240,6 +254,14 @@ loading each page in turn proves nothing; the mismatch needs `activePage` to
 change WITHOUT a remount. **`npm run check:nav` taps through the app the way a
 person does** and is the only check that sees this class of bug. Reloading is
 not tapping.
+
+**And it shipped a second time on 2026-08-30**, the same hook in the same file,
+below the same returns. `check:nav` did not catch that one either: its walks
+opened the deck by tapping a "WEEK IN REVIEW" button that no longer existed, so
+each one logged `NOTFOUND`, never crossed the gate, and **warned instead of
+failing**. Fixed both ways on 2026-08-30 — the walks leave the week unseen and
+tap out of the deck itself, and a step that cannot find its button now fails the
+run. A check that cannot fail is not a check.
 
 **Screenshot the deck with `--force-prefers-reduced-motion`.** `Count` animates
 on `requestAnimationFrame`, which headless Chrome's virtual time does not drive,
