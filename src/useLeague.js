@@ -360,10 +360,28 @@ export function useLeague(currentUser, { round = null } = {}) {
           };
         })();
 
+        // The round after this one, once its pool is drawn and while its
+        // deadline is ahead. The result of a race holds the home page until
+        // the Wednesday after it, and the next pool is drawn on the Tuesday,
+        // so for a day the page is about last week while picks for next week
+        // are open. This is what the box on top of the result reads.
+        const next = (() => {
+          const n = races.find(r => r.round === race.round + 1);
+          if (!n || !(n.top_drivers || []).length || !(n.mid_drivers || []).length) return null;
+          if (!n.pick_deadline || n.pick_deadline <= now) return null;
+          return { id: n.id, round: n.round, name: n.race_name, deadline: n.pick_deadline };
+        })();
+        if (next && me) {
+          const mine = (await supabase.from("picks").select("player_id")
+            .eq("race_id", next.id).eq("player_id", me.id)).data || [];
+          next.picked = mine.length > 0;
+        }
+
         if (!alive) return;
         setState({
           loading: false,
           previous,
+          next,
           me: currentUser,
           playerId: me ? me.id : null,
           myTeam: teamShape(myTeamRow),

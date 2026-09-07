@@ -13,7 +13,7 @@ import { V, FD, display, numeric, body, label as labelType, marquee, textGlow, e
 import { supabase } from "./supabaseClient";
 import { useLeague } from "./useLeague";
 import { lockedDemo } from "./lockedDemo";
-import { raceTimePT } from "./raceTimes";
+import { raceTimePT, whenPT } from "./raceTimes";
 import { ordinal } from "./teamTable";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
@@ -56,6 +56,9 @@ const SNAP = {
     date: "2026-07-26", lightsOut: "2026-07-26T13:00:00Z", deadline: "2026-07-25T00:00:00Z",
     pitQuestion: "Alpine's first pit stop",
   },
+  // The round after, with its pool drawn and its deadline ahead. Only the
+  // final state reads it, for the box on top of the result.
+  next: { round: 12, name: "Dutch Grand Prix", deadline: "2026-08-22T00:00:00Z", picked: false },
   // Hungaroring character. This is the "what kind of track is this" answer.
   track: {
     headline: "This track is tight, twisty, and nearly impossible to pass on.",
@@ -785,16 +788,21 @@ function NeedleSides({ side }) {
 // because reading a value off scroll position is unreliable on a phone.
 //
 // The track is padded to half the width at both ends so the first and last
-// options can actually reach the middle. Centring uses scrollIntoView rather
-// than offsetLeft arithmetic, which was measuring against the wrong parent and
-// left the selection hanging off the left edge.
+// options can actually reach the middle. Centring is measured on screen
+// rather than by offsetLeft, which was measuring against the wrong parent and
+// left the selection hanging off the left edge. It scrolls the track and only
+// the track: scrollIntoView did the centring too, but it also pulled the page
+// down until the wheel was in view, so the picks page opened 400px in, at the
+// needle instead of the top.
 function Wheel({ options, value, onChange, format = (v) => v, accent = V.purple, tone, depth = "wheel" }) {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const on = el.querySelector("[data-on='1']");
-    if (on && on.scrollIntoView) on.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    if (!on || !el.scrollBy) return;
+    const r = on.getBoundingClientRect(), e = el.getBoundingClientRect();
+    el.scrollBy({ left: (r.left + r.width / 2) - (e.left + e.width / 2), behavior: "smooth" });
   }, [value]);
 
   const idx = options.indexOf(value);
@@ -1793,6 +1801,50 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
 
 
 
+// ── Next week's picks, on top of this week's result ──────
+//
+// The result holds the home page until the Wednesday after the race, and the
+// next pool is drawn on the Tuesday, so for a day the page is about a round
+// that has been run while picks for the next one are open. This is the way
+// through: one box, the whole of it a button, above the sign for the race
+// that was. Pink until your picks are in, because pink is needs attention and
+// it is the same colour the middle nav light shows for the same fact; green
+// once they are, and then it says so and offers the way back to change them.
+function NextPicks({ next, onOpen }) {
+  const [hot, setHot] = useState(false);
+  if (!next) return null;
+  const c = next.picked ? V.green : V.pink;
+  return (
+    <button
+      onClick={onOpen}
+      onMouseEnter={() => setHot(true)} onMouseLeave={() => setHot(false)}
+      className={next.picked ? undefined : "v-flicker"}
+      style={{
+        width: "100%", cursor: "pointer", textAlign: "center",
+        background: hot ? `${c}1f` : `${c}12`,
+        borderRadius: 14, padding: "16px 20px 15px", marginBottom: 18,
+        ...edgeGlow(c, hot ? 1.5 : 1),
+        transition: "background 160ms, box-shadow 160ms",
+      }}
+    >
+      <p style={{ ...display("chip"), fontSize: 13, color: c, margin: 0,
+                  textTransform: "uppercase", letterSpacing: "0.1em" }}>
+        {next.picked ? "Picks in" : "Picks open"}
+      </p>
+      <p style={{ ...display("h2"), ...textGlow(c), margin: "4px 0 0", textTransform: "uppercase" }}>
+        {next.name}
+      </p>
+      <p style={{ ...body("bodySm"), color: V.text2, margin: "6px 0 0" }}>
+        {next.picked ? "Change them until" : "Close"} {whenPT(next.deadline, { date: false })}
+      </p>
+      <p style={{ ...display("h3"), fontSize: 15, color: c, margin: "10px 0 0",
+                  textTransform: "uppercase", letterSpacing: "0.08em" }}>
+        {next.picked ? "See your picks" : "Make your picks"}
+      </p>
+    </button>
+  );
+}
+
 // The locked and scored screen, in four cards.
 //
 // One colour rule runs through all of them: green is your side, because green
@@ -2726,7 +2778,7 @@ function HandsBoard({ seats }) {
 //   you did not pick        nothing of yours to show, and nothing to be done
 //   someone else is missing the line is an average, so the number can still move
 //   all four are in         the line is final and the week is set
-function HomeLocked({ scored: scoredWeek = true }) {
+function HomeLocked({ scored: scoredWeek = true, onAhead }) {
   const week = useWeek();
   const { race, seats = [], boxBox, myTeam, opp } = week;
   const mine = seats.filter(s => s.ours);
@@ -2779,6 +2831,9 @@ function HomeLocked({ scored: scoredWeek = true }) {
 
   return (
     <>
+      {/* Only over a result. Before the race is run the next pool does not
+          exist, and if it somehow did, a locked week is not the place for it. */}
+      {scoredWeek && <NextPicks next={week.next} onOpen={() => onAhead && onAhead(week.next.round)} />}
       <Marquee
         race={race}
         // Before the race, when it runs. After it, that it is over: the time is
@@ -3249,15 +3304,22 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
   const pinned = /^r\d+$/.test(kind || "") ? Number((kind || "").slice(1)) : null;
   const demo = ["all", "waiting", "missed", "pending", "open", "submitted"].includes(kind)
     ? lockedDemo(kind) : null;
-  const loaded = useLeague(given || demo ? null : currentUser, { round: pinned });
+  // The round the box on the result hands you to. Not `pinned`: a pinned
+  // round is one that has been played and renders locked, and this one is
+  // the round ahead, which has to render open so the picks can be made.
+  const [ahead, setAhead] = useState(null);
+  const loaded = useLeague(given || demo ? null : currentUser, { round: pinned ?? ahead });
   const week = given || demo || loaded;
 
   // The page triples in height the moment the week arrives. Whatever the
   // scroll position was against the short version is meaningless against the
   // tall one, so it goes back to the top when the content is actually there.
+  // The same again when the round on screen changes: the box on the result
+  // swaps the page to the next round's picks without a load in between, and
+  // the old offset would land somewhere down the pool.
   useEffect(() => {
     if (!week.loading) window.scrollTo(0, 0);
-  }, [week.loading]);
+  }, [week.loading, week.race && week.race.round]);
   const [tab, setTab] = useState(initialTab);
   const [lapIdx, setLapIdx] = useState(initialLap);
 
@@ -3314,7 +3376,7 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
           state === "waiting" ? <HomeWaiting onNav={nav} />
             : state === "open" || state === "submitted"
               ? <HomeOpen onNav={nav} submitted={state === "submitted"} />
-              : <HomeLocked scored={state === "final"} />
+              : <HomeLocked scored={state === "final"} onAhead={setAhead} />
         )}
       </div>
     </div>

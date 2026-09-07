@@ -13,7 +13,7 @@ MyPicks.jsx: 22-driver finishing order grid.
 PracticePicks.jsx: practice/preview picks UI.
 SchedulePage.jsx: THE schedule page, at /schedule. The round, every matchup in it, on the Vegas look. Which round it opens on comes from scheduleRace() in raceTimes.js.
 Schedule.jsx: the OLD schedule, unrouted, at ?page=schedule-v1. Dynamic recap button, reads pick_deadline. Editing this file does not change /schedule; that mistake cost a round trip on 2026-08-28.
-raceTimes.js: when each race starts and how to say that out loud. RACE_UTC, raceTimePT, raceStartMs, currentRace (the week the app is on, 48h after lights out) and scheduleRace (the week /schedule is on, which is different on purpose; see below).
+raceTimes.js: when each race starts and how to say that out loud. RACE_UTC, raceTimePT, whenPT, raceStartMs, raceHandoverMs, currentRace (the week the app is on: a round holds until the Wednesday after it at 6am Pacific, set 2026-09-07; it was 48h after lights out) and scheduleRace (the week /schedule is on, which is different on purpose; see below).
 PickIntel.jsx: pick intel display, depends on canonical driver names for headshots and color chips.
 drivers.js: canonical driver identity. Names, teams, cached headshot URLs, name aliases, the useOpenF1Drivers hook and findDriver. Single source of truth for anything driver-shaped.
 teams.js: canonical team identity. Full name (matches teams.name in Supabase), short name for tight spots, three-letter code for URLs. Single source of truth for anything team-shaped. Codes are part of the URL scheme, so changing one breaks a link.
@@ -169,8 +169,8 @@ unchanged: the deadline, checked at submit.
 
 **Changed 2026-08-28.** `scheduleRace()` in raceTimes.js: a round holds the page
 until the next race week starts, on **its Thursday at midnight Pacific**. It was
-`currentRace`, which hands over 48 hours after lights out, so the result came off
-the screen on the Tuesday while it was still being talked about, and with a
+`currentRace`, which then handed over 48 hours after lights out, so the result came
+off the screen on the Tuesday while it was still being talked about, and with a
 fortnight between rounds 12 and 13 it did that for twelve days.
 
 Pacific rather than UTC because the league is: midnight UTC Thursday is 5pm
@@ -183,6 +183,25 @@ and /teams read. Picks open on the Tuesday, and a home page still showing last
 week on the Tuesday has no way through to the picks that just opened. /teams also
 reads `currentRace` for when the next race starts, and a round that already ran
 would make its 72-hour switch permanently true.
+
+### Which round the home is on, and the box for next week's picks
+
+**Changed 2026-09-07.** `currentRace()` hands over on the **Wednesday after the
+race at 6am Pacific**, not 48 hours after lights out. The result is the most
+read screen of the round and Tuesday 6am was taking it down. Until then, once
+the next round's pool is drawn and its deadline is ahead, the scored home shows a
+**Picks open** box above the race sign: pink until your picks are in, green once
+they are, the whole box a button. Tapping it loads the next round in the open
+state, in place; `ahead` in VegasHome.jsx, which is not `pinned`, because a
+pinned round renders locked. The nav light already judged the next round on its
+own, by race date, so the two agree. `week.next` in useLeague.js is what the box
+reads. /teams and the dashboard read `currentRace` too, so they hold the played
+round a day longer than they did; their 72-hour switch was already true from
+Sunday and now stays true through Tuesday.
+
+The pit-guess Wheel used `scrollIntoView` to centre itself, which also pulled the
+page down to the wheel, so the open page opened 400px in. Found because the box's
+swap landed there; it scrolls only its own track now.
 
 Numbers it works out that the app never had: all-play record, schedule luck, the
 perfect hand the pools allowed and what you left behind, the single best swap you

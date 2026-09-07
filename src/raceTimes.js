@@ -36,19 +36,23 @@ const PT = "America/Los_Angeles";
 const part = (d, opts) => d.toLocaleString("en-US", { timeZone: PT, ...opts });
 
 // "Sunday August 23 at 6 am". The minutes only appear when there are any, so a
-// race on the hour does not read as a train timetable.
-export function raceTimePT(round) {
-  const iso = RACE_UTC[round];
+// race on the hour does not read as a train timetable. `date: false` drops the
+// month and day, for a deadline inside the week: "Friday at 5 pm".
+export function whenPT(iso, { date = true } = {}) {
   if (!iso) return null;
   const d = new Date(iso);
   const day = part(d, { weekday: "long" });
   const month = part(d, { month: "long" });
-  const date = part(d, { day: "numeric" });
+  const dom = part(d, { day: "numeric" });
   const hour = part(d, { hour: "numeric", hour12: true });   // "6 AM"
   const mins = part(d, { minute: "numeric" });
   const [h, ampm] = hour.split(" ");
   const time = mins === "0" ? `${h} ${ampm.toLowerCase()}` : `${h}:${mins.padStart(2, "0")} ${ampm.toLowerCase()}`;
-  return `${day} ${month} ${date} at ${time}`;
+  return date ? `${day} ${month} ${dom} at ${time}` : `${day} at ${time}`;
+}
+
+export function raceTimePT(round) {
+  return whenPT(RACE_UTC[round]);
 }
 
 // Which race the app is on.
@@ -64,8 +68,16 @@ export function raceTimePT(round) {
 // as the end sent everyone to a Grand Prix a fortnight out on the Sunday
 // afternoon their own result landed.
 //
-// One rule, scored or not: a round is finished 48 hours after it started.
-const GRACE_MS = 48 * 3600e3;
+// One rule, scored or not: a round is finished on the Wednesday morning after
+// it, at 6am Pacific. It was 48 hours after lights out, which is Tuesday 6am
+// for a Sunday race: the result came off the home page while the next pool
+// was already drawn and picks already open, and the page that replaced it had
+// nothing to say about the round everyone was still talking about. Now the
+// result holds through Tuesday, with a box for the next round's picks on top
+// of it once that pool exists, and Wednesday morning the page moves on.
+// Andrew set the day and the hour on 2026-09-07.
+const HANDOVER_DAY = 3;   // Wednesday
+const HANDOVER_HOUR = 6;  // 6am Pacific
 
 export const raceStartMs = (race) => {
   const iso = RACE_UTC[race.round];
@@ -136,14 +148,28 @@ export function scheduleRace(races, nowMs = Date.now()) {
   return cur;
 }
 
+// When a round hands over: the first Wednesday after lights out, at 6am
+// Pacific. Counted forward in Pacific days, the mirror of raceWeekStartMs, so
+// round 21's Saturday-night race gets the Wednesday after its own weekend.
+export function raceHandoverMs(race) {
+  const start = raceStartMs(race);
+  if (start == null) return null;
+  const wd = new Intl.DateTimeFormat("en-US", { timeZone: PT, weekday: "short" })
+    .format(new Date(start));
+  const idx = WD.indexOf(wd);
+  if (idx < 0) return null;
+  const fwd = idx < HANDOVER_DAY ? HANDOVER_DAY - idx : HANDOVER_DAY + 7 - idx;
+  return ptMidnight(start + fwd * 86400e3) + HANDOVER_HOUR * 3600e3;
+}
+
 export function currentRace(races, scoredIds, nowMs = Date.now()) {
   const list = [...races].sort((a, b) => a.round - b.round);
   const done = (r) => {
-    const t = raceStartMs(r);
+    const t = raceHandoverMs(r);
     // No start time and no date is nothing to measure, so fall back to the
     // score: an unplaceable round that has been played is over.
     if (t == null) return !!(scoredIds && scoredIds.has && scoredIds.has(r.id));
-    return nowMs - t > GRACE_MS;
+    return nowMs >= t;
   };
   return list.find(r => !done(r)) || list[list.length - 1] || null;
 }
