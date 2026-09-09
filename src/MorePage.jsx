@@ -113,6 +113,24 @@ export default function MorePage({ onNavigate, currentUser }) {
           <div style={label({ color: V.blue, fontSize: 15 })}>Coming soon</div>
         </div>
 
+        <button onClick={() => onNavigate("power")} style={{
+          ...card({ padding: "16px 18px", marginBottom: 14 }),
+          width: "100%", display: "grid", gap: 4, textAlign: "left",
+          cursor: "pointer", border: `1px solid ${V.border2}`,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{
+              fontFamily: FD, fontWeight: 700, fontSize: 18, letterSpacing: "0.04em",
+              textTransform: "uppercase", color: V.text,
+            }}>Power Rankings</span>
+            <span style={{ fontFamily: FB, fontSize: 18, color: V.text2 }}>&rsaquo;</span>
+          </div>
+          <span style={{ fontFamily: FB, fontSize: 14, color: V.text2, lineHeight: 1.4 }}>
+            All 24 teams rated out of 100 on scoring, form, the last five results and
+            who they have had to play. A write-up on every team.
+          </span>
+        </button>
+
         <button onClick={() => onNavigate("dashboard")} style={{
           ...card({ padding: "16px 18px", marginBottom: 14 }),
           width: "100%", display: "grid", gap: 4, textAlign: "left",

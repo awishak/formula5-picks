@@ -34,6 +34,8 @@ const WALKS = [
   { gate: true, taps: ["CONTINUE WITHOUT", "NEXT", "NEXT", "NEXT", "NEXT", "MAKE YOUR PICKS"] },
   { taps: ["PLAYERS", "TEAMS", "MORE", "HOME"] },
   { taps: ["TEAMS", "SCHEDULE", "HOME", "PLAYERS"] },
+  // Into the Power Rankings from More and back out by the nav.
+  { taps: ["MORE", "POWER RANKINGS", "TEAMS", "MORE", "POWER RANKINGS", "HOME"] },
 ];
 
 const page = walk => `<meta charset="utf-8"><body style="margin:0">
@@ -72,7 +74,7 @@ for (const walk of WALKS) {
       { maxBuffer: 40 * 1024 * 1024, timeout: 90000, killSignal: "SIGKILL" });
     out = `${r.stdout}\n${r.stderr}`;
   } catch (e) {
-    if (e.killed) { console.log(`  FAIL  ${walk.join(" -> ")}  (timed out)`); failed++; continue; }
+    if (e.killed) { console.log(`  FAIL  ${(walk.gate ? "GATE -> " : "") + walk.taps.join(" -> ")}  (timed out)`); failed++; continue; }
     out = `${e.stdout || ""}\n${e.stderr || ""}`;
   }
   finally { try { unlinkSync(tmp); } catch (e) {} }

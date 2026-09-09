@@ -20,6 +20,7 @@ import VegasHome from "./VegasHome.jsx";
 import SchedulePage from "./SchedulePage.jsx";
 import ViewingAs from "./ViewingAs.jsx";
 import MorePage from "./MorePage.jsx";
+import PowerPage from "./PowerPage.jsx";
 import ComingSoon from "./ComingSoon.jsx";
 import DashboardPage from "./DashboardPage.jsx";
 import HandsIdeas from "./HandsIdeas.jsx";
@@ -822,7 +823,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 // the pages that have no path of their own yet.
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
-  "dashboard", "hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
+  "dashboard", "power", "hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
   "f1-calendar", "season-preview", "recaps", "admin", "recap", "paddock", "paddock-vegas",
 ]);
 
@@ -839,6 +840,8 @@ const ROUTES = [
   { path: "/", page: "vegas" },
   { path: "/more", page: "home" },
   { path: "/dashboard", page: "dashboard" },
+  // The team Power Rankings. Reached from the More page.
+  { path: "/power", page: "power" },
   { path: "/hands/1", page: "hands1" },
   { path: "/hands/2", page: "hands2" },
   { path: "/hands/3", page: "hands3" },
@@ -872,7 +875,7 @@ const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 // Pages rebuilt on the Vegas look. They set their own ground and their own
 // header, so the light shell's logo bar and background have to get out of the
 // way or a dark page opens under a white block.
-const VEGAS_PAGES = new Set(["hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home", "vegas", "dashboard", "schedule", "team-standings", "player-standings", "admin"]);
+const VEGAS_PAGES = new Set(["hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home", "vegas", "dashboard", "power", "schedule", "team-standings", "player-standings", "admin"]);
 
 // A path in, a page and any parameter out.
 function readPath(pathname) {
@@ -1222,6 +1225,7 @@ export default function App() {
         {activePage === "team-standings-v1" && <TeamStandings currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "division-trends" && <DivisionTrends currentUser={currentUser} onNavigate={navigateTo} />}
         {activePage === "dashboard" && <DashboardPage currentUser={currentUser} onNavigate={navigateTo} />}
+        {activePage === "power" && <PowerPage currentUser={currentUser} />}
 
         {activePage === "schedule" && <SchedulePage currentUser={currentUser} />}
         {/* The first-half schedule page, unrouted. */}
