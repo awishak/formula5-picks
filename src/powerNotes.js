@@ -18,7 +18,22 @@
 //      2026-09-09: they should be different from each other.
 //   7. The choice between phrasings is hashed off the team and the round,
 //      never random, so the page reads the same on every load.
+//   8. Every paragraph opens on a headline: the one line somebody scanning the
+//      page reads, and what they need to know about this team right now.
+//      Andrew, 2026-09-09. It comes off TEAM_PUN in wire.js, the bank Andrew
+//      wrote himself, so the wording is his including the punctuation, and the
+//      rules that bank carries are the rules here: a line that says "you" is
+//      addressed to a reader this page does not have, and a line that claims a
+//      rout only runs over one. A win line runs over a good run, a loss line
+//      over a bad one, and a team going both ways at once gets a plain line
+//      about the result rather than a pun that overstates the run.
+//   9. No two teams take the same headline in one week, and the headline never
+//      says what the sentence after it says. The puns carry no numbers, so the
+//      "why" sentence keeps the number and the rank.
+//  10. No driver is named in a headline. DRIVER_PUN belongs to the weekly
+//      paper, where one week is the subject; a team's week is not one driver.
 import { ordinal, nextFixtures } from "./teamTable.js";
+import { TEAM_PUN, BIG_ONLY, ADDRESSES_READER } from "./wire.js";
 
 const r1 = n => Math.round(n * 10) / 10;
 const fmt = n => (Number.isInteger(r1(n)) ? String(r1(n)) : r1(n).toFixed(1));
@@ -149,6 +164,86 @@ export const LORE = {
   ],
 };
 
+// The plain lines, for a team going two ways at once: four wins in the last
+// five and then a loss, or four losses and then a win. The pun banks are win
+// and loss only, and a win pun over a team that just lost claims a week that
+// did not happen. These say what the last round did and leave the run to the
+// sentence after them.
+// A loss off four wins in five is one dropped, and a loss off three is a run
+// coming apart, so the two take different words.
+const PLAIN = {
+  won: ["{t} answer back", "{t} take one back", "{t} stop the slide", "{t} get back on the board"],
+  lostRun: ["{t} give one back", "{t} drop one"],
+  lostBad: ["{t} come unstuck", "{t} lose the thread"],
+  drew: ["{t} split the week", "{t} share the points"],
+};
+
+// Andrew's lines are headlines in the weekly paper, where nothing follows them
+// on the line, so most carry no full stop. Here the headline is the first
+// sentence of a paragraph and needs one. A line that already ends on a mark
+// keeps the mark he wrote.
+const stop = line => (/[.!?]$/.test(line) ? line : `${line}.`);
+
+// The run and the last result as one number. Two teams can both hold three
+// wins in the last five and be going opposite ways, and the headline is about
+// which way. Four from five is a good run at 5 and a mixed week at 3 once the
+// last one is lost, which is what keeps a win pun off a team that just lost.
+const formScore = r => {
+  const last = r.form[r.form.length - 1];
+  return r.wins + (!last ? 0 : last.won === true ? 1 : last.won === false ? -1 : 0);
+};
+
+/**
+ * One headline a team, in row order so a collision can step to the next line.
+ *
+ * @param {object} power  buildTeamPower(db) output
+ * @returns {object}      { [teamId]: headline }
+ */
+export function buildPowerHeadlines(power) {
+  const { rows, round } = power;
+  const used = new Set();      // the words as they print
+  const spent = new Set();     // and the line they came off
+  const out = {};
+  rows.forEach(r => {
+    const last = r.form[r.form.length - 1];
+    const score = formScore(r);
+    // A pun that claims a rout only runs over one: four or five wins from the
+    // last five, or a last result decided by 25 or more.
+    const big = r.wins >= 4 || (last && Math.abs(last.score - last.oppScore) >= 25);
+    const bank = TEAM_PUN[r.code] || {};
+    const kind = score >= 4 ? "win" : score <= 1 ? "loss" : null;
+    let lines = kind
+      ? (bank[kind] || []).filter(l => !ADDRESSES_READER.test(l) && (big || !BIG_ONLY.has(l)))
+      : [];
+    if (!lines.length) {
+      lines = !last || last.won === null ? PLAIN.drew
+        : last.won ? PLAIN.won
+        : r.wins >= 4 ? PLAIN.lostRun : PLAIN.lostBad;
+    }
+    // Hashed off the team and the round, never random. Two teams landing on the
+    // same line step to the next one rather than printing twice. The plain
+    // lines are one small bank shared by every team that draws them, so the
+    // template is spent as well as the sentence: three teams reading "answer
+    // back" in the same week is the same repetition with three names on it.
+    const n = hash(`${r.code}:${round}:head`) % lines.length;
+    let line = null, from = null;
+    for (const skip of [true, false]) {
+      for (let i = 0; i < lines.length && !line; i++) {
+        const src = lines[(n + i) % lines.length];
+        if (skip && spent.has(src)) continue;
+        const cand = stop(src.replace(/\{t\}/g, r.short));
+        if (!used.has(cand)) { line = cand; from = src; }
+      }
+      if (line) break;
+    }
+    if (!line) line = stop(`${r.short} hold ${ordinal(r.place)}`);
+    used.add(line);
+    if (from) spent.add(from);
+    out[r.id] = line;
+  });
+  return out;
+}
+
 /**
  * @param {object} power  buildTeamPower(db) output
  * @param {object} db     { teams, races, scores, schedule, players }
@@ -164,14 +259,16 @@ export function buildPowerNotes(power, db) {
   const mostWins = Math.max(...rows.map(x => x.w));
   const fixtures = nextFixtures(db, round + 1);
 
-  // Four shapes, dealt round the table in hashed order so that neighbouring
-  // rows do not open the same way and every shape runs about six times.
-  //   A  move, why, last time out, people, lore, next
-  //   B  lore, move, why, last time out, next
-  //   C  move, lore, why, people or schedule, next
-  //   D  why, move, last time out, lore, next
+  // Every paragraph opens on its headline. Under it, four shapes, dealt round
+  // the table in hashed order so that neighbouring rows do not run the same
+  // way and every shape runs about six times.
+  //   A  headline, move, why, last time out, people, lore, next
+  //   B  headline, lore, move, why, last time out, next
+  //   C  headline, move, lore, why, people or schedule, next
+  //   D  headline, why, move, last time out, lore, next
   const SHAPES = ["A", "B", "C", "D"];
   const offset = hash(`shape:${round}`) % 4;
+  const headlines = buildPowerHeadlines(power);
 
   const notes = {};
   rows.forEach((r, i) => {
@@ -179,6 +276,11 @@ export function buildPowerNotes(power, db) {
     const shape = SHAPES[(i + offset) % 4];
     const t = r.short;
     const place = ordinal(r.place);
+    const headline = headlines[r.id];
+    // Most of Andrew's lines name the team, so the sentence straight after the
+    // headline says "they" rather than naming them twice in a row. Shape B has
+    // a line of lore in between, which is enough distance to name them again.
+    const namedInHead = headline.includes(t);
 
     /* ---- where they sit, and the move. Built for the team by name and for
             "they", so a shape that has already named the team does not name
@@ -194,7 +296,8 @@ export function buildPowerNotes(power, db) {
       if (r.move <= -3) return pick(named ? [`${subj} drop ${word(-r.move)} places to ${place}.`, `Down ${word(-r.move)} to ${place} for ${subj}.`, `${subj} fall to ${place}, ${word(-r.move)} places down on last week.`] : [`${subj} drop ${word(-r.move)} places to ${place}.`, `${subj} fall to ${place}, ${word(-r.move)} places down on last week.`], key);
       return pick([`${subj} slip ${word(-r.move)} to ${place}.`, `${subj} are ${place}, down ${word(-r.move)}.`], key);
     };
-    const move = moveLine(t);
+    const move = moveLine(namedInHead ? "They" : t);
+    const moveNamed = moveLine(t);
 
     /* ---- why: the run, or the number, with its rank ---- */
     const st = streak(r.form);
@@ -308,18 +411,21 @@ export function buildPowerNotes(power, db) {
       ], key + "n");
     }
 
-    /* ---- deal the sentences by shape ---- */
+    /* ---- deal the sentences by shape, under the headline ---- */
     let out;
     if (shape === "A") out = [move, why, lastLine, people, lore, nextLine];
-    else if (shape === "B") out = [lore, move, why, lastLine, sched, nextLine];
+    else if (shape === "B") out = [lore, moveNamed, why, lastLine, sched, nextLine];
     else if (shape === "C") out = [move, lore, why, people || sched, nextLine];
     else {
-      // Leads on the why, so the team is named in front of the number and the
-      // move is said about "they".
-      const led = /^(Their|They've)/.test(why) ? `${t}: ${why.replace(/^./, c => c.toLowerCase())}` : `For ${t}, ${why.replace(/^./, c => c.toLowerCase())}`;
+      // Leads on the why, so the number comes before the move and the move is
+      // said about "they". A headline that has already named the team is the
+      // introduction, so the why runs plain rather than naming them again.
+      const led = namedInHead ? why
+        : /^(Their|They've)/.test(why) ? `${t}: ${why.replace(/^./, c => c.toLowerCase())}`
+        : `For ${t}, ${why.replace(/^./, c => c.toLowerCase())}`;
       out = [led, moveLine("They"), lastLine, sched, lore, nextLine];
     }
-    notes[r.id] = out.filter(Boolean).join(" ");
+    notes[r.id] = [headline, ...out].filter(Boolean).join(" ");
   });
   return notes;
 }

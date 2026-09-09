@@ -85,7 +85,9 @@ const shortNames = names => {
 // Two lines per team, one for a win and one for a loss, each built off what the
 // team is actually called. Keyed on the three-letter code from teams.js, so a
 // rename is one edit and a missing team falls through to the plain lines below.
-const TEAM_PUN = {
+// Exported because the Power Rankings write-ups headline off the same bank, in
+// powerNotes.js. One bank, so Andrew's wording is edited in one place.
+export const TEAM_PUN = {
   VAN: { win: ["{t} deliver", "{t} go the distance", "{t} make it rain"],
          loss: ["{t} break down", "{t} miss the drop",
                 "Forecast for {t}: cloudy with a chance of losing"] },
@@ -194,7 +196,7 @@ const DRIVER_PUN = {
   "Valtteri Bottas": { good: ["Bottas up", "Bottas to the top"], bad: ["Bottom of the Bottas", "Bottas empty"] },
 };
 
-const BIG_ONLY = new Set([
+export const BIG_ONLY = new Set([
   "{t} blow the week open", "{t} pull away from the pack", "{t} ride off the front",
   "{t} come down in a flood", "{t} run the happiest week on earth", "{t} stampede",
 ]);
@@ -207,7 +209,7 @@ const BIG_MARGIN = 10;
 // reader's own team. The same bank also writes headlines about somebody else's
 // upset, and "You put the W in Wildcat" over a team the reader is not on is
 // addressed to nobody.
-const ADDRESSES_READER = /\byou\b|\byour\b/i;
+export const ADDRESSES_READER = /\byou\b|\byour\b/i;
 
 const teamLine = (team, kind, key, margin = null, self = true) => {
   const bank = TEAM_PUN[codeOf(team.name) || ""];

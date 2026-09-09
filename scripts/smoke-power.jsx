@@ -7,7 +7,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { PowerBoard } from "../src/PowerPage.jsx";
 import { buildTeamPower } from "../src/teamTable.js";
-import { buildPowerNotes, LORE } from "../src/powerNotes.js";
+import { buildPowerNotes, buildPowerHeadlines, LORE } from "../src/powerNotes.js";
 import db from "./weekly-fixture.json";
 
 const power = buildTeamPower(db);
@@ -46,4 +46,24 @@ if (new Set(texts).size !== texts.length) { console.error("two teams share a wri
 // "it", nothing X-not-Y.
 const itHit = texts.filter(t => / it[.,;]/.test(t));
 if (itHit.length) { console.error("write-up ends a clause on 'it':", itHit[0]); process.exit(1); }
-console.log(`smoke:power ok, round ${power.round}, 24 rows, 24 write-ups`);
+
+// The headline opens every write-up and no two teams take the same one. A
+// headline is the one line somebody scanning the page reads, so two teams
+// sharing one is two teams reading as the same week. The headlines are checked
+// off buildPowerHeadlines rather than off the paragraph, because Andrew's own
+// lines carry full stops, exclamation marks and question marks inside them
+// ("Guys. are you even trying.", "Dan? Brian? Is this what it feels like to
+// win?") and no split on a sentence mark can find the end of one.
+const heads = buildPowerHeadlines(power);
+if (Object.keys(heads).length !== 24) { console.error("a team has no headline"); process.exit(1); }
+for (const r of power.rows) {
+  const h = heads[r.id];
+  if (!h || !/[.!?]$/.test(h)) { console.error(`${r.code} headline does not end a sentence: ${h}`); process.exit(1); }
+  if (!notes[r.id].startsWith(h)) { console.error(`${r.code} write-up does not open on its headline`); process.exit(1); }
+}
+const hs = Object.values(heads);
+if (new Set(hs).size !== hs.length) {
+  const seen = new Set(), dupe = hs.find(h => (seen.has(h) ? true : (seen.add(h), false)));
+  console.error(`two teams share a headline: ${dupe}`); process.exit(1);
+}
+console.log(`smoke:power ok, round ${power.round}, 24 rows, 24 write-ups, 24 headlines`);

@@ -143,8 +143,12 @@ function Row({ row, mine, nameOf }) {
 }
 
 // The five parts of the rating, each with the team's rank on it across the
-// league, and last week's result above them. Data, set as data: a label, a
-// number, a place.
+// league, and last week's result above them. Data, set as data.
+//
+// The rank sits beside the label rather than out on its own edge: "Season avg
+// · 4th" is one thing to read, and the number stays on the right where the eye
+// runs down it. Labels are white and the block is 15px, so the write-up card
+// carries two sizes and not three. Andrew, 2026-09-09.
 const rankText = rk => (rk.tied ? `T-${ordinal(rk.place)}` : ordinal(rk.place));
 function Facts({ row, byId }) {
   const last = row.last;
@@ -156,23 +160,38 @@ function Facts({ row, byId }) {
     { k: "Last 5 avg", v: row.last5.toFixed(1), r: rankText(row.ranks.last5) },
     { k: "Last 2 avg", v: row.last2.toFixed(1), r: rankText(row.ranks.last2) },
     { k: "Last 5 wins", v: Number.isInteger(row.wins) ? String(row.wins) : row.wins.toFixed(1), r: rankText(row.ranks.wins) },
-    { k: "Schedule", v: row.schedule.toFixed(1), r: `${rankText(row.ranks.schedule)} hardest` },
+    // No "hardest" on the rank: at 393 the label wrapped onto a second line,
+    // and the how-it-is-built card above the write-ups says which end rank 1 is.
+    { k: "Schedule", v: row.schedule.toFixed(1), r: rankText(row.ranks.schedule) },
   ];
-  const cell = extra => ({ ...body("bodySm", { fontSize: 13, lineHeight: 1.5 }), ...extra });
+  const cell = extra => ({ ...body("bodySm", { fontSize: 15, lineHeight: 1.5 }), ...extra });
   return (
-    <div style={{
-      display: "grid", gridTemplateColumns: "auto 1fr auto", columnGap: 12, rowGap: 0,
-      padding: "8px 12px", borderRadius: 12, background: V.bg3, marginBottom: 10,
-    }}>
-      <span style={cell({ color: V.text3, fontWeight: 600 })}>Last week</span>
-      <span style={cell({ color: lastColor, fontWeight: 600, fontVariantNumeric: "tabular-nums", gridColumn: "2 / 4" })}>{lastText}</span>
-      {lines.map(l => (
-        <div key={l.k} style={{ display: "contents" }}>
-          <span style={cell({ color: V.text3, fontWeight: 600 })}>{l.k}</span>
-          <span style={cell({ color: V.text, fontVariantNumeric: "tabular-nums" })}>{l.v}</span>
-          <span style={cell({ color: V.blue, fontWeight: 600, textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{l.r}</span>
-        </div>
-      ))}
+    <div style={{ padding: "8px 12px", borderRadius: 12, background: V.bg3, marginBottom: 10 }}>
+      {/* Last week sits outside the grid. Inside it, "W 90-85 v TNT Roku" set
+          the width of the number column for all five rows below, which at 360
+          left "Season avg · 1st" too little room and wrapped every label.
+          The result takes a whole line of its own rather than breaking in half:
+          "W 87-77 v HomeworkTubes" is 5px too wide at 360 and wrapped after
+          the "v". */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+        <span style={cell({ color: V.text, fontWeight: 600, flexShrink: 0 })}>Last week</span>
+        <span style={cell({
+          color: lastColor, fontWeight: 600, fontVariantNumeric: "tabular-nums",
+          whiteSpace: "nowrap", marginLeft: "auto",
+        })}>{lastText}</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", columnGap: 12, rowGap: 0 }}>
+        {lines.map(l => (
+          <div key={l.k} style={{ display: "contents" }}>
+            <span style={cell({ color: V.text, fontWeight: 600 })}>
+              {l.k}
+              {" · "}
+              <span style={{ color: V.blue }}>{l.r}</span>
+            </span>
+            <span style={cell({ color: V.text, fontVariantNumeric: "tabular-nums", textAlign: "right" })}>{l.v}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -245,7 +264,8 @@ export function PowerBoard({ power, notes, myTeamId, nameOf = {} }) {
         <div style={body("bodySm", { fontSize: 13, color: V.text3, marginTop: 8, lineHeight: 1.5 })}>
           Scoring is the matchup score, drivers plus BOX BOX. A draw counts as half a win.
           Strength of schedule is what the last five opponents average a week, with the
-          easiest run in the league at 0 and the hardest at 10.
+          easiest run in the league at 0 and the hardest at 10. The rank beside it in a
+          write-up runs hardest first, so 1st is the hardest run in the league.
         </div>
       </div>
 
