@@ -7,7 +7,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { PowerBoard } from "../src/PowerPage.jsx";
 import { buildTeamPower } from "../src/teamTable.js";
-import { buildPowerNotes, buildPowerHeadlines, LORE } from "../src/powerNotes.js";
+import { buildPowerNotes, buildPowerHeadlines } from "../src/powerNotes.js";
 import db from "./weekly-fixture.json";
 
 const power = buildTeamPower(db);
@@ -32,12 +32,6 @@ for (const t of [null, power.rows[0].id, power.rows[23].id]) {
 }
 if (outs.size < 3) { console.error("the highlight is not driving the render: identical output across players"); process.exit(1); }
 
-// Every team has lore and every write-up carries one of its lines.
-for (const r of power.rows) {
-  const bank = LORE[r.code];
-  if (!bank || !bank.length) { console.error(`no lore for ${r.code}`); process.exit(1); }
-  if (!bank.some(l => notes[r.id].includes(l))) { console.error(`${r.code} write-up carries no lore line`); process.exit(1); }
-}
 // Every write-up is a different paragraph. Two teams sharing one would mean the
 // sentence bank ran dry for that shape of week.
 const texts = Object.values(notes);

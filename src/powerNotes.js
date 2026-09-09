@@ -13,9 +13,11 @@
 //      of the league.
 //   5. Nothing non-human decides, refuses, knows or tells. A rating rises; a
 //      team wins; a person reads.
-//   6. Every paragraph carries one line of lore, from docs/F5_Team_Lore.md,
-//      and no two paragraphs take the same shape in the same week. Andrew,
-//      2026-09-09: they should be different from each other.
+//   6. Short, and no team lore. Andrew, 2026-09-09: half as long, and nobody
+//      needs to know who the team was named for here. A write-up is the
+//      headline, the number with its rank, one colour sentence when the week
+//      has one, and who is next. The place and the move are on the row above
+//      and are not said again.
 //   7. The choice between phrasings is hashed off the team and the round,
 //      never random, so the page reads the same on every load.
 //   8. Every paragraph opens on a headline: the one line somebody scanning the
@@ -59,109 +61,6 @@ const streak = form => {
   let n = 0;
   for (let i = form.length - 1; i >= 0 && form[i].won === last; i--) n++;
   return { what: last, n };
-};
-
-// One line of lore a team, from docs/F5_Team_Lore.md, keyed on the code in
-// teams.js. Two or three lines each so neighbouring weeks do not repeat, and
-// nothing here that the lore doc does not say. A line that names a player goes
-// stale when that player moves, so check the roster before adding one.
-export const LORE = {
-  VAN: [
-    "Van City is Vancouver, where Rafik Zarifa's wife is from, and corsa is Italian for race.",
-    "Rafik Zarifa co-founded the team with the Cascadia pair in 2024 after a spell on East Bay Racing.",
-  ],
-  ECR: [
-    "El Camino Real runs past SCU, where Harold Gutmann works; Paul Kohli is an alum. The fast road, in Spanish.",
-    "A new team this year, named for the road that runs past the university both players came through.",
-  ],
-  JSV: [
-    "An original team from 2023, named after the infamous Silicon Valley juicer startup.",
-    "George Fahmy is a founding member of the league, and both players are from the Bay Area.",
-  ],
-  XRT: [
-    "XLIX is 49, for the Gold Rush and Sacramento, and the Tower Bridge on the logo is drawn to read as the numerals.",
-    "The Sacramento team, with the 1849 Gold Rush in the name and the Tower Bridge in the badge.",
-  ],
-  WLD: [
-    "An original team of two Los Gatos High classmates, the Los Gatos Wildcats.",
-    "Two Wildcats from Los Gatos High, in the league since the start.",
-  ],
-  BRO: [
-    "Two former students of Professor Ishak's at Santa Clara, with SCU hidden inside Scuderia and the Broncos for the mascot.",
-    "An original team. The SCU in the middle of the name is the university and the Bronco is its mascot.",
-  ],
-  COU: [
-    "An original team named for an adult Los Gatos community side, and no university mascot in sight.",
-    "Cougar Autosport have been here since the start, named for a Los Gatos adult community team.",
-  ],
-  CSC: [
-    "Cascadia is the Pacific Northwest, and the team was part of Van City Corsa before it split off.",
-    "Once half of Van City Corsa, now their own team, named for the bioregion up the coast.",
-  ],
-  STL: [
-    "Founded in 2025 by former SCU men when Jack Civitts moved to Cal Poly; stalloni is stallions, and 1851 is the year SCU was founded.",
-    "Stallions in Italian, and the year in the name is Santa Clara's founding.",
-  ],
-  EBR: [
-    "An original team, friends from the East Bay. Peep the logo.",
-    "East Bay friends, in the league since the start, with a logo worth a second look.",
-  ],
-  TEX: [
-    "Two friends from grad school at UT Austin, one who grew up in Texas and one who lives there now. Drive plus Texas.",
-    "An original team out of UT Austin, Texas in the name and one of the two still living there.",
-  ],
-  GAR: [
-    "Two SCU freshmen, one from Argentina; garra is Spanish for claw, or for grit.",
-    "A new team of two Santa Clara freshmen, named for the Spanish word for claw.",
-  ],
-  TNT: [
-    "Thompson and Thompson, and Andy Thompson works at Roku.",
-    "TNT is Thompson and Thompson, and the Roku is Andy Thompson's employer.",
-  ],
-  SHO: [
-    "Two former students from the same Fall 2022 Public Speaking class, named for Daniel Ricciardo's shoey, with Max and Danny for the old Red Bull pairing.",
-    "Named for the shoey, and the Max and Danny is the old Verstappen and Ricciardo pairing as much as the two players.",
-  ],
-  MEA: [
-    "Carnesecca and Ball, meat and ball. Maggie Ball was in Professor Ishak's very first class at SCU in Fall 2012.",
-    "The name is the two surnames, carne being meat, and Maggie Ball goes back to Professor Ishak's first class at SCU.",
-  ],
-  CAR: [
-    "A spinoff of Aggie Slipstream founded in 2025, UC Davis, and sent down for 2026 for a cost cap violation after signing the last two individual champions.",
-    "Founded in 2025 by Andrew Ishak out of Aggie Slipstream, and relegated for 2026 for signing the last two individual champions under the cost cap.",
-  ],
-  ISK: [
-    "Iskandaraya is Arabic for Alexandria; two Coptic friends from church.",
-    "Named for Alexandria, in Arabic, by two friends from church.",
-  ],
-  LUX: [
-    "Named for the ancient Egyptian city; two close friends from Hayward Church.",
-    "Luxor, the ancient city on the Nile, for two close friends from Hayward Church.",
-  ],
-  PEL: [
-    "Brett Dillon is French and into biking, Stacy Michaelsen loves her Peloton and eggplant, and aubergine is the French for eggplant.",
-    "A Peloton bike, an eggplant in French, and a beautifully absurd team name.",
-  ],
-  PRS: [
-    "Evie Ishak and her friend Matilda Luton; prestissimo is the tempo marking for very fast, and veloce is Italian for fast.",
-    "Very fast twice over, once as a music tempo for Evie Ishak's singing and once in Italian.",
-  ],
-  TJP: [
-    "TJ Donato and the Formula 5 Bot. The name is deliberately underwhelming.",
-    "Half of this team is a bot, and the name is underwhelming on purpose.",
-  ],
-  MKR: [
-    "Big Disney fans, Larry Noel near the Magic Kingdom in Florida and Chris Fondacaro near Disneyland, and both friends of Professor Ishak's from elementary school.",
-    "One player near the Magic Kingdom and one near Disneyland, friends of Professor Ishak's since elementary school.",
-  ],
-  HWT: [
-    "HomeworkTubes.com is a real website. Both players were on Cougar Autosport before this and coached little league with Professor Ishak.",
-    "Two former Cougar Autosport players who coached little league with Professor Ishak, named for a real website.",
-  ],
-  AGS: [
-    "The acronym is ASS. They slipstream because they suck. That's the lore.",
-    "An original team whose acronym is ASS, and the lore ends there.",
-  ],
 };
 
 // The plain lines, for a team going two ways at once: four wins in the last
@@ -259,45 +158,12 @@ export function buildPowerNotes(power, db) {
   const mostWins = Math.max(...rows.map(x => x.w));
   const fixtures = nextFixtures(db, round + 1);
 
-  // Every paragraph opens on its headline. Under it, four shapes, dealt round
-  // the table in hashed order so that neighbouring rows do not run the same
-  // way and every shape runs about six times.
-  //   A  headline, move, why, last time out, people, lore, next
-  //   B  headline, lore, move, why, last time out, next
-  //   C  headline, move, lore, why, people or schedule, next
-  //   D  headline, why, move, last time out, lore, next
-  const SHAPES = ["A", "B", "C", "D"];
-  const offset = hash(`shape:${round}`) % 4;
   const headlines = buildPowerHeadlines(power);
 
   const notes = {};
-  rows.forEach((r, i) => {
+  rows.forEach(r => {
     const key = `${r.code}:${round}`;
-    const shape = SHAPES[(i + offset) % 4];
-    const t = r.short;
-    const place = ordinal(r.place);
     const headline = headlines[r.id];
-    // Most of Andrew's lines name the team, so the sentence straight after the
-    // headline says "they" rather than naming them twice in a row. Shape B has
-    // a line of lore in between, which is enough distance to name them again.
-    const namedInHead = headline.includes(t);
-
-    /* ---- where they sit, and the move. Built for the team by name and for
-            "they", so a shape that has already named the team does not name
-            them twice in two sentences. ---- */
-    const moveLine = subj => {
-      const named = subj === t;
-      if (r.move == null) return `${subj} come in at ${place}.`;
-      if (r.place === 1 && r.move === 0) return pick([`${subj} stay top.`, `${subj} hold the top spot.`], key);
-      if (r.place === 1) return `${subj} go top, up ${word(r.move)} from last week.`;
-      if (r.move === 0) return pick(named ? [`${subj} hold ${place}.`, `No move for ${subj}, who stay ${place}.`, `${subj} are ${place} again.`] : [`${subj} hold ${place}.`, `${subj} are ${place} again.`], key);
-      if (r.move >= 3) return pick(named ? [`${subj} climb ${word(r.move)} places to ${place}.`, `Up ${word(r.move)} to ${place} for ${subj}.`, `${subj} are ${place}, up ${word(r.move)} on last week.`] : [`${subj} climb ${word(r.move)} places to ${place}.`, `${subj} are ${place}, up ${word(r.move)} on last week.`], key);
-      if (r.move > 0) return pick([`${subj} move up ${word(r.move)} to ${place}.`, `${subj} edge up to ${place}.`], key);
-      if (r.move <= -3) return pick(named ? [`${subj} drop ${word(-r.move)} places to ${place}.`, `Down ${word(-r.move)} to ${place} for ${subj}.`, `${subj} fall to ${place}, ${word(-r.move)} places down on last week.`] : [`${subj} drop ${word(-r.move)} places to ${place}.`, `${subj} fall to ${place}, ${word(-r.move)} places down on last week.`], key);
-      return pick([`${subj} slip ${word(-r.move)} to ${place}.`, `${subj} are ${place}, down ${word(-r.move)}.`], key);
-    };
-    const move = moveLine(namedInHead ? "They" : t);
-    const moveNamed = moveLine(t);
 
     /* ---- why: the run, or the number, with its rank ---- */
     const st = streak(r.form);
@@ -320,7 +186,7 @@ export function buildPowerNotes(power, db) {
     } else if (st.what === false && st.n >= 3) {
       why = pick([
         `${cap(word(st.n))} straight losses, on ${fmt(r.last5)} a week over the last five, which is still ${placeOf(fRank)} in the league.`,
-        `They've lost ${word(st.n)} in a row. The scoring is ${fmt(r.last5)} a week over the last five, ${gap >= 0 ? "above" : "under"} their ${fmt(r.season)} for the season, so the losses are about who they've drawn as much as what they've scored.`,
+        `They've lost ${word(st.n)} in a row on ${fmt(r.last5)} a week, ${gap >= 0 ? "above" : "under"} their ${fmt(r.season)} for the season.`,
       ], key + "l");
     } else if (fRank.place <= 3) {
       why = `${cap(winsWord)} in the last five, and the ${fmt(r.last5)} a week over that run is ${placeOf(fRank)} in the league on form.`;
@@ -335,7 +201,7 @@ export function buildPowerNotes(power, db) {
       ], key + "f");
     }
     if (r.w === mostWins && r.place > 8) {
-      why += ` Nobody has won more matchups than their ${word(r.w)}. The ${fmt(r.season)} a week they've scored is ${placeOf(sRank)} in the league, and scoring is seventy percent of the rating.`;
+      why = `Nobody has won more matchups than their ${word(r.w)}, and the ${fmt(r.season)} a week they've scored is ${placeOf(sRank)} in the league.`;
     }
 
     /* ---- last time out, when the result says something ---- */
@@ -394,10 +260,6 @@ export function buildPowerNotes(power, db) {
       sched = `Their last five opponents average ${fmt(r.oppAvg)} a week, the ${which} in the league.`;
     }
 
-    /* ---- lore ---- */
-    const bank = LORE[r.code];
-    const lore = bank ? pick(bank, key + "lore") : null;
-
     /* ---- next ---- */
     const nextId = fixtures.opponentOf[r.id];
     const next = nextId ? byId[nextId] : null;
@@ -411,20 +273,11 @@ export function buildPowerNotes(power, db) {
       ], key + "n");
     }
 
-    /* ---- deal the sentences by shape, under the headline ---- */
-    let out;
-    if (shape === "A") out = [move, why, lastLine, people, lore, nextLine];
-    else if (shape === "B") out = [lore, moveNamed, why, lastLine, sched, nextLine];
-    else if (shape === "C") out = [move, lore, why, people || sched, nextLine];
-    else {
-      // Leads on the why, so the number comes before the move and the move is
-      // said about "they". A headline that has already named the team is the
-      // introduction, so the why runs plain rather than naming them again.
-      const led = namedInHead ? why
-        : /^(Their|They've)/.test(why) ? `${t}: ${why.replace(/^./, c => c.toLowerCase())}`
-        : `For ${t}, ${why.replace(/^./, c => c.toLowerCase())}`;
-      out = [led, moveLine("They"), lastLine, sched, lore, nextLine];
-    }
+    /* ---- one colour sentence, when the week has one. Last time out is
+            only built when the result says something, so it goes first; the
+            teammate gap and the schedule take turns after that. ---- */
+    const colour = lastLine || (people && sched ? pick([people, sched], key + "c") : people || sched);
+    const out = [why, colour, nextLine];
     notes[r.id] = [headline, ...out].filter(Boolean).join(" ");
   });
   return notes;
