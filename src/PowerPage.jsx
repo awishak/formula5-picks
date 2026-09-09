@@ -38,12 +38,25 @@ function Title() {
   );
 }
 
-// The division, said short. Gold is the Championship and silver the Second
-// Division, the same two marks /teams uses for its section headers.
+// The division is a dot, gold for the Championship and silver for the Second
+// Division, the same two marks /teams uses for its section headers. It was a
+// dot and a word, and "CHAMP" beside a team name read as somebody being the
+// champion. Andrew, 2026-09-09. The legend above the table says what the dots
+// mean.
 const DIV = {
-  championship: { tag: "CHAMP", color: V.gold },
-  second: { tag: "2ND DIV", color: V.silver },
+  championship: { name: "Championship", color: V.gold },
+  second: { name: "Second Division", color: V.silver },
 };
+
+// Both players, as initial and surname, so a team card says who is on it.
+const shortName = n => {
+  const parts = (n || "").trim().split(/\s+/);
+  return parts.length > 1 ? `${parts[0][0]}. ${parts.slice(1).join(" ")}` : (n || "");
+};
+
+function Dot({ color, size = 9 }) {
+  return <span style={{ width: size, height: size, borderRadius: size / 2, background: color, flexShrink: 0, display: "inline-block" }} />;
+}
 
 const rec = r => (r.d > 0 ? `${r.w}-${r.l}-${r.d}` : `${r.w}-${r.l}`);
 
@@ -82,8 +95,9 @@ function Form({ form }) {
   );
 }
 
-function Row({ row, mine }) {
+function Row({ row, mine, nameOf }) {
   const div = DIV[row.division] || DIV.second;
+  const who = [row.p1Id, row.p2Id].map(id => nameOf[id]).filter(Boolean).map(shortName).join(" \u00b7 ");
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 8,
@@ -109,13 +123,15 @@ function Row({ row, mine }) {
           display: "flex", gap: 8, alignItems: "center", marginTop: 2,
           whiteSpace: "nowrap", overflow: "hidden",
         }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-            <span style={{ width: 8, height: 8, borderRadius: 4, background: div.color, flexShrink: 0 }} />
-            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, letterSpacing: "0.06em", color: div.color }}>{div.tag}</span>
-          </span>
+          <Dot color={div.color} />
           <span style={body("bodySm", { fontSize: 13, color: V.text2, fontVariantNumeric: "tabular-nums", flexShrink: 0 })}>{rec(row)}</span>
           <Form form={row.form} />
         </div>
+        {/* Wraps rather than clips: "A. Thompson · M. Thompson" is 5px over at
+            393 and 38px over at 360, and a name cut short is a name wrong. */}
+        {who && (
+          <div style={body("bodySm", { fontSize: 13, color: V.text2, marginTop: 1, lineHeight: 1.3 })}>{who}</div>
+        )}
       </div>
       {/* The rating, out of 100, right against the edge. Blue is the score
           colour; green and pink mean won and lost and are taken. */}
@@ -127,8 +143,9 @@ function Row({ row, mine }) {
 }
 
 // One team's write-up: the row's facts in a header, then the paragraph.
-function Note({ row, text, mine }) {
+function Note({ row, text, mine, nameOf }) {
   const div = DIV[row.division] || DIV.second;
+  const who = [row.p1Id, row.p2Id].map(id => nameOf[id]).filter(Boolean).map(shortName).join(" \u00b7 ");
   return (
     <div style={{ ...card({ padding: "14px 16px 16px", marginBottom: 10 }), ...(mine ? edgeGlow(V.blue, 0.6) : {}) }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -136,10 +153,11 @@ function Note({ row, text, mine }) {
         {row.logo && <img src={row.logo} alt="" style={{ width: 34, height: 34, objectFit: "contain", flexShrink: 0 }} />}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={display("h3", { fontSize: 18, lineHeight: 1.25, color: mine ? V.blue : V.text })}>{row.name}</div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 2, whiteSpace: "nowrap" }}>
-            <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, letterSpacing: "0.06em", color: div.color }}>{div.tag}</span>
-            <span style={body("bodySm", { fontSize: 13, color: V.text2, fontVariantNumeric: "tabular-nums" })}>{rec(row)}</span>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 2, whiteSpace: "nowrap" }}>
+            <Dot color={div.color} />
+            <span style={body("bodySm", { fontSize: 13, color: V.text2, fontVariantNumeric: "tabular-nums", flexShrink: 0 })}>{rec(row)}</span>
           </div>
+          {who && <div style={body("bodySm", { fontSize: 13, color: V.text2, lineHeight: 1.3 })}>{who}</div>}
         </div>
         <div style={numeric("stat", { fontSize: 22, color: V.text, flexShrink: 0, ...textGlow(V.blue, 0.6) })}>{Math.round(row.rating)}</div>
       </div>
@@ -148,7 +166,7 @@ function Note({ row, text, mine }) {
   );
 }
 
-export function PowerBoard({ power, notes, myTeamId }) {
+export function PowerBoard({ power, notes, myTeamId, nameOf = {} }) {
   const { rows, round, weights, perfect } = power;
   return (
     <div style={WRAP}>
@@ -159,11 +177,20 @@ export function PowerBoard({ power, notes, myTeamId }) {
         A perfect week is {perfect} points.
       </div>
 
+      {/* What the dots mean, once, above the table. */}
+      <div style={{ display: "flex", gap: 14, alignItems: "center", margin: "0 2px 10px" }}>
+        {Object.values(DIV).map(d => (
+          <span key={d.name} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Dot color={d.color} size={11} />
+            <span style={label({ fontSize: 13, color: d.color })}>{d.name}</span>
+          </span>
+        ))}
+      </div>
       <div style={{ display: "flex", justifyContent: "space-between", padding: "0 10px 4px" }}>
         <span style={label({ fontSize: 13, color: V.text3 })}>LAST 5</span>
         <span style={label({ fontSize: 13, color: V.blue })}>RATING</span>
       </div>
-      {rows.map(r => <Row key={r.id} row={r} mine={r.id === myTeamId} />)}
+      {rows.map(r => <Row key={r.id} row={r} mine={r.id === myTeamId} nameOf={nameOf} />)}
 
       {/* The system, printed rather than hidden: a ranking nobody can check is a
           ranking nobody believes. */}
@@ -191,7 +218,7 @@ export function PowerBoard({ power, notes, myTeamId }) {
           letterSpacing: "0.05em", textTransform: "uppercase", color: V.pink,
         }}>The write-ups</span>
       </div>
-      {rows.map(r => <Note key={r.id} row={r} text={notes[r.id] || ""} mine={r.id === myTeamId} />)}
+      {rows.map(r => <Note key={r.id} row={r} text={notes[r.id] || ""} mine={r.id === myTeamId} nameOf={nameOf} />)}
     </div>
   );
 }
@@ -217,7 +244,8 @@ export default function PowerPage({ currentUser }) {
         const me = players.find(p => p.name === currentUser);
         const myTeam = me ? teams.find(t => t.player1_id === me.id || t.player2_id === me.id) : null;
 
-        setState({ loading: false, power, notes, myTeamId: myTeam ? myTeam.id : null });
+        const nameOf = Object.fromEntries(players.map(p => [p.id, p.name]));
+        setState({ loading: false, power, notes, nameOf, myTeamId: myTeam ? myTeam.id : null });
       } catch (e) {
         console.error(e);
         setState({ loading: false, error: true });
@@ -231,7 +259,7 @@ export default function PowerPage({ currentUser }) {
   return (
     <div style={{ background: V.bg, minHeight: "100vh" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap');`}</style>
-      <PowerBoard power={state.power} notes={state.notes} myTeamId={state.myTeamId} />
+      <PowerBoard power={state.power} notes={state.notes} myTeamId={state.myTeamId} nameOf={state.nameOf} />
     </div>
   );
 }

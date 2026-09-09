@@ -11,6 +11,7 @@ import { buildPowerNotes } from "../src/powerNotes.js";
 import db from "./weekly-fixture.json";
 
 const power = buildTeamPower(db);
+const nameOf = Object.fromEntries(db.players.map(p => [p.id, p.name]));
 const notes = buildPowerNotes(power, db);
 if (power.rows.length !== 24) { console.error(`expected 24 rows, got ${power.rows.length}`); process.exit(1); }
 if (Object.keys(notes).length !== 24) { console.error("a team has no write-up"); process.exit(1); }
@@ -20,8 +21,11 @@ if (bad.length) { console.error("rating off the scale:", bad.map(r => `${r.code}
 
 const outs = new Set();
 for (const t of [null, power.rows[0].id, power.rows[23].id]) {
-  const html = renderToStaticMarkup(<PowerBoard power={power} notes={notes} myTeamId={t} />);
+  const html = renderToStaticMarkup(<PowerBoard power={power} notes={notes} myTeamId={t} nameOf={nameOf} />);
   if (!html.includes("RANKINGS")) { console.error("title missing"); process.exit(1); }
+  // Both players on every row: 24 teams, 48 initial-and-surname names.
+  const names = (html.match(/\b[A-Z]\. [A-Z][a-z]/g) || []).length;
+  if (names < 96) { console.error(`expected 96 short names across rows and write-ups, found ${names}`); process.exit(1); }
   outs.add(html);
   console.log(`myTeam=${t ? t.slice(0, 8) : "none"} ${html.length} chars`);
 }
