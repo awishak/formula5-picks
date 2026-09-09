@@ -95,10 +95,10 @@ export const TEAM_PUN = {
                "{t} strike gold", "{t} do it for Sactown"],
          loss: ["{t} do not compute", "{t} come up a numeral short",
                 "{t} get 86ed", "{t} does not mark the spot"] },
-  TEX: { win: ["{t} send the message", "{t} get their point across",
-               "{t} put their horns up", "{t} ride tall in the saddle"],
-         loss: ["{t} left on read", "{t} lose the signal",
-                "{t} is back!...or not.", "{t} wilt in the Texas heat"] },
+  // Texas only. Four lines that read the name as "drive text" were cut on
+  // 2026-09-09: Andrew, "texting lines are wrong".
+  TEX: { win: ["{t} put their horns up", "{t} ride tall in the saddle"],
+         loss: ["{t} is back!...or not.", "{t} wilt in the Texas heat"] },
   HWT: { win: ["{t} hand it in on time", "{t} ace the assignment",
                "{t}.com make Tubey the worm smile!"],
          loss: ["{t} miss the deadline", "{t} ask for an extension",
