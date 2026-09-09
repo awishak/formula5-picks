@@ -142,8 +142,44 @@ function Row({ row, mine, nameOf }) {
   );
 }
 
-// One team's write-up: the row's facts in a header, then the paragraph.
-function Note({ row, text, mine, nameOf }) {
+// The five parts of the rating, each with the team's rank on it across the
+// league, and last week's result above them. Data, set as data: a label, a
+// number, a place.
+const rankText = rk => (rk.tied ? `T-${ordinal(rk.place)}` : ordinal(rk.place));
+function Facts({ row, byId }) {
+  const last = row.last;
+  const opp = last ? byId[last.oppId] : null;
+  const lastColor = !last ? V.text2 : last.won === true ? V.green : last.won === false ? V.pink : V.silver;
+  const lastText = !last ? "" : `${last.won === true ? "W" : last.won === false ? "L" : "D"} ${last.score}\u2013${last.oppScore} v ${opp ? opp.short : "?"}`;
+  const lines = [
+    { k: "Season avg", v: row.season.toFixed(1), r: rankText(row.ranks.season) },
+    { k: "Last 5 avg", v: row.last5.toFixed(1), r: rankText(row.ranks.last5) },
+    { k: "Last 2 avg", v: row.last2.toFixed(1), r: rankText(row.ranks.last2) },
+    { k: "Last 5 wins", v: Number.isInteger(row.wins) ? String(row.wins) : row.wins.toFixed(1), r: rankText(row.ranks.wins) },
+    { k: "Schedule", v: row.schedule.toFixed(1), r: `${rankText(row.ranks.schedule)} hardest` },
+  ];
+  const cell = extra => ({ ...body("bodySm", { fontSize: 13, lineHeight: 1.5 }), ...extra });
+  return (
+    <div style={{
+      display: "grid", gridTemplateColumns: "auto 1fr auto", columnGap: 12, rowGap: 0,
+      padding: "8px 12px", borderRadius: 12, background: V.bg3, marginBottom: 10,
+    }}>
+      <span style={cell({ color: V.text3, fontWeight: 600 })}>Last week</span>
+      <span style={cell({ color: lastColor, fontWeight: 600, fontVariantNumeric: "tabular-nums", gridColumn: "2 / 4" })}>{lastText}</span>
+      {lines.map(l => (
+        <div key={l.k} style={{ display: "contents" }}>
+          <span style={cell({ color: V.text3, fontWeight: 600 })}>{l.k}</span>
+          <span style={cell({ color: V.text, fontVariantNumeric: "tabular-nums" })}>{l.v}</span>
+          <span style={cell({ color: V.blue, fontWeight: 600, textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{l.r}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// One team's write-up: the row's facts in a header, the stat block, then the
+// paragraph.
+function Note({ row, text, mine, nameOf, byId }) {
   const div = DIV[row.division] || DIV.second;
   const who = [row.p1Id, row.p2Id].map(id => nameOf[id]).filter(Boolean).map(shortName).join(" \u00b7 ");
   return (
@@ -161,6 +197,7 @@ function Note({ row, text, mine, nameOf }) {
         </div>
         <div style={numeric("stat", { fontSize: 22, color: V.text, flexShrink: 0, ...textGlow(V.blue, 0.6) })}>{Math.round(row.rating)}</div>
       </div>
+      <Facts row={row} byId={byId} />
       <p style={body("body", { fontSize: 15, lineHeight: 1.55, color: V.text, margin: 0 })}>{text}</p>
     </div>
   );
@@ -168,6 +205,7 @@ function Note({ row, text, mine, nameOf }) {
 
 export function PowerBoard({ power, notes, myTeamId, nameOf = {} }) {
   const { rows, round, weights, perfect } = power;
+  const byId = Object.fromEntries(rows.map(r => [r.id, r]));
   return (
     <div style={WRAP}>
       <Title />
@@ -218,7 +256,7 @@ export function PowerBoard({ power, notes, myTeamId, nameOf = {} }) {
           letterSpacing: "0.05em", textTransform: "uppercase", color: V.pink,
         }}>The write-ups</span>
       </div>
-      {rows.map(r => <Note key={r.id} row={r} text={notes[r.id] || ""} mine={r.id === myTeamId} nameOf={nameOf} />)}
+      {rows.map(r => <Note key={r.id} row={r} text={notes[r.id] || ""} mine={r.id === myTeamId} nameOf={nameOf} byId={byId} />)}
     </div>
   );
 }

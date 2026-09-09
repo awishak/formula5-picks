@@ -360,10 +360,25 @@ export function buildTeamPower(db, { toRound = null } = {}) {
     // Up is a smaller number, so the move is the old place minus the new.
     r.move = r.was ? r.was - r.place : null;
   });
-  // Schedule rank across the league: 1 is the hardest run of opponents.
-  const bySched = rows.slice().sort((a, b) => b.oppAvg - a.oppAvg);
-  const schedRank = {}; bySched.forEach((r, i) => { schedRank[r.id] = i + 1; });
-  rows.forEach(r => { r.schedRank = schedRank[r.id]; });
+  // Where each team ranks on each of the five parts, across the league. Level
+  // teams share a place and the next one skips, the way placesBy does for
+  // players. Schedule rank 1 is the hardest run of opponents.
+  const rankOn = key => {
+    const sorted = rows.slice().sort((a, b) => b[key] - a[key]);
+    const place = {};
+    sorted.forEach((r, i) => { place[r.id] = (i > 0 && sorted[i - 1][key] === r[key]) ? place[sorted[i - 1].id] : i + 1; });
+    const tied = {};
+    sorted.forEach(r => { tied[place[r.id]] = (tied[place[r.id]] || 0) + 1; });
+    return { place, tied };
+  };
+  const ranks = { season: rankOn("season"), last5: rankOn("last5"), last2: rankOn("last2"), wins: rankOn("wins"), schedule: rankOn("oppAvg") };
+  rows.forEach(r => {
+    r.ranks = {};
+    Object.entries(ranks).forEach(([k, v]) => {
+      r.ranks[k] = { place: v.place[r.id], tied: v.tied[v.place[r.id]] > 1 };
+    });
+    r.schedRank = r.ranks.schedule.place;
+  });
 
   const opps = rows.map(r => r.oppAvg);
   return {
