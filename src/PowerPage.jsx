@@ -223,7 +223,7 @@ function Note({ row, text, mine, nameOf, byId }) {
 }
 
 export function PowerBoard({ power, notes, myTeamId, nameOf = {} }) {
-  const { rows, round, weights, perfect } = power;
+  const { rows, round, weights, perfect, curve } = power;
   const byId = Object.fromEntries(rows.map(r => [r.id, r]));
   return (
     <div style={WRAP}>
@@ -231,7 +231,7 @@ export function PowerBoard({ power, notes, myTeamId, nameOf = {} }) {
 
       <div style={body("bodySm", { color: V.text2, margin: "0 2px 14px", lineHeight: 1.5 })}>
         Who you would least like to draw next week, across all 24 teams. After round {round}.
-        A perfect week is {perfect} points.
+        Read the rating like a grade: 90 is an A, 80 a B, 70 a C, 60 a D, and under 60 fails.
       </div>
 
       {/* What the dots mean, once, above the table. */}
@@ -262,10 +262,17 @@ export function PowerBoard({ power, notes, myTeamId, nameOf = {} }) {
           ))}
         </div>
         <div style={body("bodySm", { fontSize: 13, color: V.text3, marginTop: 8, lineHeight: 1.5 })}>
-          Scoring is the matchup score, drivers plus BOX BOX. A draw counts as half a win.
-          Strength of schedule is what the last five opponents average a week, with the
-          easiest run in the league at 0 and the hardest at 10. The rank beside it in a
-          write-up runs hardest first, so 1st is the hardest run in the league.
+          Scoring is the matchup score, drivers plus BOX BOX, marked out of a perfect
+          week of {perfect}. A draw counts as half a win. Strength of schedule is what the
+          last five opponents average a week, with the easiest run in the league at 0 and
+          the hardest at 10. The rank beside it in a write-up runs hardest first, so 1st
+          is the hardest run in the league.
+        </div>
+        <div style={body("bodySm", { fontSize: 13, color: V.text3, marginTop: 8, lineHeight: 1.5 })}>
+          Then the mark is graded on a curve. The league&rsquo;s average team is a {curve.mean},
+          and every {curve.step} points is one standard deviation of the league that week,
+          so the best team in the league lands in the 90s and the worst fails. The curve
+          moves nobody: the order is the weights above.
         </div>
       </div>
 

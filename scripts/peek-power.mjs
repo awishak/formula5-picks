@@ -17,8 +17,9 @@ if (process.env.F5_DB) {
 const power = buildTeamPower(db);
 const notes = buildPowerNotes(power, db);
 console.log(`Power Rankings after round ${power.round}\n`);
+console.log(`    ${"".padEnd(16)} grade   raw  move\n`);
 for (const r of power.rows) {
   const mv = r.move == null ? "new" : r.move > 0 ? `+${r.move}` : String(r.move);
-  console.log(`${String(r.place).padStart(2)}  ${r.short.padEnd(16)} ${String(r.rating).padStart(5)}  ${mv.padStart(4)}  ${r.division === "championship" ? "CHAMP" : "2ND  "}  ${r.w}-${r.l}-${r.d}`);
+  console.log(`${String(r.place).padStart(2)}  ${r.short.padEnd(16)} ${String(r.rating).padStart(5)} ${String(r.raw).padStart(5)}  ${mv.padStart(4)}  ${r.division === "championship" ? "CHAMP" : "2ND  "}  ${r.w}-${r.l}-${r.d}`);
   console.log(`    ${notes[r.id]}\n`);
 }

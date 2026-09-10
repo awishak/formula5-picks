@@ -262,15 +262,25 @@ export const TIEBREAKS = [
 //            every team's opponents average within twelve points of each
 //            other, which is one rating point at this weight.
 //
-// A perfect week is 100 points. A team on 100 has scored 100 a week all season,
-// won its last five, and played the hardest schedule in the league. The best
-// week anybody has posted is 121, so 100 is high and reachable. Fixed rather
-// than taken from the data so a 75 in round 14 means the same thing in round 22.
+// A perfect week is 100 points, and the five parts add up to a raw mark out of
+// 100 against it. Then the mark is graded on a curve, the way a class is. The
+// league's average team is set to CURVE_MEAN and every CURVE_STEP points is one
+// standard deviation of the league that week, so the best team lands in the
+// 90s and the worst in the 50s, and the number reads as a grade: 90 is an A,
+// 60 is a D, under 60 fails. Andrew, 2026-09-09: the raw marks ran 82 to 45,
+// which put an A team on a B and nothing on an F. The curve does not reorder
+// anybody, it stretches the same line, so his weights still decide the board.
+//
+// The price is that the number is relative to the league that week, so a 75
+// in round 14 is the average team in round 14 rather than a fixed amount of
+// scoring. The parts underneath are still measured, not curved.
 //
 // The schedule part's ends are set by whoever has the easiest and hardest run
 // that week, so a team's schedule score can move when somebody else's schedule
 // changes. That is the price of a part that always reaches both ends.
 export const PERFECT_WEEK = 100;
+export const CURVE_MEAN = 75;
+export const CURVE_STEP = 10;
 export const POWER_WEIGHTS = [
   { key: "season",   weight: 0.30, label: "season average" },
   { key: "last5",    weight: 0.20, label: "last 5 average" },
@@ -322,7 +332,7 @@ export function buildTeamPower(db, { toRound = null } = {}) {
     const opps = rows.map(r => r.parts.oppAvg);
     const lo = Math.min(...opps), hi = Math.max(...opps);
     const spread = hi - lo;
-    return rows.map(({ row, parts }) => {
+    const graded = rows.map(({ row, parts }) => {
       // Each part is a fraction of perfect, then weighted. Schedule is the one
       // part scaled to the league rather than to the perfect week.
       const schedule = spread > 0 ? (parts.oppAvg - lo) / spread : 0;
@@ -333,13 +343,15 @@ export function buildTeamPower(db, { toRound = null } = {}) {
         wins: W.wins * parts.wins / 5,
         schedule: W.schedule * schedule,
       };
-      const rating = 100 * Object.values(pieces).reduce((a, b) => a + b, 0);
+      const raw = 100 * Object.values(pieces).reduce((a, b) => a + b, 0);
       return {
         id: row.id, name: row.name, short: row.short, code: row.code, logo: row.logo,
         nation: row.nation, division: row.division,
         p1Id: row.p1Id, p2Id: row.p2Id,
         w: row.w, l: row.l, d: row.d, played: row.played,
-        rating: r1(rating),
+        // The raw mark out of a perfect week. The rating is this, curved, below.
+        raw: r1(raw),
+        rating: raw,
         // The five parts as they were measured, for the row and the write-up.
         season: r1(parts.season), last5: r1(parts.last5), last2: r1(parts.last2),
         wins: parts.wins, oppAvg: r1(parts.oppAvg),
@@ -348,7 +360,15 @@ export function buildTeamPower(db, { toRound = null } = {}) {
         form: parts.form,
         last: row.weeks[row.weeks.length - 1] || null,
       };
-    }).sort((a, b) => (b.rating - a.rating) || a.name.localeCompare(b.name))
+    });
+    // The curve. Population deviation, since the league is the whole population.
+    const marks = graded.map(r => r.rating);
+    const m = mean(marks);
+    const sd = Math.sqrt(mean(marks.map(x => (x - m) ** 2)));
+    return graded.map(r => ({
+      ...r,
+      rating: r1(Math.max(0, Math.min(100, sd > 0 ? CURVE_MEAN + CURVE_STEP * (r.rating - m) / sd : CURVE_MEAN))),
+    })).sort((a, b) => (b.rating - a.rating) || (b.raw - a.raw) || a.name.localeCompare(b.name))
       .map((r, i) => ({ ...r, place: i + 1 }));
   };
 
@@ -383,6 +403,7 @@ export function buildTeamPower(db, { toRound = null } = {}) {
   const opps = rows.map(r => r.oppAvg);
   return {
     rows, round, weights: POWER_WEIGHTS, perfect: PERFECT_WEEK,
+    curve: { mean: CURVE_MEAN, step: CURVE_STEP },
     easiest: Math.min(...opps), hardest: Math.max(...opps),
   };
 }
