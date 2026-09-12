@@ -2162,10 +2162,17 @@ function RootingCard({ seats, boxBox }) {
   })();
   const ord = cancel(orderBag(true), orderBag(false));
   // What the week is actually being decided on, in the order it falls through.
+  //
+  // The last rung is the line, and the line is the average of four guesses, so
+  // a matchup where nobody picked has no line to fall to. It used to fall there
+  // anyway and read the number off null: TNT Roku and XLIX Racing went into
+  // round 14 with all four missing, and every one of those four got a white
+  // screen on the home page. Nothing is a state, and it says so.
   const level = forUs.length || against.length ? "drivers"
     : best.mine.length || best.theirs.length ? "best"
     : ord.mine.length || ord.theirs.length ? "order"
-    : "boxbox";
+    : boxBox.line != null ? "boxbox"
+    : "nothing";
 
   const Strip = ({ names, c }) => (
     // Wraps rather than scrolls. A third face off the right edge is a rooting
@@ -2206,7 +2213,9 @@ function RootingCard({ seats, boxBox }) {
       }}>
         {level !== "drivers" && (
           <p style={{ ...body("bodySm"), fontSize: 13, color: V.text2, margin: "10px 0 0" }}>
-            {level === "boxbox"
+            {level === "nothing"
+              ? "No picks in on either side. Nothing to root for."
+              : level === "boxbox"
               ? "Same drivers, same orders, same calls. BOX BOX is the week."
               : level === "order"
               ? "Same drivers, same calls. The orders are the week."
@@ -2220,6 +2229,10 @@ function RootingCard({ seats, boxBox }) {
             following the words: in an over week your drivers are on the right
             and Root for goes with them. */}
         {(() => {
+          // Two empty columns headed Root for and Root against are worse than
+          // no columns: they read as a week where the two teams cancelled out,
+          // which is the one thing that has not happened.
+          if (level === "nothing") return null;
           const cols = boxBox.side === "UNDER"
             ? [{ mine: true, c: MINE, label: "Root for" },
                { mine: false, c: THEIRS, label: "Root against" }]

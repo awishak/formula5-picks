@@ -5,9 +5,16 @@
 // Nightly rather than weekly because the deadlines are not all on the same day
 // — round 15 closes on a Thursday and the rest on a Friday.
 //
-// It only acts on a race whose deadline passed in the last twelve hours, so a
-// rerun on any other night is a no-op rather than a second pass over an old
-// round.
+// It only acts on a race whose deadline passed in the last twenty-four hours,
+// so a rerun on any other night is a no-op rather than a second pass over an
+// old round. The runs are 24h apart, so exactly one of them falls inside that
+// window whatever hour the deadline is set to.
+//
+// Twelve hours until 2026-09-11, which assumed every deadline sits a few hours
+// before the nightly run. Round 14 was reopened to 5am Pacific on the Saturday
+// after four players missed it, which put the deadline fifteen hours ahead of
+// the next run: inside no window at all, so the bot would have skipped that
+// round for good rather than covering it late.
 import { ready, select, authorized } from "../_supabase.js";
 
 const TOP_PICKS = 1, MID_PICKS = 4;
@@ -33,7 +40,7 @@ export default async function handler(req, res) {
     const race = races.find(r => {
       if (!r.pick_deadline) return false;
       const gone = now - new Date(r.pick_deadline).getTime();
-      return gone > 0 && gone < 12 * 3600e3;
+      return gone > 0 && gone < 24 * 3600e3;
     });
     if (!race) return res.status(200).json({ ok: true, skipped: "no deadline passed in the last twelve hours" });
 
