@@ -23,8 +23,9 @@ import { BG, BLUE, TEXT, TEXT2, BORDER, avatarColor } from "./theme";
 import { V, FM, FD as VFD, FB, edgeGlow, textGlow, VEGAS_CSS } from "./theme.vegas";
 
 const FD_LIGHT = "'Geologica', sans-serif";
-const CARDS = 10;
-const VEGAS_FROM = 6;              // 0-based: card 7 is the first Vegas card
+// The deck is ten cards. The count is no longer a constant because the race clip
+// can sit in front of them, so the live length is `total` inside the component.
+const VEGAS_FROM = 6;              // deck-relative: card 7 is the first Vegas card
 
 /* ------------------------------------------------------------- tokens */
 
@@ -282,19 +283,27 @@ function Breakdown({ deck, T }) {
 
 // initialCard and initialReveal exist for scripts/smoke-recap.jsx, which has to
 // reach every card and both halves of card 4 without being able to click.
-export default function Recap({ playerName, onExit, initialCard = 0, initialReveal = false }) {
+export default function Recap({ playerName, onExit, initialCard = 0, initialReveal = false,
+                               showRaceClip = false }) {
   const [i, setI] = useState(initialCard);
   const [revealed, setRevealed] = useState(initialReveal);
   const [boardMode, setBoardMode] = useState("before");
   const deck = DATA.players[playerName];
-  const vegas = i >= VEGAS_FROM;
+
+  // The race clip, when it is switched on, sits in FRONT of the ten cards. Every
+  // index below is therefore deck-relative: d === -1 is the clip, d === 0 the
+  // title card. Reading `i` directly here would shift the Vegas turn, the board
+  // travel and card 4's reveal by one the moment the clip appears.
+  const clip = showRaceClip ? 1 : 0;
+  const d = i - clip;
+  const vegas = d >= VEGAS_FROM;
   const T = tokens(vegas);
 
   // The board travels the moment its card lands, so the swap is seen not found.
   useEffect(() => {
-    if (i === 4) { setBoardMode("before"); const t = setTimeout(() => setBoardMode("swapped"), 700); return () => clearTimeout(t); }
-    if (i === 5) { setBoardMode("swapped"); const t = setTimeout(() => setBoardMode("byAvg"), 700); return () => clearTimeout(t); }
-  }, [i]);
+    if (d === 4) { setBoardMode("before"); const t = setTimeout(() => setBoardMode("swapped"), 700); return () => clearTimeout(t); }
+    if (d === 5) { setBoardMode("swapped"); const t = setTimeout(() => setBoardMode("byAvg"), 700); return () => clearTimeout(t); }
+  }, [d]);
 
   useEffect(() => { window.scrollTo(0, 0); }, [i]);
 
@@ -337,7 +346,7 @@ export default function Recap({ playerName, onExit, initialCard = 0, initialReve
           <Avatar name={deck.name} photo={deck.photo} size={64} T={T} ring={T.good} />
           <Stat T={T}>{deck.ppr}</Stat>
         </div>
-        <Ladder me={deck} T={T} live={i === 1} />
+        <Ladder me={deck} T={T} live={d === 1} />
         <Line T={T} dim size={T.small}>League average is {DATA.league.ppr}.</Line>
       </Card>
     ),
@@ -486,10 +495,38 @@ export default function Recap({ playerName, onExit, initialCard = 0, initialReve
     ),
   ];
 
+  // Switched on for the week a race lands: the clip plays in front of the deck.
+  //
+  // Tap to play, with sound, so `controls` rather than autoplay — muted autoplay
+  // is the only kind browsers allow, and this clip has audio worth hearing.
+  // preload="metadata" keeps the 3.3MB off the wire until someone actually taps,
+  // which matters when this is the first thing the deck loads.
+  const clipCard = () => (
+    <Card T={T}>
+      <Kicker T={T}>Formula 5 · Spanish Grand Prix</Kicker>
+      <Head T={T}>Let's start with the Spanish Grand Prix.</Head>
+      <video
+        src="/spanish-gp-2026.mp4"
+        poster="/spanish-gp-2026-poster.jpg"
+        controls
+        playsInline
+        preload="metadata"
+        style={{
+          width: "100%", maxWidth: 330, aspectRatio: "9 / 16", display: "block",
+          borderRadius: 14, border: `1px solid ${T.line}`, background: "#000",
+        }}
+      />
+      <Line T={T} dim>Tap to play — it has sound.</Line>
+    </Card>
+  );
+
+  const shown = clip ? [clipCard, ...cards] : cards;
+  const total = shown.length;
+
   // Card 4 holds its outcome back behind one click, so the stake lands first.
-  const onCard4 = i === 3;
+  const onCard4 = d === 3;
   const nextLabel = onCard4 && !revealed ? "What happened?"
-    : { 3: "See who got promoted", 4: "See scoring averages", 5: "See the second half" }[i]
+    : { 3: "See who got promoted", 4: "See scoring averages", 5: "See the second half" }[d]
     || "Next";
   const advance = () => {
     if (onCard4 && !revealed) return setRevealed(true);
@@ -513,13 +550,13 @@ export default function Recap({ playerName, onExit, initialCard = 0, initialReve
       {/* Progress pips. The next button is the tap target, so these are read-only. */}
       <div style={{ position: "fixed", top: 18, left: 0, right: 0, zIndex: 5,
         display: "flex", gap: 5, justifyContent: "center", padding: "0 20px" }}>
-        {Array.from({ length: CARDS }, (_, n) => (
+        {Array.from({ length: total }, (_, n) => (
           <div key={n} style={{ height: 3, flex: 1, maxWidth: 34, borderRadius: 2,
             background: n <= i ? T.good : T.line, transition: "background 0.3s ease" }} />
         ))}
       </div>
 
-      {cards[i]()}
+      {shown[i]()}
 
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 5,
         padding: "14px 20px 22px", display: "flex", gap: 10,
@@ -530,7 +567,7 @@ export default function Recap({ playerName, onExit, initialCard = 0, initialReve
             style={{ ...btn(T), padding: "13px 17px", background: "transparent",
               color: T.dim, border: `1px solid ${T.line}`, boxShadow: "none" }}>←</button>
         )}
-        {(i < CARDS - 1 || (onCard4 && !revealed)) && (
+        {(i < total - 1 || (onCard4 && !revealed)) && (
           <button onClick={advance} style={btn(T)}>{nextLabel}</button>
         )}
       </div>
