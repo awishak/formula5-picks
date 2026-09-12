@@ -28,6 +28,12 @@ const LOGO_B64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAu4AAADDCAMAAADq
 // Barcelona). Set to null to take the card out.
 const RACE_CLIP_ROUND = 14;
 
+// Last moment the clip is shown: end of Sat 19 Sep 2026, Pacific. Written in UTC
+// because that is what the browser compares against, and PDT is UTC-7, so the
+// end of the 19th locally is 07:00Z on the 20th. After this the card is gone
+// with no deploy needed.
+const RACE_CLIP_UNTIL = Date.parse("2026-09-20T07:00:00Z");
+
 const CIRCUITS = {
   1:  { city: "Melbourne",   country: "🇦🇺", circuit: "Albert Park" },
   2:  { city: "Shanghai",    country: "🇨🇳", circuit: "Shanghai International" },
@@ -929,11 +935,13 @@ export default function App() {
   // recapData.json and says so at the top. Keeping the query out here means the
   // deck still takes no Supabase dependency and just receives a boolean.
   //
-  // NOTE: this does not expire on its own. Once round 14 is scored the card
-  // stays until RACE_CLIP_ROUND is changed or the prop is dropped.
+  // The window close is checked at render rather than here, so a session left
+  // open across the boundary loses the card too instead of keeping it until
+  // reload.
   useEffect(() => {
     async function checkRaceClip() {
       try {
+        if (Date.now() >= RACE_CLIP_UNTIL) return;   // window shut, skip the query
         const { data: race } = await supabase.from("races")
           .select("id").eq("season", 2026).eq("round", RACE_CLIP_ROUND).maybeSingle();
         if (!race) return;
@@ -987,7 +995,7 @@ export default function App() {
     if (who) return (
       <Recap
         playerName={who}
-        showRaceClip={raceClipOn}
+        showRaceClip={raceClipOn && Date.now() < RACE_CLIP_UNTIL}
         // Back to the root, not to the current path: leaving the deck from
         // /deck has to drop the path or it reopens on the next load.
         onExit={() => { window.history.replaceState(null, "", "/"); navigateTo("home"); }}
