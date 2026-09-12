@@ -1600,7 +1600,11 @@ function MyPicksInner({ currentUser, onNavigate }) {
   }
 
   // ── No drivers set yet ────────────────────────────────
-  if (!race.top_drivers || race.top_drivers.length === 0) {
+  // Both pools must be present. StepMidPicks does drivers.slice(0, 7) with no
+  // guard of its own, so a race with a top pool but no midfield pool rendered
+  // step 0 fine and threw the moment the player tapped Next.
+  if (!race.top_drivers || race.top_drivers.length === 0 ||
+      !race.mid_drivers || race.mid_drivers.length === 0) {
     return (
       <div style={{ padding: "20px 20px 100px" }}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>

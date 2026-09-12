@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
+import ErrorBoundary from "./ErrorBoundary.jsx";
 
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, PURPLE, SILVER, FD, FB } from "./theme";
@@ -64,7 +65,7 @@ const thStyle = {
 };
 const tdStyle = { padding: "5px 8px", fontSize: 10 };
 
-export default function PickIntel({ currentUser }) {
+function PickIntelInner({ currentUser }) {
   const [races, setRaces] = useState([]);
   const [players, setPlayers] = useState([]);
   const [picks, setPicks] = useState([]);
@@ -546,5 +547,16 @@ export default function PickIntel({ currentUser }) {
         </div>
       )}
     </div>
+  );
+}
+
+// Wrapped so a crash here shows the error instead of unmounting the whole app.
+// Players land on this screen once a deadline has passed, so a silent failure
+// here reads to them as "I can't make my picks".
+export default function PickIntel(props) {
+  return (
+    <ErrorBoundary where="Pick Intel">
+      <PickIntelInner {...props} />
+    </ErrorBoundary>
   );
 }
