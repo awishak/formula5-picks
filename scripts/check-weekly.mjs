@@ -16,12 +16,18 @@ const run = promisify(execFile);
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const BASE = process.env.F5_BASE || "http://localhost:5173";
 const PLAYER = process.argv[2] || "Andrew Ishak";
-const STAGES = [1, 3, 1, 1];
+// A round's deck is four cards, and round 14 opens on a video ahead of them, so
+// both shapes are walked. Every card in round 14 sits one place later.
+const RUNS = [
+  { round: 13, stages: [1, 3, 1, 1] },
+  { round: 14, stages: [1, 1, 3, 1, 1] },
+];
 
 let failed = 0;
+for (const { round, stages: STAGES } of RUNS) {
 for (let card = 0; card < STAGES.length; card++) {
   for (let st = 1; st <= STAGES[card]; st++) {
-    const url = `${BASE}/week?card=${card + 1}&stage=${st}&player=${encodeURIComponent(PLAYER)}`;
+    const url = `${BASE}/week?round=${round}&card=${card + 1}&stage=${st}&player=${encodeURIComponent(PLAYER)}`;
     let out = "";
     try {
       const r = await run(CHROME, ["--headless=new", "--disable-gpu", "--virtual-time-budget=6000",
@@ -34,7 +40,7 @@ for (let card = 0; card < STAGES.length; card++) {
     // A card that painted nothing is a failure even with a clean console.
     const text = out.replace(/<script[\s\S]*?<\/script>/g, "").replace(/<[^>]+>/g, " ");
     const thin = text.replace(/\s+/g, " ").trim().length < 120;
-    const label = STAGES[card] > 1 ? `card ${card + 1} stage ${st}` : `card ${card + 1}`;
+    const label = `round ${round} ` + (STAGES[card] > 1 ? `card ${card + 1} stage ${st}` : `card ${card + 1}`);
     if (errs.length || thin) {
       failed++;
       console.log(`  FAIL  ${label}${thin ? "  (rendered almost nothing)" : ""}`);
@@ -43,6 +49,7 @@ for (let card = 0; card < STAGES.length; card++) {
       console.log(`  ok    ${label}`);
     }
   }
+}
 }
 console.log(`\n${failed ? "FAILED" : "OK"}  ${PLAYER}`);
 process.exit(failed ? 1 : 0);

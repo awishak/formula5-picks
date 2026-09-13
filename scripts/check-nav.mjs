@@ -29,9 +29,11 @@ const WALKS = [
   { gate: true, taps: ["SKIP", "PLAYERS"] },
   { gate: true, taps: ["SKIP", "PLAYERS", "TEAMS", "HOME"] },
   // Out of the deck by its own button, which lands on the new home.
-  // Card 1 offers the music instead of NEXT, then card 2's three presses and
-  // card 3 before card 4's button, which hands off to the new home.
-  { gate: true, taps: ["CONTINUE WITHOUT", "NEXT", "NEXT", "NEXT", "NEXT", "MAKE YOUR PICKS"] },
+  // Round 14 opens on a video with a NEXT, so that tap is optional: a trailing
+  // ? taps the button only if it is there. Then card 1 offers the music instead
+  // of NEXT, card 2's three presses and card 3 before card 4's button, which
+  // reads DONE until the next round's pools are drawn on the Tuesday.
+  { gate: true, taps: ["NEXT?", "CONTINUE WITHOUT", "NEXT", "NEXT", "NEXT", "NEXT", "MAKE YOUR PICKS|DONE"] },
   { taps: ["PLAYERS", "TEAMS", "MORE", "HOME"] },
   { taps: ["TEAMS", "SCHEDULE", "HOME", "PLAYERS"] },
   // Into the Power Rankings from More and back out by the nav.
@@ -50,10 +52,11 @@ let i=0;
 const tap=()=>{
   if(i>=steps.length) return;
   const d=f.contentDocument;
-  const want=steps[i];
+  const optional=steps[i].endsWith("?");
+  const want=optional?steps[i].slice(0,-1):steps[i];
   const b=[...d.querySelectorAll("button")].find(x=>new RegExp(want,"i").test(x.textContent));
-  if(b) b.click(); else console.log("NOTFOUND "+want);
-  i++; setTimeout(tap,2200);
+  if(b) b.click(); else if(!optional) console.log("NOTFOUND "+want);
+  i++; setTimeout(tap,b||!optional?2200:0);
 };
 setTimeout(tap,4200);
 </script>`;

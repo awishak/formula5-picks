@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { V, FM, FD, FB, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
+import { V, FM, FD, FB, label, body, card, textGlow, titleFit, titleBox } from "./theme.vegas";
 import { supabase } from "./supabaseClient";
 import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
 
@@ -107,10 +107,6 @@ export default function MorePage({ onNavigate, currentUser }) {
                 : err}
             </p>
           )}
-        </div>
-
-        <div style={{ ...card({ padding: 18, marginBottom: 14 }), ...edgeGlow(V.blue, 0.6) }}>
-          <div style={label({ color: V.blue, fontSize: 15 })}>Coming soon</div>
         </div>
 
         <button onClick={() => onNavigate("power")} style={{

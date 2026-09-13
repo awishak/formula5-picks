@@ -51,6 +51,44 @@ for (const name of names) {
   }
 }
 
+// Round 14 opens on a video ahead of card 1, and no other round does. The
+// fixture is not round 14, so the round is swapped on the data: the deck picks
+// its card list off `round` alone. Every card behind the video has to render
+// one place later, and the deck without it must be unchanged.
+{
+  const base = buildWeekly(DB, names[0]);
+  const r14 = { ...base, round: 14, raceName: "Spanish Grand Prix" };
+  const check = (label, fn) => {
+    total++;
+    try { fn(); console.log(`  ok    ${label}`); }
+    catch (e) { failed++; console.log(`  FAIL  ${label}\n        ${e.message}`); }
+  };
+  check("round 14 opens on the video", () => {
+    const html = renderToString(<WeeklyDeck data={r14} initialCard={0} />);
+    if (!/<video[^>]+r14-spain\.mp4/.test(html)) throw new Error("no video on card 1");
+    if (!/SPANISH GRAND PRIX/.test(html)) throw new Error("no kicker");
+    if (!/Play the video with sound/.test(html)) throw new Error("no sound button");
+  });
+  check(`round ${base.round} does not`, () => {
+    const html = renderToString(<WeeklyDeck data={base} initialCard={0} />);
+    if (/<video/.test(html)) throw new Error("a video on a round that has none");
+  });
+  STAGES.forEach((n, ci) => {
+    for (let st = 0; st < n; st++) check(`round 14 card ${ci + 2}${n > 1 ? ` stage ${st + 1}` : ""} matches card ${ci + 1} without the video`, () => {
+      // The video, the progress lights, and Back, which card 1 only grows
+      // because there is now a card behind it.
+      const strip = s => s.replace(/<video[\s\S]*?<\/video>/g, "").replace(/ROUND \d+[^<]*/g, "")
+        .replace(/<button[^>]*aria-label="Back"[\s\S]*?<\/button>/g, "")
+        .replace(/<div style="flex:1;height:3px[\s\S]*?<\/div><\/div>/g, "");
+      const a = strip(renderToString(<WeeklyDeck data={r14} initialCard={ci + 1} initialStage={st} />));
+      const b = strip(renderToString(<WeeklyDeck data={{ ...base, raceName: r14.raceName }} initialCard={ci} initialStage={st} />));
+      if (/<video/.test(a)) throw new Error("the video rendered past card 1");
+      if (a.length < 400) throw new Error(`suspiciously short: ${a.length} chars`);
+      if (Math.abs(a.length - b.length) > 200) throw new Error(`differs from the same card without the video by ${a.length - b.length} chars`);
+    });
+  });
+}
+
 // A player with no score for the round must come back null rather than throw,
 // which is what the loader turns into the "not scored yet" screen.
 try {

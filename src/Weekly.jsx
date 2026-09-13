@@ -34,11 +34,9 @@ import {
   edgeGlow, textGlow, card as vcard, titleFit, titleBox, VEGAS_CSS,
 } from "./theme.vegas";
 
-const CARDS = 4;
-// Nothing needs a scroll.
-const SCROLLS = new Set([2]);   // where you stand: two tables, at full size
-// How many presses a card takes before the deck moves on. Card 2 plays itself
-// out in five, everything else is one.
+// How many presses a card takes before the deck moves on. The race card plays
+// itself out in RACE_STAGES, everything else is one. The card list itself is
+// built per round in WeeklyDeck, since round 14 opens on a video.
 //
 // Declared here rather than beside the card, because `const` does not hoist:
 // reading a constant defined further down the file throws on load in the
@@ -52,7 +50,6 @@ const SCROLLS = new Set([2]);   // where you stand: two tables, at full size
 // stop, then the points going to a side.
 const S_RACE = 0, S_TEAM = 1, S_POOL = 2;
 const RACE_STAGES = 3;
-const CARD_STAGES = [1, RACE_STAGES, 1, 1];
 const PAD = (h, extra = 0) =>
   (h < 740 ? { t: 54, b: 92 + extra } : { t: 64, b: 104 + extra });
 // What the theme button adds to the bottom bar, so a card is measured against
@@ -284,6 +281,25 @@ const THEME_SRC = "/velvet-thunder.mp3";
 const THEME_PLAY = "Play the new F5 theme song, \u201CVelvet Thunder\u201D";
 const THEME_PAUSE = "Pause \u201CVelvet Thunder\u201D";
 const THEME_CREDIT = "Written by Andrea Buttacavoli, majority owner of Prestissimo Veloce";
+
+// A video that opens one round's deck, ahead of card 1. Round 14, the Spanish
+// Grand Prix, only, set by Andrew 2026-09-13; nothing carries forward to later
+// rounds. The seen flag is untouched, so anyone who had already closed round
+// 14's deck does not get it again. Encoded down from a 19.6MB 4K phone clip
+// with macOS's avconvert, Preset960x540.
+const INTRO_VIDEO = {
+  14: { src: "/weekly/r14-spain.mp4", poster: "/weekly/r14-spain.jpg" },
+};
+const VIDEO_SOUND_ON = "Mute the video";
+const VIDEO_SOUND_OFF = "Play the video with sound";
+
+const MutedIcon = ({ color, size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3.5 9.4h3.6L12 5.2v13.6L7.1 14.6H3.5z" fill={color} />
+    <path d="M15.5 9.5l5 5M20.5 9.5l-5 5" fill="none" stroke={color}
+      strokeWidth="1.9" strokeLinecap="round" />
+  </svg>
+);
 
 const SpeakerIcon = ({ color, size }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
@@ -2410,6 +2426,66 @@ function seasonLine(c, run, round, playerId) {
   };
 }
 
+// The pill beside NEXT on the video card, the same shape as the theme's inline
+// pill so the bottom bar reads the same on every card.
+function SoundButton({ on, onToggle }) {
+  const color = on ? V.blue : V.text2;
+  const Icon = on ? SpeakerIcon : MutedIcon;
+  return (
+    <button onClick={onToggle} aria-label={on ? VIDEO_SOUND_ON : VIDEO_SOUND_OFF}
+      aria-pressed={on} style={{
+        flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 8,
+        background: V.bg2, cursor: "pointer", padding: "10px 15px 10px 12px",
+        whiteSpace: "nowrap",
+        border: `1px solid ${on ? V.blue : V.border2}`, borderRadius: 999,
+        ...(on ? edgeGlow(V.blue, 0.5) : {}),
+      }}>
+      <span className={on ? "v-pulse" : undefined} style={{ lineHeight: 0, flexShrink: 0 }}>
+        <Icon color={color} size={18} />
+      </span>
+      <span style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color,
+        lineHeight: 1.35, whiteSpace: "nowrap" }) }}>{on ? "Sound on" : "Sound"}</span>
+    </button>
+  );
+}
+
+// The round's video, before card 1. Muted and playing on arrival, because no
+// browser plays sound before a tap and the deck opens without one; the tap on
+// the video or on the Sound pill is that gesture.
+//
+// Sized off the viewport rather than scaled by Card: the width is whatever
+// leaves the whole 9:16 frame under the kicker and above the bottom bar, so the
+// card measures inside its room and never shrinks. 210px is the tallest PAD
+// plus the kicker and the gap.
+function CardVideo({ d, video }) {
+  const { clip, ref, soundOn, toggleSound } = video;
+  // React does not write `muted` into the markup, and iOS decides whether an
+  // autoplaying video may start from the element as inserted. Setting the
+  // property and calling play() here is the reliable version. A refusal, Low
+  // Power Mode for one, leaves the poster up and a tap starts it.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.muted = true;
+    el.play().catch(() => {});
+  }, [ref]);
+
+  return (
+    <>
+      <Kicker>ROUND {d.round} &middot; {String(d.raceName || "").toUpperCase()}</Kicker>
+      <video ref={ref} src={clip.src} poster={clip.poster}
+        autoPlay muted loop playsInline preload="auto"
+        onClick={toggleSound}
+        style={{
+          display: "block", aspectRatio: "9 / 16",
+          width: "min(100%, calc((100dvh - 210px) * 9 / 16))",
+          borderRadius: 16, background: V.bg2, objectFit: "cover", cursor: "pointer",
+          ...(soundOn ? edgeGlow(V.blue, 0.6) : { border: `1px solid ${V.border2}` }),
+        }} />
+    </>
+  );
+}
+
 function CardResult({ d, theme }) {
   const c = d.card1;
   const won = c.outcome === "won", lost = c.outcome === "lost";
@@ -3163,8 +3239,40 @@ function CardNext({ d, onPicks, onExit }) {
  * smoke script can render all 48 without a network.
  */
 export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStage = 0 }) {
-  const [i, setI] = useState(Math.min(CARDS - 1, Math.max(0, initialCard)));
+  // The cards this round's deck runs, by name rather than by position, because
+  // a round with an intro video has every card one place later. `scrolls` and
+  // `stages` ride on the card so nothing below counts positions.
+  const clip = data ? INTRO_VIDEO[data.round] : null;
+  const cards = [
+    ...(clip ? [{ kind: "video", Body: CardVideo, stages: 1 }] : []),
+    // The grid card is cut: card 2 already puts every player on screen.
+    { kind: "result", Body: CardResult, stages: 1 },
+    // The matchup press is the only thing in the deck that scrolls; the whole
+    // race card is let scroll so that press can.
+    { kind: "race", Body: CardRace, stages: RACE_STAGES, scrolls: true },
+    // Where you stand: two tables, at full size.
+    { kind: "standings", Body: CardStandings, stages: 1, scrolls: true },
+    { kind: "next", Body: CardNext, stages: 1 },
+  ];
+
+  const [i, setI] = useState(Math.min(cards.length - 1, Math.max(0, initialCard)));
   const [stage, setStage] = useState(initialStage);
+
+  // The intro video's sound. Starts muted; turning it on stops the theme, so
+  // the two never play over each other if somebody backs up from a later card.
+  const videoRef = useRef(null);
+  const [soundOn, setSoundOn] = useState(false);
+  const toggleSound = () => {
+    const el = videoRef.current;
+    if (!el) return;
+    const on = el.muted || el.paused;
+    el.muted = !on;
+    if (on) {
+      if (audio.current && !audio.current.paused) audio.current.pause();
+      el.play().catch(() => {});
+    }
+    setSoundOn(on);
+  };
 
   // The theme track. The element lives up here rather than inside card 1 so it
   // survives the card changing, and unmounting the deck is what stops the
@@ -3192,8 +3300,10 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
   };
 
   useEffect(() => { window.scrollTo(0, 0); }, [i]);
+  // Leaving the video unmounts it, and it comes back muted.
+  useEffect(() => { setSoundOn(false); }, [i]);
 
-  const stages = CARD_STAGES[i] || 1;
+  const stages = (cards[i] && cards[i].stages) || 1;
   const lastStage = stage >= stages - 1;
   // The reset belongs here rather than in an effect on `i`: an effect also runs
   // on mount, which threw away the stage that ?stage= had just opened on.
@@ -3206,15 +3316,15 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
     if (stage > 0) { setStage(stage - 1); return; }
     if (i === 0) return;
     setI(i - 1);
-    setStage((CARD_STAGES[i - 1] || 1) - 1);
+    setStage(((cards[i - 1] && cards[i - 1].stages) || 1) - 1);
   };
 
   if (!data) return null;
 
-  // The grid card is cut: card 2 already puts every player on screen.
-  const bodies = [CardResult, CardRace, CardStandings, CardNext];
-  const Body = bodies[i];
-  const last = i === CARDS - 1;
+  const { kind, Body, scrolls } = cards[i];
+  const last = i === cards.length - 1;
+  // The result card makes the music offer in its body and has no bottom bar.
+  const offer = kind === "result";
 
   return (
     <div style={{ background: V.bg, minHeight: "100dvh", position: "relative", overflowX: "hidden" }}>
@@ -3298,7 +3408,7 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 30,
         display: "flex", gap: 4, padding: "14px 16px 10px", background:
           `linear-gradient(${V.bg} 60%, transparent)` }}>
-        {CARD_STAGES.map((n, ci) =>
+        {cards.map(c => c.stages).map((n, ci) =>
           Array.from({ length: n }, (_, si) => {
             const done = ci < i || (ci === i && si <= stage);
             const here = ci === i && si === stage;
@@ -3350,17 +3460,18 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
 
       <Card dep={`${i}-${stage}-${data.player.name}`}
         bottom={0}
-        scrolls={SCROLLS.has(i) || i === 1}>
+        scrolls={Boolean(scrolls)}>
         <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit}
-          theme={i === 0 ? {
+          video={kind === "video" ? { clip, ref: videoRef, soundOn, toggleSound } : undefined}
+          theme={offer ? {
             onWith: () => { playTheme(); advance(); },
             onWithout: advance,
           } : undefined} />
       </Card>
 
-      {!last && i !== 0 && (
+      {!last && !offer && (
         <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 30,
-          display: "flex", flexDirection: i === 0 ? "column" : "row",
+          display: "flex", flexDirection: offer ? "column" : "row",
           alignItems: "center", justifyContent: "center", gap: 10,
           padding: "16px 16px 26px",
           background: `linear-gradient(transparent, ${V.bg} 46%)` }}>
@@ -3368,23 +3479,25 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
               everybody presses. Card 1 makes the offer in full and stacks it
               above NEXT; the cards behind it get the short pill in the row,
               because neither has the height to stack anything. */}
-          {i === 0 && <ThemeButton playing={playing} onToggle={toggleTheme} variant="wide" />}
+          {offer && <ThemeButton playing={playing} onToggle={toggleTheme} variant="wide" />}
           {/* The credit rides with the offer, and it is always here rather than
               appearing on play: the bar is fixed, so a line arriving on the tap
               would push NEXT down under the thumb that just pressed. */}
-          {i === 0 && (
+          {offer && (
             <div style={{ ...body("bodySm", { fontSize: 13, color: V.text2,
               lineHeight: 1.3 }), textAlign: "center", maxWidth: 340 }}>
               {THEME_CREDIT}
             </div>
           )}
-          {i > 0 && <ThemeButton playing={playing} onToggle={toggleTheme} variant="inline" />}
+          {kind === "video"
+            ? <SoundButton on={soundOn} onToggle={toggleSound} />
+            : !offer && <ThemeButton playing={playing} onToggle={toggleTheme} variant="inline" />}
           {/* Wider when it is the only thing in the bar. On the cards that
               share the row with the pill it gives back the width, or the two
               together run past the edge of a 320px phone. */}
           <button onClick={advance} style={{
             ...display("h3", { color: V.bg }), background: V.blue, border: "none",
-            borderRadius: 999, padding: i === 0 ? "13px 44px" : "13px 28px",
+            borderRadius: 999, padding: offer ? "13px 44px" : "13px 28px",
             cursor: "pointer", flexShrink: 0,
             boxShadow: `0 0 18px ${V.blue}77`,
           }}>NEXT</button>
