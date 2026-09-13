@@ -26,6 +26,7 @@ import Flag, { Flagged } from "./Flag.jsx";
 import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
 // The same board the home page draws, from the same file.
 import HandsColumns from "./HandsColumns.jsx";
+import TubeyCover, { COVERS } from "./TubeyCover.jsx";
 import { shortOf } from "./teams.js";
 import { boxBoxLine, boxBoxSide } from "./pitStop.js";
 import { F1_TEAM_COLORS } from "./theme";
@@ -278,9 +279,19 @@ const ChartHead = ({ n, title, action, onAction }) => (
 // glows while the track is playing, which is the only thing separating "my
 // phone is muted" from "this button is broken" on that phone.
 const THEME_SRC = "/velvet-thunder.mp3";
-const THEME_PLAY = "Play the new F5 theme song, \u201CVelvet Thunder\u201D";
-const THEME_PAUSE = "Pause \u201CVelvet Thunder\u201D";
 const THEME_CREDIT = "Written by Andrea Buttacavoli, majority owner of Prestissimo Veloce";
+
+// Two songs since 2026-09-13. The new one, "F5 Theme Song featuring Tubey the
+// Worm", leads the offer on card 1 with its cover; Velvet Thunder stays as the
+// old one you can still pick. Andrew: this holds every round until he changes
+// it. One <audio> plays whichever was chosen, so the pill on later cards names
+// and stops that one.
+const TRACKS = {
+  tubey: { src: "/tubey-the-worm.mp3", name: "Tubey the Worm" },
+  velvet: { src: THEME_SRC, name: "Velvet Thunder" },
+};
+// Which of the four drawn sleeves in TubeyCover.jsx runs. ?cover= overrides it.
+const TUBEY_COVER = "neon";
 
 // A video that opens one round's deck, ahead of card 1. Round 14, the Spanish
 // Grand Prix, only, set by Andrew 2026-09-13; nothing carries forward to later
@@ -291,7 +302,7 @@ const INTRO_VIDEO = {
   14: { src: "/weekly/r14-spain.mp4", poster: "/weekly/r14-spain.jpg" },
 };
 const VIDEO_SOUND_ON = "Mute the video";
-const VIDEO_SOUND_OFF = "Play the video with sound";
+const VIDEO_SOUND_OFF = "Turn the video sound on";
 
 const MutedIcon = ({ color, size }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
@@ -338,7 +349,14 @@ const PauseIcon = ({ color, size }) => (
 // The tap on WITH THE MUSIC is what unlocks audio: every browser blocks sound
 // until a gesture, so that button starts the track and then advances, in that
 // order, or the deck moves on and the track never plays.
-function ThemeOffer({ won, onWith, onWithout }) {
+//
+// Since 2026-09-13 the offer is the Tubey song, with its cover beside the title
+// and three ways on: play it, go on without music, or play Velvet Thunder. The
+// cover sits in a row with the title rather than above it, because card 1 is
+// already scaling on a 375x667 phone and a stacked sleeve would push it under
+// the floor. The old song is a quiet line rather than a third pill for the
+// same reason.
+function ThemeOffer({ won, onWith, onOld, onWithout, cover = TUBEY_COVER }) {
   return (
     <div style={{ ...vcard({ padding: 16, width: "100%" }), ...edgeGlow(V.blue, 0.7),
       display: "grid", gap: 12, justifyItems: "center", textAlign: "center",
@@ -347,35 +365,52 @@ function ThemeOffer({ won, onWith, onWithout }) {
       <span className="v-sweep" aria-hidden="true" style={{ position: "absolute",
         top: 0, bottom: 0, width: 90, pointerEvents: "none",
         background: `linear-gradient(100deg, transparent, ${V.blue}22, transparent)` }} />
-      <div style={{ ...label({ fontSize: 12, color: V.text3 }) }}>THE NEW F5 THEME SONG</div>
-      <div style={{ ...display("h2", { fontSize: 27 }), ...textGlow(V.blue, 0.8) }}>
-        VELVET THUNDER
+      <div style={{ display: "flex", alignItems: "center", gap: 14, width: "100%",
+        maxWidth: 340, textAlign: "left" }}>
+        <TubeyCover variant={cover} size={116}
+          style={{ boxShadow: `0 0 18px ${V.blue}55`, border: `1px solid ${V.border2}` }} />
+        <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
+          <div style={{ ...label({ fontSize: 13, color: V.text3 }) }}>THE NEW F5 THEME SONG</div>
+          <div style={{ ...body("bodySm", { fontSize: 13, color: V.text2, lineHeight: 1.2 }) }}>
+            featuring
+          </div>
+          <div style={{ ...display("h2", { fontSize: 25, lineHeight: 1.05 }), ...textGlow(V.blue, 0.8) }}>
+            TUBEY THE WORM
+          </div>
+        </div>
       </div>
       <div style={{ ...body("bodySm", { fontSize: 14, color: V.text2, lineHeight: 1.4 }),
         maxWidth: 320 }}>
         {won
-          ? "Congrats! For your victory, please enjoy the new F5 theme song, written by Prestissimo Veloce team boss Andrea Buttacavoli."
-          : "But cheer up by listening to the new F5 theme song, written by Prestissimo Veloce team boss Andrea Buttacavoli."}
+          ? "Congrats! Celebrate with the new F5 theme song."
+          : "Cheer up with the new F5 theme song."}
       </div>
       <div style={{ display: "grid", gap: 8, width: "100%", maxWidth: 320 }}>
         <button onClick={onWith} style={{
           ...display("h3", { fontSize: 17, color: V.bg }), background: V.blue,
           border: "none", borderRadius: 999, padding: "13px 20px", cursor: "pointer",
           boxShadow: `0 0 18px ${V.blue}77`,
-        }}>CONTINUE WITH THE MUSIC</button>
+        }}>PLAY THE NEW SONG</button>
         <button onClick={onWithout} style={{
           ...display("h3", { fontSize: 17, color: V.blue }), background: V.bg,
           border: `1.5px solid ${V.blue}`, borderRadius: 999, padding: "13px 20px",
           cursor: "pointer",
-        }}>CONTINUE WITHOUT</button>
+        }}>CONTINUE WITHOUT MUSIC</button>
+        <button onClick={onOld} style={{
+          ...body("bodySm", { fontSize: 14, fontWeight: 600, color: V.text2 }),
+          background: "transparent", border: "none", padding: "8px 10px", cursor: "pointer",
+          textDecoration: "underline", textUnderlineOffset: 3,
+        }}>Play the old song, Velvet Thunder</button>
       </div>
     </div>
   );
 }
 
-function ThemeButton({ playing, onToggle, variant = "chrome" }) {
+function ThemeButton({ playing, onToggle, variant = "chrome", name = TRACKS.tubey.name }) {
   const color = playing ? V.blue : V.text2;
   const Icon = playing ? PauseIcon : SpeakerIcon;
+  const THEME_PLAY = `Play ${name}`;
+  const THEME_PAUSE = `Pause ${name}`;
   const aria = playing ? THEME_PAUSE : THEME_PLAY;
 
   // The short pill, in two places. `inline` sits beside NEXT on the cards that
@@ -401,7 +436,7 @@ function ThemeButton({ playing, onToggle, variant = "chrome" }) {
         <Icon color={color} size={18} />
       </span>
       <span style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color,
-        lineHeight: 1.35, whiteSpace: "nowrap" }) }}>Velvet Thunder</span>
+        lineHeight: 1.35, whiteSpace: "nowrap" }) }}>{name}</span>
     </button>
   );
 
@@ -1750,6 +1785,21 @@ function CardRace({ d, stage = 0 }) {
   const preLevel = M.myPreBB === M.oppPreBB;
   const preLead = M.myPreBB > M.oppPreBB;
 
+  // A matchup is the picks and the BOX BOX line together, and most weeks both
+  // go the same way. Andrew, 2026-09-13: when they do, name both. When the line
+  // went against the hands, it is the "but" that turned the result.
+  const result = me.result === "won" ? "won" : me.result === "lost" ? "lost" : "drew";
+  const lineSide = M.myBB > 0 ? "your" : M.myBB < 0 ? "their" : null;
+  const handsAgainst = (result === "won" && M.myPreBB < M.oppPreBB)
+    || (result === "lost" && M.myPreBB > M.oppPreBB);
+  const lineWith = (result === "won" && lineSide === "your")
+    || (result === "lost" && lineSide === "their")
+    // A draw is always the line pulling level, whichever way it went.
+    || (result === "drew" && lineSide != null && !preLevel);
+  const withLine = s => (lineWith
+    ? `${s}${handsAgainst || result === "drew" ? ", but" : ", and"} the pit stop landed on ${lineSide} side of the BOX BOX line.`
+    : `${s}.`);
+
   const beatN = c.ladder.filter(r => !r.me && me.pts > r.pts).length;
   const lostN = c.ladder.filter(r => !r.me && me.pts < r.pts).length;
   const head = stage === S_RACE
@@ -1760,14 +1810,19 @@ function CardRace({ d, stage = 0 }) {
     // Every headline is a sentence that says who, what and by how much. A bare
     // score with a direction on the end ("60 to 54, your way") names two
     // numbers and leaves the reader to work out what they are.
-    : stage === S_TEAM ? (netDrivers === 0
-        ? `As for the matchup, here's how it shook out: all four of you chose the same drivers, so the hands were level at ${M.myPreBB}.`
+    // Drivers cancelling does not make the hands level: the order and best
+    // finish bonuses are in the hands too, and they can still split the teams.
+    : stage === S_TEAM ? withLine(netDrivers === 0
+        ? (preLevel
+          ? `As for the matchup, here's how it shook out: all four of you chose the same drivers, so the hands were level at ${M.myPreBB}`
+          : `As for the matchup, here's how it shook out: all four of you chose the same drivers, and the bonuses put ${preLead ? "you" : "them"} ahead, ` +
+            `${Math.max(M.myPreBB, M.oppPreBB)} to ${Math.min(M.myPreBB, M.oppPreBB)}`)
         : onlyMine.length || onlyTheirs.length
-          ? `Here's why you ${iWon ? "won" : "lost"} this week: your team had ` +
-            `${listOf(onlyMine)}, they had ${listOf(onlyTheirs)}.`
-        : preLevel ? `As for the matchup, here's how it shook out: the two teams were level at ${M.myPreBB} on drivers.`
-        : preLead ? `As for the matchup, here's how it shook out: you were ahead on drivers, ${M.myPreBB} to ${M.oppPreBB}.`
-        : `As for the matchup, here's how it shook out: they were ahead on drivers, ${M.oppPreBB} to ${M.myPreBB}.`)
+          ? `Here's why you ${result} this week: your team had ` +
+            `${listOf(onlyMine)}, they had ${listOf(onlyTheirs)}`
+        : preLevel ? `As for the matchup, here's how it shook out: the two teams were level at ${M.myPreBB} on drivers`
+        : preLead ? `As for the matchup, here's how it shook out: you were ahead on drivers, ${M.myPreBB} to ${M.oppPreBB}`
+        : `As for the matchup, here's how it shook out: they were ahead on drivers, ${M.oppPreBB} to ${M.myPreBB}`)
     : M.myBB > 0
       ? `You won the BOX BOX line, worth five points to you and one off them.`
       : `They won the BOX BOX line, worth five points to them and one off you.`;
@@ -2440,48 +2495,78 @@ function SoundButton({ on, onToggle }) {
         border: `1px solid ${on ? V.blue : V.border2}`, borderRadius: 999,
         ...(on ? edgeGlow(V.blue, 0.5) : {}),
       }}>
-      <span className={on ? "v-pulse" : undefined} style={{ lineHeight: 0, flexShrink: 0 }}>
+      <span style={{ lineHeight: 0, flexShrink: 0 }}>
         <Icon color={color} size={18} />
       </span>
       <span style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color,
-        lineHeight: 1.35, whiteSpace: "nowrap" }) }}>{on ? "Sound on" : "Sound"}</span>
+        lineHeight: 1.35, whiteSpace: "nowrap" }) }}>{on ? "Sound on" : "Sound off"}</span>
     </button>
   );
 }
 
-// The round's video, before card 1. Muted and playing on arrival, because no
-// browser plays sound before a tap and the deck opens without one; the tap on
-// the video or on the Sound pill is that gesture.
+// The round's video, before card 1. Nothing plays until the reader presses
+// play, and it plays with sound, set by Andrew 2026-09-13. The press is the
+// gesture every browser wants before it will play sound, so sound on by
+// default costs nothing. It plays once; at the end the play button comes back.
+// Tapping the video while it plays pauses it.
 //
 // Sized off the viewport rather than scaled by Card: the width is whatever
 // leaves the whole 9:16 frame under the kicker and above the bottom bar, so the
 // card measures inside its room and never shrinks. 210px is the tallest PAD
 // plus the kicker and the gap.
 function CardVideo({ d, video }) {
-  const { clip, ref, soundOn, toggleSound } = video;
-  // React does not write `muted` into the markup, and iOS decides whether an
-  // autoplaying video may start from the element as inserted. Setting the
-  // property and calling play() here is the reliable version. A refusal, Low
-  // Power Mode for one, leaves the poster up and a tap starts it.
-  useEffect(() => {
+  const { clip, ref, soundOn, pauseTheme } = video;
+  const [playing, setPlaying] = useState(false);
+  // The element comes back on a return visit, so it takes the pill's setting
+  // rather than the markup's.
+  useEffect(() => { if (ref.current) ref.current.muted = !soundOn; }, [ref, soundOn]);
+
+  const play = () => {
     const el = ref.current;
     if (!el) return;
-    el.muted = true;
-    el.play().catch(() => {});
-  }, [ref]);
+    el.muted = !soundOn;
+    if (soundOn) pauseTheme();
+    // Set first so the button goes the moment it is pressed; onPause puts it
+    // back if the browser refuses.
+    setPlaying(true);
+    el.play().catch(() => setPlaying(false));
+  };
+  const toggle = () => {
+    const el = ref.current;
+    if (!el) return;
+    if (el.paused) play(); else el.pause();
+  };
 
   return (
     <>
       <Kicker>ROUND {d.round} &middot; {String(d.raceName || "").toUpperCase()}</Kicker>
-      <video ref={ref} src={clip.src} poster={clip.poster}
-        autoPlay muted loop playsInline preload="auto"
-        onClick={toggleSound}
-        style={{
-          display: "block", aspectRatio: "9 / 16",
-          width: "min(100%, calc((100dvh - 210px) * 9 / 16))",
-          borderRadius: 16, background: V.bg2, objectFit: "cover", cursor: "pointer",
-          ...(soundOn ? edgeGlow(V.blue, 0.6) : { border: `1px solid ${V.border2}` }),
-        }} />
+      <div style={{
+        position: "relative", aspectRatio: "9 / 16",
+        width: "min(100%, calc((100dvh - 210px) * 9 / 16))",
+        borderRadius: 16, overflow: "hidden", background: V.bg2,
+        border: `1px solid ${V.border2}`,
+      }}>
+        <video ref={ref} src={clip.src} poster={clip.poster}
+          playsInline preload="metadata"
+          onClick={toggle}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => { setPlaying(false); if (ref.current) ref.current.currentTime = 0; }}
+          style={{ display: "block", width: "100%", height: "100%", objectFit: "cover",
+            cursor: "pointer" }} />
+        {!playing && (
+          <button onClick={play} aria-label="Play the video" style={{
+            position: "absolute", inset: 0, margin: "auto", width: 92, height: 92,
+            borderRadius: 999, border: "none", cursor: "pointer",
+            background: V.blue, boxShadow: `0 0 28px ${V.blue}aa`,
+            display: "grid", placeItems: "center",
+          }}>
+            <svg width="38" height="38" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5.2v13.6L19 12z" fill={V.bg} />
+            </svg>
+          </button>
+        )}
+      </div>
     </>
   );
 }
@@ -2514,7 +2599,7 @@ function CardResult({ d, theme }) {
       {say.line && <Line color={V.text}>{say.line}</Line>}
 
       {theme && (
-        <ThemeOffer won={won} onWith={theme.onWith} onWithout={theme.onWithout} />
+        <ThemeOffer won={won} onWith={theme.onWith} onOld={theme.onOld} onWithout={theme.onWithout} cover={theme.cover} />
       )}
 
       <Ask>And how did you do yourself?</Ask>
@@ -3162,14 +3247,21 @@ function CardNext({ d, onPicks, onExit }) {
           top: 0, bottom: 0, width: 90, pointerEvents: "none",
           background: `linear-gradient(100deg, transparent, ${V.blue}22, transparent)` }} />
         <div style={{ ...label({ fontSize: 11, color: V.text3 }) }}>ADVERTISEMENT</div>
+        {/* Tubey since 2026-09-13, sleeve and all. The sleeve sits beside the
+            title rather than above it, so the card is barely taller than when
+            it advertised Velvet Thunder. */}
         <button onClick={c.poolReady ? onPicks : onExit} style={{
           background: "none", border: "none", padding: 0, cursor: "pointer",
-          display: "grid", gap: 6, justifyItems: "center" }}>
-          <span style={{ ...display("h2", { fontSize: 24 }), ...textGlow(V.blue, 0.8) }}>
-            GET VELVET THUNDER NOW
-          </span>
-          <span style={{ ...body("bodySm", { fontSize: 14, color: V.text2 }) }}>
-            Available on Winamp, MiniDisc and Zune
+          display: "flex", gap: 12, alignItems: "center", textAlign: "left" }}>
+          <TubeyCover variant={TUBEY_COVER} size={72}
+            style={{ border: `1px solid ${V.border2}` }} />
+          <span style={{ display: "grid", gap: 4 }}>
+            <span style={{ ...display("h2", { fontSize: 24, lineHeight: 1.05 }), ...textGlow(V.blue, 0.8) }}>
+              GET TUBEY THE WORM NOW
+            </span>
+            <span style={{ ...body("bodySm", { fontSize: 14, color: V.text2 }) }}>
+              Available on Winamp, MiniDisc and Zune
+            </span>
           </span>
         </button>
         {/* The review. Andrew's copy, punctuation and all. */}
@@ -3182,7 +3274,7 @@ function CardNext({ d, onPicks, onExit }) {
             -Fantasy Games Weekly
           </span>
         </div>
-        <a href={THEME_SRC} download="velvet-thunder.mp3" style={{
+        <a href={TRACKS.tubey.src} download="tubey-the-worm.mp3" style={{
           ...display("h3", { fontSize: 15, color: V.bg }), background: V.blue,
           borderRadius: 999, padding: "11px 26px", textDecoration: "none",
           boxShadow: `0 0 18px ${V.blue}77`,
@@ -3261,17 +3353,18 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
   // The intro video's sound. Starts muted; turning it on stops the theme, so
   // the two never play over each other if somebody backs up from a later card.
   const videoRef = useRef(null);
-  const [soundOn, setSoundOn] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
   const toggleSound = () => {
     const el = videoRef.current;
-    if (!el) return;
-    const on = el.muted || el.paused;
-    el.muted = !on;
-    if (on) {
-      if (audio.current && !audio.current.paused) audio.current.pause();
-      el.play().catch(() => {});
-    }
+    const on = !soundOn;
+    if (el) el.muted = !on;
+    if (on && el && !el.paused) pauseTheme();
     setSoundOn(on);
+  };
+  // The video with sound and the theme never play over each other, which only
+  // comes up if somebody backs up to the video from a later card.
+  const pauseTheme = () => {
+    if (audio.current && !audio.current.paused) audio.current.pause();
   };
 
   // The theme track. The element lives up here rather than inside card 1 so it
@@ -3286,22 +3379,39 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
     // Set the state before awaiting play(), or the button sits dead for as long
     // as the first bytes take to arrive: preload is off, so the tap is what
     // starts the download. onPlay and onPause below correct it either way.
+    // The element carries no src until a song is chosen, so a reader who went on
+    // without music gets the new song from the pill.
+    if (!el.getAttribute("src")) el.src = TRACKS[track].src;
     if (el.paused) { setPlaying(true); el.play().catch(() => setPlaying(false)); }
     else el.pause();
   };
   // Card 1's offer starts the track and never stops it, so the two buttons
   // there cannot be a toggle: tapping WITH THE MUSIC on a deck that is already
   // playing would turn the song off on the way to card 2.
-  const playTheme = () => {
+  //
+  // Which song is chosen there. The src is swapped on the element inside the
+  // tap, before play(), because play() has to run inside the gesture.
+  const [track, setTrack] = useState("tubey");
+  const playTheme = (which = "tubey") => {
     const el = audio.current;
-    if (!el || !el.paused) return;
+    if (!el) return;
+    if (which !== track || !el.getAttribute("src")) {
+      el.pause();
+      el.src = TRACKS[which].src;
+      setTrack(which);
+    } else if (!el.paused) return;
     setPlaying(true);
     el.play().catch(() => setPlaying(false));
   };
+  // ?cover= shows one of the other sleeves in place, so all four can be
+  // looked at on the real card.
+  const cover = (() => {
+    if (typeof window === "undefined") return TUBEY_COVER;
+    const q = new URLSearchParams(window.location.search).get("cover");
+    return COVERS.includes(q) ? q : TUBEY_COVER;
+  })();
 
   useEffect(() => { window.scrollTo(0, 0); }, [i]);
-  // Leaving the video unmounts it, and it comes back muted.
-  useEffect(() => { setSoundOn(false); }, [i]);
 
   const stages = (cards[i] && cards[i].stages) || 1;
   const lastStage = stage >= stages - 1;
@@ -3454,17 +3564,19 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
       {/* The last card has no bottom bar, so the chrome carries the control
           there and nowhere else. Looped, because four cards outlast most of a
           track and the deck should not fall silent halfway through card 2. */}
-      {last && <ThemeButton playing={playing} onToggle={toggleTheme} />}
-      <audio ref={audio} src={THEME_SRC} preload="none" loop
+      {last && <ThemeButton playing={playing} onToggle={toggleTheme} name={TRACKS[track].name} />}
+      <audio ref={audio} preload="none" loop
         onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
 
       <Card dep={`${i}-${stage}-${data.player.name}`}
         bottom={0}
         scrolls={Boolean(scrolls)}>
         <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit}
-          video={kind === "video" ? { clip, ref: videoRef, soundOn, toggleSound } : undefined}
+          video={kind === "video" ? { clip, ref: videoRef, soundOn, toggleSound, pauseTheme } : undefined}
           theme={offer ? {
-            onWith: () => { playTheme(); advance(); },
+            onWith: () => { playTheme("tubey"); advance(); },
+            onOld: () => { playTheme("velvet"); advance(); },
+            cover,
             onWithout: advance,
           } : undefined} />
       </Card>
@@ -3479,7 +3591,7 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
               everybody presses. Card 1 makes the offer in full and stacks it
               above NEXT; the cards behind it get the short pill in the row,
               because neither has the height to stack anything. */}
-          {offer && <ThemeButton playing={playing} onToggle={toggleTheme} variant="wide" />}
+          {offer && <ThemeButton playing={playing} onToggle={toggleTheme} variant="wide" name={TRACKS[track].name} />}
           {/* The credit rides with the offer, and it is always here rather than
               appearing on play: the bar is fixed, so a line arriving on the tap
               would push NEXT down under the thumb that just pressed. */}
@@ -3491,7 +3603,7 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
           )}
           {kind === "video"
             ? <SoundButton on={soundOn} onToggle={toggleSound} />
-            : !offer && <ThemeButton playing={playing} onToggle={toggleTheme} variant="inline" />}
+            : !offer && <ThemeButton playing={playing} onToggle={toggleTheme} variant="inline" name={TRACKS[track].name} />}
           {/* Wider when it is the only thing in the bar. On the cards that
               share the row with the pill it gives back the width, or the two
               together run past the edge of a 320px phone. */}

@@ -67,7 +67,9 @@ for (const name of names) {
     const html = renderToString(<WeeklyDeck data={r14} initialCard={0} />);
     if (!/<video[^>]+r14-spain\.mp4/.test(html)) throw new Error("no video on card 1");
     if (!/SPANISH GRAND PRIX/.test(html)) throw new Error("no kicker");
-    if (!/Play the video with sound/.test(html)) throw new Error("no sound button");
+    if (!/Mute the video/.test(html)) throw new Error("sound is not on by default");
+    if (!/aria-label="Play the video"/.test(html)) throw new Error("no play button");
+    if (/<video[^>]*autoplay/i.test(html)) throw new Error("the video autoplays");
   });
   check(`round ${base.round} does not`, () => {
     const html = renderToString(<WeeklyDeck data={base} initialCard={0} />);

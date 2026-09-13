@@ -73,7 +73,9 @@ Four cards, nine presses. `/week` opens it, with `?player=`, `?card=`, `?stage=`
 and `?round=` overrides so every press can be photographed.
 
 **Round 14 alone opens on a video**, added 2026-09-13: a six-second clip ahead
-of card 1, muted and playing, with a Sound pill beside NEXT. `INTRO_VIDEO` in
+of card 1, with a Sound pill beside NEXT. **It waits for the play button and
+plays with sound on**, Andrew's call the same day; it had shipped muted and
+autoplaying. The press is the gesture browsers need for sound. Plays once. `INTRO_VIDEO` in
 Weekly.jsx is keyed on the round and holds only 14, so no later round gets one.
 The card list is built per round by name (`kind`), not by position, so in round
 14 every card is one place later and `?card=2` is the result. The seen flag was
@@ -133,7 +135,21 @@ Rules this deck holds:
 
 ### The theme music
 
-**Live 2026-08-28.** "Velvet Thunder", written by Andrea Buttacavoli, majority
+**Two songs since 2026-09-13, and it stays this way until Andrew changes it.**
+Card 1's offer leads with "F5 Theme Song featuring Tubey the Worm"
+(`public/tubey-the-worm.mp3`, 40 seconds, copied from the file Andrew dropped in
+the project root) beside a drawn album cover, then CONTINUE WITHOUT MUSIC, then a
+quiet line to play Velvet Thunder instead. `TRACKS` in Weekly.jsx holds both;
+the one `<audio>` has no src until a song is chosen, and the tap swaps the src
+before calling play(), because play() has to run inside the gesture. The pill on
+later cards names whichever was chosen, and plays Tubey for anyone who went on
+without music. The four cover options live in `src/TubeyCover.jsx`;
+`TUBEY_COVER` picks one and `?cover=neon|notebook|advisory|grid` shows the
+others on the real card. **Neon is the one**, Andrew's pick the same day. Card
+4's album advert is Tubey too, with the sleeve beside the title, and its
+download button hands out `tubey-the-worm.mp3`. Both songs loop.
+
+**Velvet Thunder, live 2026-08-28.** "Velvet Thunder", written by Andrea Buttacavoli, majority
 owner of Prestissimo Veloce. `public/velvet-thunder.mp3`, 1.9MB, `preload="none"`
 and looped. The `<audio>` element lives in `WeeklyDeck`, so the track survives
 the card changing and leaving the deck is what stops it.
