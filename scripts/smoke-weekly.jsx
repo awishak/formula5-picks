@@ -91,6 +91,26 @@ for (const name of names) {
   });
 }
 
+// The last card asks for a flag only of somebody who has never chosen one. The
+// fixture has nobody with a flag, so both sides are forced here. "" is chose
+// no flag, which is an answer, and does not get asked either.
+{
+  const base = buildWeekly(DB, names[0]);
+  const last = data => renderToString(<WeeklyDeck data={data} initialCard={3} />);
+  for (const [nation, ask] of [[null, true], ["US-CA", false], ["", false]]) {
+    total++;
+    const html = last({ ...base, player: { ...base.player, nation } });
+    const asked = /CHOOSE YOUR FLAG/.test(html);
+    if (asked !== ask) { failed++; console.log(`  FAIL  flag ${JSON.stringify(nation)}: box ${asked ? "shown" : "hidden"}`); }
+    else console.log(`  ok    flag ${JSON.stringify(nation)}: box ${ask ? "shown" : "hidden"}`);
+  }
+  total++;
+  const html = last(base);
+  if (!/GET VELVET THUNDER NOW/.test(html) || !/featuring Tubey the Worm/.test(html)) {
+    failed++; console.log("  FAIL  the advert does not name Velvet Thunder featuring Tubey the Worm");
+  } else console.log("  ok    the advert names Velvet Thunder featuring Tubey the Worm");
+}
+
 // A player with no score for the round must come back null rather than throw,
 // which is what the loader turns into the "not scored yet" screen.
 try {

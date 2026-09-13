@@ -146,8 +146,14 @@ later cards names whichever was chosen, and plays Tubey for anyone who went on
 without music. The four cover options live in `src/TubeyCover.jsx`;
 `TUBEY_COVER` picks one and `?cover=neon|notebook|advisory|grid` shows the
 others on the real card. **Neon is the one**, Andrew's pick the same day. Card
-4's album advert is Tubey too, with the sleeve beside the title, and its
-download button hands out `tubey-the-worm.mp3`. Both songs loop.
+4's album advert is the new song too, with the sleeve beside the title, and its
+download button hands out the new file. Both songs loop. **The song is still
+called Velvet Thunder; it is Velvet Thunder featuring Tubey the Worm.** The
+advert says GET VELVET THUNDER NOW over "featuring Tubey the Worm", and the
+review is Andrew's: "this song probably doesn't need lyrics--especially these
+lyrics". Card 4 asks for a flag only of somebody whose `nation` was null when
+the deck opened. The pill on later cards reads "Velvet Thunder (feat. Tubey)",
+stacked on two lines, because on one it ran NEXT off a 320px phone.
 
 **Velvet Thunder, live 2026-08-28.** "Velvet Thunder", written by Andrea Buttacavoli, majority
 owner of Prestissimo Veloce. `public/velvet-thunder.mp3`, 1.9MB, `preload="none"`

@@ -287,7 +287,7 @@ const THEME_CREDIT = "Written by Andrea Buttacavoli, majority owner of Prestissi
 // it. One <audio> plays whichever was chosen, so the pill on later cards names
 // and stops that one.
 const TRACKS = {
-  tubey: { src: "/tubey-the-worm.mp3", name: "Tubey the Worm" },
+  tubey: { src: "/tubey-the-worm.mp3", name: "Velvet Thunder (feat. Tubey)" },
   velvet: { src: THEME_SRC, name: "Velvet Thunder" },
 };
 // Which of the four drawn sleeves in TubeyCover.jsx runs. ?cover= overrides it.
@@ -412,6 +412,10 @@ function ThemeButton({ playing, onToggle, variant = "chrome", name = TRACKS.tube
   const THEME_PLAY = `Play ${name}`;
   const THEME_PAUSE = `Pause ${name}`;
   const aria = playing ? THEME_PAUSE : THEME_PLAY;
+  // "Velvet Thunder (feat. Tubey)" on one line runs NEXT off a 320px phone and
+  // covers Back on the last card, so the feature goes under the title and the
+  // pill stays the width it was for Velvet Thunder alone.
+  const [title, feat] = name.split(" (feat. ");
 
   // The short pill, in two places. `inline` sits beside NEXT on the cards that
   // have no height to give; `chrome` is the same pill parked in the top bar on
@@ -426,7 +430,8 @@ function ThemeButton({ playing, onToggle, variant = "chrome", name = TRACKS.tube
         ? { position: "fixed", top: 18, right: 62, zIndex: 31 }
         : { flexShrink: 0 }),
       display: "inline-flex", alignItems: "center", gap: 8,
-      background: V.bg2, cursor: "pointer", padding: "10px 15px 10px 12px",
+      background: V.bg2, cursor: "pointer",
+      padding: feat ? "6px 16px 6px 12px" : "10px 15px 10px 12px",
       whiteSpace: "nowrap",
       border: `1px solid ${playing ? V.blue : V.border2}`, borderRadius: 999,
       ...(playing ? edgeGlow(V.blue, 0.5) : {}),
@@ -435,8 +440,14 @@ function ThemeButton({ playing, onToggle, variant = "chrome", name = TRACKS.tube
         style={{ lineHeight: 0, flexShrink: 0 }}>
         <Icon color={color} size={18} />
       </span>
-      <span style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color,
-        lineHeight: 1.35, whiteSpace: "nowrap" }) }}>{name}</span>
+      <span style={{ display: "grid", textAlign: "left" }}>
+        <span style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color,
+          lineHeight: feat ? 1.15 : 1.35, whiteSpace: "nowrap" }) }}>{title}</span>
+        {feat && (
+          <span style={{ ...body("bodySm", { fontSize: 13, fontWeight: 500, color,
+            lineHeight: 1.15, whiteSpace: "nowrap" }) }}>feat. {feat.replace(/\)$/, "")}</span>
+        )}
+      </span>
     </button>
   );
 
@@ -3200,6 +3211,10 @@ function CardNext({ d, onPicks, onExit }) {
   const [saving, setSaving] = useState(false);
   const [flagErr, setFlagErr] = useState(null);
   const chosen = nation != null;
+  // Asked only of somebody who had not chosen when the deck opened, Andrew
+  // 2026-09-13. Read off the data rather than the state, so the box stays up
+  // for the reader who picks a flag here and sees it land.
+  const askFlag = Boolean(d.player.id) && d.player.nation == null;
   const save = async code => {
     setPicking(false);
     if (!d.player.id) return;
@@ -3218,7 +3233,7 @@ function CardNext({ d, onPicks, onExit }) {
   return (
     <>
 
-      {d.player.id && (
+      {askFlag && (
         <div style={{ ...vcard({ padding: 14, width: "100%" }), ...edgeGlow(V.green, 0.6),
           display: "grid", gap: 10 }}>
           <div style={{ ...display("h2", { fontSize: 27 }), ...textGlow(V.green, 0.8),
@@ -3247,9 +3262,9 @@ function CardNext({ d, onPicks, onExit }) {
           top: 0, bottom: 0, width: 90, pointerEvents: "none",
           background: `linear-gradient(100deg, transparent, ${V.blue}22, transparent)` }} />
         <div style={{ ...label({ fontSize: 11, color: V.text3 }) }}>ADVERTISEMENT</div>
-        {/* Tubey since 2026-09-13, sleeve and all. The sleeve sits beside the
-            title rather than above it, so the card is barely taller than when
-            it advertised Velvet Thunder. */}
+        {/* The new song since 2026-09-13, sleeve and all: still Velvet Thunder,
+            now featuring Tubey the Worm. The sleeve sits beside the title
+            rather than above it, so the card is barely taller than before. */}
         <button onClick={c.poolReady ? onPicks : onExit} style={{
           background: "none", border: "none", padding: 0, cursor: "pointer",
           display: "flex", gap: 12, alignItems: "center", textAlign: "left" }}>
@@ -3257,7 +3272,10 @@ function CardNext({ d, onPicks, onExit }) {
             style={{ border: `1px solid ${V.border2}` }} />
           <span style={{ display: "grid", gap: 4 }}>
             <span style={{ ...display("h2", { fontSize: 24, lineHeight: 1.05 }), ...textGlow(V.blue, 0.8) }}>
-              GET TUBEY THE WORM NOW
+              GET VELVET THUNDER NOW
+            </span>
+            <span style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color: V.text }) }}>
+              featuring Tubey the Worm
             </span>
             <span style={{ ...body("bodySm", { fontSize: 14, color: V.text2 }) }}>
               Available on Winamp, MiniDisc and Zune
@@ -3268,13 +3286,13 @@ function CardNext({ d, onPicks, onExit }) {
         <div style={{ display: "grid", gap: 3, justifyItems: "center", maxWidth: 330 }}>
           <span style={{ ...body("bodySm", { fontSize: 14, color: V.text, lineHeight: 1.4 }),
             fontStyle: "italic" }}>
-            &ldquo;an instant classic in the field of made up songs about made up games&rdquo;
+            &ldquo;this song probably doesn&rsquo;t need lyrics--especially these lyrics&rdquo;
           </span>
           <span style={{ ...label({ fontSize: 11, color: V.text3 }) }}>
             -Fantasy Games Weekly
           </span>
         </div>
-        <a href={TRACKS.tubey.src} download="tubey-the-worm.mp3" style={{
+        <a href={TRACKS.tubey.src} download="velvet-thunder-featuring-tubey-the-worm.mp3" style={{
           ...display("h3", { fontSize: 15, color: V.bg }), background: V.blue,
           borderRadius: 999, padding: "11px 26px", textDecoration: "none",
           boxShadow: `0 0 18px ${V.blue}77`,
