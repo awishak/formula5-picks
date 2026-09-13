@@ -42,6 +42,9 @@ export default function SchedulePage({ currentUser }) {
       // Every needle guess in the season, so each matchup can carry its own
       // BOX BOX line: the line is the average of the four in it.
       const picks = (await supabase.from("picks").select("race_id,player_id,pit_guess")).data || [];
+      // The first pit stop each round, the time Andrew entered, so every box
+      // score can show where it landed against its own line.
+      const results = (await supabase.from("results").select("race_id,pit_stop_time")).data || [];
       if (!alive) return;
 
       const db = { players, teams, races, scores, schedule };
@@ -63,7 +66,7 @@ export default function SchedulePage({ currentUser }) {
       const cur = scheduleRace(drawn);
       const latest = cur || drawn[drawn.length - 1];
 
-      setS({ loading: false, db, teams, races, schedule, drawn, scored, picks,
+      setS({ loading: false, db, teams, races, schedule, drawn, scored, picks, results,
              myTeamId: myTeam ? myTeam.id : null, playersById:
                Object.fromEntries(players.map(p => [p.id, p.name])) });
       // ?round=12 opens on that round. It makes an unscored week checkable
@@ -122,6 +125,12 @@ export default function SchedulePage({ currentUser }) {
       .map(id => guessOf[id]).filter(v => v != null);
     return g.length ? Math.round((g.reduce((x, y) => x + y, 0) / g.length) * 100) / 100 : null;
   };
+  // One stop a round, the same for all twelve matchups.
+  const stop = (() => {
+    const r = (s.results || []).find(x => x.race_id === race.id);
+    const t = r && r.pit_stop_time != null ? Number(r.pit_stop_time) : null;
+    return t == null || Number.isNaN(t) ? null : t;
+  })();
   const myDiv = (() => {
     const t = teamById[s.myTeamId];
     if (!t) return null;
@@ -158,6 +167,7 @@ export default function SchedulePage({ currentUser }) {
         return before !== 0 && after !== 0 && before !== after;
       })(),
       line: lineOf(teamById[m.home_team_id], teamById[m.away_team_id]),
+      stop,
       players: {
         away: rosterOf(teamById[m.away_team_id], away, race.id, s.playersById, pPlace),
         home: rosterOf(teamById[m.home_team_id], home, race.id, s.playersById, pPlace),
@@ -579,15 +589,25 @@ function Fixture({ f, scored, variant = 1, live = false }) {
         <Side s={f.right} won={rWon} roster={f.players.home} mirror />
       </div>
 
-      {/* The BOX BOX line, sitting on the bottom edge where it fell between 1.5
-          and 4.5. Twelve cards down the page it reads as a scatter of where the
-          league set its lines this week. */}
+      {/* Your Matchup's Line, a blue line across the bottom edge where it fell
+          between 1.5 and 4.5, and the first pit stop a green dot on the same
+          edge. Andrew, 2026-09-13: the line was a dot and the stop was not
+          shown. Twelve cards down the page the dot stays put and the lines
+          scatter around it, so which side each matchup went reads at a glance.
+          The dot is drawn after the line, so a push shows the dot on it. */}
       {f.line != null && (
         <div style={{
-          position: "absolute", left: `${pc(f.line)}%`, bottom: -4, width: 8, height: 8,
-          marginLeft: -4, borderRadius: 4, background: V.blue,
+          position: "absolute", left: `${pc(f.line)}%`, bottom: -8, width: 3, height: 16,
+          marginLeft: -1.5, borderRadius: 2, background: V.blue,
           boxShadow: `0 0 6px ${V.blue}`,
         }} title={`Your Matchup\u2019s Line ${f.line.toFixed(2)}`} />
+      )}
+      {scored && f.stop != null && (
+        <div style={{
+          position: "absolute", left: `${pc(f.stop)}%`, bottom: -6, width: 12, height: 12,
+          marginLeft: -6, borderRadius: 6, background: MINE, border: "2px solid #000",
+          boxSizing: "border-box", boxShadow: `0 0 7px ${MINE}`,
+        }} title={`First pit stop ${f.stop.toFixed(2)}`} />
       )}
     </div>
   );
