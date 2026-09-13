@@ -27,6 +27,7 @@ import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
 // The same board the home page draws, from the same file.
 import HandsColumns from "./HandsColumns.jsx";
 import { shortOf } from "./teams.js";
+import { boxBoxLine, boxBoxSide } from "./pitStop.js";
 import { F1_TEAM_COLORS } from "./theme";
 import {
   V, FM, FD, FN, FB, TYPE, display, numeric, body, label,
@@ -2743,11 +2744,8 @@ function CardWhatIf({ d }) {
     const end = c.wantLow ? 1.5 : 4.5;
     return four.map(f => (f.mine && (c.state === "pair" || f.me) ? { ...f, guess: end } : f));
   }, [play, four, c.wantLow, c.state]);
-  const movedLine = useMemo(() => {
-    const gs = moved.map(f => f.guess).filter(x => x != null);
-    return gs.length ? gs.reduce((a, b) => a + b, 0) / gs.length : null;
-  }, [moved]);
-  const wouldWin = movedLine != null && (c.wantLow ? d.card4.pit > movedLine : d.card4.pit < movedLine);
+  const movedLine = useMemo(() => boxBoxLine(moved.map(f => f.guess)), [moved]);
+  const wouldWin = boxBoxSide(d.card4.pit, movedLine) === (c.wantLow ? "OVER" : "UNDER");
 
   return (
     <>

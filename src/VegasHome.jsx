@@ -18,6 +18,7 @@ import { ordinal } from "./teamTable";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
 import HandsColumns from "./HandsColumns.jsx";
+import { boxBoxSide } from "./pitStop.js";
 
 // ── Real league snapshot, round 11 ───────────────────────
 const PLAYER_PHOTOS = {
@@ -1624,9 +1625,12 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
   const ours = boxBox.side === "UNDER" ? "left" : "right";
   // Which side the stop actually landed, which is the whole result.
   const stop = boxBox.stop != null ? Math.min(MAX, Math.max(MIN, boxBox.stop)) : null;
-  const wonBox = stop != null && line != null &&
-    ((stop > line) === (boxBox.side === "OVER"));
-  const stopColor = wonBox ? MINE : THEIRS;
+  // Read off the real stop, not the one clamped to the dial, and level to the
+  // hundredth is a push.
+  const landed = boxBoxSide(boxBox.stop, line);
+  const pushBox = landed === "PUSH";
+  const wonBox = landed != null && !pushBox && landed === boxBox.side;
+  const stopColor = pushBox ? DIVIDE : wonBox ? MINE : THEIRS;
   const cColor = F1_TEAM_COLORS[boxBox.team] || V.purple;
   const TICKS = [1.5, 2, 2.5, 3, 3.5, 4, 4.5];
   // The lane grows with the deepest plate, so a crowded week pushes the scale
@@ -1791,7 +1795,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
       </div>
       {stop != null && (
         <p style={{ ...body("bodyMd"), fontSize: 15, color: stopColor, textAlign: "center", margin: "6px 0 0" }}>
-          Stopped at {boxBox.stop.toFixed(2)}s. {wonBox ? "Your side." : "Theirs."}
+          Stopped at {boxBox.stop.toFixed(2)}s. {pushBox ? "On the line. Push." : wonBox ? "Your side." : "Theirs."}
         </p>
       )}
     </div>

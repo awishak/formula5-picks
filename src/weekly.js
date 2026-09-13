@@ -15,9 +15,11 @@
 //                      both players, plus the BOX BOX result
 //   BOX BOX line     = the average of ALL FOUR pit guesses in the matchup,
 //                      both teams. A stop above the line goes to the OVER seat,
-//                      below it to the UNDER seat, exactly equal is a push.
+//                      below it to the UNDER seat, level to the hundredth is a
+//                      push. src/pitStop.js holds that rule for both files.
 //   home_team_id     IS the OVER seat.
 import { buildTeamTable, FIRST_H2_ROUND } from "./teamTable.js";
+import { boxBoxLine, boxBoxSide } from "./pitStop.js";
 import { codeOf, shortOf } from "./teams.js";
 // Finishing orders and pool lists are external spellings, so they resolve
 // through the alias map rather than by string equality.
@@ -38,6 +40,13 @@ export const PIT_CEIL = 4.5;
 // the number card 5 needs and the one that is easy to get wrong.
 export const BB_WIN = 5;
 export const BB_LOSS = -1;
+// What the OVER and UNDER seats take off a stop and a line. A push is nothing to either.
+const bonuses = (stop, line) => {
+  const side = boxBoxSide(stop, line);
+  return side === "OVER" ? { ob: BB_WIN, ub: BB_LOSS }
+    : side === "UNDER" ? { ob: BB_LOSS, ub: BB_WIN }
+    : { ob: 0, ub: 0 };
+};
 // One team moves 6, the other moves 6 the other way, so the margin moves 12.
 export const BB_SWING = (BB_WIN - BB_LOSS) * 2;
 
@@ -156,13 +165,8 @@ export function buildWeekly(db, playerName, round = null) {
     const guesses = [...homePlayers, ...awayPlayers]
       .map(id => num(pickOf[id] && pickOf[id].pit_guess))
       .filter(v => v != null && !isNaN(v));
-    const line = guesses.length ? avg(guesses) : null;
-
-    let overBonus = 0, underBonus = 0;
-    if (line != null && pit != null) {
-      if (pit > line) { overBonus = BB_WIN; underBonus = BB_LOSS; }
-      else if (pit < line) { overBonus = BB_LOSS; underBonus = BB_WIN; }
-    }
+    const line = boxBoxLine(guesses);
+    const { ob: overBonus, ub: underBonus } = bonuses(pit, line);
 
     const half = ids => ids.reduce((a, id) => a + (scoreOf[id] ? TEAM_HALF(scoreOf[id]) : 0), 0);
     const homeHalf = half(homePlayers), awayHalf = half(awayPlayers);
@@ -799,12 +803,7 @@ export function buildWeekly(db, playerName, round = null) {
           return num(pk && pk.pit_guess);
         })
         .filter(v => v != null && !isNaN(v));
-      const line = guesses.length ? avg(guesses) : null;
-      let ob = 0, ub = 0;
-      if (line != null && stop != null) {
-        if (stop > line) { ob = BB_WIN; ub = BB_LOSS; }
-        else if (stop < line) { ob = BB_LOSS; ub = BB_WIN; }
-      }
+      const { ob, ub } = bonuses(stop, boxBoxLine(guesses));
       const half = list => list.reduce((a, id) => {
         const row = rows.find(x => x.player_id === id);
         return a + (row ? TEAM_HALF(row) : 0);
@@ -945,12 +944,7 @@ export function buildWeekly(db, playerName, round = null) {
           const pk = picks.find(x => x.race_id === r.id && x.player_id === id);
           return num(pk && pk.pit_guess);
         }).filter(v => v != null && !isNaN(v));
-        const line = gs.length ? avg(gs) : null;
-        let ob = 0, ub = 0;
-        if (line != null && stop != null) {
-          if (stop > line) { ob = BB_WIN; ub = BB_LOSS; }
-          else if (stop < line) { ob = BB_LOSS; ub = BB_WIN; }
-        }
+        const { ob, ub } = bonuses(stop, boxBoxLine(gs));
         const half = list => list.reduce((a, id) => {
           const row = rows.find(x => x.player_id === id);
           return a + (row ? TEAM_HALF(row) : 0);
@@ -1029,12 +1023,7 @@ export function buildWeekly(db, playerName, round = null) {
           const pk = picks.find(x => x.race_id === r.id && x.player_id === id);
           return num(pk && pk.pit_guess);
         }).filter(v => v != null && !isNaN(v));
-        const line = gs.length ? avg(gs) : null;
-        let ob = 0, ub = 0;
-        if (line != null && stop != null) {
-          if (stop > line) { ob = BB_WIN; ub = BB_LOSS; }
-          else if (stop < line) { ob = BB_LOSS; ub = BB_WIN; }
-        }
+        const { ob, ub } = bonuses(stop, boxBoxLine(gs));
         const half2 = list => list.reduce((a, id) => {
           const row = rows.find(x => x.player_id === id);
           return a + (row ? TEAM_HALF(row) : 0);
@@ -1049,8 +1038,8 @@ export function buildWeekly(db, playerName, round = null) {
     const lines = fixtures.map(f => f.line).filter(v => v != null);
     const lineSplit = pit == null || !lines.length ? null : {
       stop: pit,
-      over: lines.filter(v => v < pit).length,     // the stop above the line: OVER seat wins
-      under: lines.filter(v => v > pit).length,
+      over: lines.filter(v => boxBoxSide(pit, v) === "OVER").length,
+      under: lines.filter(v => boxBoxSide(pit, v) === "UNDER").length,
       // Within a tenth either way, which is closer than anybody can guess.
       knife: fixtures.filter(f => f.line != null && Math.abs(f.line - pit) <= 0.1).length,
       lo: round1(Math.min(...lines)), hi: round1(Math.max(...lines)),

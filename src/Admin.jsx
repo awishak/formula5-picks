@@ -54,6 +54,7 @@ const SURFACE = V.bg2, INPUT = V.bg3, ONNEON = V.bg;
 import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
 import { NAME_OF as NATION_NAME } from "./nationList.js";
 import { drawPools, recentlyUsed } from "./pools.js";
+import { boxBoxLine, boxBoxSide, needlePoints } from "./pitStop.js";
 
 // Every player's flag and every team's flag, in one place, for the one person
 // who can set anybody's. Players set their own on the More page; this is the
@@ -152,17 +153,6 @@ function FlagsAdmin() {
 
 // F1 points by finishing position
 const F1_PTS = { 1:25, 2:18, 3:15, 4:12, 5:10, 6:8, 7:6, 8:4, 9:2, 10:1 };
-
-// Needle scoring
-function needleScore(guess, actual) {
-  const diff = Math.abs(guess - actual);
-  if (diff < 0.05) return 5;
-  if (diff <= 0.15) return 4;
-  if (diff <= 0.25) return 3;
-  if (diff <= 0.35) return 2;
-  if (diff <= 0.45) return 1;
-  return 0;
-}
 
 // Weekly top-10 bonus
 const WEEKLY_BONUS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
@@ -634,7 +624,7 @@ export default function Admin() {
         const bestFinishBonus = bestFinishGuessNum === bestActualPos ? 3 : 0;
 
         // Pit stop needle
-        const pitIndividualPts = pick.pit_guess ? needleScore(pick.pit_guess, pitTime) : 0;
+        const pitIndividualPts = pick.pit_guess ? needlePoints(pick.pit_guess, pitTime) : 0;
 
         const totalPts = topPickPts + midfieldPts + orderBonus + bestFinishBonus + pitIndividualPts;
 
@@ -683,36 +673,17 @@ export default function Admin() {
         const awayPlayers = [awayTeam.player1_id, awayTeam.player2_id];
         const allFour = [...homePlayers, ...awayPlayers];
 
-        // BOX BOX line = average of 4 pit guesses
-        const pitGuesses = allFour
-          .map(pid => picksMap[pid]?.pit_guess)
-          .filter(g => g != null);
-
-        const boxBoxLine = pitGuesses.length > 0
-          ? pitGuesses.reduce((a, b) => a + b, 0) / pitGuesses.length
-          : null;
+        // BOX BOX line = average of 4 pit guesses, to the hundredth
+        const line = boxBoxLine(allFour.map(pid => picksMap[pid]?.pit_guess));
 
         // Home = Over, Away = Under (from schedule)
         const overTeam = homeTeam;
         const underTeam = awayTeam;
 
-        // Determine who wins the BOX BOX
-        let overBonus = 0, underBonus = 0;
-        if (boxBoxLine !== null) {
-          if (pitTime > boxBoxLine) {
-            // Actual > line = OVER wins
-            overBonus = 5;
-            underBonus = -1;
-          } else if (pitTime < boxBoxLine) {
-            // Actual < line = UNDER wins
-            overBonus = -1;
-            underBonus = 5;
-          } else {
-            // Exact = push, no bonus
-            overBonus = 0;
-            underBonus = 0;
-          }
-        }
+        // Determine who wins the BOX BOX. Level to the hundredth is a push, no bonus.
+        const side = boxBoxSide(pitTime, line);
+        const overBonus = side === "OVER" ? 5 : side === "UNDER" ? -1 : 0;
+        const underBonus = side === "UNDER" ? 5 : side === "OVER" ? -1 : 0;
 
         // Team matchup scores (no needle)
         function teamPlayerScore(pid) {
@@ -740,7 +711,7 @@ export default function Admin() {
           awayBoxBox: underBonus,
           homeTotal,
           awayTotal,
-          boxBoxLine: boxBoxLine ? boxBoxLine.toFixed(2) : "N/A",
+          boxBoxLine: line != null ? line.toFixed(2) : "N/A",
           homeWon: homeTotal > awayTotal,
           awayWon: awayTotal > homeTotal,
           // Store for saving

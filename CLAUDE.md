@@ -8,7 +8,8 @@ React + Vite frontend. Supabase backend (Postgres + RLS). Deployed on Vercel.
 
 ## File map
 
-Admin.jsx: scoring logic including needleScore, Driver Pools tab with dropdown selectors.
+Admin.jsx: scoring logic, Driver Pools tab with dropdown selectors.
+pitStop.js: the pit stop at two precisions, and the only copy. Pure. boxBoxLine and boxBoxSide settle the team game to the **hundredth**: the line is the four guesses averaged and rounded to two places, and level with the stop to the hundredth is a push. needlePoints settles the individual game to the **tenth**: the stop is rounded to one place, 5 for on it and one fewer each tenth off. Set by Andrew 2026-09-13. Admin, weekly.js, useLeague.js, VegasHome and Weekly.jsx all read it; never compare a stop to a line with a bare `>` again.
 MyPicks.jsx: 22-driver finishing order grid.
 PracticePicks.jsx: practice/preview picks UI.
 SchedulePage.jsx: THE schedule page, at /schedule. The round, every matchup in it, on the Vegas look. Which round it opens on comes from scheduleRace() in raceTimes.js.
@@ -308,7 +309,9 @@ DRIVER_NAMES: canonical driver name strings, defined in src/drivers.js. Every dr
 
 Standings depended on database row order. RESOLVED 2026-08-18. Two teams in a division can post the identical matchup score, ten times in the first half, and nothing decided which took the higher championship-points place. It fell to Postgres heap order, which is not stable: an UPDATE rewrites a row to the end of the heap, so adding division_h2 reshuffled 45 championship points with no score changing. Any query whose output order matters needs an explicit rule, not an implicit one.
 
-needleScore threshold bug: the bucket thresholds use 0.05/0.15/0.25 instead of clean 0.0/0.1/0.2. Pit times entered as hundredths (e.g. 2.17) are silently scored as the nearest tenth. Open decision below.
+BOX BOX line compared unrounded. RESOLVED 2026-09-13. Admin compared the stop against the raw average of the four guesses while every page printed the line to two places, so round 14's TJ Premium v Luxor, a line of 2.575 shown as 2.58 against a 2.58 stop, scored +5/-1 instead of a push. The Needle's old 0.05/0.15/0.25 buckets were already rounding the stop to the tenth, except on a stop ending in 5, where float noise decided. Both now live in src/pitStop.js; see the file map.
+
+`results.pit_stop_time` stores one decimal. Round 14 was scored at 2.58 and the row reads 2.6, so anything that reworks a matchup from the results row (weekly.js, the home page) sees a different stop than Admin scored. Widening the column to numeric(5,2) is owed; check with information_schema first.
 Supabase silent writes: RLS policy mismatches swallow writes with no error. Always append .select() to update calls so failures surface.
 Duplicate const declarations: cause silent Vercel build failures. The old build keeps serving, so a deploy looks like it did nothing. Check for these first when a deploy seems to have no effect.
 Driver name matching: fragile. Use canonical DRIVER_NAMES strings everywhere.
@@ -584,7 +587,6 @@ The deck went from unseen to verified on 2026-08-17 and the tooling transfers:
 
 ## Open work items
 
-needleScore thresholds: decide between fixing the bucket thresholds (0.0/0.1/0.2 etc.) or enforcing tenths-only entry in the input.
 Matchup leading player stat: the higher scorer on the winning team in a head-to-head matchup. Compute at render time like trophies. Add to player stats and the glossary.
 
 Automated driver pools (deferred to August 2026). Goal: generate pools automatically the Monday before each race. Rule: 3 random drivers from driver standings positions 1-5, 7 random from positions 6-15, weighted to avoid drivers who appeared in recent rounds' pools. Prior pools are already in races.top_drivers / races.mid_drivers, so repeat-avoidance needs no new storage.

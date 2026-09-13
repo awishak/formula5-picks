@@ -4,6 +4,7 @@ import { buildTeamTable, rankByAverage, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { displayOf, shortOf, codeOf } from "./teams";
 import { currentRace } from "./raceTimes";
+import { boxBoxLine, boxBoxSide } from "./pitStop";
 
 // The week, for real. Everything the Home page needs about the next race, who
 // you are playing, and whether the picks are in.
@@ -337,15 +338,9 @@ export function useLeague(currentUser, { round = null } = {}) {
             ? (await supabase.from("picks").select("player_id,pit_guess")
                 .eq("race_id", played.id).in("player_id", four)).data || []
             : [];
-          const gs = lastPicks
-            .map(x => (x.pit_guess == null ? null : Number(x.pit_guess)))
-            .filter(v => v != null && !Number.isNaN(v));
-          const line = gs.length ? gs.reduce((a, b) => a + b, 0) / gs.length : null;
-          let ob = 0, ub = 0;
-          if (line != null && stop != null) {
-            if (stop > line) { ob = 5; ub = -1; }
-            else if (stop < line) { ob = -1; ub = 5; }
-          }
+          const side = boxBoxSide(stop, boxBoxLine(lastPicks.map(x => x.pit_guess)));
+          const ob = side === "OVER" ? 5 : side === "UNDER" ? -1 : 0;
+          const ub = side === "UNDER" ? 5 : side === "OVER" ? -1 : 0;
           const homeTotal = half(homeTeam) + ob, awayTotal = half(awayTeam) + ub;
           const iAmHome = fx.home_team_id === myTeamRow.id;
           const mineTotal = iAmHome ? homeTotal : awayTotal;
@@ -543,13 +538,9 @@ export function useLeague(currentUser, { round = null } = {}) {
           // The needle. The constructor comes out of the question itself, which
           // is the only place it is written down.
           boxBox: {
-            line: (() => {
-              const g = [myTeamRow, oppRow].filter(Boolean)
-                .flatMap(t => [t.player1_id, t.player2_id])
-                .map(id => pickOf[id] && Number(pickOf[id].pit_guess))
-                .filter(v => typeof v === "number" && !Number.isNaN(v));
-              return g.length ? Math.round((g.reduce((a, b) => a + b, 0) / g.length) * 100) / 100 : null;
-            })(),
+            line: boxBoxLine([myTeamRow, oppRow].filter(Boolean)
+              .flatMap(t => [t.player1_id, t.player2_id])
+              .map(id => pickOf[id] && pickOf[id].pit_guess)),
             // How many of the four have not been entered. The line is an
             // average, so it is not final while anyone is missing.
             waitingOn: [myTeamRow, oppRow].filter(Boolean)
