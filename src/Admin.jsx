@@ -55,6 +55,7 @@ import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
 import { NAME_OF as NATION_NAME } from "./nationList.js";
 import { drawPools, recentlyUsed } from "./pools.js";
 import { boxBoxLine, boxBoxSide, needlePoints } from "./pitStop.js";
+import { teamOfQuestion } from "./firstStop.js";
 
 // Every player's flag and every team's flag, in one place, for the one person
 // who can set anybody's. Players set their own on the More page; this is the
@@ -392,23 +393,9 @@ export default function Admin() {
       Object.entries(DRIVER_TEAMS).forEach(([num, team]) => {
         (TEAM_TO_DRIVERS[team] = TEAM_TO_DRIVERS[team] || []).push(Number(num));
       });
-      // Free-text aliases → canonical team label. Order matters (Red Bull before
-      // Racing Bulls). The old Sauber/Kick/Stake names map to the Audi entry that
-      // now holds those car numbers.
-      const TEAM_ALIASES = [
-        ["Red Bull", ["red bull"]],
-        ["Racing Bulls", ["racing bulls", "vcarb"]],
-        ["McLaren", ["mclaren"]],
-        ["Ferrari", ["ferrari"]],
-        ["Mercedes", ["mercedes"]],
-        ["Williams", ["williams"]],
-        ["Aston Martin", ["aston"]],
-        ["Alpine", ["alpine"]],
-        ["Haas", ["haas"]],
-        ["Audi", ["audi", "sauber", "kick", "stake"]],
-        ["Cadillac", ["cadillac"]],
-      ];
-      const matchedName = (TEAM_ALIASES.find(([, aliases]) => aliases.some(a => question.includes(a))) || [])[0];
+      // Free-text aliases → canonical team label, shared with the line charts
+      // in src/firstStop.js so the two cannot name different teams.
+      const matchedName = teamOfQuestion(question);
 
       if (matchedName) {
         const nums = TEAM_TO_DRIVERS[matchedName] || [];

@@ -185,11 +185,11 @@ export default function Rules() {
       </Section>
 
       {/* TEAMS & BOX BOX */}
-      <Section title="Teams & The BOX BOX Line">
+      <Section title="Teams & Your Matchup’s Line">
         <P>Players are organized into <strong>2-player teams</strong>. Each race, your team faces another team in a round-robin schedule. There are two divisions — <Badge text="CHAMPIONSHIP" color={GOLD} bg={`${GOLD}15`} /> and <Badge text="SECOND DIVISION" color={PURPLE} bg={`${PURPLE}15`} /> — each with 12 teams.</P>
 
-        <Label>The BOX BOX Line</Label>
-        <P>Each matchup has a BOX BOX Line: the <strong>average of all 4 players' pit stop guesses</strong> that week. One team is assigned OVER and the other UNDER. If the actual pit stop lands on your side, your team earns the bonus.</P>
+        <Label>Your Matchup’s Line</Label>
+        <P>Each matchup has a line, Your Matchup’s Line: the <strong>average of all 4 players' pit stop guesses</strong> that week. One team is assigned OVER and the other UNDER. If the actual pit stop lands on your side, your team earns the bonus.</P>
 
         <Label>Strategy</Label>
         <P>Your guess moves the line. If you're the <Badge text="UNDER" color={PURPLE} bg={`${PURPLE}15`} />, guessing <strong>high</strong> pushes the line up and gives your team more room. If you're the <Badge text="OVER" color={GOLD} bg={`${GOLD}15`} />, guessing <strong>low</strong> pulls it down. You're always choosing between hunting needle points and gaming the line for your team.</P>
@@ -197,7 +197,7 @@ export default function Rules() {
 
       {/* MATCHUP SCORE */}
       <Section title="Matchup Score">
-        <P><strong>Matchup Score</strong> = Player 1's score (no needle) + Player 2's score (no needle) + BOX BOX Line bonus</P>
+        <P><strong>Matchup Score</strong> = Player 1's score (no needle) + Player 2's score (no needle) + BOX BOX points from Your Matchup’s Line</P>
         <div style={{
           background: `${DARK}04`, borderRadius: 10, padding: "8px 12px", margin: "8px 0"
         }}>
@@ -232,7 +232,7 @@ export default function Rules() {
         <div style={{
           background: `${DARK}04`, borderRadius: 10, padding: "8px 12px", margin: "8px 0"
         }}>
-          <PtsRow left="1. Got BOX BOX Line correct" right="" />
+          <PtsRow left="1. Won Your Matchup’s Line" right="" />
           <PtsRow left="2. Lower player's individual matchup score" right="" />
           <PtsRow left="3. How many got finishing order right" right="" />
           <PtsRow left="4. Earlier average submission time" right="" />

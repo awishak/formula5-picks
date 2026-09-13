@@ -19,6 +19,7 @@ import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
 import HandsColumns from "./HandsColumns.jsx";
 import { boxBoxSide } from "./pitStop.js";
+import { useFirstStop, stopLabel } from "./firstStop.js";
 
 // ── Real league snapshot, round 11 ───────────────────────
 const PLAYER_PHOTOS = {
@@ -939,9 +940,9 @@ function NeedleExplainer({ side }) {
 
           <Label color={V.gold} style={{ marginBottom: 8 }}>For your team</Label>
           <p style={{ ...body("body"), color: V.text2, margin: "0 0 10px" }}>
-            All four guesses in the matchup are averaged into the BOX BOX line. Your team has
+            All four guesses in the matchup are averaged into Your Matchup&rsquo;s Line. Your team has
             the <span style={{ color: V.gold }}>{side}</span> and theirs has the {other}. If the
-            real stop lands on your side, your team takes +5 and theirs loses 1.
+            real stop lands on your side, that&rsquo;s +5 for your team and &minus;1 for your opponent.
           </p>
           <p style={{ ...body("body"), color: V.text2, margin: 0 }}>
             Your own guess moves that line. Guessing {nudge} drags it {dir} and gives your team
@@ -1030,7 +1031,7 @@ function PickReview({ order, finish, needle, sent, onBack, onSubmit, saving, err
             </div>
 
             <p style={{ ...body("bodySm"), color: V.text3, margin: "0 0 18px" }}>
-              Your guess of {needle.toFixed(1)}s moves the BOX BOX line, and your team has the{" "}
+              Your guess of {needle.toFixed(1)}s moves Your Matchup&rsquo;s Line, and your team has the{" "}
               <span style={{ color: V.gold }}>{boxBox.side}</span>.
             </p>
 
@@ -1401,7 +1402,7 @@ function HomeSubmitted({ onEdit }) {
               </div>
             </div>
             <p style={{ ...body("bodySm"), color: V.text3, margin: "12px 0 0" }}>
-              Both your guesses go into the BOX BOX line, and your team has the{" "}
+              Both your guesses go into Your Matchup&rsquo;s Line, and your team has the{" "}
               <span style={{ color: V.gold }}>{boxBox.side}</span>.
             </p>
           </div>
@@ -1776,7 +1777,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
                   {line.toFixed(2)}
                 </div>
                 <div style={{ ...display("chip"), fontSize: 10, color: DIVIDE, marginTop: 3,
-                              letterSpacing: "0.12em" }}>BOX BOX LINE</div>
+                              letterSpacing: "0.12em" }}>YOUR MATCHUP&rsquo;S LINE</div>
               </div>
               <Side t={over} mine={ours === "right"} word="OVER" />
             </div>
@@ -1864,8 +1865,12 @@ const MINE = V.green, THEIRS = V.pink, DIVIDE = V.blue;
 // Where the BOX BOX points went. It is six of swing and it is already inside
 // the two numbers above, so the only question this answers is which team took
 // it, and the box is that team's colour.
-function BoxBoxScore({ myTeam, opp, bb, under, boxBox, seats, scored = true }) {
+function BoxBoxScore({ myTeam, opp, bb, under, boxBox, seats, scored = true, race = null }) {
   const line = boxBox && boxBox.line, stop = boxBox && boxBox.stop;
+  // Who made the stop and on which lap. Above the early return, because a hook
+  // below one is how App.jsx broke twice.
+  const firstStop = useFirstStop({ date: race && race.date, question: race && race.pitQuestion,
+    enabled: stop != null });
   if (line == null) return null;
   // Undecided is blue, the same blue as the line, because blue is the divider
   // and nothing has fallen either side of it yet.
@@ -1893,12 +1898,21 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, seats, scored = true }) {
   const MIN = 1.5, MAX = 4.5;
   const pct = (v) => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
   const TICKS = [1.5, 2, 2.5, 3, 3.5, 4, 4.5];
+  // Andrew, 2026-09-13: the line is "Your Matchup's Line", footnoted, and the
+  // stop is a big dot named for what it was, "Haas, Ocon, Lap 14", green or pink
+  // for the side it landed on. It said BOX BOX and ACTUAL. The points keep the
+  // BOX BOX name.
+  const stopName = stopLabel(firstStop, boxBox.team);
+  const landed = boxBoxSide(stop, line);
+  const stopC = landed == null || landed === "PUSH" ? DIVIDE
+    : landed === boxBox.side ? MINE : THEIRS;
   // Two plates over one scale. They only need two rows when they would land on
   // top of each other, which depends entirely on where the stop came in.
-  const PLATE_BB = 78, PLATE_ACT = 62;
+  const PLATE_BB = 138, PLATE_ACT = Math.max(70, stopName.length * 6.6 + 14);
   const clash = stop != null && line != null &&
     Math.abs(pct(stop) - pct(line)) < ((PLATE_BB + PLATE_ACT) / 2 / 330) * 100;
-  const AXIS = 26 + (clash ? 20 : 0);
+  const AXIS = 26 + (clash ? 22 : 0);
+  const DOT = 18;
   // Which way you want it to go. Over the line is your side in an over week and
   // theirs in an under one, so the green is on the right or the left depending
   // on the seat, never on a fixed side.
@@ -1949,19 +1963,19 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, seats, scored = true }) {
           padding: "2px 5px", borderRadius: 7, background: "#000",
           border: `1px solid ${DIVIDE}`, boxSizing: "border-box",
           fontFamily: FD, fontWeight: 700, fontSize: 11, lineHeight: 1.35,
-          letterSpacing: "0.04em", color: DIVIDE, whiteSpace: "nowrap",
-        }}>BOX BOX</div>
+          letterSpacing: "0.02em", color: DIVIDE, whiteSpace: "nowrap",
+        }}>Your Matchup&rsquo;s Line*</div>
         {/* The stop gets named the same way the line does, or the second mark
             on the scale is just a mark. */}
         {stop != null && (
           <div style={{
-            position: "absolute", top: clash ? 20 : 0, width: PLATE_ACT, textAlign: "center",
+            position: "absolute", top: clash ? 22 : 0, width: PLATE_ACT, textAlign: "center",
             left: at(stop, PLATE_ACT),
             padding: "2px 5px", borderRadius: 7, background: "#000",
-            border: `1px solid ${c}`, boxSizing: "border-box",
+            border: `1px solid ${stopC}`, boxSizing: "border-box",
             fontFamily: FD, fontWeight: 700, fontSize: 11, lineHeight: 1.35,
-            letterSpacing: "0.04em", color: c, whiteSpace: "nowrap",
-          }}>ACTUAL</div>
+            letterSpacing: "0.02em", color: stopC, whiteSpace: "nowrap",
+          }}>{stopName}</div>
         )}
         {/* Colour spreading out of the line, brightest against it and gone by
             the ends: everything this side of it is the result you want. */}
@@ -2008,9 +2022,17 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, seats, scored = true }) {
           });
         })()}
         <Tick v={line} color={DIVIDE} wide />
-        <Value v={line} text={line.toFixed(2)} color={DIVIDE} />
-        {stop != null && <Tick v={stop} color={c} wide />}
-        {stop != null && <Value v={stop} text={stop.toFixed(2)} color={c} />}
+        {/* One number when the two land together, which is a push. */}
+        {!(stop != null && landed === "PUSH") && <Value v={line} text={line.toFixed(2)} color={DIVIDE} />}
+        {stop != null && (
+          <div style={{
+            position: "absolute", left: `${pct(stop)}%`, top: AXIS - DOT / 2 + 1,
+            width: DOT, height: DOT, marginLeft: -DOT / 2, borderRadius: 999,
+            background: stopC, border: "2px solid #000", boxSizing: "border-box",
+            boxShadow: `0 0 10px ${stopC}`,
+          }} />
+        )}
+        {stop != null && <Value v={stop} text={stop.toFixed(2)} color={stopC} />}
 
         {/* Its own line rather than the one the numbers are on. A stop can land
             exactly where the words would go, and this week it does: ten seconds
@@ -2025,6 +2047,10 @@ function BoxBoxScore({ myTeam, opp, bb, under, boxBox, seats, scored = true }) {
             }}>{col === MINE ? "Good for you" : "Good for them"}</span>
           ))}
         </div>
+      </div>
+      <div style={{ ...body("bodySm", { fontSize: 13, color: DIVIDE, lineHeight: 1.35 }),
+        fontStyle: "italic", marginTop: 2 }}>
+        *Your Matchup&rsquo;s Line is the average of your four pit stop picks.
       </div>
     </div>
   );
@@ -2885,7 +2911,7 @@ function HomeLocked({ scored: scoredWeek = true, onAhead }) {
           <>
             <Scoreboard myTeam={myTeam} opp={opp} under={under} scored={scored}
                         mineTotal={tot(true)} theirTotal={tot(false)} />
-            <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under}
+            <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under} race={race}
                          boxBox={boxBox} seats={seats} scored={scored} />
             <HandsColumns seats={seats} under={under} scored={scored}
                           driverPts={week.driverPts || {}} />
@@ -3016,7 +3042,7 @@ function RootingBoard({ order, live, lapInfo, settled = false }) {
         </div>
 
         <p style={{ ...body("bodySm"), color: V.text3, margin: "12px 0 0" }}>
-          These are driver points only and does not account for the box box line.
+          These are driver points only and do not count BOX BOX points from Your Matchup&rsquo;s Line.
         </p>
         {live && (
           <p style={{ ...body("bodySm"), color: V.text3, margin: "5px 0 0" }}>

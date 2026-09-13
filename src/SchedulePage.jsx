@@ -587,7 +587,7 @@ function Fixture({ f, scored, variant = 1, live = false }) {
           position: "absolute", left: `${pc(f.line)}%`, bottom: -4, width: 8, height: 8,
           marginLeft: -4, borderRadius: 4, background: V.blue,
           boxShadow: `0 0 6px ${V.blue}`,
-        }} title={`BOX BOX line ${f.line.toFixed(2)}`} />
+        }} title={`Your Matchup\u2019s Line ${f.line.toFixed(2)}`} />
       )}
     </div>
   );

@@ -330,7 +330,7 @@ function StepPitStop({ value, onChange, teamSide }) {
           Every race has a pit stop question. You're guessing a time in seconds, and how close you get determines your individual points: <Pts>+5</Pts> for nailing it, down to <Pts>+1</Pts> if you're within 0.4 seconds.
         </p>
         <p style={{ margin: "0 0 8px" }}>
-          But here's the twist — this is also where the <strong>team game</strong> lives. Your guess doesn't just score you individual points. It also moves something called the <strong>BOX BOX Line</strong>, which is the average of all 4 guesses in your matchup (you + your teammate + the two people you're playing this week).
+          But here's the twist — this is also where the <strong>team game</strong> lives. Your guess doesn't just score you individual points. It also moves something called <strong>Your Matchup’s Line</strong>, which is the average of all 4 guesses in your matchup (you + your teammate + the two people you're playing this week).
         </p>
         <p style={{ margin: "0 0 8px" }}>
           Each week, your team is assigned either{" "}
@@ -340,7 +340,7 @@ function StepPitStop({ value, onChange, teamSide }) {
           . If the actual pit stop time lands on your team's side of the line: <Pts team>+5 for your team</Pts>. Wrong side? <Pts negative>−1 for your team</Pts>.
         </p>
         <p style={{ margin: "0 0 8px" }}>
-          So do you guess what you actually think the answer is and maximize your own points? Or do you sacrifice accuracy to push the BOX BOX Line in your team's favor? That tension is what makes The Needle fun.
+          So do you guess what you actually think the answer is and maximize your own points? Or do you sacrifice accuracy to push Your Matchup’s Line in your team's favor? That tension is what makes The Needle fun.
         </p>
         <p style={{ margin: 0 }}>
           {isUnder

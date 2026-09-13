@@ -29,6 +29,7 @@ import HandsColumns from "./HandsColumns.jsx";
 import TubeyCover, { COVERS } from "./TubeyCover.jsx";
 import { shortOf } from "./teams.js";
 import { boxBoxLine, boxBoxSide } from "./pitStop.js";
+import { useFirstStop, stopLabel, teamOfQuestion } from "./firstStop.js";
 import { F1_TEAM_COLORS } from "./theme";
 import {
   V, FM, FD, FN, FB, TYPE, display, numeric, body, label,
@@ -710,7 +711,7 @@ function PitLine({ four, line, pit, need = null, wantLow = null, showNames = tru
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
-      aria-label="Pit guesses between 1.5 and 4.5 seconds, the BOX BOX line, and the actual stop">
+      aria-label="Pit guesses between 1.5 and 4.5 seconds, Your Matchup&rsquo;s Line, and the first pit stop">
       {/* The stretch of the range your side needs the stop to land in. */}
       {need != null && (
         <rect x={wantLow ? 30 : px(need)} y={axis - 46}
@@ -1458,10 +1459,20 @@ const BoxBoxRow = ({ pts, mirror }) => (
   </div>
 );
 
-function BoxBoxStrip({ M, mine = null, needlePts = 0, four = null, beat = 99 }) {
+// Andrew, 2026-09-13: the line is "Your Matchup's Line", footnoted under the
+// strip, and the stop is a big dot on the bar named for what it was, "Haas,
+// Ocon, Lap 14", green or pink for the side it landed on. They said LINE and
+// STOP. The points underneath keep the BOX BOX name. The line is printed to the
+// hundredth, because that is what it is settled to.
+function BoxBoxStrip({ M, mine = null, needlePts = 0, four = null, beat = 99, stopName = "The stop" }) {
   const MIN = PIT_FLOOR, MAX = PIT_CEIL;
   const pct = v => ((Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN)) * 100;
-  const c = M.myBB > 0 ? MINE_C : THEIRS_C;
+  const c = M.myBB > 0 ? MINE_C : M.myBB < 0 ? THEIRS_C : V.blue;
+  const DOT = 20;
+  // Both plates are wide now, so they are held inside the strip rather than
+  // centred on a value near either end and run off it.
+  const at = (v, w) => `clamp(0px, calc(${pct(v)}% - ${w / 2}px), calc(100% - ${w}px))`;
+  const LINE_W = 170, STOP_W = Math.max(90, (stopName.length + 6) * 7 + 14);
   const leftC = M.seat === "UNDER" ? MINE_C : THEIRS_C;
   const rightC = M.seat === "OVER" ? MINE_C : THEIRS_C;
   const showLine = beat >= 5;
@@ -1473,7 +1484,7 @@ function BoxBoxStrip({ M, mine = null, needlePts = 0, four = null, beat = 99 }) 
 
   return (
     <div style={{ width: "100%" }}>
-      <div style={{ position: "relative", height: 96, margin: "6px 2px 0" }}>
+      <div style={{ position: "relative", height: 112, margin: "6px 2px 0" }}>
         {/* The two sides of the line, which only mean anything once the line
             is on screen. */}
         {showLine && (
@@ -1486,12 +1497,13 @@ function BoxBoxStrip({ M, mine = null, needlePts = 0, four = null, beat = 99 }) 
               background: `linear-gradient(to right, ${rightC}4d, transparent)` }} />
             <div className="v-pop" style={{ position: "absolute", left: `${pct(M.line)}%`,
               top: 58, width: 2, height: 26, background: V.blue, transform: "translateX(-1px)" }} />
-            <div className="v-pop" style={{ position: "absolute", top: 44,
-              left: `${pct(M.line)}%`, transform: "translateX(-50%)", padding: "2px 6px",
+            <div className="v-pop" style={{ position: "absolute", top: 40,
+              left: at(M.line, LINE_W), width: LINE_W, textAlign: "center", padding: "2px 6px",
+              boxSizing: "border-box",
               borderRadius: 7, background: "#000", border: `1px solid ${V.blue}`,
-              whiteSpace: "nowrap", fontFamily: FD, fontWeight: 700, fontSize: 11,
+              whiteSpace: "nowrap", fontFamily: FD, fontWeight: 700, fontSize: 12,
               color: V.blue }}>
-              LINE {one(M.line)}
+              Your Matchup&rsquo;s Line* {two(M.line)}
             </div>
           </>
         )}
@@ -1521,13 +1533,20 @@ function BoxBoxStrip({ M, mine = null, needlePts = 0, four = null, beat = 99 }) 
         })}
 
         {showStop && (
-          <div className="v-drop" style={{ position: "absolute", top: 82,
-            left: `${pct(M.pit)}%`, transform: "translateX(-50%)", padding: "2px 6px",
-            borderRadius: 7, background: "#000", border: `1px solid ${c}`,
-            whiteSpace: "nowrap", fontFamily: FD, fontWeight: 700, fontSize: 12,
-            color: c }}>
-            STOP {M.pit}
-          </div>
+          <>
+            <div className="v-drop" style={{ position: "absolute", top: 71 - DOT / 2,
+              left: `${pct(M.pit)}%`, width: DOT, height: DOT, marginLeft: -DOT / 2,
+              borderRadius: 999, background: c, border: "2px solid #000",
+              boxSizing: "border-box", boxShadow: `0 0 12px ${c}` }} />
+            <div className="v-drop" style={{ position: "absolute", top: 86,
+              left: at(M.pit, STOP_W), width: STOP_W, textAlign: "center", padding: "2px 6px",
+              boxSizing: "border-box",
+              borderRadius: 7, background: "#000", border: `1px solid ${c}`,
+              whiteSpace: "nowrap", fontFamily: FD, fontWeight: 700, fontSize: 12,
+              color: c }}>
+              {stopName} &middot; {M.pit}
+            </div>
+          </>
         )}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4,
@@ -1543,6 +1562,13 @@ function BoxBoxStrip({ M, mine = null, needlePts = 0, four = null, beat = 99 }) 
           <BoxBoxRow pts={M.oppBB} mirror />
         </div>
       )}
+      {/* Always in the layout and only shown with the line, so the strip is
+          the same height on every beat. */}
+      <div className={showLine ? "v-pop" : undefined} style={{ ...body("bodySm", { fontSize: 13,
+        color: V.blue, lineHeight: 1.35 }), fontStyle: "italic", marginTop: 8, textAlign: "left",
+        visibility: showLine ? "visible" : "hidden" }}>
+        *Your Matchup&rsquo;s Line is the average of your four pit stop picks.
+      </div>
     </div>
   );
 }
@@ -1757,6 +1783,8 @@ function CardRace({ d, stage = 0 }) {
   const me = c.ladder.find(r => r.me);
   const top = c.ladder[0];
   const [beat, setBeat] = useState(0);
+  // Who made the stop the line was settled on, and on which lap.
+  const firstStop = useFirstStop({ date: d.raceDate, question: d.pitQuestion, enabled: M.pit != null });
 
   // Stages 3 and 4 play themselves out. Arriving from later leaves them settled.
   useEffect(() => {
@@ -1808,7 +1836,7 @@ function CardRace({ d, stage = 0 }) {
     // A draw is always the line pulling level, whichever way it went.
     || (result === "drew" && lineSide != null && !preLevel);
   const withLine = s => (lineWith
-    ? `${s}${handsAgainst || result === "drew" ? ", but" : ", and"} the pit stop landed on ${lineSide} side of the BOX BOX line.`
+    ? `${s}${handsAgainst || result === "drew" ? ", but" : ", and"} the pit stop landed on ${lineSide} side of Your Matchup\u2019s Line.`
     : `${s}.`);
 
   const beatN = c.ladder.filter(r => !r.me && me.pts > r.pts).length;
@@ -1835,8 +1863,8 @@ function CardRace({ d, stage = 0 }) {
         : preLead ? `As for the matchup, here's how it shook out: you were ahead on drivers, ${M.myPreBB} to ${M.oppPreBB}`
         : `As for the matchup, here's how it shook out: they were ahead on drivers, ${M.oppPreBB} to ${M.myPreBB}`)
     : M.myBB > 0
-      ? `You won the BOX BOX line, worth five points to you and one off them.`
-      : `They won the BOX BOX line, worth five points to them and one off you.`;
+      ? `You won Your Matchup\u2019s Line. That\u2019s +5 for your team and \u22121 for your opponent.`
+      : `They won Your Matchup\u2019s Line. That\u2019s +5 for your opponent and \u22121 for your team.`;
 
   // The two panels, and which order they go in.
   //
@@ -1857,7 +1885,8 @@ function CardRace({ d, stage = 0 }) {
               {stage === S_TEAM && teamBeat >= BEAT_GUESSES && (
                 <div className="v-pop">
                   <BoxBoxStrip M={M} mine={d.card4.guess} needlePts={d.card4.needlePts}
-                    four={d.card4.four} beat={teamBeat} />
+                    four={d.card4.four} beat={teamBeat}
+                    stopName={stopLabel(firstStop, teamOfQuestion(d.pitQuestion))} />
                 </div>
               )}
               {stage === S_TEAM && (
@@ -1923,10 +1952,12 @@ function CardRace({ d, stage = 0 }) {
                   : teamBeat < BEAT_LINE
                   ? "All four guesses."
                   : teamBeat < BEAT_STOP
-                  ? `The line, ${one(M.line)}.`
+                  ? `Your Matchup’s Line, ${two(M.line)}.`
                   : M.myBB > 0
-                  ? `The stop, ${M.pit}. Five to you, one off them.`
-                  : `The stop, ${M.pit}. Five to them, one off you.`}
+                  ? `The stop, ${M.pit}. That\u2019s +5 for your team and \u22121 for your opponent.`
+                  : M.myBB < 0
+                  ? `The stop, ${M.pit}. That\u2019s +5 for your opponent and \u22121 for your team.`
+                  : `The stop, ${M.pit}, right on the line. A push, nothing to either.`}
               </Line>
             </>
           )}
@@ -2294,8 +2325,8 @@ const Chevron = ({ dir, color, size = 26 }) => {
 function because(c) {
   const k = c.cause;
   if (k.kind === "boxbox") {
-    return c.outcome === "won" ? "That was down to a good call on the BOX BOX line."
-      : c.outcome === "lost" ? "That came down to losing the BOX BOX line."
+    return c.outcome === "won" ? "That was down to a good call on Your Matchup\u2019s Line."
+      : c.outcome === "lost" ? "That came down to losing Your Matchup\u2019s Line."
       : "BOX BOX is what levelled the two of you.";
   }
   if (k.kind === "driver") {
@@ -2353,14 +2384,14 @@ const SEASON_LINES = [
   // the scoreboard cannot show you: the two totals already have BOX BOX in
   // them, so without this sentence the week reads as a normal win.
   { k: "bbWon", when: f => f.bbDecided && f.won,
-    fact: "Your team won the matchup by winning the BOX BOX line.", lines: [
+    fact: "Your team won the matchup by winning Your Matchup\u2019s Line.", lines: [
     "That's the team game, and it takes both of you pulling the same way.",
     "Six points for putting the team ahead of your own needle.",
     "Take BOX BOX out and you lose that one.",
     "That's a pit wall call, and both of you made the call.",
   ] },
   { k: "bbLost", when: f => f.bbDecided && f.lost,
-    fact: "Your team lost the matchup on the BOX BOX line.", lines: [
+    fact: "Your team lost the matchup on Your Matchup\u2019s Line.", lines: [
     "Six points, and they played the line harder. That's the trade.",
     "Take BOX BOX out and you win that one.",
     "Their pit wall made the better call this week.",

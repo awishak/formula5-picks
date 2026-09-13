@@ -605,8 +605,8 @@ function slotPit(d, key) {
         : ` You did not guess.`));
     body.push(`The line was ${secs(c.line)}, the average of all four guesses, and you sat in the ` +
       `${c.seat} seat. ` +
-      (bbWon ? `The stop landed on your side, so BOX BOX was worth five to the team and cost theirs one.`
-        : c.bb === "lost" ? `The stop landed the other way, so the other side took five and you gave up one.`
+      (bbWon ? `The stop landed on your side. That\u2019s +5 for your team and \u22121 for your opponent.`
+        : c.bb === "lost" ? `The stop landed the other way. That\u2019s +5 for your opponent and \u22121 for your team.`
         : `Nothing separated the two sides on the line.`));
     body.push(v === "both"
       ? `Both halves of the pit lane, in one week. ${c.leagueScored} of the ${c.field} who scored got ` +

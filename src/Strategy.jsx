@@ -210,7 +210,7 @@ export default function Strategy() {
   function StrategyTeam() {
     return (
       <div style={{ fontFamily: FB, fontSize: 13, color: TEXT2, lineHeight: 1.7 }}>
-        <p style={{ margin: 0 }}>The BOX BOX line is the average of all four players' pit stop guesses in your matchup. Your team is assigned either Over or Under. If the actual pit stop time lands on your team's side of the line, your team gets <Pts type="team">+5 team</Pts>. If not, you get <Pts type="negative">−1 team</Pts>. That's a 6-point swing.</p>
+        <p style={{ margin: 0 }}>Your Matchup’s Line is the average of all four players' pit stop guesses in your matchup. Your team is assigned either Over or Under. If the actual pit stop time lands on your team's side of the line, your team gets <Pts type="team">+5 team</Pts>. If not, you get <Pts type="negative">−1 team</Pts>. That's a 6-point swing.</p>
         <p style={{ margin: "10px 0 0" }}>The team play: If your team has the Over, you want the line to be as LOW as possible — so guess low. If your team has the Under, guess HIGH to push the line up. You're trying to shift the average in your favor.</p>
         <p style={{ margin: "10px 0 0" }}>The tradeoff: Deliberately guessing away from the actual time will cost you Needle points individually. But the <Pts type="team">+5</Pts> team bonus (vs <Pts type="negative">−1</Pts>) is a massive 6-point swing that can decide your matchup.</p>
       </div>
@@ -221,8 +221,8 @@ export default function Strategy() {
     return (
       <div style={{ fontFamily: FB, fontSize: 13, color: TEXT2, lineHeight: 1.7 }}>
         <p style={{ margin: 0 }}>Most experienced players try to find a sweet spot. They estimate the actual pit stop time, then nudge their guess slightly in the direction that helps their team's BOX BOX side.</p>
-        <p style={{ margin: "10px 0 0" }}>Example: You think the pit stop will be 2.5 seconds. Your team has the Over. Instead of guessing exactly 2.5, you guess 2.2 or 2.3 — still close enough to earn <Pts>+2</Pts> or <Pts>+3</Pts> Needle points, but pulling the BOX BOX line down to give your team a better shot at the <Pts type="team">+5 team bonus</Pts>.</p>
-        <p style={{ margin: "10px 0 0" }}>When to lean individual: You're in a tight race for the Players Championship, or your team matchup is already a blowout either way. When to lean team: Your team matchup is close and the <Pts type="team">+5</Pts> / <Pts type="negative">−1</Pts> swing could decide it. Check the Schedule page — matchups outlined in green were decided by the BOX BOX line.</p>
+        <p style={{ margin: "10px 0 0" }}>Example: You think the pit stop will be 2.5 seconds. Your team has the Over. Instead of guessing exactly 2.5, you guess 2.2 or 2.3 — still close enough to earn <Pts>+2</Pts> or <Pts>+3</Pts> Needle points, but pulling Your Matchup’s Line down to give your team a better shot at the <Pts type="team">+5 team bonus</Pts>.</p>
+        <p style={{ margin: "10px 0 0" }}>When to lean individual: You're in a tight race for the Players Championship, or your team matchup is already a blowout either way. When to lean team: Your team matchup is close and the <Pts type="team">+5</Pts> / <Pts type="negative">−1</Pts> swing could decide it. Check the Schedule page — matchups outlined in green were decided by Your Matchup’s Line.</p>
       </div>
     );
   }
@@ -235,7 +235,7 @@ export default function Strategy() {
     },
     {
       id: "team", title: "Optimize for Your Team",
-      subtitle: "Swing the BOX BOX line in your favor", color: GREEN,
+      subtitle: "Swing Your Matchup’s Line in your favor", color: GREEN,
       component: StrategyTeam
     },
     {
@@ -264,7 +264,7 @@ export default function Strategy() {
             <p style={{ fontFamily: FB, fontSize: 10, color: BLUEDARK, margin: 0, fontStyle: "italic" }}>Only counts towards individual standings</p>
           </div>
           <div style={{ flex: 1, padding: 10, borderRadius: 10, background: `${GREEN}06`, border: `1px solid ${GREEN}15` }}>
-            <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: GREEN, margin: "0 0 4px" }}>2. BOX BOX LINE</p>
+            <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 11, color: GREEN, margin: "0 0 4px" }}>2. YOUR MATCHUP’S LINE</p>
             <p style={{ fontFamily: FB, fontSize: 12, color: TEXT2, margin: "0 0 6px" }}>Avg of all 4 guesses in your matchup → <Pts type="team">+5</Pts> or <Pts type="negative">−1</Pts></p>
             <p style={{ fontFamily: FB, fontSize: 10, color: GREEN, margin: 0, fontStyle: "italic" }}>Only counts towards your team's matchup</p>
           </div>
@@ -307,7 +307,7 @@ export default function Strategy() {
       <div style={{ background: `${GOLD}08`, borderRadius: 14, border: `1px solid ${GOLD}20`, padding: "14px 16px", marginTop: 20 }}>
         <p style={{ fontFamily: FD, fontWeight: 800, fontSize: 12, color: GOLD, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 6px" }}>Pro Tip</p>
         <p style={{ fontFamily: FB, fontSize: 13, color: TEXT2, lineHeight: 1.6, margin: 0 }}>
-          Check the Schedule page after each race — matchups with a <strong style={{ color: GREEN }}>green outline</strong> were decided by the BOX BOX line. Use that to decide how aggressively to play the team angle.
+          Check the Schedule page after each race — matchups with a <strong style={{ color: GREEN }}>green outline</strong> were decided by Your Matchup’s Line. Use that to decide how aggressively to play the team angle.
         </p>
       </div>
     </div>

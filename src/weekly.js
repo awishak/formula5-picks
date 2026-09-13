@@ -1276,6 +1276,8 @@ export function buildWeekly(db, playerName, round = null) {
 
   return {
     round: race.round, raceName: race.race_name, raceDate: race.race_date,
+    // Which team the pit question named, so the deck can look up who made the stop.
+    pitQuestion: race.pit_stop_question || null,
     // id and nation so card 4 can offer the flag and write the choice.
     // nation is the raw column, NOT nationById: null there means never
     // chosen, which is what the card needs to know to ask.
