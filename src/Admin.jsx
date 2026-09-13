@@ -19,6 +19,19 @@ function needleScore(guess, actual) {
   return 0;
 }
 
+// The BOX BOX line, in whole hundredths.
+//
+// Players set their guess on a dial with a 0.1 step, so the average of four of
+// them always lands on a multiple of 0.025 and can never equal a pit time typed
+// in hundredths. Compared at full precision the push branch below was therefore
+// unreachable: a line of 2.575 shows on screen as "2.58", and a 2.58 stop was
+// scored a win for OVER against a line everyone had just read as equal.
+//
+// So score the line at the precision it is displayed. Going through integer
+// hundredths rather than toFixed keeps the half-way cases (x.x25, x.x75) landing
+// the same way every time instead of on whichever side the float happens to sit.
+export const toHundredths = n => Math.round(Math.round(n * 1000) / 10);
+
 // Weekly top-10 bonus
 const WEEKLY_BONUS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
@@ -548,19 +561,21 @@ export default function Admin() {
         const overTeam = homeTeam;
         const underTeam = awayTeam;
 
-        // Determine who wins the BOX BOX
+        // Determine who wins the BOX BOX, comparing the line as it is shown.
+        const lineHundredths = boxBoxLine === null ? null : toHundredths(boxBoxLine);
+        const pitHundredths = toHundredths(pitTime);
         let overBonus = 0, underBonus = 0;
-        if (boxBoxLine !== null) {
-          if (pitTime > boxBoxLine) {
+        if (lineHundredths !== null) {
+          if (pitHundredths > lineHundredths) {
             // Actual > line = OVER wins
             overBonus = 5;
             underBonus = -1;
-          } else if (pitTime < boxBoxLine) {
+          } else if (pitHundredths < lineHundredths) {
             // Actual < line = UNDER wins
             overBonus = -1;
             underBonus = 5;
           } else {
-            // Exact = push, no bonus
+            // Same line to the hundredth = push, no bonus either way
             overBonus = 0;
             underBonus = 0;
           }
@@ -592,7 +607,9 @@ export default function Admin() {
           awayBoxBox: underBonus,
           homeTotal,
           awayTotal,
-          boxBoxLine: boxBoxLine ? boxBoxLine.toFixed(2) : "N/A",
+          // The scored value, not a separately rounded one, so the line on screen
+          // can never disagree with the result next to it.
+          boxBoxLine: lineHundredths === null ? "N/A" : (lineHundredths / 100).toFixed(2),
           homeWon: homeTotal > awayTotal,
           awayWon: awayTotal > homeTotal,
           // Store for saving
