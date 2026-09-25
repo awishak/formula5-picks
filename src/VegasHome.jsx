@@ -20,6 +20,7 @@ import { F1_TEAM_COLORS } from "./theme";
 import HandsColumns from "./HandsColumns.jsx";
 import { boxBoxSide } from "./pitStop.js";
 import { useFirstStop, stopLabel } from "./firstStop.js";
+import FernoloSeal from "./FernoloSeal";
 
 // ── Real league snapshot, round 11 ───────────────────────
 const PLAYER_PHOTOS = {
@@ -2846,6 +2847,10 @@ function HomeLocked({ scored: scoredWeek = true, onAhead }) {
           <span style={{ ...display("chip"), fontSize: 13, color: V.pink, marginLeft: "auto" }}>
             No picks
           </span>
+        )}
+        {/* Made by the randomizer after the deadline: Fernolo's seal. */}
+        {seat.picked && seat.auto && (
+          <FernoloSeal size={40} style={{ marginLeft: "auto", marginTop: -5, marginBottom: -5 }} />
         )}
       </div>
       {seat.pick && (

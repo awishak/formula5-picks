@@ -18,6 +18,7 @@ import { shortName } from "./names.js";
 import { V, FD, display, numeric, card } from "./theme.vegas";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
+import FernoloSeal from "./FernoloSeal";
 
 export const MINE = V.green, THEIRS = V.pink, DIVIDE = V.blue;
 
@@ -51,7 +52,7 @@ function Face({ name, size = 40, ring, glow = 1, drained = false, edge = 2, blan
   );
 }
 
-function PlayerBadge({ name, picked, size = 38, photo, dim = !picked, ring }) {
+function PlayerBadge({ name, picked, size = 38, photo, dim = !picked, ring, seal = false }) {
   const initials = (name || "").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   const c = ring || (picked ? V.green : V.text3);
   return (
@@ -65,6 +66,12 @@ function PlayerBadge({ name, picked, size = 38, photo, dim = !picked, ring }) {
         ...display("chip"), color: c,
         filter: dim ? "grayscale(0.7) brightness(0.75)" : "none",
       }}>{photo ? "" : initials}</div>
+      {/* Fernolo's seal on the shoulder of a face whose picks he made. Half
+          the face, hung off the lower right so the ring colour still reads. */}
+      {seal && (
+        <FernoloSeal size={Math.round(size * 0.56)}
+          style={{ position: "absolute", right: -6, bottom: -4, zIndex: 1 }} />
+      )}
     </div>
   );
 }
@@ -222,7 +229,7 @@ export default function HandsColumns({ seats, under, driverPts = {}, scored = tr
                 display: "flex", flexDirection: "column", alignItems: "center",
               }}>
                 <PlayerBadge name={h.name} picked={false} dim={false} ring={col}
-                             photo={h.photo} size={54} />
+                             photo={h.photo} size={54} seal={h.auto} />
                 <Plate text={h.mine ? "You" : shortName(h.name)} c={col} size={13} top={-8} />
                 {scored && (
                   <div style={{ ...numeric("h3"), fontSize: 22, color: col, marginTop: 4 }}>

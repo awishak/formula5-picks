@@ -41,7 +41,13 @@ export default function SchedulePage({ currentUser }) {
       if (!alive) return;
       // Every needle guess in the season, so each matchup can carry its own
       // BOX BOX line: the line is the average of the four in it.
-      const picks = (await supabase.from("picks").select("race_id,player_id,pit_guess")).data || [];
+      // auto is the randomizer's mark, so a box score can say whose picks
+      // were made for them. Until scripts/picks_auto_column.sql has run the
+      // column is not there, and a page with no lines is worse than one with
+      // no marks, so the read falls back to the columns that always exist.
+      let picksQ = await supabase.from("picks").select("race_id,player_id,pit_guess,auto");
+      if (picksQ.error) picksQ = await supabase.from("picks").select("race_id,player_id,pit_guess");
+      const picks = picksQ.data || [];
       // The first pit stop each round, the time Andrew entered, so every box
       // score can show where it landed against its own line.
       const results = (await supabase.from("results").select("race_id,pit_stop_time")).data || [];
@@ -113,9 +119,13 @@ export default function SchedulePage({ currentUser }) {
   const pRows = buildPlayerTable(s.db);
   const pPlace = placesBy(pRows, r => r.avg);
 
-  const guessOf = {};
+  const guessOf = {}, autoOf = {};
   s.picks.filter(p => p.race_id === race.id)
-    .forEach(p => { const v = Number(p.pit_guess); if (!Number.isNaN(v)) guessOf[p.player_id] = v; });
+    .forEach(p => {
+      const v = Number(p.pit_guess);
+      if (!Number.isNaN(v)) guessOf[p.player_id] = v;
+      if (p.auto) autoOf[p.player_id] = true;
+    });
   // The line is the average of the four guesses in the matchup, same as the
   // week computes it, so a matchup with a card missing still has a line off
   // whoever did guess.
@@ -169,8 +179,8 @@ export default function SchedulePage({ currentUser }) {
       line: lineOf(teamById[m.home_team_id], teamById[m.away_team_id]),
       stop,
       players: {
-        away: rosterOf(teamById[m.away_team_id], away, race.id, s.playersById, pPlace),
-        home: rosterOf(teamById[m.home_team_id], home, race.id, s.playersById, pPlace),
+        away: rosterOf(teamById[m.away_team_id], away, race.id, s.playersById, pPlace, autoOf),
+        home: rosterOf(teamById[m.home_team_id], home, race.id, s.playersById, pPlace, autoOf),
       },
     };
   });
@@ -243,6 +253,15 @@ export default function SchedulePage({ currentUser }) {
                     textTransform: "uppercase" }}>
           {isScored ? "Final" : (raceTimePT(round) || "")}
         </p>
+        {/* Only on a round where the randomizer made somebody's picks. A
+            half-card is too narrow for a word beside the name, so the name
+            is pink and this line says what pink means. */}
+        {fixtures.some(f => [...f.players.away, ...f.players.home].some(r => r.auto)) && (
+          <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, textAlign: "center",
+                      margin: "-8px 0 14px", fontStyle: "italic" }}>
+            <span style={{ color: V.pink }}>Pink name</span>: picks made by the randomizer.
+          </p>
+        )}
 
         {groups.map(g => (
           <div key={g.division}>
@@ -281,9 +300,10 @@ const initialLast = (full) => {
 
 // The two players in score order, highest first. Reading the bigger number
 // first is how anyone reads a scoreline.
-function rosterOf(team, row, raceId, namesById, placeById = {}) {
+function rosterOf(team, row, raceId, namesById, placeById = {}, autoById = {}) {
   if (!team) return [];
-  const one = (id, pts) => ({ name: namesById[id], pts, place: placeById[id] });
+  const one = (id, pts) => ({ name: namesById[id], pts, place: placeById[id],
+                              auto: Boolean(autoById[id]) });
   const wk = row && row.weeks.find(x => x.raceId === raceId);
   // Before the race there is no week to sort on, so they stay in roster order.
   if (!wk) return [one(team.player1_id, null), one(team.player2_id, null)];
@@ -515,18 +535,20 @@ function Fixture({ f, scored, variant = 1, live = false }) {
                                  textAlign: mirror ? "right" : "left" }}>
                     {r.place != null ? ordinal(r.place) : ""}
                   </span>
-                  <span style={{ ...body("bodySm"), fontSize: 14, color: V.text2,
+                  <span style={{ ...body("bodySm"), fontSize: 14, color: r.auto ? V.pink : V.text2,
                                  flex: "1 1 0", minWidth: 0, whiteSpace: "nowrap",
                                  overflow: "hidden", textOverflow: "ellipsis",
-                                 textAlign: mirror ? "right" : "left" }}>
+                                 textAlign: mirror ? "right" : "left" }}
+                        title={r.auto ? "Picks made by the randomizer" : undefined}>
                     {r.name ? initialLast(r.name) : "\u2014"}
                   </span>
                 </span>
               ) : (
-                <span key="n" style={{ ...body("bodySm"), fontSize: 14, color: V.text2,
+                <span key="n" style={{ ...body("bodySm"), fontSize: 14, color: r.auto ? V.pink : V.text2,
                                flex: "1 1 0", minWidth: 0, whiteSpace: "nowrap",
                                overflow: "hidden", textOverflow: "ellipsis",
-                               textAlign: mirror ? "right" : "left" }}>
+                               textAlign: mirror ? "right" : "left" }}
+                      title={r.auto ? "Picks made by the randomizer" : undefined}>
                   {r.name ? initialLast(r.name) : "\u2014"}
                 </span>
               ),

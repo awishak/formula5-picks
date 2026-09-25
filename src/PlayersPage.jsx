@@ -4,6 +4,7 @@ import Flag, { Flagged } from "./Flag.jsx";
 import { V, FM, FD, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { ordinal } from "./teamTable";
+import FernoloSeal from "./FernoloSeal";
 
 // The individual standings. Built to the same pattern as TeamsPage on purpose:
 // same header, same row shape, same rules about what scales and what does not.
@@ -193,7 +194,9 @@ function TrophyRow({ row }) {
   );
 }
 
-function Row({ row, place, mine, move, mode }) {
+// sealed: the randomizer made this player's picks for the last scored race,
+// so the last-race number carries Fernolo's seal in whichever spot it sits.
+function Row({ row, place, mine, move, mode, sealed = false }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 8,
@@ -229,13 +232,20 @@ function Row({ row, place, mine, move, mode }) {
         minWidth: mode.id === "trophies" ? 92 : 40 }}>
         {mode.id === "trophies"
           ? <TrophyRow row={row} />
-          : <div style={numeric("stat", { fontSize: 26, color: V.text,
-              ...textGlow(V.blue, 0.7) })}>{mode.spot1(row)}</div>}
+          : <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+              {sealed && mode.id === "last" && <FernoloSeal size={26} />}
+              <div style={numeric("stat", { fontSize: 26, color: V.text,
+                ...textGlow(V.blue, 0.7) })}>{mode.spot1(row)}</div>
+            </div>}
         {mode.spot2(row) && (
-          <div style={{
-            fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.04em",
-            textTransform: "uppercase", color: V.text2, marginTop: 1, whiteSpace: "nowrap",
-          }}>{mode.spot2(row)}</div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 5,
+                        marginTop: 1 }}>
+            {sealed && mode.id !== "last" && mode.spot2(row).startsWith("Last") && <FernoloSeal size={18} />}
+            <div style={{
+              fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.04em",
+              textTransform: "uppercase", color: V.text2, whiteSpace: "nowrap",
+            }}>{mode.spot2(row)}</div>
+          </div>
         )}
       </div>
 
@@ -269,6 +279,15 @@ export default function PlayersPage({ currentUser }) {
         // One scored race is nothing to have moved from. The table before it has
         // all 48 level on nought, so everybody would read as climbing.
         const move = {};
+        // Whose picks the randomizer made for the last scored race, so the
+        // last-race number can carry Fernolo's seal. The auto column arrives
+        // with scripts/picks_auto_column.sql; until it has run, nobody is sealed.
+        const sealed = {};
+        if (scoredIds.length > 0) {
+          const lastId = scoredIds[scoredIds.length - 1];
+          const q = await supabase.from("picks").select("player_id,auto").eq("race_id", lastId);
+          (q.data || []).forEach(p => { if (p.auto) sealed[p.player_id] = true; });
+        }
         if (scoredIds.length > 1) {
           const lastId = scoredIds[scoredIds.length - 1];
           const wasPlace = placesBy(
@@ -276,7 +295,7 @@ export default function PlayersPage({ currentUser }) {
             r => r.avg);
           rows.forEach(r => { move[r.id] = (wasPlace[r.id] || place[r.id]) - place[r.id]; });
         }
-        setState({ loading: false, rows, place, move });
+        setState({ loading: false, rows, place, move, sealed });
       } catch (e) {
         console.error(e);
         setState({ loading: false, error: true });
@@ -289,7 +308,7 @@ export default function PlayersPage({ currentUser }) {
   if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
   if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Standings did not load.</div>;
 
-  const { rows, place, move } = state;
+  const { rows, place, move, sealed } = state;
   const me = rows.find(r => r.name === currentUser);
   const mode = MODES.find(m => m.id === modeId) || MODES[0];
 
@@ -324,6 +343,7 @@ export default function PlayersPage({ currentUser }) {
 
         {shown.map(r => (
           <Row key={r.id} row={r} place={shownPlace[r.id]} mine={me && r.id === me.id}
+               sealed={Boolean(sealed[r.id])}
                move={mode.id === "ppr" ? move[r.id] : undefined} mode={mode} />
         ))}
 

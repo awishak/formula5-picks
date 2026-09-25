@@ -513,6 +513,7 @@ export function buildWeekly(db, playerName, round = null) {
         return {
           id, name: nameOf[id], photo: photoOf[id],
           ours: myPlayers.includes(id), mine: id === me.id,
+          auto: Boolean(pk.auto),
           pick: { order: order.slice(0, 5), bestFinish: pk.best_finish || null },
           score: {
             top: sc.top_pick_pts || 0, mid: sc.midfield_pts || 0,

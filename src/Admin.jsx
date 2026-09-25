@@ -1025,11 +1025,20 @@ export default function Admin() {
               finishing_order: order,
               best_finish: `P${Math.floor(Math.random() * 10) + 1}`,
               pit_guess: Math.round((1.5 + Math.random() * 3.0) * 10) / 10,
-              submitted_at: new Date().toISOString()
+              submitted_at: new Date().toISOString(),
+              // The randomizer's mark, the same one Fernolo writes, so a
+              // matchup can say these picks were made for the player.
+              auto: true
             };
           });
 
-          const { data: inserted, error } = await supabase.from("picks").insert(rows).select();
+          let { data: inserted, error } = await supabase.from("picks").insert(rows).select();
+          // The auto column may not exist yet (scripts/picks_auto_column.sql).
+          // Filling the picks matters more than labelling them.
+          if (error && /auto/.test(error.message || "")) {
+            ({ data: inserted, error } = await supabase.from("picks")
+              .insert(rows.map(({ auto, ...rest }) => rest)).select());
+          }
           if (error) {
             setRandomStatus("Error: " + error.message);
           } else if (!inserted || inserted.length === 0) {

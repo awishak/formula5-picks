@@ -497,6 +497,9 @@ export function useLeague(currentUser, { round = null } = {}) {
                 ours: Boolean(own),
                 team: displayOf(t.name),
                 picked: Boolean(pickOf[id]),
+                // The randomizer made these, after the deadline. Marked so the
+                // matchup can say so; the pick itself scores like any other.
+                auto: Boolean(pickOf[id] && pickOf[id].auto),
                 pick: visible ? asPick(pickOf[id]) || null : null,
                 score: visible ? scoreOf[id] || null : null,
               };
