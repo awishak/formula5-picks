@@ -66,11 +66,12 @@ function PlayerBadge({ name, picked, size = 38, photo, dim = !picked, ring, seal
         ...display("chip"), color: c,
         filter: dim ? "grayscale(0.7) brightness(0.75)" : "none",
       }}>{photo ? "" : initials}</div>
-      {/* Fernolo's seal on the shoulder of a face whose picks he made. Half
-          the face, hung off the lower right so the ring colour still reads. */}
+      {/* Fernolo's seal on a face whose picks he made, most of the face's
+          size and hung off its lower right like a sticker. Andrew, 2026-09-25:
+          half the face was not big enough. */}
       {seal && (
-        <FernoloSeal size={Math.round(size * 0.56)}
-          style={{ position: "absolute", right: -6, bottom: -4, zIndex: 1 }} />
+        <FernoloSeal size={Math.round(size * 0.85)}
+          style={{ position: "absolute", right: -16, bottom: -10, zIndex: 1 }} />
       )}
     </div>
   );

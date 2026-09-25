@@ -230,23 +230,23 @@ function Row({ row, place, mine, move, mode, sealed = false }) {
           name can use, and the names are what needed the room. */}
       <div style={{ flexShrink: 0, textAlign: "right",
         minWidth: mode.id === "trophies" ? 92 : 40 }}>
-        {mode.id === "trophies"
-          ? <TrophyRow row={row} />
-          : <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
-              {sealed && mode.id === "last" && <FernoloSeal size={26} />}
-              <div style={numeric("stat", { fontSize: 26, color: V.text,
-                ...textGlow(V.blue, 0.7) })}>{mode.spot1(row)}</div>
-            </div>}
-        {mode.spot2(row) && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 5,
-                        marginTop: 1 }}>
-            {sealed && mode.id !== "last" && mode.spot2(row).startsWith("Last") && <FernoloSeal size={18} />}
-            <div style={{
-              fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.04em",
-              textTransform: "uppercase", color: V.text2, whiteSpace: "nowrap",
-            }}>{mode.spot2(row)}</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+          {/* Fernolo's seal beside the score, the size of the face on the row,
+              on any mode that shows the last race. */}
+          {sealed && mode.id !== "trophies" && <FernoloSeal size={42} />}
+          <div>
+            {mode.id === "trophies"
+              ? <TrophyRow row={row} />
+              : <div style={numeric("stat", { fontSize: 26, color: V.text,
+                  ...textGlow(V.blue, 0.7) })}>{mode.spot1(row)}</div>}
+            {mode.spot2(row) && (
+              <div style={{
+                fontFamily: FD, fontWeight: 600, fontSize: 13, letterSpacing: "0.04em",
+                textTransform: "uppercase", color: V.text2, marginTop: 1, whiteSpace: "nowrap",
+              }}>{mode.spot2(row)}</div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
     </div>

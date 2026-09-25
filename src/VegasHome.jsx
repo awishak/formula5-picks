@@ -2850,7 +2850,7 @@ function HomeLocked({ scored: scoredWeek = true, onAhead }) {
         )}
         {/* Made by the randomizer after the deadline: Fernolo's seal. */}
         {seat.picked && seat.auto && (
-          <FernoloSeal size={40} style={{ marginLeft: "auto", marginTop: -5, marginBottom: -5 }} />
+          <FernoloSeal size={56} style={{ marginLeft: "auto", marginTop: -13, marginBottom: -13 }} />
         )}
       </div>
       {seat.pick && (
