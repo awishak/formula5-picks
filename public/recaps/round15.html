@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Round 15: the floor</title>
+<meta name="description" content="Round 15, the Azerbaijan Grand Prix: the lowest-scoring week in Formula 5 history, in numbers.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07070c;--bg2:#0e0e17;--bg3:#151521;--bg4:#1d1d2b;--blue:#00d9ff;--pink:#ff2d95;--text:#f2f2f7;--text2:#a8a8c0;--text3:#8a8aa6;--border:rgba(255,255,255,.09);--border2:rgba(255,255,255,.16);--fd:'Encode Sans Semi Condensed',system-ui,sans-serif;--fn:'Chakra Petch',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:var(--bg)}
+body{font-family:var(--fd);background:var(--bg);color:var(--text);padding:16px 16px 60px;max-width:660px;margin:0 auto;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--blue)}
+.kicker{font-family:var(--fn);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+h1{font-family:var(--fn);font-weight:700;font-size:clamp(34px,9vw,52px);line-height:1;letter-spacing:.02em;text-transform:uppercase;margin:8px 0 6px;color:var(--pink);text-shadow:0 0 6px rgba(255,45,149,.55),0 0 22px rgba(255,45,149,.35)}
+.stand{font-size:17px;color:var(--text2);max-width:520px}
+.stand b{color:var(--text)}
+.hero{margin:8px 0 24px}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:18px 0 0}
+.tile{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:14px 14px 12px}
+.tile .n{font-family:var(--fn);font-weight:700;font-size:38px;line-height:1;color:var(--pink);text-shadow:0 0 10px rgba(255,45,149,.45)}
+.tile .n.blue{color:var(--blue);text-shadow:0 0 10px rgba(0,217,255,.45)}
+.tile .c{font-size:13px;color:var(--text2);margin-top:6px;line-height:1.35}
+.tile .c b{color:var(--text)}
+section{margin:22px 0}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:16px 14px 14px;margin-bottom:14px}
+.ch{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
+.num{font-family:var(--fn);font-weight:700;font-size:13px;color:var(--blue);border:1px solid var(--blue);border-radius:6px;padding:1px 6px;letter-spacing:.06em;flex-shrink:0;margin-top:2px}
+.ch h2{font-size:20px;line-height:1.2;font-weight:700}
+.ch p,.note{font-size:14px;color:var(--text2);margin-top:4px}
+.note{margin-top:10px;line-height:1.45}
+.note b{color:var(--text)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
+.act{font-family:var(--fd);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:999px;padding:9px 14px;min-height:36px;cursor:pointer}
+.act[aria-pressed="true"]{color:#000;background:var(--blue);border-color:var(--blue)}
+.act:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--text2);margin:0 0 10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+.legend i.blue{background:var(--blue)}.legend i.pink{background:var(--pink)}.legend i.muted{background:var(--text3)}
+.row{display:grid;grid-template-columns:132px 1fr 58px;align-items:center;gap:8px;min-height:32px;padding:2px 0}
+.row.db{grid-template-columns:112px 1fr 84px}
+.lab{display:flex;align-items:center;gap:7px;min-width:0}
+.lt{font-size:14px;font-weight:600;line-height:1.15;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lt small{display:block;font-size:13px;font-weight:400;color:var(--text3)}
+.track{position:relative;height:20px;background:var(--bg3);border-radius:6px;overflow:hidden}
+.zero{position:absolute;top:0;bottom:0;width:1px;background:var(--border2)}
+.bar{position:absolute;top:2px;bottom:2px;border-radius:4px;transform-origin:left center;animation:grow .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*35ms)}
+.bar.blue{background:var(--blue);box-shadow:0 0 10px rgba(0,217,255,.35)}
+.bar.pink{background:var(--pink);box-shadow:0 0 10px rgba(255,45,149,.35)}
+.bar.muted{background:var(--text3)}
+.val{font-family:var(--fn);font-weight:700;font-size:16px;text-align:right;white-space:nowrap}
+.val.blue,.blue{color:var(--blue)}.val.pink,.pink{color:var(--pink)}.val.muted,.muted{color:var(--text2)}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.face,.logo,.head{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;object-fit:cover;background:var(--bg4);border:2px solid var(--border2);flex-shrink:0;font-family:var(--fn);font-weight:700;color:var(--text2);font-size:13px}
+.logo{border-radius:8px;object-fit:contain;background:#fff;padding:2px}
+.logo-t{background:var(--bg4);color:var(--text2)}
+.head{object-fit:cover;object-position:top;background:var(--bg4)}
+.stack{display:grid;grid-template-columns:44px 1fr 28px;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);animation:fade .5s both;animation-delay:calc(var(--i)*40ms)}
+.stack:last-child{border-bottom:0}
+.sv{font-family:var(--fn);font-weight:700;font-size:20px;text-align:right}
+.faces{display:flex;flex-wrap:wrap;gap:3px}
+.fw{display:inline-flex}
+.sc{font-family:var(--fn);font-size:13px;color:var(--text3);text-align:right}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.link{position:absolute;top:9px;height:2px;background:var(--border2)}
+.dot{position:absolute;top:3px;width:14px;height:14px;margin-left:-7px;border-radius:50%;border:2px solid var(--bg2)}
+.dot.blue{background:var(--blue)}.dot.pink{background:var(--pink);box-shadow:0 0 8px rgba(255,45,149,.6)}
+.db .val{font-size:14px}.arr{color:var(--text3)}
+.db.held .lt{color:var(--text2)}
+.more{display:none}.show-all .more{display:grid}
+.pod{display:flex;gap:10px;margin:10px 0 4px}
+.pod .p{flex:1;background:var(--bg3);border-radius:12px;padding:10px 8px;text-align:center;font-size:13px;color:var(--text2)}
+.pod .p b{display:block;color:var(--text);font-size:14px;margin-top:6px}
+.pod .p .pos{font-family:var(--fn);font-weight:700;color:var(--blue);font-size:13px;letter-spacing:.08em}
+.pod .p .no{color:var(--pink);font-weight:600;font-size:13px}
+.wall{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.wall .w{display:flex;flex-direction:column;align-items:center;width:58px;font-size:13px;color:var(--text2);text-align:center;line-height:1.15}
+.wall .w b{font-family:var(--fn);color:var(--pink);font-size:15px}
+.mu{display:grid;grid-template-columns:1fr 92px 1fr;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid #c9ccd6;border-radius:14px;padding:10px 10px;margin-bottom:8px;animation:fade .5s both;animation-delay:calc(var(--i)*40ms)}
+.mu.ch{border-left-color:#ffc93c}
+.side{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
+.side.r{align-items:flex-end;text-align:right}
+.side .tn{font-size:14px;font-weight:600;line-height:1.15;color:var(--text2)}
+.side.won .tn{color:var(--text)}
+.side .seat{font-family:var(--fn);font-size:13px;letter-spacing:.1em;color:var(--text3)}
+.score{font-family:var(--fn);font-weight:700;font-size:24px;text-align:center;display:flex;justify-content:center;gap:6px;align-items:baseline}
+.score .v{font-size:13px;color:var(--text3);font-weight:600}
+.divh{font-family:var(--fn);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);margin:14px 0 8px}
+#tip{position:fixed;z-index:9;pointer-events:none;background:#000;color:var(--text);border:1px solid var(--blue);border-radius:8px;padding:7px 10px;font-size:13px;line-height:1.35;max-width:280px;opacity:0;transition:opacity .12s}
+#tip.on{opacity:1}
+details{margin-top:14px}
+summary{cursor:pointer;font-weight:700;color:var(--text2);font-size:14px;padding:8px 0;min-height:36px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th{text-align:left;font-weight:700;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--border2);font-size:13px}
+td{padding:6px 4px;border-bottom:1px solid var(--border);font-family:var(--fn);font-size:13px}
+td:nth-child(2){font-family:var(--fd);font-size:14px;white-space:nowrap}
+tr.hl td{color:var(--pink)}
+.tw{overflow-x:auto}
+.foot{font-size:13px;color:var(--text3);margin-top:30px;line-height:1.5}
+@media (max-width:420px){.row{grid-template-columns:122px 1fr 42px;gap:6px}.row.db{grid-template-columns:110px 1fr 74px}.lt{font-size:13px}.tile .n{font-size:32px}.val{font-size:15px}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}}
+</style></head>
+<body>
+<div id="tip" role="status" aria-live="polite"></div>
+
+<header class="hero">
+  <div class="kicker">Round 15 · Azerbaijan Grand Prix</div>
+  <h1>The floor</h1>
+  <p class="stand">The lowest-scoring week in Formula 5 history, by every number the league keeps. <b>Aston Martin never pitted</b>, so the Needle paid nobody and BOX BOX was a push in all twelve matchups. That is not the story. The pool was.</p>
+  <div class="tiles">
+    <div class="tile"><div class="n">6.9</div><div class="c">Average score. The previous low was <b>26.1</b>, Canada.</div></div>
+    <div class="tile"><div class="n">8</div><div class="c">Negative scores. <b>The first ever.</b> Nobody had scored below zero before Saturday.</div></div>
+    <div class="tile"><div class="n">43<span style="font-size:20px;color:var(--text2)">/48</span></div><div class="c">Players who had their <b>worst week of the season</b>.</div></div>
+    <div class="tile"><div class="n blue">30</div><div class="c">The winning score, Brett Dillon. <b>Lowest ever.</b> Every other week's leader scored 48 or more.</div></div>
+  </div>
+</header>
+
+<section>
+  <div class="card">
+    <div class="ch"><span class="num">1</span><div><h2>Average score, every round</h2><p>All fifteen scored rounds. Press a button to take the Needle and the weekly bonus out, or to see the team game.</p></div></div>
+    <div class="acts" role="group" aria-label="Chart 1 view">
+      <button class="act" aria-pressed="true" data-k="ind">Individual</button>
+      <button class="act" aria-pressed="false" data-k="drv">Drivers only</button>
+      <button class="act" aria-pressed="false" data-k="team">Team score</button>
+    </div>
+    <div class="legend"><span><i class="blue"></i>Other rounds</span><span><i class="pink"></i>This week</span></div>
+    <div id="c1" data-max="100"><div class="row" data-tip="Australian Grand Prix: average 38.8, median 40, high 61, low 13" style="--i:0">
+    <div class="lab"><span class="lt">Australia<small>R1</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:38.833333333333336%" data-ind="38.833333333333336" data-drv="36.083333333333336" data-team="74.16666666666667"></span></div>
+    <div class="val blue">38.8</div>
+  </div><div class="row" data-tip="Chinese Grand Prix: average 32.1, median 31, high 52, low 21" style="--i:1">
+    <div class="lab"><span class="lt">China<small>R2</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:32.145833333333336%" data-ind="32.145833333333336" data-drv="31" data-team="62"></span></div>
+    <div class="val blue">32.1</div>
+  </div><div class="row" data-tip="Japanese Grand Prix: average 42.5, median 44, high 67, low 15" style="--i:2">
+    <div class="lab"><span class="lt">Japan<small>R3</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:42.479166666666664%" data-ind="42.479166666666664" data-drv="41.333333333333336" data-team="84.66666666666667"></span></div>
+    <div class="val blue">42.5</div>
+  </div><div class="row" data-tip="Miami Grand Prix: average 31.2, median 27, high 57, low 13" style="--i:3">
+    <div class="lab"><span class="lt">Miami<small>R4</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:31.229166666666668%" data-ind="31.229166666666668" data-drv="28.125" data-team="58.25"></span></div>
+    <div class="val blue">31.2</div>
+  </div><div class="row" data-tip="Canadian Grand Prix: average 26.1, median 25.5, high 48, low 11" style="--i:4">
+    <div class="lab"><span class="lt">Canada<small>R5</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:26.145833333333336%" data-ind="26.145833333333332" data-drv="23.416666666666668" data-team="48.833333333333336"></span></div>
+    <div class="val blue">26.1</div>
+  </div><div class="row" data-tip="Monaco Grand Prix: average 32.2, median 35, high 64, low 9" style="--i:5">
+    <div class="lab"><span class="lt">Monaco<small>R6</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:32.229166666666664%" data-ind="32.229166666666664" data-drv="31.083333333333332" data-team="64.16666666666667"></span></div>
+    <div class="val blue">32.2</div>
+  </div><div class="row" data-tip="Spanish Grand Prix: average 44.0, median 45.5, high 68, low 17" style="--i:6">
+    <div class="lab"><span class="lt">Spain<small>R7</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:44.020833333333336%" data-ind="44.020833333333336" data-drv="42.25" data-team="86.5"></span></div>
+    <div class="val blue">44.0</div>
+  </div><div class="row" data-tip="Austrian Grand Prix: average 42.8, median 46, high 67, low 19" style="--i:7">
+    <div class="lab"><span class="lt">Austria<small>R8</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:42.833333333333336%" data-ind="42.833333333333336" data-drv="40.541666666666664" data-team="83.08333333333333"></span></div>
+    <div class="val blue">42.8</div>
+  </div><div class="row" data-tip="British Grand Prix: average 35.0, median 34, high 54, low 22" style="--i:8">
+    <div class="lab"><span class="lt">Britain<small>R9</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:34.958333333333336%" data-ind="34.958333333333336" data-drv="33.8125" data-team="69.625"></span></div>
+    <div class="val blue">35.0</div>
+  </div><div class="row" data-tip="Belgian Grand Prix: average 48.4, median 53, high 70, low 19" style="--i:9">
+    <div class="lab"><span class="lt">Belgium<small>R10</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:48.4375%" data-ind="48.4375" data-drv="47.291666666666664" data-team="96.58333333333333"></span></div>
+    <div class="val blue">48.4</div>
+  </div><div class="row" data-tip="Hungarian Grand Prix: average 41.6, median 41, high 74, low 18" style="--i:10">
+    <div class="lab"><span class="lt">Hungary<small>R11</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:41.583333333333336%" data-ind="41.583333333333336" data-drv="39.4375" data-team="80.875"></span></div>
+    <div class="val blue">41.6</div>
+  </div><div class="row" data-tip="Dutch Grand Prix: average 31.4, median 29, high 54, low 16" style="--i:11">
+    <div class="lab"><span class="lt">Zandvoort<small>R12</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:31.374999999999996%" data-ind="31.375" data-drv="28.625" data-team="59.25"></span></div>
+    <div class="val blue">31.4</div>
+  </div><div class="row" data-tip="Italian Grand Prix: average 41.5, median 43, high 58, low 24" style="--i:12">
+    <div class="lab"><span class="lt">Monza<small>R13</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:41.520833333333336%" data-ind="41.520833333333336" data-drv="39.333333333333336" data-team="80.66666666666667"></span></div>
+    <div class="val blue">41.5</div>
+  </div><div class="row" data-tip="Spanish Grand Prix: average 40.9, median 39, high 59, low 30" style="--i:13">
+    <div class="lab"><span class="lt">Spain<small>R14</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:40.875%" data-ind="40.875" data-drv="38.375" data-team="78.58333333333333"></span></div>
+    <div class="val blue">40.9</div>
+  </div><div class="row" data-tip="Azerbaijan Grand Prix: average 6.9, median 4, high 30, low -3" style="--i:14">
+    <div class="lab"><span class="lt">Azerbaijan<small>R15</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar pink" style="left:0%;width:6.895833333333333%" data-ind="6.895833333333333" data-drv="5.75" data-team="11.5"></span></div>
+    <div class="val pink">6.9</div>
+  </div></div>
+    <p class="note">Take the Needle out and this week is <b>5.8</b> against a previous low of <b>23.4</b>. The missing pit stop cost a few points a head. The pool cost the rest.</p>
+  </div>
+</section>
+
+<section>
+  <div class="card">
+    <div class="ch"><span class="num">2</span><div><h2>Where all 48 landed</h2><p>Every score this week, each player on their number. Hover or tap a face for the breakdown.</p></div></div>
+    <div id="c2"><div class="stack" style="--i:0">
+    <div class="sv pink">-3</div>
+    <div class="faces"><span class="fw" data-tip="Chris Fondacaro: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c55c6192-2f81-4188-8e00-705b8a5744e4.png?t=1772503743937" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Evie Ishak: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/382172b9-a2ad-472d-b823-1cdcb77bc713.png?t=1772503455737" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Francisco Soldavini: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/40d29a8a-3349-4d7a-87b9-e74cedda7c19.png?t=1775102877270" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Martin Nobar: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/9ff55d39-139e-4b44-b305-e48ddd44e913.png?t=1773359414261" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Paul Kohli: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e44c9473-d593-4339-ba0e-64f1ea081865.png?t=1773533408532" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Ryan Kohli: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2074a773-5b33-4aac-83bf-7682ead3d638.png?t=1772686275949" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Sam Bottoms: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Scott Schertler: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c3eb5cac-805e-4dc4-be56-cade175e0f0d.png?t=1772682658405" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span></div>
+    <div class="sc">8</div>
+  </div><div class="stack" style="--i:1">
+    <div class="sv muted">+4</div>
+    <div class="faces"><span class="fw" data-tip="Andy Thompson: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/33d73ea9-a9e8-4050-9ffb-97cccab68487.png?t=1787202390496" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Anthony Carnesecca: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/da8b5649-9209-4d28-a31c-2aa8fc1eaa4b.png?t=1772686091799" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Harold Gutmann: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2a1d8e8a-bc94-4105-abc9-5445bc58befa.png?t=1772682503476" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Jack Civitts: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ad3adcf9-af83-4139-aa13-120bdf0b6fae.png?t=1772680121672" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Joe Hanna: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/8d0e2012-5bfd-4ac8-a33f-fc5aced4f730.png?t=1772503416555" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Joe McGlynn: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/447a215c-371d-4212-95e1-dcef174e95f9.png?t=1772503336906" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Kevin Coolidge: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/719da11a-6cd8-42f4-aba5-a3bd95742a1a.png?t=1772503404813" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Lucia Thompson: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/82aa6e87-b661-4f83-ae1a-5d91240abd02.png?t=1772680284304" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Maggie Ball: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/b8a89653-d99b-41e5-89ff-4f2ac889597b.png?t=1773359248972" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Matilda Luton: 4. Top -1, midfield +5"><span class="face face-t" style="width:30px;height:30px;font-size:11px">ML</span></span><span class="fw" data-tip="Matteo Thompson: 4. Top -1, midfield +5"><span class="face face-t" style="width:30px;height:30px;font-size:11px">MT</span></span><span class="fw" data-tip="Max Reisinger: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/bdf2cbea-2d4d-4264-8b78-4f8e10718ae6.png?t=1772688942909" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Moses Abdelshaid: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/48b723a2-5ec3-417d-930c-178789a46e81.png?t=1775102938119" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Nick Brody: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ff73dde2-1a9a-40ce-993d-77d055846c18.png?t=1772503323321" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Rafik Zarifa: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/34ed0f7d-81ed-4a72-b018-f25941106902.png?t=1772680006315" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Theo Ishak: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/5e8e105d-b2bb-4495-9f45-04bfce6e4587.png?t=1772682483157" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Zack Girgis: 4. Top -1, midfield +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ca16dfb6-d535-4cd9-8a2d-1597eca5fc59.png?t=1772503392387" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span></div>
+    <div class="sc">17</div>
+  </div><div class="stack" style="--i:2">
+    <div class="sv muted">+5</div>
+    <div class="faces"><span class="fw" data-tip="Brian Dong: 5. Top +8, midfield -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d777878f-40a4-4c1d-850c-aad1fb4e2472.png?t=1772503373890" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Danny Bowers: 5. Top -1, midfield +6"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/04a0263f-4b0a-4c6f-93ef-adef92059d9a.png?t=1772688952842" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Pavly Attalah: 5. Top +8, midfield -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/fde25878-810c-4b3b-9e09-3c9e1a7ff096.png?t=1773533381354" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Ramy Stephanos: 5. Top -1, midfield +6"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d29a5fba-5fa5-44de-ac4f-85358e9d6eef.png?t=1772687022016" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span></div>
+    <div class="sc">4</div>
+  </div><div class="stack" style="--i:3">
+    <div class="sv muted">+6</div>
+    <div class="faces"><span class="fw" data-tip="Dan Patry: 6. Top +8, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/f2cac69d-59a2-48e9-b60a-b08a21c38023.png?t=1772503383052" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="George Fahmy: 6. Top +8, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/4d59c809-651e-4031-969b-ccedca7c91cc.png?t=1772680080866" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Grant Wong: 6. Top +8, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/061ca7b2-411b-4405-b425-13c6aebfbb51.png?t=1772503464761" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Kerolos Nakhla: 6. Top +8, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/110f6a66-8220-42e4-8045-de39f116d37f.png?t=1772680159093" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Ronnie Nobar: 6. Top +8, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/754831c9-864d-4a49-b95a-c98ad6d3d59d.png?t=1773533357437" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Stacy Michaelsen: 6. Top +8, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/0f599d2b-a7e8-4407-8a48-7bb08e1bd446.png?t=1772503349191" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="TJ Donato: 6. Top +8, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/b59a1094-3e17-4ecc-9566-0afdfdff2f75.png?t=1772682441089" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span></div>
+    <div class="sc">7</div>
+  </div><div class="stack" style="--i:4">
+    <div class="sv muted">+10</div>
+    <div class="faces"><span class="fw" data-tip="Formula5 Bot: 10. Top +12, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/857170ed-6313-40de-9b7e-9d41b339e690.png?t=1773084768500" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span><span class="fw" data-tip="Mena Yousef: 10. Top +12, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/8f01fd36-f1ec-4add-887e-c092a70c11a6.png?t=1773359475330" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span></div>
+    <div class="sc">2</div>
+  </div><div class="stack" style="--i:5">
+    <div class="sv muted">+12</div>
+    <div class="faces"><span class="fw" data-tip="Heather Ishak: 12. Top +12, midfield -1, weekly bonus +1"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d68bc062-2314-4441-85cb-81cd1f4f5f6b.png?t=1772503446727" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span></div>
+    <div class="sc">1</div>
+  </div><div class="stack" style="--i:6">
+    <div class="sv muted">+15</div>
+    <div class="faces"><span class="fw" data-tip="Larry Noel: 15. Top +8, midfield +5, weekly bonus +2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/0f1d7bf4-4260-46b9-85b1-bb54376f76c5.png?t=1772680212006" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span></div>
+    <div class="sc">1</div>
+  </div><div class="stack" style="--i:7">
+    <div class="sv muted">+16</div>
+    <div class="faces"><span class="fw" data-tip="Alicia Cho: 16. Top +8, midfield +5, weekly bonus +3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d38f9195-6919-4e24-83df-805a09a91794.png?t=1772503622978" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span></div>
+    <div class="sc">1</div>
+  </div><div class="stack" style="--i:8">
+    <div class="sv muted">+17</div>
+    <div class="faces"><span class="fw" data-tip="Maggie Mudge: 17. Top +8, midfield +5, weekly bonus +4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/bfbae87b-584f-4740-b34b-443908c575e6.png?t=1773359329773" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span></div>
+    <div class="sc">1</div>
+  </div><div class="stack" style="--i:9">
+    <div class="sv muted">+18</div>
+    <div class="faces"><span class="fw" data-tip="Chris Malek: 18. Top +8, midfield +5, weekly bonus +5"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ffb1c790-b0ef-461a-a2f0-299733db8859.png?t=1772503436067" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span></div>
+    <div class="sc">1</div>
+  </div><div class="stack" style="--i:10">
+    <div class="sv muted">+19</div>
+    <div class="faces"><span class="fw" data-tip="Anthony Zamary: 19. Top +8, midfield +5, weekly bonus +6"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/3bc29336-c21d-4afa-a985-2917f9b681a9.png?t=1772503518475" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"></span></div>
+    <div class="sc">1</div>
+  </div><div class="stack" style="--i:11">
+    <div class="sv blue">+24</div>
+    <div class="faces"><span class="fw" data-tip="Andrew Ishak: 24. Top +12, midfield +5, weekly bonus +7"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/74e68847-70fe-4eaf-9075-f4cfaa642cdd.png?t=1772682494867" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#00d9ff"></span></div>
+    <div class="sc">1</div>
+  </div><div class="stack" style="--i:12">
+    <div class="sv blue">+25</div>
+    <div class="faces"><span class="fw" data-tip="Aditya Satish: 25. Top +12, midfield +5, weekly bonus +8"><span class="face face-t" style="width:30px;height:30px;font-size:11px;border-color:#00d9ff">AS</span></span></div>
+    <div class="sc">1</div>
+  </div><div class="stack" style="--i:13">
+    <div class="sv blue">+29</div>
+    <div class="faces"><span class="fw" data-tip="Krista Nabil: 29. Top +12, midfield +5, best finish +3, weekly bonus +9"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/1d177bf0-e5e9-4412-b220-b5d1e2e74b68.png?t=1772680182207" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#00d9ff"></span></div>
+    <div class="sc">1</div>
+  </div><div class="stack" style="--i:14">
+    <div class="sv blue">+30</div>
+    <div class="faces"><span class="fw" data-tip="Brett Dillon: 30. Top +12, midfield +5, best finish +3, weekly bonus +10"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d9e8e2f9-ddb4-4aca-a67e-43264d19751c.png?t=1772428753985" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#00d9ff"></span></div>
+    <div class="sc">1</div>
+  </div></div>
+    <p class="note"><b>17 players scored exactly 4</b>: Norris on top for &minus;1 and one scoring midfielder for 5. <b>8 scored &minus;3</b>: Norris on top and two of the negative midfielders. Before this week the lowest score in league history was <b>9</b>. 36 of 48 came in under it.</p>
+  </div>
+</section>
+
+<section>
+  <div class="card">
+    <div class="ch"><span class="num">3</span><div><h2>Season low, before and after</h2><p>Each player's previous worst week against this one. Blue is where the floor was. Pink is where it is now.</p></div></div>
+    <div class="acts"><button class="act" id="c3more" aria-pressed="false">All 48</button></div>
+    <div class="legend"><span><i class="blue"></i>Previous low</span><span><i class="pink"></i>This week, a new low</span></div>
+    <div id="c3"><div class="row db" style="--i:0" data-tip="Francisco Soldavini: this week -3, previous low 23, down 26">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/40d29a8a-3349-4d7a-87b9-e74cedda7c19.png?t=1775102877270" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Soldavini</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:0%;width:41.269841269841265%"></span>
+      <span class="dot blue" style="left:41.269841269841265%"></span>
+      <span class="dot pink" style="left:0%"></span></div>
+    <div class="val"><span class="muted">23</span> <span class="arr">&rarr;</span> <span class="pink">-3</span></div>
+  </div><div class="row db" style="--i:1" data-tip="Martin Nobar: this week -3, previous low 22, down 25">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/9ff55d39-139e-4b44-b305-e48ddd44e913.png?t=1773359414261" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">M. Nobar</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:0%;width:39.682539682539684%"></span>
+      <span class="dot blue" style="left:39.682539682539684%"></span>
+      <span class="dot pink" style="left:0%"></span></div>
+    <div class="val"><span class="muted">22</span> <span class="arr">&rarr;</span> <span class="pink">-3</span></div>
+  </div><div class="row db" style="--i:2" data-tip="Ryan Kohli: this week -3, previous low 20, down 23">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2074a773-5b33-4aac-83bf-7682ead3d638.png?t=1772686275949" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">R. Kohli</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:0%;width:36.507936507936506%"></span>
+      <span class="dot blue" style="left:36.507936507936506%"></span>
+      <span class="dot pink" style="left:0%"></span></div>
+    <div class="val"><span class="muted">20</span> <span class="arr">&rarr;</span> <span class="pink">-3</span></div>
+  </div><div class="row db" style="--i:3" data-tip="Sam Bottoms: this week -3, previous low 20, down 23">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Bottoms</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:0%;width:36.507936507936506%"></span>
+      <span class="dot blue" style="left:36.507936507936506%"></span>
+      <span class="dot pink" style="left:0%"></span></div>
+    <div class="val"><span class="muted">20</span> <span class="arr">&rarr;</span> <span class="pink">-3</span></div>
+  </div><div class="row db" style="--i:4" data-tip="Paul Kohli: this week -3, previous low 20, down 23">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e44c9473-d593-4339-ba0e-64f1ea081865.png?t=1773533408532" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">P. Kohli</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:0%;width:36.507936507936506%"></span>
+      <span class="dot blue" style="left:36.507936507936506%"></span>
+      <span class="dot pink" style="left:0%"></span></div>
+    <div class="val"><span class="muted">20</span> <span class="arr">&rarr;</span> <span class="pink">-3</span></div>
+  </div><div class="row db" style="--i:5" data-tip="Joe McGlynn: this week 4, previous low 26, down 22">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/447a215c-371d-4212-95e1-dcef174e95f9.png?t=1772503336906" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">McGlynn</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:34.920634920634924%"></span>
+      <span class="dot blue" style="left:46.03174603174603%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">26</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db" style="--i:6" data-tip="Joe Hanna: this week 4, previous low 25, down 21">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/8d0e2012-5bfd-4ac8-a33f-fc5aced4f730.png?t=1772503416555" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Hanna</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:33.33333333333333%"></span>
+      <span class="dot blue" style="left:44.44444444444444%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">25</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db" style="--i:7" data-tip="Evie Ishak: this week -3, previous low 18, down 21">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/382172b9-a2ad-472d-b823-1cdcb77bc713.png?t=1772503455737" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">E. Ishak</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:0%;width:33.33333333333333%"></span>
+      <span class="dot blue" style="left:33.33333333333333%"></span>
+      <span class="dot pink" style="left:0%"></span></div>
+    <div class="val"><span class="muted">18</span> <span class="arr">&rarr;</span> <span class="pink">-3</span></div>
+  </div><div class="row db" style="--i:8" data-tip="Chris Fondacaro: this week -3, previous low 18, down 21">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c55c6192-2f81-4188-8e00-705b8a5744e4.png?t=1772503743937" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Fondacaro</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:0%;width:33.33333333333333%"></span>
+      <span class="dot blue" style="left:33.33333333333333%"></span>
+      <span class="dot pink" style="left:0%"></span></div>
+    <div class="val"><span class="muted">18</span> <span class="arr">&rarr;</span> <span class="pink">-3</span></div>
+  </div><div class="row db" style="--i:9" data-tip="Scott Schertler: this week -3, previous low 18, down 21">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c3eb5cac-805e-4dc4-be56-cade175e0f0d.png?t=1772682658405" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Schertler</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:0%;width:33.33333333333333%"></span>
+      <span class="dot blue" style="left:33.33333333333333%"></span>
+      <span class="dot pink" style="left:0%"></span></div>
+    <div class="val"><span class="muted">18</span> <span class="arr">&rarr;</span> <span class="pink">-3</span></div>
+  </div><div class="row db" style="--i:10" data-tip="Theo Ishak: this week 4, previous low 24, down 20">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/5e8e105d-b2bb-4495-9f45-04bfce6e4587.png?t=1772682483157" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">T. Ishak</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:31.746031746031743%"></span>
+      <span class="dot blue" style="left:42.857142857142854%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">24</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db" style="--i:11" data-tip="Max Reisinger: this week 4, previous low 23, down 19">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/bdf2cbea-2d4d-4264-8b78-4f8e10718ae6.png?t=1772688942909" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Reisinger</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:30.158730158730155%"></span>
+      <span class="dot blue" style="left:41.269841269841265%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">23</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db" style="--i:12" data-tip="Stacy Michaelsen: this week 6, previous low 25, down 19">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/0f599d2b-a7e8-4407-8a48-7bb08e1bd446.png?t=1772503349191" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Michaelsen</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:14.285714285714285%;width:30.158730158730158%"></span>
+      <span class="dot blue" style="left:44.44444444444444%"></span>
+      <span class="dot pink" style="left:14.285714285714285%"></span></div>
+    <div class="val"><span class="muted">25</span> <span class="arr">&rarr;</span> <span class="pink">6</span></div>
+  </div><div class="row db" style="--i:13" data-tip="Moses Abdelshaid: this week 4, previous low 23, down 19">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/48b723a2-5ec3-417d-930c-178789a46e81.png?t=1775102938119" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Abdelshaid</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:30.158730158730155%"></span>
+      <span class="dot blue" style="left:41.269841269841265%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">23</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db" style="--i:14" data-tip="Matteo Thompson: this week 4, previous low 22, down 18">
+    <div class="lab"><span class="face face-t" style="width:26px;height:26px;font-size:10px">MT</span><span class="lt">M. Thompson</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:28.571428571428573%"></span>
+      <span class="dot blue" style="left:39.682539682539684%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">22</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:15" data-tip="Jack Civitts: this week 4, previous low 22, down 18">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ad3adcf9-af83-4139-aa13-120bdf0b6fae.png?t=1772680121672" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Civitts</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:28.571428571428573%"></span>
+      <span class="dot blue" style="left:39.682539682539684%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">22</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:16" data-tip="Harold Gutmann: this week 4, previous low 21, down 17">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2a1d8e8a-bc94-4105-abc9-5445bc58befa.png?t=1772682503476" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Gutmann</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:26.984126984126984%"></span>
+      <span class="dot blue" style="left:38.095238095238095%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">21</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:17" data-tip="Ronnie Nobar: this week 6, previous low 23, down 17">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/754831c9-864d-4a49-b95a-c98ad6d3d59d.png?t=1773533357437" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">R. Nobar</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:14.285714285714285%;width:26.98412698412698%"></span>
+      <span class="dot blue" style="left:41.269841269841265%"></span>
+      <span class="dot pink" style="left:14.285714285714285%"></span></div>
+    <div class="val"><span class="muted">23</span> <span class="arr">&rarr;</span> <span class="pink">6</span></div>
+  </div><div class="row db more" style="--i:18" data-tip="Lucia Thompson: this week 4, previous low 20, down 16">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/82aa6e87-b661-4f83-ae1a-5d91240abd02.png?t=1772680284304" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">L. Thompson</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:25.396825396825395%"></span>
+      <span class="dot blue" style="left:36.507936507936506%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">20</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:19" data-tip="Kevin Coolidge: this week 4, previous low 20, down 16">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/719da11a-6cd8-42f4-aba5-a3bd95742a1a.png?t=1772503404813" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Coolidge</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:25.396825396825395%"></span>
+      <span class="dot blue" style="left:36.507936507936506%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">20</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:20" data-tip="George Fahmy: this week 6, previous low 22, down 16">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/4d59c809-651e-4031-969b-ccedca7c91cc.png?t=1772680080866" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Fahmy</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:14.285714285714285%;width:25.3968253968254%"></span>
+      <span class="dot blue" style="left:39.682539682539684%"></span>
+      <span class="dot pink" style="left:14.285714285714285%"></span></div>
+    <div class="val"><span class="muted">22</span> <span class="arr">&rarr;</span> <span class="pink">6</span></div>
+  </div><div class="row db more" style="--i:21" data-tip="Maggie Ball: this week 4, previous low 20, down 16">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/b8a89653-d99b-41e5-89ff-4f2ac889597b.png?t=1773359248972" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Ball</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:25.396825396825395%"></span>
+      <span class="dot blue" style="left:36.507936507936506%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">20</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:22" data-tip="Zack Girgis: this week 4, previous low 20, down 16">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ca16dfb6-d535-4cd9-8a2d-1597eca5fc59.png?t=1772503392387" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Girgis</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:25.396825396825395%"></span>
+      <span class="dot blue" style="left:36.507936507936506%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">20</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:23" data-tip="Formula5 Bot: this week 10, previous low 25, down 15">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/857170ed-6313-40de-9b7e-9d41b339e690.png?t=1773084768500" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Bot</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:20.634920634920633%;width:23.80952380952381%"></span>
+      <span class="dot blue" style="left:44.44444444444444%"></span>
+      <span class="dot pink" style="left:20.634920634920633%"></span></div>
+    <div class="val"><span class="muted">25</span> <span class="arr">&rarr;</span> <span class="pink">10</span></div>
+  </div><div class="row db more" style="--i:24" data-tip="Kerolos Nakhla: this week 6, previous low 21, down 15">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/110f6a66-8220-42e4-8045-de39f116d37f.png?t=1772680159093" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Nakhla</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:14.285714285714285%;width:23.80952380952381%"></span>
+      <span class="dot blue" style="left:38.095238095238095%"></span>
+      <span class="dot pink" style="left:14.285714285714285%"></span></div>
+    <div class="val"><span class="muted">21</span> <span class="arr">&rarr;</span> <span class="pink">6</span></div>
+  </div><div class="row db more" style="--i:25" data-tip="Pavly Attalah: this week 5, previous low 20, down 15">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/fde25878-810c-4b3b-9e09-3c9e1a7ff096.png?t=1773533381354" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Attalah</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:12.698412698412698%;width:23.80952380952381%"></span>
+      <span class="dot blue" style="left:36.507936507936506%"></span>
+      <span class="dot pink" style="left:12.698412698412698%"></span></div>
+    <div class="val"><span class="muted">20</span> <span class="arr">&rarr;</span> <span class="pink">5</span></div>
+  </div><div class="row db more" style="--i:26" data-tip="Nick Brody: this week 4, previous low 19, down 15">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ff73dde2-1a9a-40ce-993d-77d055846c18.png?t=1772503323321" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Brody</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:23.809523809523807%"></span>
+      <span class="dot blue" style="left:34.92063492063492%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">19</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:27" data-tip="Anthony Carnesecca: this week 4, previous low 18, down 14">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/da8b5649-9209-4d28-a31c-2aa8fc1eaa4b.png?t=1772686091799" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Carnesecca</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:22.222222222222218%"></span>
+      <span class="dot blue" style="left:33.33333333333333%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">18</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:28" data-tip="Rafik Zarifa: this week 4, previous low 18, down 14">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/34ed0f7d-81ed-4a72-b018-f25941106902.png?t=1772680006315" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Zarifa</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:22.222222222222218%"></span>
+      <span class="dot blue" style="left:33.33333333333333%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">18</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:29" data-tip="TJ Donato: this week 6, previous low 20, down 14">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/b59a1094-3e17-4ecc-9566-0afdfdff2f75.png?t=1772682441089" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Donato</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:14.285714285714285%;width:22.22222222222222%"></span>
+      <span class="dot blue" style="left:36.507936507936506%"></span>
+      <span class="dot pink" style="left:14.285714285714285%"></span></div>
+    <div class="val"><span class="muted">20</span> <span class="arr">&rarr;</span> <span class="pink">6</span></div>
+  </div><div class="row db more" style="--i:30" data-tip="Mena Yousef: this week 10, previous low 24, down 14">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/8f01fd36-f1ec-4add-887e-c092a70c11a6.png?t=1773359475330" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Yousef</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:20.634920634920633%;width:22.22222222222222%"></span>
+      <span class="dot blue" style="left:42.857142857142854%"></span>
+      <span class="dot pink" style="left:20.634920634920633%"></span></div>
+    <div class="val"><span class="muted">24</span> <span class="arr">&rarr;</span> <span class="pink">10</span></div>
+  </div><div class="row db more" style="--i:31" data-tip="Andy Thompson: this week 4, previous low 15, down 11">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/33d73ea9-a9e8-4050-9ffb-97cccab68487.png?t=1787202390496" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">A. Thompson</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:17.46031746031746%"></span>
+      <span class="dot blue" style="left:28.57142857142857%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">15</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:32" data-tip="Dan Patry: this week 6, previous low 17, down 11">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/f2cac69d-59a2-48e9-b60a-b08a21c38023.png?t=1772503383052" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Patry</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:14.285714285714285%;width:17.46031746031746%"></span>
+      <span class="dot blue" style="left:31.746031746031743%"></span>
+      <span class="dot pink" style="left:14.285714285714285%"></span></div>
+    <div class="val"><span class="muted">17</span> <span class="arr">&rarr;</span> <span class="pink">6</span></div>
+  </div><div class="row db more" style="--i:33" data-tip="Danny Bowers: this week 5, previous low 15, down 10">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/04a0263f-4b0a-4c6f-93ef-adef92059d9a.png?t=1772688952842" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Bowers</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:12.698412698412698%;width:15.873015873015872%"></span>
+      <span class="dot blue" style="left:28.57142857142857%"></span>
+      <span class="dot pink" style="left:12.698412698412698%"></span></div>
+    <div class="val"><span class="muted">15</span> <span class="arr">&rarr;</span> <span class="pink">5</span></div>
+  </div><div class="row db more" style="--i:34" data-tip="Matilda Luton: this week 4, previous low 13, down 9">
+    <div class="lab"><span class="face face-t" style="width:26px;height:26px;font-size:10px">ML</span><span class="lt">Luton</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:11.11111111111111%;width:14.285714285714285%"></span>
+      <span class="dot blue" style="left:25.396825396825395%"></span>
+      <span class="dot pink" style="left:11.11111111111111%"></span></div>
+    <div class="val"><span class="muted">13</span> <span class="arr">&rarr;</span> <span class="pink">4</span></div>
+  </div><div class="row db more" style="--i:35" data-tip="Ramy Stephanos: this week 5, previous low 13, down 8">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d29a5fba-5fa5-44de-ac4f-85358e9d6eef.png?t=1772687022016" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Stephanos</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:12.698412698412698%;width:12.698412698412698%"></span>
+      <span class="dot blue" style="left:25.396825396825395%"></span>
+      <span class="dot pink" style="left:12.698412698412698%"></span></div>
+    <div class="val"><span class="muted">13</span> <span class="arr">&rarr;</span> <span class="pink">5</span></div>
+  </div><div class="row db more" style="--i:36" data-tip="Larry Noel: this week 15, previous low 23, down 8">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/0f1d7bf4-4260-46b9-85b1-bb54376f76c5.png?t=1772680212006" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Noel</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:28.57142857142857%;width:12.698412698412696%"></span>
+      <span class="dot blue" style="left:41.269841269841265%"></span>
+      <span class="dot pink" style="left:28.57142857142857%"></span></div>
+    <div class="val"><span class="muted">23</span> <span class="arr">&rarr;</span> <span class="pink">15</span></div>
+  </div><div class="row db more" style="--i:37" data-tip="Grant Wong: this week 6, previous low 13, down 7">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/061ca7b2-411b-4405-b425-13c6aebfbb51.png?t=1772503464761" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Wong</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:14.285714285714285%;width:11.11111111111111%"></span>
+      <span class="dot blue" style="left:25.396825396825395%"></span>
+      <span class="dot pink" style="left:14.285714285714285%"></span></div>
+    <div class="val"><span class="muted">13</span> <span class="arr">&rarr;</span> <span class="pink">6</span></div>
+  </div><div class="row db more" style="--i:38" data-tip="Heather Ishak: this week 12, previous low 18, down 6">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d68bc062-2314-4441-85cb-81cd1f4f5f6b.png?t=1772503446727" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">H. Ishak</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:23.809523809523807%;width:9.523809523809522%"></span>
+      <span class="dot blue" style="left:33.33333333333333%"></span>
+      <span class="dot pink" style="left:23.809523809523807%"></span></div>
+    <div class="val"><span class="muted">18</span> <span class="arr">&rarr;</span> <span class="pink">12</span></div>
+  </div><div class="row db more" style="--i:39" data-tip="Chris Malek: this week 18, previous low 23, down 5">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ffb1c790-b0ef-461a-a2f0-299733db8859.png?t=1772503436067" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Malek</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:33.33333333333333%;width:7.936507936507937%"></span>
+      <span class="dot blue" style="left:41.269841269841265%"></span>
+      <span class="dot pink" style="left:33.33333333333333%"></span></div>
+    <div class="val"><span class="muted">23</span> <span class="arr">&rarr;</span> <span class="pink">18</span></div>
+  </div><div class="row db more" style="--i:40" data-tip="Alicia Cho: this week 16, previous low 20, down 4">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d38f9195-6919-4e24-83df-805a09a91794.png?t=1772503622978" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Cho</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:30.158730158730158%;width:6.349206349206348%"></span>
+      <span class="dot blue" style="left:36.507936507936506%"></span>
+      <span class="dot pink" style="left:30.158730158730158%"></span></div>
+    <div class="val"><span class="muted">20</span> <span class="arr">&rarr;</span> <span class="pink">16</span></div>
+  </div><div class="row db more" style="--i:41" data-tip="Brian Dong: this week 5, previous low 9, down 4">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d777878f-40a4-4c1d-850c-aad1fb4e2472.png?t=1772503373890" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Dong</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:12.698412698412698%;width:6.34920634920635%"></span>
+      <span class="dot blue" style="left:19.047619047619047%"></span>
+      <span class="dot pink" style="left:12.698412698412698%"></span></div>
+    <div class="val"><span class="muted">9</span> <span class="arr">&rarr;</span> <span class="pink">5</span></div>
+  </div><div class="row db more" style="--i:42" data-tip="Maggie Mudge: this week 17, previous low 20, down 3">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/bfbae87b-584f-4740-b34b-443908c575e6.png?t=1773359329773" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Mudge</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:31.746031746031743%;width:4.761904761904763%"></span>
+      <span class="dot blue" style="left:36.507936507936506%"></span>
+      <span class="dot pink" style="left:31.746031746031743%"></span></div>
+    <div class="val"><span class="muted">20</span> <span class="arr">&rarr;</span> <span class="pink">17</span></div>
+  </div><div class="row db held more" style="--i:43" data-tip="Andrew Ishak: this week 24, previous low 18, not a season low">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/74e68847-70fe-4eaf-9075-f4cfaa642cdd.png?t=1772682494867" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">A. Ishak</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:33.33333333333333%;width:9.523809523809526%"></span>
+      <span class="dot blue" style="left:33.33333333333333%"></span>
+      <span class="dot blue" style="left:42.857142857142854%"></span></div>
+    <div class="val"><span class="muted">18</span> <span class="arr">&rarr;</span> <span class="blue">24</span></div>
+  </div><div class="row db held more" style="--i:44" data-tip="Krista Nabil: this week 29, previous low 22, not a season low">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/1d177bf0-e5e9-4412-b220-b5d1e2e74b68.png?t=1772680182207" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Nabil</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:39.682539682539684%;width:11.111111111111107%"></span>
+      <span class="dot blue" style="left:39.682539682539684%"></span>
+      <span class="dot blue" style="left:50.79365079365079%"></span></div>
+    <div class="val"><span class="muted">22</span> <span class="arr">&rarr;</span> <span class="blue">29</span></div>
+  </div><div class="row db held more" style="--i:45" data-tip="Anthony Zamary: this week 19, previous low 11, not a season low">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/3bc29336-c21d-4afa-a985-2917f9b681a9.png?t=1772503518475" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Zamary</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:22.22222222222222%;width:12.698412698412696%"></span>
+      <span class="dot blue" style="left:22.22222222222222%"></span>
+      <span class="dot blue" style="left:34.92063492063492%"></span></div>
+    <div class="val"><span class="muted">11</span> <span class="arr">&rarr;</span> <span class="blue">19</span></div>
+  </div><div class="row db held more" style="--i:46" data-tip="Brett Dillon: this week 30, previous low 22, not a season low">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d9e8e2f9-ddb4-4aca-a67e-43264d19751c.png?t=1772428753985" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"><span class="lt">Dillon</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:39.682539682539684%;width:12.698412698412703%"></span>
+      <span class="dot blue" style="left:39.682539682539684%"></span>
+      <span class="dot blue" style="left:52.38095238095239%"></span></div>
+    <div class="val"><span class="muted">22</span> <span class="arr">&rarr;</span> <span class="blue">30</span></div>
+  </div><div class="row db held more" style="--i:47" data-tip="Aditya Satish: this week 25, previous low 14, not a season low">
+    <div class="lab"><span class="face face-t" style="width:26px;height:26px;font-size:10px">AS</span><span class="lt">Satish</span></div>
+    <div class="track"><span class="zero" style="left:4.761904761904762%"></span>
+      <span class="link" style="left:26.984126984126984%;width:17.46031746031746%"></span>
+      <span class="dot blue" style="left:26.984126984126984%"></span>
+      <span class="dot blue" style="left:44.44444444444444%"></span></div>
+    <div class="val"><span class="muted">14</span> <span class="arr">&rarr;</span> <span class="blue">25</span></div>
+  </div></div>
+    <p class="note">43 of 48 set a new season low. The five who did not are the five who finished on top: A. Ishak, Nabil, Zamary, Dillon, Satish. Francisco Soldavini fell furthest, 23 to -3.</p>
+  </div>
+</section>
+
+<section>
+  <div class="card">
+    <div class="ch"><span class="num">4</span><div><h2>The pool</h2><p>What each driver on offer was worth, and how many hands he was in. The podium was not on the menu.</p></div></div>
+    <div class="pod"><div class="p"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="44" height="44" loading="lazy" style="width:44px;height:44px"><span class="pos">P1</span><b>George Russell</b><span class="no">not in the pool</span></div><div class="p"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="44" height="44" loading="lazy" style="width:44px;height:44px"><span class="pos">P2</span><b>Max Verstappen</b><span class="no">not in the pool</span></div><div class="p"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/I/ISAHAD01_Isack_Hadjar/isahad01.png.transform/1col/image.png" alt="" width="44" height="44" loading="lazy" style="width:44px;height:44px"><span class="pos">P3</span><b>Isack Hadjar</b><span class="no">not in the pool</span></div></div>
+    <div class="acts" role="group" aria-label="Chart 4 view">
+      <button class="act" aria-pressed="true" data-k="per">A pick</button>
+      <button class="act" aria-pressed="false" data-k="total">Whole league</button>
+    </div>
+    <div class="legend"><span><i class="blue"></i>Scored</span><span><i class="muted"></i>Nothing</span><span><i class="pink"></i>Cost a point</span></div>
+    <div id="c4"><div class="row" data-tip="Charles Leclerc: +12 a pick, picked by 7 of 48, +84 across the league" style="--i:0">
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Leclerc<small>top pool</small></span></div>
+    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar blue" style="left:7.6923076923076925%;width:92.3076923076923%" data-per="12" data-total="84"></span></div>
+    <div class="val blue">12</div>
+  </div><div class="row" data-tip="Lewis Hamilton: +8 a pick, picked by 14 of 48, +112 across the league" style="--i:1">
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Hamilton<small>top pool</small></span></div>
+    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar blue" style="left:7.6923076923076925%;width:61.53846153846154%" data-per="8" data-total="112"></span></div>
+    <div class="val blue">8</div>
+  </div><div class="row" data-tip="Arvid Lindblad: +6 a pick, picked by 28 of 48, +168 across the league" style="--i:2">
+    <div class="lab"><span class="head head-t" style="width:34px;height:34px">AL</span><span class="lt">Lindblad<small>midfield</small></span></div>
+    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar blue" style="left:7.6923076923076925%;width:46.15384615384615%" data-per="6" data-total="168"></span></div>
+    <div class="val blue">6</div>
+  </div><div class="row" data-tip="Oscar Piastri: 0 a pick, picked by 46 of 48, 0 across the league" style="--i:3">
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Piastri<small>midfield</small></span></div>
+    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar muted" style="left:7.6923076923076925%;width:0%" data-per="0" data-total="0"></span></div>
+    <div class="val muted">0</div>
+  </div><div class="row" data-tip="Liam Lawson: 0 a pick, picked by 45 of 48, 0 across the league" style="--i:4">
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LIALAW01_Liam_Lawson/lialaw01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Lawson<small>midfield</small></span></div>
+    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar muted" style="left:7.6923076923076925%;width:0%" data-per="0" data-total="0"></span></div>
+    <div class="val muted">0</div>
+  </div><div class="row" data-tip="Gabriel Bortoleto: 0 a pick, picked by 6 of 48, 0 across the league" style="--i:5">
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GABBOR01_Gabriel_Bortoleto/gabbor01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Bortoleto<small>midfield</small></span></div>
+    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar muted" style="left:7.6923076923076925%;width:0%" data-per="0" data-total="0"></span></div>
+    <div class="val muted">0</div>
+  </div><div class="row" data-tip="Pierre Gasly: -1 a pick, picked by 40 of 48, -40 across the league" style="--i:6">
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Gasly<small>midfield</small></span></div>
+    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar pink" style="left:0%;width:7.6923076923076925%" data-per="-1" data-total="-40"></span></div>
+    <div class="val pink">-1</div>
+  </div><div class="row" data-tip="Lando Norris: -1 a pick, picked by 27 of 48, -27 across the league" style="--i:7">
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Norris<small>top pool</small></span></div>
+    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar pink" style="left:0%;width:7.6923076923076925%" data-per="-1" data-total="-27"></span></div>
+    <div class="val pink">-1</div>
+  </div><div class="row" data-tip="Franco Colapinto: -1 a pick, picked by 19 of 48, -19 across the league" style="--i:8">
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FRACOL01_Franco_Colapinto/fracol01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Colapinto<small>midfield</small></span></div>
+    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar pink" style="left:0%;width:7.6923076923076925%" data-per="-1" data-total="-19"></span></div>
+    <div class="val pink">-1</div>
+  </div><div class="row" data-tip="Lance Stroll: -1 a pick, picked by 8 of 48, -8 across the league" style="--i:9">
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANSTR01_Lance_Stroll/lanstr01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Stroll<small>midfield</small></span></div>
+    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar pink" style="left:0%;width:7.6923076923076925%" data-per="-1" data-total="-8"></span></div>
+    <div class="val pink">-1</div>
+  </div></div>
+    <p class="note">Three of ten drivers scored. <b>Piastri and Lawson</b>, in 46 and 45 hands, returned nothing. <b>Gasly</b> was on 40 of 48 and cost every one of them. <b>Norris</b> was the top pick for 27 people.</p>
+  </div>
+</section>
+
+<section>
+  <div class="card">
+    <div class="ch"><span class="num">5</span><div><h2>Team scores this week</h2><p>Both players' driver points, and BOX BOX, which was a push for everyone.</p></div></div>
+    <div class="legend"><span><i class="blue"></i>20 or more</span><span><i class="muted"></i>Under 20</span><span><i class="pink"></i>Below zero</span></div>
+    <div id="c5"><div class="row" data-tip="Garra Dynamics: -6. Ryan Kohli -3, Francisco Soldavini -3, BOX BOX a push" style="--i:0">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2cfbbd19-61c8-4c6a-87c1-6367a3f5483a.png?t=1772676769760" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Garra</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar pink" style="left:0%;width:16.666666666666664%"></span></div>
+    <div class="val pink">-6</div>
+  </div><div class="row" data-tip="El Camino Rapido: 1. Harold Gutmann 4, Paul Kohli -3, BOX BOX a push" style="--i:1">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/a602540b-92f4-48f0-bff2-67e74fba1e67.png?t=1772524618249" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">El Camino</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:2.7777777777777777%"></span></div>
+    <div class="val muted">1</div>
+  </div><div class="row" data-tip="Prestissimo Veloce: 1. Evie Ishak -3, Matilda Luton 4, BOX BOX a push" style="--i:2">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/611053aa-8e7d-4b64-b37a-c34c3a59dd5f.png?t=1772677744693" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Prestissimo</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:2.7777777777777777%"></span></div>
+    <div class="val muted">1</div>
+  </div><div class="row" data-tip="Stalloni 1851: 1. Jack Civitts 4, Scott Schertler -3, BOX BOX a push" style="--i:3">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/b9eb80e4-13ef-41d6-adff-1c8e64270c6a.png?t=1772469050248" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Stalloni</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:2.7777777777777777%"></span></div>
+    <div class="val muted">1</div>
+  </div><div class="row" data-tip="Cascadia Motorsport: 3. Martin Nobar -3, Ronnie Nobar 6, BOX BOX a push" style="--i:4">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8c6bc36d-54ab-4df5-85f8-564128000041.png?t=1772436321238" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Cascadia</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:8.333333333333332%"></span></div>
+    <div class="val muted">3</div>
+  </div><div class="row" data-tip="HomeworkTubes.Com: 3. Sam Bottoms -3, Grant Wong 6, BOX BOX a push" style="--i:5">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/fc7843e9-bf07-493f-a9bf-59c6ce2f3a21.png?t=1772436034485" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">HomeworkTubes</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:8.333333333333332%"></span></div>
+    <div class="val muted">3</div>
+  </div><div class="row" data-tip="Drivetex: 8. Nick Brody 4, Joe McGlynn 4, BOX BOX a push" style="--i:6">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2343928e-bdf3-415a-9f0a-ef3b6af5793f.png?t=1772417222653" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Drivetex</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:22.22222222222222%"></span></div>
+    <div class="val muted">8</div>
+  </div><div class="row" data-tip="East Bay Racing: 8. Joe Hanna 4, Zack Girgis 4, BOX BOX a push" style="--i:7">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/44aabae5-10ac-47e4-8314-27a67adec475.png?t=1772417226721" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">East Bay</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:22.22222222222222%"></span></div>
+    <div class="val muted">8</div>
+  </div><div class="row" data-tip="Meatballs: 8. Anthony Carnesecca 4, Maggie Ball 4, BOX BOX a push" style="--i:8">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/27ccc53b-cca4-4b6b-a166-7ed81b11c86f.png?t=1772677683335" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Meatballs</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:22.22222222222222%"></span></div>
+    <div class="val muted">8</div>
+  </div><div class="row" data-tip="TNT Roku F5 Team: 8. Andy Thompson 4, Matteo Thompson 4, BOX BOX a push" style="--i:9">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/9a1eeebb-53f4-4435-842a-835fcb9c416f.png?t=1772678148341" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">TNT Roku</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:22.22222222222222%"></span></div>
+    <div class="val muted">8</div>
+  </div><div class="row" data-tip="Shoey Time! w/ Max and Danny: 9. Max Reisinger 4, Danny Bowers 5, BOX BOX a push" style="--i:10">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/d9e7da52-4a19-48e0-8c5d-4cfce49f5f43.png?t=1772677964018" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Shoey Time!</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:25%"></span></div>
+    <div class="val muted">9</div>
+  </div><div class="row" data-tip="Magic Kingdom Racing: 10. Chris Fondacaro -3, Larry Noel 13, BOX BOX a push" style="--i:11">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/4c3cda25-74f1-4884-9e85-d45fff114e71.png?t=1772677562032" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Magic Kingdom</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:27.77777777777778%"></span></div>
+    <div class="val muted">10</div>
+  </div><div class="row" data-tip="Aggie Slipstream: 11. Brian Dong 5, Dan Patry 6, BOX BOX a push" style="--i:12">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/bfd3f733-9e00-4aec-8b30-42ac5f98f0d5.png?t=1772417195340" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">AgSlipstream</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:30.555555555555557%"></span></div>
+    <div class="val muted">11</div>
+  </div><div class="row" data-tip="Juicero Silicon Valley: 12. George Fahmy 6, Kerolos Nakhla 6, BOX BOX a push" style="--i:13">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8ae6c08b-ce0e-4383-91c2-ceb17ba3db1a.png?t=1772417238558" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Juicero SV</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:33.33333333333333%"></span></div>
+    <div class="val muted">12</div>
+  </div><div class="row" data-tip="Van City Corsa: 14. Rafik Zarifa 4, Mena Yousef 10, BOX BOX a push" style="--i:14">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/0a09b0a7-8d2c-451a-9541-29b3046aaee3.png?t=1772417253012" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Van City</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:38.88888888888889%"></span></div>
+    <div class="val muted">14</div>
+  </div><div class="row" data-tip="Cougar Autosport: 15. Heather Ishak 11, Lucia Thompson 4, BOX BOX a push" style="--i:15">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/b4a23ce2-0b92-4db3-9ec8-20f7735d212f.png?t=1773678185674" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Cougar</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:41.66666666666667%"></span></div>
+    <div class="val muted">15</div>
+  </div><div class="row" data-tip="TJ Premium: 16. TJ Donato 6, Formula5 Bot 10, BOX BOX a push" style="--i:16">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/16ff8643-cd10-4ad5-9118-e4e50fb4a0ba.png?t=1772678010120" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">TJ Premium</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:44.44444444444444%"></span></div>
+    <div class="val muted">16</div>
+  </div><div class="row" data-tip="Luxor Motorsport: 18. Pavly Attalah 5, Chris Malek 13, BOX BOX a push" style="--i:17">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8743272f-21a4-443c-af8b-819ea11615a2.png?t=1772677485951" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Luxor</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:50%"></span></div>
+    <div class="val muted">18</div>
+  </div><div class="row" data-tip="Scuderia Iskandaraya: 18. Anthony Zamary 13, Ramy Stephanos 5, BOX BOX a push" style="--i:18">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/f3e74436-4bb4-4be6-b3b5-3829e29e032a.png?t=1773678329574" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Iskandaraya</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar muted" style="left:16.666666666666664%;width:50%"></span></div>
+    <div class="val muted">18</div>
+  </div><div class="row" data-tip="Cal Aggie Racing: 21. Andrew Ishak 17, Kevin Coolidge 4, BOX BOX a push" style="--i:19">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/f3eab88a-5d25-4e3b-b7fc-2aa7a9ea4385.png?t=1772417213026" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Cal Aggie</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar blue" style="left:16.666666666666664%;width:58.333333333333336%"></span></div>
+    <div class="val blue">21</div>
+  </div><div class="row" data-tip="Wildcat Motors: 21. Aditya Satish 17, Theo Ishak 4, BOX BOX a push" style="--i:20">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/5c4087ab-d297-43c8-a132-d212ed0e1190.png?t=1772417256621" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Wildcat</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar blue" style="left:16.666666666666664%;width:58.333333333333336%"></span></div>
+    <div class="val blue">21</div>
+  </div><div class="row" data-tip="XLIX Racing Team: 24. Krista Nabil 20, Moses Abdelshaid 4, BOX BOX a push" style="--i:21">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/579bad3e-bbc9-42f2-9371-22abd9da04d4.png?t=1772469411331" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">XLIX Racing</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar blue" style="left:16.666666666666664%;width:66.66666666666666%"></span></div>
+    <div class="val blue">24</div>
+  </div><div class="row" data-tip="Bronco SCUderia: 26. Alicia Cho 13, Maggie Mudge 13, BOX BOX a push" style="--i:22">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/113cbd29-f5b3-4311-a4ef-0b053404719d.png?t=1772417205416" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Bronco</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar blue" style="left:16.666666666666664%;width:72.22222222222221%"></span></div>
+    <div class="val blue">26</div>
+  </div><div class="row" data-tip="Peloton Aubergine: 26. Brett Dillon 20, Stacy Michaelsen 6, BOX BOX a push" style="--i:23">
+    <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/4ce965b1-70bf-43db-a3b0-6585be8d8b5e.png?t=1772677776753" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Peloton</span></div>
+    <div class="track"><span class="zero" style="left:16.666666666666664%"></span><span class="bar blue" style="left:16.666666666666664%;width:72.22222222222221%"></span></div>
+    <div class="val blue">26</div>
+  </div></div>
+    <p class="note">Average <b>11.5</b>, previous low <b>48.8</b>. <b>Garra Dynamics on -6</b> is the first negative team score. The 19 lowest team scores in league history all happened on Saturday; before this week the floor was 21.</p>
+  </div>
+</section>
+
+<section>
+  <div class="card">
+    <div class="ch"><span class="num">6</span><div><h2>The weekly leader, every round</h2><p>The high score each week and who posted it.</p></div></div>
+    <div id="c6"><div class="row" data-tip="Australian Grand Prix: Formula5 Bot led the week with 61" style="--i:0">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/857170ed-6313-40de-9b7e-9d41b339e690.png?t=1773084768500" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Australia<small>R1 · Bot</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:76.25%"></span></div>
+    <div class="val blue">61</div>
+  </div><div class="row" data-tip="Chinese Grand Prix: Heather Ishak led the week with 52" style="--i:1">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d68bc062-2314-4441-85cb-81cd1f4f5f6b.png?t=1772503446727" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">China<small>R2 · H. Ishak</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:65%"></span></div>
+    <div class="val blue">52</div>
+  </div><div class="row" data-tip="Japanese Grand Prix: Chris Fondacaro led the week with 67" style="--i:2">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c55c6192-2f81-4188-8e00-705b8a5744e4.png?t=1772503743937" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Japan<small>R3 · Fondacaro</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:83.75%"></span></div>
+    <div class="val blue">67</div>
+  </div><div class="row" data-tip="Miami Grand Prix: Grant Wong led the week with 57" style="--i:3">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/061ca7b2-411b-4405-b425-13c6aebfbb51.png?t=1772503464761" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Miami<small>R4 · Wong</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:71.25%"></span></div>
+    <div class="val blue">57</div>
+  </div><div class="row" data-tip="Canadian Grand Prix: Brian Dong led the week with 48" style="--i:4">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d777878f-40a4-4c1d-850c-aad1fb4e2472.png?t=1772503373890" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Canada<small>R5 · Dong</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:60%"></span></div>
+    <div class="val blue">48</div>
+  </div><div class="row" data-tip="Monaco Grand Prix: Rafik Zarifa led the week with 64" style="--i:5">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/34ed0f7d-81ed-4a72-b018-f25941106902.png?t=1772680006315" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Monaco<small>R6 · Zarifa</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:80%"></span></div>
+    <div class="val blue">64</div>
+  </div><div class="row" data-tip="Spanish Grand Prix: Joe McGlynn led the week with 68" style="--i:6">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/447a215c-371d-4212-95e1-dcef174e95f9.png?t=1772503336906" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Spain<small>R7 · McGlynn</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:85%"></span></div>
+    <div class="val blue">68</div>
+  </div><div class="row" data-tip="Austrian Grand Prix: Sam Bottoms led the week with 67" style="--i:7">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Austria<small>R8 · Bottoms</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:83.75%"></span></div>
+    <div class="val blue">67</div>
+  </div><div class="row" data-tip="British Grand Prix: Harold Gutmann led the week with 54" style="--i:8">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2a1d8e8a-bc94-4105-abc9-5445bc58befa.png?t=1772682503476" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Britain<small>R9 · Gutmann</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:67.5%"></span></div>
+    <div class="val blue">54</div>
+  </div><div class="row" data-tip="Belgian Grand Prix: Sam Bottoms led the week with 70" style="--i:9">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Belgium<small>R10 · Bottoms</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:87.5%"></span></div>
+    <div class="val blue">70</div>
+  </div><div class="row" data-tip="Hungarian Grand Prix: Ronnie Nobar led the week with 74" style="--i:10">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/754831c9-864d-4a49-b95a-c98ad6d3d59d.png?t=1773533357437" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Hungary<small>R11 · R. Nobar</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:92.5%"></span></div>
+    <div class="val blue">74</div>
+  </div><div class="row" data-tip="Dutch Grand Prix: Francisco Soldavini led the week with 54" style="--i:11">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/40d29a8a-3349-4d7a-87b9-e74cedda7c19.png?t=1775102877270" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Zandvoort<small>R12 · Soldavini</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:67.5%"></span></div>
+    <div class="val blue">54</div>
+  </div><div class="row" data-tip="Italian Grand Prix: Jack Civitts led the week with 58" style="--i:12">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ad3adcf9-af83-4139-aa13-120bdf0b6fae.png?t=1772680121672" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Monza<small>R13 · Civitts</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:72.5%"></span></div>
+    <div class="val blue">58</div>
+  </div><div class="row" data-tip="Spanish Grand Prix: Harold Gutmann led the week with 59" style="--i:13">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2a1d8e8a-bc94-4105-abc9-5445bc58befa.png?t=1772682503476" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Spain<small>R14 · Gutmann</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:73.75%"></span></div>
+    <div class="val blue">59</div>
+  </div><div class="row" data-tip="Azerbaijan Grand Prix: Brett Dillon led the week with 30" style="--i:14">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d9e8e2f9-ddb4-4aca-a67e-43264d19751c.png?t=1772428753985" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Azerbaijan<small>R15 · Dillon</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar pink" style="left:0%;width:37.5%"></span></div>
+    <div class="val pink">30</div>
+  </div></div>
+    <p class="note">Brett Dillon won the week with <b>30</b>. Every other round's leader scored 48 or more, and 7 of them scored 60 or more.</p>
+  </div>
+</section>
+
+<section>
+  <div class="card">
+    <div class="ch"><span class="num">7</span><div><h2>The twenty lowest scores ever</h2><p>All twenty are from this week.</p></div></div>
+    <div class="wall"><div class="w" data-tip="Francisco Soldavini, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/40d29a8a-3349-4d7a-87b9-e74cedda7c19.png?t=1775102877270" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>Soldavini</div><div class="w" data-tip="Scott Schertler, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c3eb5cac-805e-4dc4-be56-cade175e0f0d.png?t=1772682658405" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>Schertler</div><div class="w" data-tip="Paul Kohli, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e44c9473-d593-4339-ba0e-64f1ea081865.png?t=1773533408532" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>P. Kohli</div><div class="w" data-tip="Martin Nobar, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/9ff55d39-139e-4b44-b305-e48ddd44e913.png?t=1773359414261" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>M. Nobar</div><div class="w" data-tip="Sam Bottoms, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>Bottoms</div><div class="w" data-tip="Evie Ishak, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/382172b9-a2ad-472d-b823-1cdcb77bc713.png?t=1772503455737" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>E. Ishak</div><div class="w" data-tip="Ryan Kohli, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2074a773-5b33-4aac-83bf-7682ead3d638.png?t=1772686275949" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>R. Kohli</div><div class="w" data-tip="Chris Fondacaro, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c55c6192-2f81-4188-8e00-705b8a5744e4.png?t=1772503743937" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>Fondacaro</div><div class="w" data-tip="Lucia Thompson, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/82aa6e87-b661-4f83-ae1a-5d91240abd02.png?t=1772680284304" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>L. Thompson</div><div class="w" data-tip="Matilda Luton, round 15: 4"><span class="face face-t" style="width:40px;height:40px;font-size:15px">ML</span><b>+4</b>Luton</div><div class="w" data-tip="Matteo Thompson, round 15: 4"><span class="face face-t" style="width:40px;height:40px;font-size:15px">MT</span><b>+4</b>M. Thompson</div><div class="w" data-tip="Kevin Coolidge, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/719da11a-6cd8-42f4-aba5-a3bd95742a1a.png?t=1772503404813" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Coolidge</div><div class="w" data-tip="Joe McGlynn, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/447a215c-371d-4212-95e1-dcef174e95f9.png?t=1772503336906" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>McGlynn</div><div class="w" data-tip="Maggie Ball, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/b8a89653-d99b-41e5-89ff-4f2ac889597b.png?t=1773359248972" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Ball</div><div class="w" data-tip="Zack Girgis, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ca16dfb6-d535-4cd9-8a2d-1597eca5fc59.png?t=1772503392387" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Girgis</div><div class="w" data-tip="Theo Ishak, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/5e8e105d-b2bb-4495-9f45-04bfce6e4587.png?t=1772682483157" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>T. Ishak</div><div class="w" data-tip="Moses Abdelshaid, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/48b723a2-5ec3-417d-930c-178789a46e81.png?t=1775102938119" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Abdelshaid</div><div class="w" data-tip="Rafik Zarifa, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/34ed0f7d-81ed-4a72-b018-f25941106902.png?t=1772680006315" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Zarifa</div><div class="w" data-tip="Anthony Carnesecca, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/da8b5649-9209-4d28-a31c-2aa8fc1eaa4b.png?t=1772686091799" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Carnesecca</div><div class="w" data-tip="Andy Thompson, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/33d73ea9-a9e8-4050-9ffb-97cccab68487.png?t=1787202390496" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>A. Thompson</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="divh">The matchups</div>
+  <p class="note" style="margin:0 0 10px">Sorted closest first. No draws, nothing inside four points. BOX BOX a push in all twelve.</p>
+  <div class="mu ch" style="--i:0">
+    <div class="side won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8ae6c08b-ce0e-4383-91c2-ceb17ba3db1a.png?t=1772417238558" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Juicero SV</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="blue">12</span><span class="v">v</span><span class="">8</span></div>
+    <div class="side r"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/27ccc53b-cca4-4b6b-a166-7ed81b11c86f.png?t=1772677683335" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Meatballs</span><span class="seat">UNDER</span></div>
+  </div><div class="mu ch" style="--i:1">
+    <div class="side"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/fc7843e9-bf07-493f-a9bf-59c6ce2f3a21.png?t=1772436034485" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">HomeworkTubes</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="">3</span><span class="v">v</span><span class="blue">8</span></div>
+    <div class="side r won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/44aabae5-10ac-47e4-8314-27a67adec475.png?t=1772417226721" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">East Bay</span><span class="seat">UNDER</span></div>
+  </div><div class="mu se" style="--i:2">
+    <div class="side won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/16ff8643-cd10-4ad5-9118-e4e50fb4a0ba.png?t=1772678010120" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">TJ Premium</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="blue">16</span><span class="v">v</span><span class="">11</span></div>
+    <div class="side r"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/bfd3f733-9e00-4aec-8b30-42ac5f98f0d5.png?t=1772417195340" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">AgSlipstream</span><span class="seat">UNDER</span></div>
+  </div><div class="mu se" style="--i:3">
+    <div class="side won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/113cbd29-f5b3-4311-a4ef-0b053404719d.png?t=1772417205416" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Bronco</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="blue">26</span><span class="v">v</span><span class="">21</span></div>
+    <div class="side r"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/5c4087ab-d297-43c8-a132-d212ed0e1190.png?t=1772417256621" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Wildcat</span><span class="seat">UNDER</span></div>
+  </div><div class="mu ch" style="--i:4">
+    <div class="side won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/b4a23ce2-0b92-4db3-9ec8-20f7735d212f.png?t=1773678185674" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Cougar</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="blue">15</span><span class="v">v</span><span class="">8</span></div>
+    <div class="side r"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2343928e-bdf3-415a-9f0a-ef3b6af5793f.png?t=1772417222653" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Drivetex</span><span class="seat">UNDER</span></div>
+  </div><div class="mu se" style="--i:5">
+    <div class="side won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/611053aa-8e7d-4b64-b37a-c34c3a59dd5f.png?t=1772677744693" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Prestissimo</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="blue">1</span><span class="v">v</span><span class="pink">-6</span></div>
+    <div class="side r"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2cfbbd19-61c8-4c6a-87c1-6367a3f5483a.png?t=1772676769760" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Garra</span><span class="seat">UNDER</span></div>
+  </div><div class="mu se" style="--i:6">
+    <div class="side"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/d9e7da52-4a19-48e0-8c5d-4cfce49f5f43.png?t=1772677964018" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Shoey Time!</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="">9</span><span class="v">v</span><span class="blue">18</span></div>
+    <div class="side r won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/f3e74436-4bb4-4be6-b3b5-3829e29e032a.png?t=1773678329574" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Iskandaraya</span><span class="seat">UNDER</span></div>
+  </div><div class="mu se" style="--i:7">
+    <div class="side"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/b9eb80e4-13ef-41d6-adff-1c8e64270c6a.png?t=1772469050248" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Stalloni</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="">1</span><span class="v">v</span><span class="blue">10</span></div>
+    <div class="side r won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/4c3cda25-74f1-4884-9e85-d45fff114e71.png?t=1772677562032" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Magic Kingdom</span><span class="seat">UNDER</span></div>
+  </div><div class="mu ch" style="--i:8">
+    <div class="side won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/4ce965b1-70bf-43db-a3b0-6585be8d8b5e.png?t=1772677776753" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Peloton</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="blue">26</span><span class="v">v</span><span class="">14</span></div>
+    <div class="side r"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/0a09b0a7-8d2c-451a-9541-29b3046aaee3.png?t=1772417253012" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Van City</span><span class="seat">UNDER</span></div>
+  </div><div class="mu ch" style="--i:9">
+    <div class="side"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/9a1eeebb-53f4-4435-842a-835fcb9c416f.png?t=1772678148341" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">TNT Roku</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="">8</span><span class="v">v</span><span class="blue">21</span></div>
+    <div class="side r won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/f3eab88a-5d25-4e3b-b7fc-2aa7a9ea4385.png?t=1772417213026" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Cal Aggie</span><span class="seat">UNDER</span></div>
+  </div><div class="mu se" style="--i:10">
+    <div class="side won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8743272f-21a4-443c-af8b-819ea11615a2.png?t=1772677485951" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Luxor</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="blue">18</span><span class="v">v</span><span class="">1</span></div>
+    <div class="side r"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/a602540b-92f4-48f0-bff2-67e74fba1e67.png?t=1772524618249" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">El Camino</span><span class="seat">UNDER</span></div>
+  </div><div class="mu ch" style="--i:11">
+    <div class="side"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8c6bc36d-54ab-4df5-85f8-564128000041.png?t=1772436321238" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Cascadia</span><span class="seat">OVER</span></div>
+    <div class="score"><span class="">3</span><span class="v">v</span><span class="blue">24</span></div>
+    <div class="side r won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/579bad3e-bbc9-42f2-9371-22abd9da04d4.png?t=1772469411331" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">XLIX Racing</span><span class="seat">UNDER</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="card">
+    <div class="ch"><span class="num">8</span><div><h2>The numbers</h2><p>Every score this week, and every round's averages.</p></div></div>
+    <details open><summary>This week, all 48</summary><div class="tw"><table><thead><tr><th>#</th><th>Player</th><th>Total</th><th>Top</th><th>Mid</th><th>Order</th><th>Best</th><th>Needle</th><th>Bonus</th><th>Prev low</th></tr></thead><tbody><tr><td>1</td><td>Chris Fondacaro</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>18</td></tr><tr><td>2</td><td>Evie Ishak</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>18</td></tr><tr><td>3</td><td>Francisco Soldavini</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>23</td></tr><tr><td>4</td><td>Martin Nobar</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>22</td></tr><tr><td>5</td><td>Paul Kohli</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>6</td><td>Ryan Kohli</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>7</td><td>Sam Bottoms</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>8</td><td>Scott Schertler</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>18</td></tr><tr><td>9</td><td>Andy Thompson</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>15</td></tr><tr><td>10</td><td>Anthony Carnesecca</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>18</td></tr><tr><td>11</td><td>Harold Gutmann</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>21</td></tr><tr><td>12</td><td>Jack Civitts</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>22</td></tr><tr><td>13</td><td>Joe Hanna</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>25</td></tr><tr><td>14</td><td>Joe McGlynn</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>26</td></tr><tr><td>15</td><td>Kevin Coolidge</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>16</td><td>Lucia Thompson</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>17</td><td>Maggie Ball</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>18</td><td>Matilda Luton</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>13</td></tr><tr><td>19</td><td>Matteo Thompson</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>22</td></tr><tr><td>20</td><td>Max Reisinger</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>23</td></tr><tr><td>21</td><td>Moses Abdelshaid</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>23</td></tr><tr><td>22</td><td>Nick Brody</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>19</td></tr><tr><td>23</td><td>Rafik Zarifa</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>18</td></tr><tr><td>24</td><td>Theo Ishak</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>24</td></tr><tr><td>25</td><td>Zack Girgis</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>26</td><td>Brian Dong</td><td class=""><b>5</b></td><td>8</td><td>-3</td><td>0</td><td>0</td><td>0</td><td>0</td><td>9</td></tr><tr><td>27</td><td>Danny Bowers</td><td class=""><b>5</b></td><td>-1</td><td>6</td><td>0</td><td>0</td><td>0</td><td>0</td><td>15</td></tr><tr><td>28</td><td>Pavly Attalah</td><td class=""><b>5</b></td><td>8</td><td>-3</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>29</td><td>Ramy Stephanos</td><td class=""><b>5</b></td><td>-1</td><td>6</td><td>0</td><td>0</td><td>0</td><td>0</td><td>13</td></tr><tr><td>30</td><td>Dan Patry</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>17</td></tr><tr><td>31</td><td>George Fahmy</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>22</td></tr><tr><td>32</td><td>Grant Wong</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>13</td></tr><tr><td>33</td><td>Kerolos Nakhla</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>21</td></tr><tr><td>34</td><td>Ronnie Nobar</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>23</td></tr><tr><td>35</td><td>Stacy Michaelsen</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>25</td></tr><tr><td>36</td><td>TJ Donato</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>37</td><td>Formula5 Bot</td><td class=""><b>10</b></td><td>12</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>25</td></tr><tr><td>38</td><td>Mena Yousef</td><td class=""><b>10</b></td><td>12</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>24</td></tr><tr><td>39</td><td>Heather Ishak</td><td class=""><b>12</b></td><td>12</td><td>-1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>18</td></tr><tr><td>40</td><td>Larry Noel</td><td class=""><b>15</b></td><td>8</td><td>5</td><td>0</td><td>0</td><td>0</td><td>2</td><td>23</td></tr><tr><td>41</td><td>Alicia Cho</td><td class=""><b>16</b></td><td>8</td><td>5</td><td>0</td><td>0</td><td>0</td><td>3</td><td>20</td></tr><tr><td>42</td><td>Maggie Mudge</td><td class=""><b>17</b></td><td>8</td><td>5</td><td>0</td><td>0</td><td>0</td><td>4</td><td>20</td></tr><tr><td>43</td><td>Chris Malek</td><td class=""><b>18</b></td><td>8</td><td>5</td><td>0</td><td>0</td><td>0</td><td>5</td><td>23</td></tr><tr><td>44</td><td>Anthony Zamary</td><td class=""><b>19</b></td><td>8</td><td>5</td><td>0</td><td>0</td><td>0</td><td>6</td><td>11</td></tr><tr><td>45</td><td>Andrew Ishak</td><td class=""><b>24</b></td><td>12</td><td>5</td><td>0</td><td>0</td><td>0</td><td>7</td><td>18</td></tr><tr><td>46</td><td>Aditya Satish</td><td class=""><b>25</b></td><td>12</td><td>5</td><td>0</td><td>0</td><td>0</td><td>8</td><td>14</td></tr><tr><td>47</td><td>Krista Nabil</td><td class=""><b>29</b></td><td>12</td><td>5</td><td>0</td><td>3</td><td>0</td><td>9</td><td>22</td></tr><tr><td>48</td><td>Brett Dillon</td><td class=""><b>30</b></td><td>12</td><td>5</td><td>0</td><td>3</td><td>0</td><td>10</td><td>22</td></tr></tbody></table></div></details>
+    <details><summary>Every round</summary><div class="tw"><table><thead><tr><th>R</th><th>Race</th><th>Avg</th><th>Median</th><th>High</th><th>Low</th><th>Drivers only</th><th>Team avg</th></tr></thead><tbody><tr class=""><td>1</td><td>Australian Grand Prix</td><td>38.8</td><td>40</td><td>61</td><td>13</td><td>36.1</td><td>74.2</td></tr><tr class=""><td>2</td><td>Chinese Grand Prix</td><td>32.1</td><td>31</td><td>52</td><td>21</td><td>31.0</td><td>62.0</td></tr><tr class=""><td>3</td><td>Japanese Grand Prix</td><td>42.5</td><td>44</td><td>67</td><td>15</td><td>41.3</td><td>84.7</td></tr><tr class=""><td>4</td><td>Miami Grand Prix</td><td>31.2</td><td>27</td><td>57</td><td>13</td><td>28.1</td><td>58.3</td></tr><tr class=""><td>5</td><td>Canadian Grand Prix</td><td>26.1</td><td>25.5</td><td>48</td><td>11</td><td>23.4</td><td>48.8</td></tr><tr class=""><td>6</td><td>Monaco Grand Prix</td><td>32.2</td><td>35</td><td>64</td><td>9</td><td>31.1</td><td>64.2</td></tr><tr class=""><td>7</td><td>Spanish Grand Prix</td><td>44.0</td><td>45.5</td><td>68</td><td>17</td><td>42.3</td><td>86.5</td></tr><tr class=""><td>8</td><td>Austrian Grand Prix</td><td>42.8</td><td>46</td><td>67</td><td>19</td><td>40.5</td><td>83.1</td></tr><tr class=""><td>9</td><td>British Grand Prix</td><td>35.0</td><td>34</td><td>54</td><td>22</td><td>33.8</td><td>69.6</td></tr><tr class=""><td>10</td><td>Belgian Grand Prix</td><td>48.4</td><td>53</td><td>70</td><td>19</td><td>47.3</td><td>96.6</td></tr><tr class=""><td>11</td><td>Hungarian Grand Prix</td><td>41.6</td><td>41</td><td>74</td><td>18</td><td>39.4</td><td>80.9</td></tr><tr class=""><td>12</td><td>Dutch Grand Prix</td><td>31.4</td><td>29</td><td>54</td><td>16</td><td>28.6</td><td>59.3</td></tr><tr class=""><td>13</td><td>Italian Grand Prix</td><td>41.5</td><td>43</td><td>58</td><td>24</td><td>39.3</td><td>80.7</td></tr><tr class=""><td>14</td><td>Spanish Grand Prix</td><td>40.9</td><td>39</td><td>59</td><td>30</td><td>38.4</td><td>78.6</td></tr><tr class="hl"><td>15</td><td>Azerbaijan Grand Prix</td><td>6.9</td><td>4</td><td>30</td><td>-3</td><td>5.8</td><td>11.5</td></tr></tbody></table></div></details>
+  </div>
+</section>
+
+<p class="foot">Individual score is drivers plus order bonus, best finish, the Needle and the weekly bonus. Team score is both players' driver points plus BOX BOX. Built from the scores table on 2026-09-26 by scripts/recap/round15.mjs.</p>
+
+<script>
+(function(){
+  var tip=document.getElementById('tip');
+  function show(e,t){tip.textContent=t;tip.classList.add('on');move(e);}
+  function move(e){var x=(e.touches?e.touches[0].clientX:e.clientX),y=(e.touches?e.touches[0].clientY:e.clientY);
+    var w=tip.offsetWidth,h=tip.offsetHeight;tip.style.left=Math.max(6,Math.min(window.innerWidth-w-6,x+12))+'px';tip.style.top=(y-h-14<6?y+16:y-h-14)+'px';}
+  function hide(){tip.classList.remove('on');}
+  document.querySelectorAll('[data-tip]').forEach(function(el){
+    el.addEventListener('mouseenter',function(e){show(e,el.getAttribute('data-tip'));});
+    el.addEventListener('mousemove',move);el.addEventListener('mouseleave',hide);
+    el.addEventListener('touchstart',function(e){show(e,el.getAttribute('data-tip'));setTimeout(hide,2200);},{passive:true});
+  });
+  // Chart 1: the same fifteen bars, three measures. Widths move, nothing is redrawn.
+  var c1=document.getElementById('c1');
+  c1.parentNode.querySelectorAll('.act[data-k]').forEach(function(b){b.addEventListener('click',function(){
+    var k=b.getAttribute('data-k');var max=+c1.getAttribute('data-max');
+    b.parentNode.querySelectorAll('.act').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+    c1.querySelectorAll('.row').forEach(function(r){var bar=r.querySelector('.bar');var v=+bar.getAttribute('data-'+k);
+      bar.style.width=(v/max*100)+'%';r.querySelector('.val').textContent=(Math.round(v*10)/10).toFixed(1);});
+  });});
+  // Chart 4: a pick, or the whole league.
+  var c4=document.getElementById('c4');
+  c4.parentNode.querySelectorAll('.act[data-k]').forEach(function(b){b.addEventListener('click',function(){
+    var k=b.getAttribute('data-k');var min=k==='per'?-1:-40,max=k==='per'?12:168,span=max-min,zero=(0-min)/span*100;
+    b.parentNode.querySelectorAll('.act').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+    c4.querySelectorAll('.row').forEach(function(r){var bar=r.querySelector('.bar');var v=+bar.getAttribute('data-'+k);var w=Math.abs(v)/span*100;
+      bar.style.left=(v>=0?zero:zero-w)+'%';bar.style.width=w+'%';r.querySelector('.zero').style.left=zero+'%';r.querySelector('.val').textContent=(v>0?'+':'')+v;});
+  });});
+  // Chart 3: fifteen biggest drops, or everyone.
+  var m=document.getElementById('c3more');
+  m.addEventListener('click',function(){var on=m.getAttribute('aria-pressed')!=='true';m.setAttribute('aria-pressed',on?'true':'false');
+    document.getElementById('c3').classList.toggle('show-all',on);m.textContent=on?'Biggest drops':'All 48';});
+})();
+</script>
+</body></html>
