@@ -344,6 +344,8 @@ Standings depended on database row order. RESOLVED 2026-08-18. Two teams in a di
 
 BOX BOX line compared unrounded. RESOLVED 2026-09-13. Admin compared the stop against the raw average of the four guesses while every page printed the line to two places, so round 14's TJ Premium v Luxor, a line of 2.575 shown as 2.58 against a 2.58 stop, scored +5/-1 instead of a push. The Needle's old 0.05/0.15/0.25 buckets were already rounding the stop to the tenth, except on a stop ending in 5, where float noise decided. Both now live in src/pitStop.js; see the file map.
 
+**A round can be scored with no stop**, since 2026-09-26: round 15's Aston Martin never pitted. Admin's pit stop box left empty writes `pit_stop_time` null, and null runs through the same two rules in src/pitStop.js: boxBoxSide gives no side, so BOX BOX is a push for all twelve matchups (0 and 0), and needlePoints gives 0, so the Needle scores nothing for anybody. The deck's strip, the Home BOX BOX card and /schedule each say "No pit stop" where the stop would have been; wire.js already had the sentence. `npm run smoke:weekly` renders a no-stop round for all 48.
+
 `results.pit_stop_time` stores one decimal. Round 14 was scored at 2.58 and the row reads 2.6, so anything that reworks a matchup from the results row (weekly.js, the home page) sees a different stop than Admin scored. Widening the column to numeric(5,2) is owed; check with information_schema first.
 Supabase silent writes: RLS policy mismatches swallow writes with no error. Always append .select() to update calls so failures surface.
 Duplicate const declarations: cause silent Vercel build failures. The old build keeps serving, so a deploy looks like it did nothing. Check for these first when a deploy seems to have no effect.

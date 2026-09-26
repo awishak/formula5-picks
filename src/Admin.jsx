@@ -460,14 +460,19 @@ export default function Admin() {
     try {
       const finishOrder = parseFinishOrder(finishOrderText);
       const dnfs = parseDNFs(dnfText);
-      const pitTime = parseFloat(pitStopTime);
+      // Empty is a week with no stop, round 15's Aston Martin, Andrew
+      // 2026-09-26. Null runs through the same rules: boxBoxSide gives no side,
+      // so BOX BOX is a push for all twelve matchups, and needlePoints gives 0,
+      // so the Needle scores nothing for anybody. Only a non-empty non-number
+      // is an error.
+      const pitTime = String(pitStopTime).trim() === "" ? null : parseFloat(pitStopTime);
 
       if (finishOrder.length < 5) {
         setError("Need at least 5 drivers in finishing order");
         setScoring(false);
         return;
       }
-      if (isNaN(pitTime)) {
+      if (pitTime != null && isNaN(pitTime)) {
         setError("Invalid pit stop time");
         setScoring(false);
         return;
@@ -1908,6 +1913,9 @@ export default function Admin() {
         <label style={{ fontFamily: FD, fontWeight: 700, fontSize: 11, color: TEXT2, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>
           Pit Stop Time (seconds)
         </label>
+        <div style={{ fontFamily: FD, fontSize: 13, color: TEXT2, marginBottom: 6 }}>
+          Leave empty if the team made no stop. BOX BOX is then a push for every matchup and the Needle scores nothing for anybody.
+        </div>
         <input
           type="number"
           step="0.01"

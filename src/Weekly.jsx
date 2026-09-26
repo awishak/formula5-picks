@@ -1532,7 +1532,17 @@ function BoxBoxStrip({ M, mine = null, needlePts = 0, four = null, beat = 99, st
           );
         })}
 
-        {showStop && (
+        {/* A week with no stop, round 15's Aston Martin: the plate says so
+            where the stop would have been, and the row under it is a push. */}
+        {showStop && M.pit == null && (
+          <div className="v-drop" style={{ position: "absolute", top: 86, left: "50%",
+            transform: "translateX(-50%)", padding: "2px 8px", borderRadius: 7,
+            background: "#000", border: `1px solid ${V.blue}`, whiteSpace: "nowrap",
+            fontFamily: FD, fontWeight: 700, fontSize: 12, color: V.blue }}>
+            No pit stop this week
+          </div>
+        )}
+        {showStop && M.pit != null && (
           <>
             <div className="v-drop" style={{ position: "absolute", top: 71 - DOT / 2,
               left: `${pct(M.pit)}%`, width: DOT, height: DOT, marginLeft: -DOT / 2,
@@ -1953,6 +1963,8 @@ function CardRace({ d, stage = 0 }) {
                   ? "All four guesses."
                   : teamBeat < BEAT_STOP
                   ? `Your Matchup’s Line, ${two(M.line)}.`
+                  : M.pit == null
+                  ? "No pit stop this week. A push, nothing to either."
                   : M.myBB > 0
                   ? `The stop, ${M.pit}. That\u2019s +5 for your team and \u22121 for your opponent.`
                   : M.myBB < 0

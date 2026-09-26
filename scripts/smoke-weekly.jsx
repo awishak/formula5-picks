@@ -10,6 +10,7 @@
 import { renderToString } from "react-dom/server";
 import { WeeklyDeck } from "../src/Weekly.jsx";
 import { buildWeekly } from "../src/weekly.js";
+import { buildWire } from "../src/wire.js";
 import DB from "./weekly-fixture.json";
 
 const CARDS = 4;
@@ -148,6 +149,33 @@ console.log(`\n  card 5 states:   ${JSON.stringify(states)}`);
 console.log(`  card 4 verdicts: ${JSON.stringify(verdicts)}`);
 for (const s of ["held", "solo", "pair", "notEnough", "locked"]) {
   if (!states[s]) console.log(`  note  card 5 state "${s}" is not in this fixture, so its copy is unrendered`);
+}
+
+// A round scored with no stop, round 15's Aston Martin. The stop is null in
+// results, so BOX BOX is a push for everybody and the Needle scores nothing.
+// Every card still renders, nothing prints the word null, and the paper's pit
+// story builds. The strip's own "No pit stop this week" plate sits behind a
+// beat the server render cannot reach, so it is read, not rendered, here.
+{
+  const round = buildWeekly(DB, names[0]).round;
+  const race = DB.races.find(r => r.round === round);
+  const NOSTOP = { ...DB, results: DB.results.map(r => r.race_id === race.id ? { ...r, pit_stop_time: null } : r) };
+  let bad = 0;
+  for (const name of names) {
+    total++;
+    try {
+      const d = buildWeekly(NOSTOP, name);
+      if (d.card4.pit != null) throw new Error("card4.pit is not null");
+      if (d.card4.bb !== "push" && d.matchup.myBB !== 0) throw new Error("BOX BOX not a push");
+      for (let i = 0; i < CARDS; i++) for (let st = 0; st < STAGES[i]; st++) {
+        const html = renderToString(<WeeklyDeck data={d} initialCard={i} initialStage={st} />);
+        if (/\bnull\b/.test(html.replace(/<[^>]+>/g, " "))) throw new Error(`card ${i + 1} stage ${st} prints null`);
+      }
+      const paper = buildWire(d);
+      if (!paper || !(paper.stories || paper.cards || paper).length) throw new Error("no paper");
+    } catch (e) { bad++; failed++; console.log(`  FAIL  no stop, ${name}: ${e.message}`); }
+  }
+  if (!bad) console.log(`  ok    no-stop round renders for all ${names.length}, BOX BOX a push, nothing prints null`);
 }
 
 console.log(`\n${failed ? "FAILED" : "OK"}  ${total - failed}/${total} renders`);

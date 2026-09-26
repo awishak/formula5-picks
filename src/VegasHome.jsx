@@ -1800,6 +1800,12 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
           Stopped at {boxBox.stop.toFixed(2)}s. {pushBox ? "On the line. Push." : wonBox ? "Your side." : "Theirs."}
         </p>
       )}
+      {/* Scored with no stop entered: the team never pitted. A push. */}
+      {scored && stop == null && (
+        <p style={{ ...body("bodyMd"), fontSize: 15, color: DIVIDE, textAlign: "center", margin: "6px 0 0" }}>
+          No pit stop this week. Push.
+        </p>
+      )}
     </div>
   );
 }

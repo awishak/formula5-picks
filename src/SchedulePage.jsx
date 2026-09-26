@@ -256,6 +256,14 @@ export default function SchedulePage({ currentUser }) {
         {/* Only on a round where the randomizer made somebody's picks. A
             half-card is too narrow for a word beside the name, so the name
             is pink and this line says what pink means. */}
+        {/* Scored with no stop, so no dot on any card and BOX BOX a push all
+            round. Said once here rather than twelve times below. */}
+        {isScored && fixtures.length > 0 && fixtures[0].stop == null && (
+          <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, textAlign: "center",
+                      margin: "-8px 0 14px", fontStyle: "italic" }}>
+            No pit stop this round. BOX BOX was a push.
+          </p>
+        )}
         {fixtures.some(f => [...f.players.away, ...f.players.home].some(r => r.auto)) && (
           <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, textAlign: "center",
                       margin: "-8px 0 14px", fontStyle: "italic" }}>
