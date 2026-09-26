@@ -66,12 +66,13 @@ function PlayerBadge({ name, picked, size = 38, photo, dim = !picked, ring, seal
         ...display("chip"), color: c,
         filter: dim ? "grayscale(0.7) brightness(0.75)" : "none",
       }}>{photo ? "" : initials}</div>
-      {/* Fernolo's seal on a face whose picks he made, most of the face's
-          size and hung off its lower right like a sticker. Andrew, 2026-09-25:
-          half the face was not big enough. */}
+      {/* Fernolo's seal on a face whose picks he made, three quarters of the
+          face and hung off its upper right like a sticker. Andrew, 2026-09-25:
+          half the face was not big enough. Upper right, because on the lower
+          right it sat over the name plate, and the plate is the name. */}
       {seal && (
-        <FernoloSeal size={Math.round(size * 0.85)}
-          style={{ position: "absolute", right: -16, bottom: -10, zIndex: 1 }} />
+        <FernoloSeal size={Math.round(size * 0.78)}
+          style={{ position: "absolute", right: -18, top: -10, zIndex: 1 }} />
       )}
     </div>
   );
@@ -158,7 +159,7 @@ export default function HandsColumns({ seats, under, driverPts = {}, scored = tr
       // No max width and no ellipsis. A surname is never cut: the plate is the
       // top layer, so a wide one sits over its neighbour rather than losing
       // letters, and a name you cannot read is worse than one that overlaps.
-      padding: "2px 5px", borderRadius: 7, background: "#000",
+      padding: "2px 5px", borderRadius: 7, background: "#000", zIndex: 2,
       border: `1px solid ${dim ? V.border : c}`,
       fontFamily: FD, fontWeight: 700, fontSize: size, lineHeight: 1.35,
       color: dim ? V.text2 : "#fff", whiteSpace: "nowrap",
