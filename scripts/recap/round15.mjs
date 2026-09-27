@@ -246,12 +246,12 @@ const dotRows = (items, { max }) => items.map((x, i) => {
   </div>`;
 }).join("");
 const dowMax = Math.ceil(Math.max(...driverWeeks.map(w => w.top.tot)) / 100) * 100;
-const chart4a = dotRows(dowSorted.map(w => ({
+const chart4a = dotRows(driverWeeks.map(w => ({
   v: w.top.tot, label: w.name, round: w.round, me: w.round === ROUND, name: surname(w.top.driver), pic: head(w.top.driver, 34),
   tip: `${w.full}, round ${w.round}: ${w.top.driver}, ${w.top.tot} across the league, ${w.top.each} a pick for ${w.top.n} pickers`,
 })), { max: dowMax });
 const worstMax = Math.ceil(Math.max(...driverWeeks.map(w => -w.bottom.tot)) / 10) * 10;
-const chart4b = dotRows(worstSorted.map(w => ({
+const chart4b = dotRows(driverWeeks.map(w => ({
   v: w.bottom.tot, label: w.name, round: w.round, me: w.round === ROUND, name: surname(w.bottom.driver), pic: head(w.bottom.driver, 34),
   tip: `${w.full}, round ${w.round}: ${w.bottom.driver}, ${w.bottom.tot} across the league, ${w.bottom.each} a pick for ${w.bottom.n} pickers`,
 })), { max: worstMax });
