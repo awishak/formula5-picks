@@ -245,7 +245,7 @@ const roundTable = `<table><thead><tr><th>R</th><th>Race</th><th>Avg</th><th>Med
 
 const html = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Round 15: the floor</title>
+<title>The Azerbaijan GP in Numbers</title>
 <meta name="description" content="Round 15, the Azerbaijan Grand Prix: the lowest-scoring week in Formula 5 history, in numbers.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet">
@@ -256,7 +256,7 @@ html{background:var(--bg)}
 body{font-family:var(--fd);background:var(--bg);color:var(--text);padding:16px 16px 60px;max-width:660px;margin:0 auto;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
 a{color:var(--blue)}
 .kicker{font-family:var(--fn);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
-h1{font-family:var(--fn);font-weight:700;font-size:clamp(34px,9vw,52px);line-height:1;letter-spacing:.02em;text-transform:uppercase;margin:8px 0 6px;color:var(--pink);text-shadow:0 0 6px rgba(255,45,149,.55),0 0 22px rgba(255,45,149,.35)}
+h1{font-family:var(--fn);font-weight:700;font-size:clamp(26px,7.4vw,40px);line-height:1;letter-spacing:.02em;text-transform:uppercase;margin:8px 0 6px;color:var(--pink);text-shadow:0 0 6px rgba(255,45,149,.55),0 0 22px rgba(255,45,149,.35)}
 .stand{font-size:17px;color:var(--text2);max-width:520px}
 .stand b{color:var(--text)}
 .hero{margin:8px 0 24px}
@@ -365,10 +365,10 @@ tr.hl td{color:var(--pink)}
 
 <header class="hero">
   <div class="kicker">Round ${ROUND} · ${esc(race.race_name)}</div>
-  <h1>The floor</h1>
-  <p class="stand">The lowest-scoring week in Formula 5 history, by every number the league keeps. <b>Aston Martin never pitted</b>, so the Needle paid nobody and BOX BOX was a push in all twelve matchups. That is not the story. The pool was.</p>
+  <h1>The Azerbaijan GP in Numbers</h1>
+  <p class="stand">${esc(podium[0].split(" ").pop())} won from ${esc(podium[1].split(" ").pop())} and ${esc(podium[2].split(" ").pop())}, and none of the three was in the pool. <b>Aston Martin never pitted</b>, so the Needle paid nobody and BOX BOX was a push in all twelve matchups. ${worstCount} of the 48 players had their worst week of the season.</p>
   <div class="lead">
-    <div class="ch"><span class="num">1</span><div><h2>Average score, every week of the season</h2><p>Best week first. Press a button to take the Needle and the weekly bonus out, or to see the team game.</p></div></div>
+    <div class="ch"><span class="num">1</span><div><h2>The Azerbaijan GP led to the lowest F5 scores of the season by every measure, and by a wide margin.</h2><p>Every week's average score, best first. The buttons take the Needle and the weekly bonus out, or show the team game.</p></div></div>
     <div class="acts" role="group" aria-label="Chart 1 view">
       <button class="act" aria-pressed="true" data-k="ind">Individual</button>
       <button class="act" aria-pressed="false" data-k="drv">Drivers only</button>
@@ -387,7 +387,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">2</span><div><h2>Where all 48 landed</h2><p>Every score this week, each player on their number. Hover or tap a face for the breakdown.</p></div></div>
+    <div class="ch"><span class="num">2</span><div><h2>${week.filter(r => r.ind === 4).length} players finished on exactly 4 points, ${negatives.length} finished below zero, and the top score was ${thisRound.max}.</h2><p>Every score this week, each player on their number. Hover or tap a face for the breakdown.</p></div></div>
     <div id="c2">${chart2}</div>
     <p class="note"><b>${week.filter(r => r.ind === 4).length} players scored exactly 4</b>: Norris on top for &minus;1 and one scoring midfielder for 5. <b>${negatives.length} scored &minus;3</b>: Norris on top and two of the negative midfielders. Before this week the lowest score in league history was <b>${prevLowScore}</b>. ${thisRound.under10} of 48 came in under it.</p>
   </div>
@@ -395,7 +395,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">3</span><div><h2>Season low, before and after</h2><p>Each player's previous worst week against this one. Blue is where the floor was. Pink is where it is now.</p></div></div>
+    <div class="ch"><span class="num">3</span><div><h2>${worstCount} of 48 players had the worst week of their season.</h2><p>Each player's previous worst week against this one. Blue is where the floor was. Pink is where it is now.</p></div></div>
     <div class="acts"><button class="act" id="c3more" aria-pressed="false">All 48</button></div>
     <div class="legend"><span><i class="blue"></i>Previous low</span><span><i class="pink"></i>This week, a new low</span></div>
     <div id="c3">${chart3}</div>
@@ -405,7 +405,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">4</span><div><h2>The pool</h2><p>What each driver on offer was worth, and how many hands he was in. The podium was not on the menu.</p></div></div>
+    <div class="ch"><span class="num">4</span><div><h2>The podium was not in the pool, and ${["zero","one","two","three","four","five","six","seven","eight","nine","ten"][pool.filter(d => d.per <= 0).length]} of the ten drivers on offer scored nothing or cost a point.</h2><p>What each driver was worth, and how many hands he was in.</p></div></div>
     <div class="pod">${podium.map((d, i) => `<div class="p">${head(d, 44)}<span class="pos">P${i + 1}</span><b>${esc(d)}</b><span class="no">not in the pool</span></div>`).join("")}</div>
     <div class="acts" role="group" aria-label="Chart 4 view">
       <button class="act" aria-pressed="true" data-k="per">A pick</button>
@@ -419,7 +419,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">5</span><div><h2>Team scores this week</h2><p>Both players' driver points, and BOX BOX, which was a push for everyone.</p></div></div>
+    <div class="ch"><span class="num">5</span><div><h2>No team scored more than ${Math.max(...teamWeek.map(t => t.v))}, and ${esc(teamWeek[0].team.name)} became the first to finish a week below zero.</h2><p>Both players' driver points, and BOX BOX, which was a push for everyone.</p></div></div>
     <div class="legend"><span><i class="blue"></i>20 or more</span><span><i class="muted"></i>Under 20</span><span><i class="pink"></i>Below zero</span></div>
     <div id="c5">${chart5}</div>
     <p class="note">Average <b>${one(thisRound.teamAvg)}</b>, previous low <b>${one(prevLowTeamAvg)}</b>. <b>Garra Dynamics on ${teamWeek[0].v}</b> is the first negative team score. The ${lowTeamAllThisWeek} lowest team scores in league history all happened on Saturday; before this week the floor was ${prevLowTeam}.</p>
@@ -428,7 +428,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">6</span><div><h2>The weekly leader, every round</h2><p>The high score each week and who posted it.</p></div></div>
+    <div class="ch"><span class="num">6</span><div><h2>${esc(thisRound.leader.name)} won the week with ${thisRound.max}, the lowest winning score the league has seen.</h2><p>The high score each week and who posted it.</p></div></div>
     <div id="c6">${chart6}</div>
     <p class="note">${esc(thisRound.leader.name)} won the week with <b>${thisRound.max}</b>. Every other round's leader scored ${prevLowHigh} or more, and ${byRound.filter(b => b.max >= 60).length} of them scored 60 or more.</p>
   </div>
@@ -436,20 +436,21 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">7</span><div><h2>The twenty lowest scores ever</h2><p>All twenty are from this week.</p></div></div>
+    <div class="ch"><span class="num">7</span><div><h2>The twenty lowest scores in league history all happened in Baku.</h2><p>Before this week the floor was ${prevLowScore}.</p></div></div>
     <div class="wall">${lowestEver.map(r => `<div class="w" data-tip="${esc(`${r.player.name}, round ${r.round}: ${r.ind}`)}">${face(r.player, 40, r.ind < 0 ? "#ff2d95" : null)}<b>${signed(r.ind)}</b>${esc(surname(r.player.name))}</div>`).join("")}</div>
   </div>
 </section>
 
 <section>
   <div class="divh">The matchups</div>
-  <p class="note" style="margin:0 0 10px">Sorted closest first. No draws, nothing inside four points. BOX BOX a push in all twelve.</p>
+  <h2 style="font-size:20px;line-height:1.2;margin-bottom:4px">Twelve matchups, no draws, and nothing closer than ${matchups[0].margin} points.</h2>
+  <p class="note" style="margin:0 0 10px">Sorted closest first. BOX BOX a push in all twelve.</p>
   ${matchupCards}
 </section>
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">8</span><div><h2>The numbers</h2><p>Every score this week, and every round's averages.</p></div></div>
+    <div class="ch"><span class="num">8</span><div><h2>Every score this week, and every round's averages.</h2><p>The tables the charts were drawn from.</p></div></div>
     <details open><summary>This week, all 48</summary><div class="tw">${table}</div></details>
     <details><summary>Every round</summary><div class="tw">${roundTable}</div></details>
   </div>
