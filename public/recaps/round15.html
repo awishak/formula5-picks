@@ -32,6 +32,13 @@ h1{font-family:var(--fn);font-weight:700;font-size:clamp(26px,7.4vw,40px);line-h
 .cv{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--fn);font-weight:700;font-size:13px;color:var(--text2);line-height:1;visibility:hidden;white-space:nowrap;transition:bottom .5s cubic-bezier(.2,.8,.2,1)}
 .cv.on{visibility:visible}
 .col.me .cv{color:var(--pink)}
+.cp{display:flex;justify-content:center;margin-top:6px;min-height:0}
+.cp:empty{display:none}
+.sub{font-family:var(--fn);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin:10px 0 0}
+.cols.wide{padding-left:36px}.cols.wide .grid span{left:36px}.cols.wide .grid span i{left:-36px}
+.cols.down .bw{align-items:flex-start;margin-top:0;margin-bottom:20px}
+.cols.down .cb{transform-origin:top;border-radius:0 0 3px 3px}
+.cols.down .grid span i{top:-8px}
 .cl{height:76px;margin-top:5px;writing-mode:vertical-rl;transform:rotate(180deg);font-size:13px;color:var(--text2);line-height:1;white-space:nowrap;overflow:hidden}
 .col.me .cl{color:var(--pink);font-weight:700}
 .col:hover .cv{visibility:visible}
@@ -121,9 +128,9 @@ tr.hl td{color:var(--pink)}
 <header class="hero">
   <div class="kicker">Round 15 · Azerbaijan Grand Prix</div>
   <h1>The Azerbaijan GP in Numbers</h1>
-  <p class="stand">Russell won from Verstappen and Hadjar, and none of the three was in the pool. <b>Aston Martin never pitted</b>, so the Needle paid nobody and BOX BOX was a push in all twelve matchups. 43 of the 48 players had their worst week of the season.</p>
+  <p class="stand">The lowest scoring week in league history, the Azerbaijan GP stands as an outlier in this F5 season. Scores were low across the board, including the first ever negative scores, achieved by eight people. And the team matchups were just as strange: one team won their matchup by scoring exactly one point.</p>
   <div class="lead">
-    <div class="ch"><span class="num">1</span><div><h2>The Azerbaijan GP led to the lowest F5 scores of the season by every measure, and by a wide margin.</h2><p>Every week's average score, best first. The buttons take the Needle and the weekly bonus out, or show the team game.</p></div></div>
+    <div class="ch"><span class="num">1</span><div><h2>The Azerbaijan GP led to the lowest F5 scores of the season by every measure, and by a wide margin.</h2><p>Every F5 week has an average score, and for fourteen rounds it sat between 26.1 and 48.4. Then Baku came in at 6.9, including a median of 4, less than a third of the previous low. And the buttons show it was not the missing pit stop: take the Needle and the weekly bonus out and the gap is the same.</p></div></div>
     <div class="acts" role="group" aria-label="Chart 1 view">
       <button class="act" aria-pressed="true" data-k="ind">Individual</button>
       <button class="act" aria-pressed="false" data-k="drv">Drivers only</button>
@@ -190,7 +197,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">2</span><div><h2>17 players finished on exactly 4 points, 8 finished below zero, and the top score was 30.</h2><p>Every score this week, each player on their number. Hover or tap a face for the breakdown.</p></div></div>
+    <div class="ch"><span class="num">2</span><div><h2>17 players finished on exactly 4 points, 8 finished below zero, and the top score was 30.</h2><p>An F5 score is five drivers, a finishing-order bonus, a best-finish guess, the Needle and a weekly bonus for the top ten, and this week the drivers did almost all of the work. Most of that work was negative, including eight people on minus three from Norris up top and two midfielders who finished out of the points. And the top of the field was thin: only four players reached twenty, and each face here sits on its own number.</p></div></div>
     <div id="c2"><div class="stack" style="--i:0">
     <div class="sv pink">-3</div>
     <div class="faces"><span class="fw" data-tip="Chris Fondacaro: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c55c6192-2f81-4188-8e00-705b8a5744e4.png?t=1772503743937" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Evie Ishak: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/382172b9-a2ad-472d-b823-1cdcb77bc713.png?t=1772503455737" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Francisco Soldavini: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/40d29a8a-3349-4d7a-87b9-e74cedda7c19.png?t=1775102877270" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Martin Nobar: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/9ff55d39-139e-4b44-b305-e48ddd44e913.png?t=1773359414261" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Paul Kohli: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e44c9473-d593-4339-ba0e-64f1ea081865.png?t=1773533408532" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Ryan Kohli: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2074a773-5b33-4aac-83bf-7682ead3d638.png?t=1772686275949" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Sam Bottoms: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span><span class="fw" data-tip="Scott Schertler: -3. Top -1, midfield -2"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c3eb5cac-805e-4dc4-be56-cade175e0f0d.png?t=1772682658405" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px;border-color:#ff2d95"></span></div>
@@ -258,7 +265,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">3</span><div><h2>43 of 48 players had the worst week of their season.</h2><p>Each player's previous worst week against this one. Blue is where the floor was. Pink is where it is now.</p></div></div>
+    <div class="ch"><span class="num">3</span><div><h2>43 of 48 players had the worst week of their season.</h2><p>Every player carries a worst week, and before Baku the lowest of anyone's was 9. This week 43 of 48 set a new one, including Francisco Soldavini, whose floor fell from 23 to -3. And the five who kept their old floor were the five at the top of the week: their previous worst was simply lower than the score that won this one. Blue is where the floor was, pink is where it is now.</p></div></div>
     <div class="acts"><button class="act" id="c3more" aria-pressed="false">All 48</button></div>
     <div class="legend"><span><i class="blue"></i>Previous low</span><span><i class="pink"></i>This week, a new low</span></div>
     <div id="c3"><div class="row db" style="--i:0" data-tip="Francisco Soldavini: this week -3, previous low 23, down 26">
@@ -604,61 +611,187 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">4</span><div><h2>The podium was not in the pool, and seven of the ten drivers on offer scored nothing or cost a point.</h2><p>What each driver was worth, and how many hands he was in.</p></div></div>
-    <div class="pod"><div class="p"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="44" height="44" loading="lazy" style="width:44px;height:44px"><span class="pos">P1</span><b>George Russell</b><span class="no">not in the pool</span></div><div class="p"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="44" height="44" loading="lazy" style="width:44px;height:44px"><span class="pos">P2</span><b>Max Verstappen</b><span class="no">not in the pool</span></div><div class="p"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/I/ISAHAD01_Isack_Hadjar/isahad01.png.transform/1col/image.png" alt="" width="44" height="44" loading="lazy" style="width:44px;height:44px"><span class="pos">P3</span><b>Isack Hadjar</b><span class="no">not in the pool</span></div></div>
-    <div class="acts" role="group" aria-label="Chart 4 view">
-      <button class="act" aria-pressed="true" data-k="per">A pick</button>
-      <button class="act" aria-pressed="false" data-k="total">Whole league</button>
+    <div class="ch"><span class="num">4</span><div><h2>Lindblad was F5 driver of the week with 168 points, the lowest winning total of the season and less than half the previous low.</h2><p>Every driver in the pool earns each of his pickers the same points, and adding those up across all 48 hands gives his league total for the week, which is how the driver of the week is named. Fourteen rounds in, the driver of the week had never scored the league fewer than 368, including 4 weeks over 850. And Lindblad's 168 came off 28 pickers at 6 points each: the best driver in the pool finished seventh.</p></div></div>
+    <div class="sub">Driver of the week, every week</div>
+    <div class="cols wide">
+    <div class="grid"><span style="bottom:0%"><i>0</i></span><span style="bottom:22.22222222222222%"><i>200</i></span><span style="bottom:44.44444444444444%"><i>400</i></span><span style="bottom:66.66666666666666%"><i>600</i></span><span style="bottom:88.88888888888889%"><i>800</i></span></div>
+    <div class="col" style="--i:0" data-tip="Belgian Grand Prix, round 10: Andrea Kimi Antonelli, 900 across the league, 25 a pick for 36 pickers">
+      <span class="bw"><span class="cv on" style="bottom:calc(100% + 3px)">900</span><span class="cb" style="height:100%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Belgium</span>
+    </div><div class="col" style="--i:1" data-tip="Austrian Grand Prix, round 8: George Russell, 875 across the league, 25 a pick for 35 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(97.22222222222221% + 3px)">875</span><span class="cb" style="height:97.22222222222221%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Austria</span>
+    </div><div class="col" style="--i:2" data-tip="Spanish Grand Prix, round 14: Max Verstappen, 864 across the league, 18 a pick for 48 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(96% + 3px)">864</span><span class="cb" style="height:96%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Spain</span>
+    </div><div class="col" style="--i:3" data-tip="Japanese Grand Prix, round 3: Andrea Kimi Antonelli, 850 across the league, 25 a pick for 34 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(94.44444444444444% + 3px)">850</span><span class="cb" style="height:94.44444444444444%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Japan</span>
+    </div><div class="col" style="--i:4" data-tip="Hungarian Grand Prix, round 11: Max Verstappen, 774 across the league, 18 a pick for 43 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(86% + 3px)">774</span><span class="cb" style="height:86%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Hungary</span>
+    </div><div class="col" style="--i:5" data-tip="Australian Grand Prix, round 1: Andrea Kimi Antonelli, 756 across the league, 18 a pick for 42 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(84% + 3px)">756</span><span class="cb" style="height:84%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Australia</span>
+    </div><div class="col" style="--i:6" data-tip="Italian Grand Prix, round 13: Max Verstappen, 705 across the league, 15 a pick for 47 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(78.33333333333333% + 3px)">705</span><span class="cb" style="height:78.33333333333333%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Monza</span>
+    </div><div class="col" style="--i:7" data-tip="Canadian Grand Prix, round 5: Max Verstappen, 690 across the league, 15 a pick for 46 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(76.66666666666667% + 3px)">690</span><span class="cb" style="height:76.66666666666667%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Canada</span>
+    </div><div class="col" style="--i:8" data-tip="Chinese Grand Prix, round 2: George Russell, 684 across the league, 18 a pick for 38 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(76% + 3px)">684</span><span class="cb" style="height:76%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">China</span>
+    </div><div class="col" style="--i:9" data-tip="Monaco Grand Prix, round 6: Pierre Gasly, 645 across the league, 15 a pick for 43 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(71.66666666666667% + 3px)">645</span><span class="cb" style="height:71.66666666666667%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Monaco</span>
+    </div><div class="col" style="--i:10" data-tip="Spanish Grand Prix, round 7: George Russell, 594 across the league, 18 a pick for 33 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(66% + 3px)">594</span><span class="cb" style="height:66%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Spain</span>
+    </div><div class="col" style="--i:11" data-tip="British Grand Prix, round 9: George Russell, 594 across the league, 18 a pick for 33 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(66% + 3px)">594</span><span class="cb" style="height:66%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Britain</span>
+    </div><div class="col" style="--i:12" data-tip="Miami Grand Prix, round 4: Andrea Kimi Antonelli, 525 across the league, 25 a pick for 21 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(58.333333333333336% + 3px)">525</span><span class="cb" style="height:58.333333333333336%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Miami</span>
+    </div><div class="col" style="--i:13" data-tip="Dutch Grand Prix, round 12: Oscar Piastri, 368 across the league, 8 a pick for 46 pickers">
+      <span class="bw"><span class="cv" style="bottom:calc(40.88888888888889% + 3px)">368</span><span class="cb" style="height:40.88888888888889%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Zandvoort</span>
+    </div><div class="col me" style="--i:14" data-tip="Azerbaijan Grand Prix, round 15: Arvid Lindblad, 168 across the league, 6 a pick for 28 pickers">
+      <span class="bw"><span class="cv on" style="bottom:calc(18.666666666666668% + 3px)">168</span><span class="cb" style="height:18.666666666666668%"></span></span>
+      <span class="cp"><span class="head head-t" style="width:26px;height:26px">AL</span></span>
+      <span class="cl">Azerbaijan</span>
     </div>
+  </div>
+    <div class="sub" style="margin-top:18px">The worst driver of the week, every week</div>
+    <p class="note" style="margin:0 0 6px">Gasly's -40 was not the worst a driver has done. Norris cost the league -47 in China, and Gasly himself did -40 in Miami. And the mechanism is the same every time: a driver who finishes outside the points costs a point to everybody holding him, so the damage is the size of his following.</p>
+    <div class="cols down">
+    <div class="grid"><span style="top:0%"><i>0</i></span><span style="top:20%"><i>-10</i></span><span style="top:40%"><i>-20</i></span><span style="top:60%"><i>-30</i></span><span style="top:80%"><i>-40</i></span><span style="top:100%"><i>-50</i></span></div>
+    <div class="col" style="--i:0" data-tip="Chinese Grand Prix, round 2: Lando Norris, -47 across the league, -1 a pick for 47 pickers">
+      <span class="bw"><span class="cv on" style="top:calc(94% + 3px)">-47</span><span class="cb" style="height:94%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">China</span>
+    </div><div class="col" style="--i:1" data-tip="Dutch Grand Prix, round 12: Max Verstappen, -47 across the league, -1 a pick for 47 pickers">
+      <span class="bw"><span class="cv" style="top:calc(94% + 3px)">-47</span><span class="cb" style="height:94%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Zandvoort</span>
+    </div><div class="col" style="--i:2" data-tip="Miami Grand Prix, round 4: Pierre Gasly, -40 across the league, -1 a pick for 40 pickers">
+      <span class="bw"><span class="cv" style="top:calc(80% + 3px)">-40</span><span class="cb" style="height:80%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Miami</span>
+    </div><div class="col me" style="--i:3" data-tip="Azerbaijan Grand Prix, round 15: Pierre Gasly, -40 across the league, -1 a pick for 40 pickers">
+      <span class="bw"><span class="cv on" style="top:calc(80% + 3px)">-40</span><span class="cb" style="height:80%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Azerbaijan</span>
+    </div><div class="col" style="--i:4" data-tip="Japanese Grand Prix, round 3: Oliver Bearman, -34 across the league, -1 a pick for 34 pickers">
+      <span class="bw"><span class="cv" style="top:calc(68% + 3px)">-34</span><span class="cb" style="height:68%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OLIBEA01_Oliver_Bearman/olibea01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Japan</span>
+    </div><div class="col" style="--i:5" data-tip="Canadian Grand Prix, round 5: George Russell, -33 across the league, -1 a pick for 33 pickers">
+      <span class="bw"><span class="cv" style="top:calc(66% + 3px)">-33</span><span class="cb" style="height:66%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Canada</span>
+    </div><div class="col" style="--i:6" data-tip="Monaco Grand Prix, round 6: Charles Leclerc, -33 across the league, -1 a pick for 33 pickers">
+      <span class="bw"><span class="cv" style="top:calc(66% + 3px)">-33</span><span class="cb" style="height:66%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Monaco</span>
+    </div><div class="col" style="--i:7" data-tip="Australian Grand Prix, round 1: Isack Hadjar, -30 across the league, -1 a pick for 30 pickers">
+      <span class="bw"><span class="cv" style="top:calc(60% + 3px)">-30</span><span class="cb" style="height:60%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/I/ISAHAD01_Isack_Hadjar/isahad01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Australia</span>
+    </div><div class="col" style="--i:8" data-tip="British Grand Prix, round 9: Alex Albon, -11 across the league, -1 a pick for 11 pickers">
+      <span class="bw"><span class="cv" style="top:calc(22% + 3px)">-11</span><span class="cb" style="height:22%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ALEALB01_Alexander_Albon/alealb01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Britain</span>
+    </div><div class="col" style="--i:9" data-tip="Spanish Grand Prix, round 7: Alex Albon, -10 across the league, -1 a pick for 10 pickers">
+      <span class="bw"><span class="cv" style="top:calc(20% + 3px)">-10</span><span class="cb" style="height:20%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ALEALB01_Alexander_Albon/alealb01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Spain</span>
+    </div><div class="col" style="--i:10" data-tip="Austrian Grand Prix, round 8: Carlos Sainz, -10 across the league, -1 a pick for 10 pickers">
+      <span class="bw"><span class="cv" style="top:calc(20% + 3px)">-10</span><span class="cb" style="height:20%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Austria</span>
+    </div><div class="col" style="--i:11" data-tip="Belgian Grand Prix, round 10: George Russell, -6 across the league, -1 a pick for 6 pickers">
+      <span class="bw"><span class="cv" style="top:calc(12% + 3px)">-6</span><span class="cb" style="height:12%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Belgium</span>
+    </div><div class="col" style="--i:12" data-tip="Italian Grand Prix, round 13: Charles Leclerc, -6 across the league, -1 a pick for 6 pickers">
+      <span class="bw"><span class="cv" style="top:calc(12% + 3px)">-6</span><span class="cb" style="height:12%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Monza</span>
+    </div><div class="col" style="--i:13" data-tip="Spanish Grand Prix, round 14: Carlos Sainz, -4 across the league, -1 a pick for 4 pickers">
+      <span class="bw"><span class="cv" style="top:calc(8% + 3px)">-4</span><span class="cb" style="height:8%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Spain</span>
+    </div><div class="col" style="--i:14" data-tip="Hungarian Grand Prix, round 11: Franco Colapinto, 0 across the league, 0 a pick for 15 pickers">
+      <span class="bw"><span class="cv" style="top:calc(0% + 3px)">0</span><span class="cb" style="height:0%"></span></span>
+      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FRACOL01_Franco_Colapinto/fracol01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
+      <span class="cl">Hungary</span>
+    </div>
+  </div>
+    <div class="sub" style="margin-top:18px">This week's pool, across the league</div>
     <div class="legend"><span><i class="blue"></i>Scored</span><span><i class="muted"></i>Nothing</span><span><i class="pink"></i>Cost a point</span></div>
     <div id="c4"><div class="row" data-tip="Charles Leclerc: +12 a pick, picked by 7 of 48, +84 across the league" style="--i:0">
-    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Leclerc<small>top pool</small></span></div>
-    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar blue" style="left:7.6923076923076925%;width:92.3076923076923%" data-per="12" data-total="84"></span></div>
-    <div class="val blue">12</div>
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Leclerc<small>7 pickers</small></span></div>
+    <div class="track"><span class="zero" style="left:19.047619047619047%"></span><span class="bar blue" style="left:19.047619047619047%;width:40%"></span></div>
+    <div class="val blue">84</div>
   </div><div class="row" data-tip="Lewis Hamilton: +8 a pick, picked by 14 of 48, +112 across the league" style="--i:1">
-    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Hamilton<small>top pool</small></span></div>
-    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar blue" style="left:7.6923076923076925%;width:61.53846153846154%" data-per="8" data-total="112"></span></div>
-    <div class="val blue">8</div>
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Hamilton<small>14 pickers</small></span></div>
+    <div class="track"><span class="zero" style="left:19.047619047619047%"></span><span class="bar blue" style="left:19.047619047619047%;width:53.333333333333336%"></span></div>
+    <div class="val blue">112</div>
   </div><div class="row" data-tip="Arvid Lindblad: +6 a pick, picked by 28 of 48, +168 across the league" style="--i:2">
-    <div class="lab"><span class="head head-t" style="width:34px;height:34px">AL</span><span class="lt">Lindblad<small>midfield</small></span></div>
-    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar blue" style="left:7.6923076923076925%;width:46.15384615384615%" data-per="6" data-total="168"></span></div>
-    <div class="val blue">6</div>
+    <div class="lab"><span class="head head-t" style="width:34px;height:34px">AL</span><span class="lt">Lindblad<small>28 pickers</small></span></div>
+    <div class="track"><span class="zero" style="left:19.047619047619047%"></span><span class="bar blue" style="left:19.047619047619047%;width:80%"></span></div>
+    <div class="val blue">168</div>
   </div><div class="row" data-tip="Oscar Piastri: 0 a pick, picked by 46 of 48, 0 across the league" style="--i:3">
-    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Piastri<small>midfield</small></span></div>
-    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar muted" style="left:7.6923076923076925%;width:0%" data-per="0" data-total="0"></span></div>
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Piastri<small>46 pickers</small></span></div>
+    <div class="track"><span class="zero" style="left:19.047619047619047%"></span><span class="bar muted" style="left:19.047619047619047%;width:0%"></span></div>
     <div class="val muted">0</div>
   </div><div class="row" data-tip="Liam Lawson: 0 a pick, picked by 45 of 48, 0 across the league" style="--i:4">
-    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LIALAW01_Liam_Lawson/lialaw01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Lawson<small>midfield</small></span></div>
-    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar muted" style="left:7.6923076923076925%;width:0%" data-per="0" data-total="0"></span></div>
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LIALAW01_Liam_Lawson/lialaw01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Lawson<small>45 pickers</small></span></div>
+    <div class="track"><span class="zero" style="left:19.047619047619047%"></span><span class="bar muted" style="left:19.047619047619047%;width:0%"></span></div>
     <div class="val muted">0</div>
   </div><div class="row" data-tip="Gabriel Bortoleto: 0 a pick, picked by 6 of 48, 0 across the league" style="--i:5">
-    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GABBOR01_Gabriel_Bortoleto/gabbor01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Bortoleto<small>midfield</small></span></div>
-    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar muted" style="left:7.6923076923076925%;width:0%" data-per="0" data-total="0"></span></div>
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GABBOR01_Gabriel_Bortoleto/gabbor01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Bortoleto<small>6 pickers</small></span></div>
+    <div class="track"><span class="zero" style="left:19.047619047619047%"></span><span class="bar muted" style="left:19.047619047619047%;width:0%"></span></div>
     <div class="val muted">0</div>
   </div><div class="row" data-tip="Pierre Gasly: -1 a pick, picked by 40 of 48, -40 across the league" style="--i:6">
-    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Gasly<small>midfield</small></span></div>
-    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar pink" style="left:0%;width:7.6923076923076925%" data-per="-1" data-total="-40"></span></div>
-    <div class="val pink">-1</div>
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Gasly<small>40 pickers</small></span></div>
+    <div class="track"><span class="zero" style="left:19.047619047619047%"></span><span class="bar pink" style="left:0%;width:19.047619047619047%"></span></div>
+    <div class="val pink">-40</div>
   </div><div class="row" data-tip="Lando Norris: -1 a pick, picked by 27 of 48, -27 across the league" style="--i:7">
-    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Norris<small>top pool</small></span></div>
-    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar pink" style="left:0%;width:7.6923076923076925%" data-per="-1" data-total="-27"></span></div>
-    <div class="val pink">-1</div>
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Norris<small>27 pickers</small></span></div>
+    <div class="track"><span class="zero" style="left:19.047619047619047%"></span><span class="bar pink" style="left:6.190476190476192%;width:12.857142857142856%"></span></div>
+    <div class="val pink">-27</div>
   </div><div class="row" data-tip="Franco Colapinto: -1 a pick, picked by 19 of 48, -19 across the league" style="--i:8">
-    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FRACOL01_Franco_Colapinto/fracol01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Colapinto<small>midfield</small></span></div>
-    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar pink" style="left:0%;width:7.6923076923076925%" data-per="-1" data-total="-19"></span></div>
-    <div class="val pink">-1</div>
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FRACOL01_Franco_Colapinto/fracol01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Colapinto<small>19 pickers</small></span></div>
+    <div class="track"><span class="zero" style="left:19.047619047619047%"></span><span class="bar pink" style="left:10%;width:9.047619047619047%"></span></div>
+    <div class="val pink">-19</div>
   </div><div class="row" data-tip="Lance Stroll: -1 a pick, picked by 8 of 48, -8 across the league" style="--i:9">
-    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANSTR01_Lance_Stroll/lanstr01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Stroll<small>midfield</small></span></div>
-    <div class="track"><span class="zero" style="left:7.6923076923076925%"></span><span class="bar pink" style="left:0%;width:7.6923076923076925%" data-per="-1" data-total="-8"></span></div>
-    <div class="val pink">-1</div>
+    <div class="lab"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANSTR01_Lance_Stroll/lanstr01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="lt">Stroll<small>8 pickers</small></span></div>
+    <div class="track"><span class="zero" style="left:19.047619047619047%"></span><span class="bar pink" style="left:15.238095238095237%;width:3.8095238095238098%"></span></div>
+    <div class="val pink">-8</div>
   </div></div>
-    <p class="note">Three of ten drivers scored. <b>Piastri and Lawson</b>, in 46 and 45 hands, returned nothing. <b>Gasly</b> was on 40 of 48 and cost every one of them. <b>Norris</b> was the top pick for 27 people.</p>
   </div>
 </section>
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">5</span><div><h2>No team scored more than 26, and Garra Dynamics became the first to finish a week below zero.</h2><p>Both players' driver points, and BOX BOX, which was a push for everyone.</p></div></div>
+    <div class="ch"><span class="num">5</span><div><h2>No team scored more than 26, and Garra Dynamics became the first to finish a week below zero.</h2><p>A team's score is both players' driver points plus BOX BOX, and with BOX BOX a push for everyone this week the whole league ran on drivers alone. No team reached 27, including eleven of the 24 that finished under ten. And Garra Dynamics finished on -6: the first team ever to end a week below zero.</p></div></div>
     <div class="legend"><span><i class="blue"></i>20 or more</span><span><i class="muted"></i>Under 20</span><span><i class="pink"></i>Below zero</span></div>
     <div id="c5"><div class="row" data-tip="Garra Dynamics: -6. Ryan Kohli -3, Francisco Soldavini -3, BOX BOX a push" style="--i:0">
     <div class="lab"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/2cfbbd19-61c8-4c6a-87c1-6367a3f5483a.png?t=1772676769760" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Garra</span></div>
@@ -763,7 +896,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">6</span><div><h2>Brett Dillon won the week with 30, the lowest winning score the league has seen.</h2><p>The high score each week and who posted it.</p></div></div>
+    <div class="ch"><span class="num">6</span><div><h2>Brett Dillon won the week with 30, the lowest winning score the league has seen.</h2><p>Somebody wins every F5 week, and through fourteen rounds the winning score had never been under 48. Brett Dillon won this one with 30, including a best-finish bonus that only two people collected. And the drop is bigger than it looks: seven of the season's weekly winners scored 60 or more.</p></div></div>
     <div id="c6"><div class="row" data-tip="Australian Grand Prix: Formula5 Bot led the week with 61" style="--i:0">
     <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/857170ed-6313-40de-9b7e-9d41b339e690.png?t=1773084768500" alt="" width="28" height="28" loading="lazy" style="width:28px;height:28px"><span class="lt">Australia<small>R1 · Bot</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:76.25%"></span></div>
@@ -831,7 +964,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">7</span><div><h2>The twenty lowest scores in league history all happened in Baku.</h2><p>Before this week the floor was 9.</p></div></div>
+    <div class="ch"><span class="num">7</span><div><h2>The twenty lowest scores in league history all happened in Baku.</h2><p>League history is 15 rounds and 720 scores, and the twenty lowest are now all from one afternoon. Eight of them are the minus threes, including both Kohlis. And the old record low no longer makes the list: 9 would have been the 37th-lowest score of the week.</p></div></div>
     <div class="wall"><div class="w" data-tip="Francisco Soldavini, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/40d29a8a-3349-4d7a-87b9-e74cedda7c19.png?t=1775102877270" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>Soldavini</div><div class="w" data-tip="Scott Schertler, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c3eb5cac-805e-4dc4-be56-cade175e0f0d.png?t=1772682658405" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>Schertler</div><div class="w" data-tip="Paul Kohli, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e44c9473-d593-4339-ba0e-64f1ea081865.png?t=1773533408532" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>P. Kohli</div><div class="w" data-tip="Martin Nobar, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/9ff55d39-139e-4b44-b305-e48ddd44e913.png?t=1773359414261" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>M. Nobar</div><div class="w" data-tip="Sam Bottoms, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>Bottoms</div><div class="w" data-tip="Evie Ishak, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/382172b9-a2ad-472d-b823-1cdcb77bc713.png?t=1772503455737" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>E. Ishak</div><div class="w" data-tip="Ryan Kohli, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2074a773-5b33-4aac-83bf-7682ead3d638.png?t=1772686275949" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>R. Kohli</div><div class="w" data-tip="Chris Fondacaro, round 15: -3"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c55c6192-2f81-4188-8e00-705b8a5744e4.png?t=1772503743937" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px;border-color:#ff2d95"><b>-3</b>Fondacaro</div><div class="w" data-tip="Lucia Thompson, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/82aa6e87-b661-4f83-ae1a-5d91240abd02.png?t=1772680284304" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>L. Thompson</div><div class="w" data-tip="Matilda Luton, round 15: 4"><span class="face face-t" style="width:40px;height:40px;font-size:15px">ML</span><b>+4</b>Luton</div><div class="w" data-tip="Matteo Thompson, round 15: 4"><span class="face face-t" style="width:40px;height:40px;font-size:15px">MT</span><b>+4</b>M. Thompson</div><div class="w" data-tip="Kevin Coolidge, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/719da11a-6cd8-42f4-aba5-a3bd95742a1a.png?t=1772503404813" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Coolidge</div><div class="w" data-tip="Joe McGlynn, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/447a215c-371d-4212-95e1-dcef174e95f9.png?t=1772503336906" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>McGlynn</div><div class="w" data-tip="Maggie Ball, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/b8a89653-d99b-41e5-89ff-4f2ac889597b.png?t=1773359248972" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Ball</div><div class="w" data-tip="Zack Girgis, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ca16dfb6-d535-4cd9-8a2d-1597eca5fc59.png?t=1772503392387" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Girgis</div><div class="w" data-tip="Theo Ishak, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/5e8e105d-b2bb-4495-9f45-04bfce6e4587.png?t=1772682483157" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>T. Ishak</div><div class="w" data-tip="Moses Abdelshaid, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/48b723a2-5ec3-417d-930c-178789a46e81.png?t=1775102938119" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Abdelshaid</div><div class="w" data-tip="Rafik Zarifa, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/34ed0f7d-81ed-4a72-b018-f25941106902.png?t=1772680006315" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Zarifa</div><div class="w" data-tip="Anthony Carnesecca, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/da8b5649-9209-4d28-a31c-2aa8fc1eaa4b.png?t=1772686091799" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>Carnesecca</div><div class="w" data-tip="Andy Thompson, round 15: 4"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/33d73ea9-a9e8-4050-9ffb-97cccab68487.png?t=1787202390496" alt="" width="40" height="40" loading="lazy" style="width:40px;height:40px"><b>+4</b>A. Thompson</div></div>
   </div>
 </section>
@@ -839,7 +972,7 @@ tr.hl td{color:var(--pink)}
 <section>
   <div class="divh">The matchups</div>
   <h2 style="font-size:20px;line-height:1.2;margin-bottom:4px">Twelve matchups, no draws, and nothing closer than 4 points.</h2>
-  <p class="note" style="margin:0 0 10px">Sorted closest first. BOX BOX a push in all twelve.</p>
+  <p class="note" style="margin:0 0 10px">Twelve matchups ran on Saturday, and with BOX BOX a push every one of them came down to driver points alone. Nothing was drawn, including the closest, which finished 12 to 8. And Prestissimo Veloce won theirs by scoring exactly one point: Garra Dynamics scored six fewer than nothing. Closest first.</p>
   <div class="mu ch" style="--i:0">
     <div class="side won"><img class="logo" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/team-logos/8ae6c08b-ce0e-4383-91c2-ceb17ba3db1a.png?t=1772417238558" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"><span class="tn">Juicero SV</span><span class="seat">OVER</span></div>
     <div class="score"><span class="blue">12</span><span class="v">v</span><span class="">8</span></div>
@@ -893,7 +1026,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">8</span><div><h2>Every score this week, and every round's averages.</h2><p>The tables the charts were drawn from.</p></div></div>
+    <div class="ch"><span class="num">8</span><div><h2>Every score this week, and every round's averages.</h2><p>Everything above comes from two tables, and both are here. The first is every player's score this week broken into its parts, including the previous season low beside it. And the second is every round's averages: the season the charts were drawn from.</p></div></div>
     <details open><summary>This week, all 48</summary><div class="tw"><table><thead><tr><th>#</th><th>Player</th><th>Total</th><th>Top</th><th>Mid</th><th>Order</th><th>Best</th><th>Needle</th><th>Bonus</th><th>Prev low</th></tr></thead><tbody><tr><td>1</td><td>Chris Fondacaro</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>18</td></tr><tr><td>2</td><td>Evie Ishak</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>18</td></tr><tr><td>3</td><td>Francisco Soldavini</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>23</td></tr><tr><td>4</td><td>Martin Nobar</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>22</td></tr><tr><td>5</td><td>Paul Kohli</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>6</td><td>Ryan Kohli</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>7</td><td>Sam Bottoms</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>8</td><td>Scott Schertler</td><td class="pink"><b>-3</b></td><td>-1</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>18</td></tr><tr><td>9</td><td>Andy Thompson</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>15</td></tr><tr><td>10</td><td>Anthony Carnesecca</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>18</td></tr><tr><td>11</td><td>Harold Gutmann</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>21</td></tr><tr><td>12</td><td>Jack Civitts</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>22</td></tr><tr><td>13</td><td>Joe Hanna</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>25</td></tr><tr><td>14</td><td>Joe McGlynn</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>26</td></tr><tr><td>15</td><td>Kevin Coolidge</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>16</td><td>Lucia Thompson</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>17</td><td>Maggie Ball</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>18</td><td>Matilda Luton</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>13</td></tr><tr><td>19</td><td>Matteo Thompson</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>22</td></tr><tr><td>20</td><td>Max Reisinger</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>23</td></tr><tr><td>21</td><td>Moses Abdelshaid</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>23</td></tr><tr><td>22</td><td>Nick Brody</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>19</td></tr><tr><td>23</td><td>Rafik Zarifa</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>18</td></tr><tr><td>24</td><td>Theo Ishak</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>24</td></tr><tr><td>25</td><td>Zack Girgis</td><td class=""><b>4</b></td><td>-1</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>26</td><td>Brian Dong</td><td class=""><b>5</b></td><td>8</td><td>-3</td><td>0</td><td>0</td><td>0</td><td>0</td><td>9</td></tr><tr><td>27</td><td>Danny Bowers</td><td class=""><b>5</b></td><td>-1</td><td>6</td><td>0</td><td>0</td><td>0</td><td>0</td><td>15</td></tr><tr><td>28</td><td>Pavly Attalah</td><td class=""><b>5</b></td><td>8</td><td>-3</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>29</td><td>Ramy Stephanos</td><td class=""><b>5</b></td><td>-1</td><td>6</td><td>0</td><td>0</td><td>0</td><td>0</td><td>13</td></tr><tr><td>30</td><td>Dan Patry</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>17</td></tr><tr><td>31</td><td>George Fahmy</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>22</td></tr><tr><td>32</td><td>Grant Wong</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>13</td></tr><tr><td>33</td><td>Kerolos Nakhla</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>21</td></tr><tr><td>34</td><td>Ronnie Nobar</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>23</td></tr><tr><td>35</td><td>Stacy Michaelsen</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>25</td></tr><tr><td>36</td><td>TJ Donato</td><td class=""><b>6</b></td><td>8</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>20</td></tr><tr><td>37</td><td>Formula5 Bot</td><td class=""><b>10</b></td><td>12</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>25</td></tr><tr><td>38</td><td>Mena Yousef</td><td class=""><b>10</b></td><td>12</td><td>-2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>24</td></tr><tr><td>39</td><td>Heather Ishak</td><td class=""><b>12</b></td><td>12</td><td>-1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>18</td></tr><tr><td>40</td><td>Larry Noel</td><td class=""><b>15</b></td><td>8</td><td>5</td><td>0</td><td>0</td><td>0</td><td>2</td><td>23</td></tr><tr><td>41</td><td>Alicia Cho</td><td class=""><b>16</b></td><td>8</td><td>5</td><td>0</td><td>0</td><td>0</td><td>3</td><td>20</td></tr><tr><td>42</td><td>Maggie Mudge</td><td class=""><b>17</b></td><td>8</td><td>5</td><td>0</td><td>0</td><td>0</td><td>4</td><td>20</td></tr><tr><td>43</td><td>Chris Malek</td><td class=""><b>18</b></td><td>8</td><td>5</td><td>0</td><td>0</td><td>0</td><td>5</td><td>23</td></tr><tr><td>44</td><td>Anthony Zamary</td><td class=""><b>19</b></td><td>8</td><td>5</td><td>0</td><td>0</td><td>0</td><td>6</td><td>11</td></tr><tr><td>45</td><td>Andrew Ishak</td><td class=""><b>24</b></td><td>12</td><td>5</td><td>0</td><td>0</td><td>0</td><td>7</td><td>18</td></tr><tr><td>46</td><td>Aditya Satish</td><td class=""><b>25</b></td><td>12</td><td>5</td><td>0</td><td>0</td><td>0</td><td>8</td><td>14</td></tr><tr><td>47</td><td>Krista Nabil</td><td class=""><b>29</b></td><td>12</td><td>5</td><td>0</td><td>3</td><td>0</td><td>9</td><td>22</td></tr><tr><td>48</td><td>Brett Dillon</td><td class=""><b>30</b></td><td>12</td><td>5</td><td>0</td><td>3</td><td>0</td><td>10</td><td>22</td></tr></tbody></table></div></details>
     <details><summary>Every round</summary><div class="tw"><table><thead><tr><th>R</th><th>Race</th><th>Avg</th><th>Median</th><th>High</th><th>Low</th><th>Drivers only</th><th>Team avg</th></tr></thead><tbody><tr class=""><td>1</td><td>Australian Grand Prix</td><td>38.8</td><td>40</td><td>61</td><td>13</td><td>36.1</td><td>74.2</td></tr><tr class=""><td>2</td><td>Chinese Grand Prix</td><td>32.1</td><td>31</td><td>52</td><td>21</td><td>31.0</td><td>62.0</td></tr><tr class=""><td>3</td><td>Japanese Grand Prix</td><td>42.5</td><td>44</td><td>67</td><td>15</td><td>41.3</td><td>84.7</td></tr><tr class=""><td>4</td><td>Miami Grand Prix</td><td>31.2</td><td>27</td><td>57</td><td>13</td><td>28.1</td><td>58.3</td></tr><tr class=""><td>5</td><td>Canadian Grand Prix</td><td>26.1</td><td>25.5</td><td>48</td><td>11</td><td>23.4</td><td>48.8</td></tr><tr class=""><td>6</td><td>Monaco Grand Prix</td><td>32.2</td><td>35</td><td>64</td><td>9</td><td>31.1</td><td>64.2</td></tr><tr class=""><td>7</td><td>Spanish Grand Prix</td><td>44.0</td><td>45.5</td><td>68</td><td>17</td><td>42.3</td><td>86.5</td></tr><tr class=""><td>8</td><td>Austrian Grand Prix</td><td>42.8</td><td>46</td><td>67</td><td>19</td><td>40.5</td><td>83.1</td></tr><tr class=""><td>9</td><td>British Grand Prix</td><td>35.0</td><td>34</td><td>54</td><td>22</td><td>33.8</td><td>69.6</td></tr><tr class=""><td>10</td><td>Belgian Grand Prix</td><td>48.4</td><td>53</td><td>70</td><td>19</td><td>47.3</td><td>96.6</td></tr><tr class=""><td>11</td><td>Hungarian Grand Prix</td><td>41.6</td><td>41</td><td>74</td><td>18</td><td>39.4</td><td>80.9</td></tr><tr class=""><td>12</td><td>Dutch Grand Prix</td><td>31.4</td><td>29</td><td>54</td><td>16</td><td>28.6</td><td>59.3</td></tr><tr class=""><td>13</td><td>Italian Grand Prix</td><td>41.5</td><td>43</td><td>58</td><td>24</td><td>39.3</td><td>80.7</td></tr><tr class=""><td>14</td><td>Spanish Grand Prix</td><td>40.9</td><td>39</td><td>59</td><td>30</td><td>38.4</td><td>78.6</td></tr><tr class="hl"><td>15</td><td>Azerbaijan Grand Prix</td><td>6.9</td><td>4</td><td>30</td><td>-3</td><td>5.8</td><td>11.5</td></tr></tbody></table></div></details>
   </div>
@@ -918,18 +1051,10 @@ tr.hl td{color:var(--pink)}
   c1.parentNode.querySelectorAll('.act[data-k]').forEach(function(b){b.addEventListener('click',function(){
     var k=b.getAttribute('data-k');var max=+c1.getAttribute('data-max-'+k);
     b.parentNode.querySelectorAll('.act').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
-    var step=max>60?20:10,g='';for(var t=0;t<=max;t+=step){g+='<span style="bottom:'+(t/max*100)+'%"><i>'+t+'</i></span>';}
+    var step=[10,20,50,100,200,500].find(function(st){return max/st<=6;})||1000,g='';for(var t=0;t<=max;t+=step){g+='<span style="bottom:'+(t/max*100)+'%"><i>'+t+'</i></span>';}
     c1.querySelector('.grid').innerHTML=g;
     c1.querySelectorAll('.col').forEach(function(r){var bar=r.querySelector('.cb');var v=+bar.getAttribute('data-'+k);
       bar.style.height=(v/max*100)+'%';var cv=r.querySelector('.cv');cv.textContent=(Math.round(v*10)/10).toFixed(1);cv.style.bottom='calc('+(v/max*100)+'% + 3px)';});
-  });});
-  // Chart 4: a pick, or the whole league.
-  var c4=document.getElementById('c4');
-  c4.parentNode.querySelectorAll('.act[data-k]').forEach(function(b){b.addEventListener('click',function(){
-    var k=b.getAttribute('data-k');var min=k==='per'?-1:-40,max=k==='per'?12:168,span=max-min,zero=(0-min)/span*100;
-    b.parentNode.querySelectorAll('.act').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
-    c4.querySelectorAll('.row').forEach(function(r){var bar=r.querySelector('.bar');var v=+bar.getAttribute('data-'+k);var w=Math.abs(v)/span*100;
-      bar.style.left=(v>=0?zero:zero-w)+'%';bar.style.width=w+'%';r.querySelector('.zero').style.left=zero+'%';r.querySelector('.val').textContent=(v>0?'+':'')+v;});
   });});
   // Chart 3: fifteen biggest drops, or everyone.
   var m=document.getElementById('c3more');
