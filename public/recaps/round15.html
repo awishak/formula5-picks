@@ -35,6 +35,18 @@ h1{font-family:var(--fn);font-weight:700;font-size:clamp(26px,7.4vw,40px);line-h
 .cp{display:flex;justify-content:center;margin-top:6px;min-height:0}
 .cp:empty{display:none}
 .sub{font-family:var(--fn);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin:10px 0 0}
+.drow{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:8px;height:42px;animation:fade .5s both;animation-delay:calc(var(--i)*35ms)}
+.dtrack{position:relative;height:42px;margin-right:18px}
+.dline{position:absolute;left:0;top:50%;height:1px;background:var(--border2)}
+.dmark{position:absolute;top:50%;transform:translate(-50%,-50%);display:flex}
+.dmark .head{width:34px;height:34px;border-color:var(--blue);box-shadow:0 0 8px rgba(0,217,255,.35)}
+.drow.me .dmark .head{border-color:var(--pink);box-shadow:0 0 10px rgba(255,45,149,.6)}
+.dlab{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:13px;line-height:1.1;display:flex;flex-direction:column}
+.dlab.flip{text-align:right;align-items:flex-end}
+.dlab b{font-weight:600;color:var(--text)}
+.dlab i{font-style:normal;font-family:var(--fn);font-weight:700;color:var(--blue)}
+.drow.me .dlab i{color:var(--pink)}
+.drow.me .lt{color:var(--pink)}
 .cols.wide{padding-left:36px}.cols.wide .grid span{left:36px}.cols.wide .grid span i{left:-36px}
 .cols.down .bw{align-items:flex-start;margin-top:0;margin-bottom:20px}
 .cols.down .cb{transform-origin:top;border-radius:0 0 3px 3px}
@@ -119,7 +131,7 @@ td:nth-child(2){font-family:var(--fd);font-size:14px;white-space:nowrap}
 tr.hl td{color:var(--pink)}
 .tw{overflow-x:auto}
 .foot{font-size:13px;color:var(--text3);margin-top:30px;line-height:1.5}
-@media (max-width:420px){.row{grid-template-columns:122px 1fr 42px;gap:6px}.row.db{grid-template-columns:110px 1fr 74px}.lt{font-size:13px}.tile .n{font-size:32px}.val{font-size:15px}}
+@media (max-width:420px){.drow{grid-template-columns:78px 1fr}.row{grid-template-columns:122px 1fr 42px;gap:6px}.row.db{grid-template-columns:110px 1fr 74px}.lt{font-size:13px}.tile .n{font-size:32px}.val{font-size:15px}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}}
 </style></head>
 <body>
@@ -613,134 +625,188 @@ tr.hl td{color:var(--pink)}
   <div class="card">
     <div class="ch"><span class="num">4</span><div><h2>Lindblad was F5 driver of the week with 168 points, the lowest winning total of the season and less than half the previous low.</h2><p>Every driver in the pool earns each of his pickers the same points, and adding those up across all 48 hands gives his league total for the week, which is how the driver of the week is named. Fourteen rounds in, the driver of the week had never scored the league fewer than 368, including 4 weeks over 850. And Lindblad's 168 came off 28 pickers at 6 points each: the best driver in the pool finished seventh.</p></div></div>
     <div class="sub">Driver of the week, every week</div>
-    <div class="cols wide">
-    <div class="grid"><span style="bottom:0%"><i>0</i></span><span style="bottom:22.22222222222222%"><i>200</i></span><span style="bottom:44.44444444444444%"><i>400</i></span><span style="bottom:66.66666666666666%"><i>600</i></span><span style="bottom:88.88888888888889%"><i>800</i></span></div>
-    <div class="col" style="--i:0" data-tip="Belgian Grand Prix, round 10: Andrea Kimi Antonelli, 900 across the league, 25 a pick for 36 pickers">
-      <span class="bw"><span class="cv on" style="bottom:calc(100% + 3px)">900</span><span class="cb" style="height:100%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Belgium</span>
-    </div><div class="col" style="--i:1" data-tip="Austrian Grand Prix, round 8: George Russell, 875 across the league, 25 a pick for 35 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(97.22222222222221% + 3px)">875</span><span class="cb" style="height:97.22222222222221%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Austria</span>
-    </div><div class="col" style="--i:2" data-tip="Spanish Grand Prix, round 14: Max Verstappen, 864 across the league, 18 a pick for 48 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(96% + 3px)">864</span><span class="cb" style="height:96%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Spain</span>
-    </div><div class="col" style="--i:3" data-tip="Japanese Grand Prix, round 3: Andrea Kimi Antonelli, 850 across the league, 25 a pick for 34 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(94.44444444444444% + 3px)">850</span><span class="cb" style="height:94.44444444444444%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Japan</span>
-    </div><div class="col" style="--i:4" data-tip="Hungarian Grand Prix, round 11: Max Verstappen, 774 across the league, 18 a pick for 43 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(86% + 3px)">774</span><span class="cb" style="height:86%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Hungary</span>
-    </div><div class="col" style="--i:5" data-tip="Australian Grand Prix, round 1: Andrea Kimi Antonelli, 756 across the league, 18 a pick for 42 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(84% + 3px)">756</span><span class="cb" style="height:84%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Australia</span>
-    </div><div class="col" style="--i:6" data-tip="Italian Grand Prix, round 13: Max Verstappen, 705 across the league, 15 a pick for 47 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(78.33333333333333% + 3px)">705</span><span class="cb" style="height:78.33333333333333%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Monza</span>
-    </div><div class="col" style="--i:7" data-tip="Canadian Grand Prix, round 5: Max Verstappen, 690 across the league, 15 a pick for 46 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(76.66666666666667% + 3px)">690</span><span class="cb" style="height:76.66666666666667%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Canada</span>
-    </div><div class="col" style="--i:8" data-tip="Chinese Grand Prix, round 2: George Russell, 684 across the league, 18 a pick for 38 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(76% + 3px)">684</span><span class="cb" style="height:76%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">China</span>
-    </div><div class="col" style="--i:9" data-tip="Monaco Grand Prix, round 6: Pierre Gasly, 645 across the league, 15 a pick for 43 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(71.66666666666667% + 3px)">645</span><span class="cb" style="height:71.66666666666667%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Monaco</span>
-    </div><div class="col" style="--i:10" data-tip="Spanish Grand Prix, round 7: George Russell, 594 across the league, 18 a pick for 33 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(66% + 3px)">594</span><span class="cb" style="height:66%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Spain</span>
-    </div><div class="col" style="--i:11" data-tip="British Grand Prix, round 9: George Russell, 594 across the league, 18 a pick for 33 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(66% + 3px)">594</span><span class="cb" style="height:66%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Britain</span>
-    </div><div class="col" style="--i:12" data-tip="Miami Grand Prix, round 4: Andrea Kimi Antonelli, 525 across the league, 25 a pick for 21 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(58.333333333333336% + 3px)">525</span><span class="cb" style="height:58.333333333333336%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Miami</span>
-    </div><div class="col" style="--i:13" data-tip="Dutch Grand Prix, round 12: Oscar Piastri, 368 across the league, 8 a pick for 46 pickers">
-      <span class="bw"><span class="cv" style="bottom:calc(40.88888888888889% + 3px)">368</span><span class="cb" style="height:40.88888888888889%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Zandvoort</span>
-    </div><div class="col me" style="--i:14" data-tip="Azerbaijan Grand Prix, round 15: Arvid Lindblad, 168 across the league, 6 a pick for 28 pickers">
-      <span class="bw"><span class="cv on" style="bottom:calc(18.666666666666668% + 3px)">168</span><span class="cb" style="height:18.666666666666668%"></span></span>
-      <span class="cp"><span class="head head-t" style="width:26px;height:26px">AL</span></span>
-      <span class="cl">Azerbaijan</span>
+    <div class="drow" style="--i:0" data-tip="Belgian Grand Prix, round 10: Andrea Kimi Antonelli, 900 across the league, 25 a pick for 36 pickers">
+    <div class="lab"><span class="lt">Belgium<small>R10</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:100%"></span>
+      <span class="dmark" style="left:100%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(0% + 22px)"><b>Antonelli</b><i>900</i></span>
+    </div>
+  </div><div class="drow" style="--i:1" data-tip="Austrian Grand Prix, round 8: George Russell, 875 across the league, 25 a pick for 35 pickers">
+    <div class="lab"><span class="lt">Austria<small>R8</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:97.22222222222221%"></span>
+      <span class="dmark" style="left:97.22222222222221%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(2.7777777777777857% + 22px)"><b>Russell</b><i>875</i></span>
+    </div>
+  </div><div class="drow" style="--i:2" data-tip="Spanish Grand Prix, round 14: Max Verstappen, 864 across the league, 18 a pick for 48 pickers">
+    <div class="lab"><span class="lt">Spain<small>R14</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:96%"></span>
+      <span class="dmark" style="left:96%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(4% + 22px)"><b>Verstappen</b><i>864</i></span>
+    </div>
+  </div><div class="drow" style="--i:3" data-tip="Japanese Grand Prix, round 3: Andrea Kimi Antonelli, 850 across the league, 25 a pick for 34 pickers">
+    <div class="lab"><span class="lt">Japan<small>R3</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:94.44444444444444%"></span>
+      <span class="dmark" style="left:94.44444444444444%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(5.555555555555557% + 22px)"><b>Antonelli</b><i>850</i></span>
+    </div>
+  </div><div class="drow" style="--i:4" data-tip="Hungarian Grand Prix, round 11: Max Verstappen, 774 across the league, 18 a pick for 43 pickers">
+    <div class="lab"><span class="lt">Hungary<small>R11</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:86%"></span>
+      <span class="dmark" style="left:86%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(14% + 22px)"><b>Verstappen</b><i>774</i></span>
+    </div>
+  </div><div class="drow" style="--i:5" data-tip="Australian Grand Prix, round 1: Andrea Kimi Antonelli, 756 across the league, 18 a pick for 42 pickers">
+    <div class="lab"><span class="lt">Australia<small>R1</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:84%"></span>
+      <span class="dmark" style="left:84%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(16% + 22px)"><b>Antonelli</b><i>756</i></span>
+    </div>
+  </div><div class="drow" style="--i:6" data-tip="Italian Grand Prix, round 13: Max Verstappen, 705 across the league, 15 a pick for 47 pickers">
+    <div class="lab"><span class="lt">Monza<small>R13</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:78.33333333333333%"></span>
+      <span class="dmark" style="left:78.33333333333333%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(21.66666666666667% + 22px)"><b>Verstappen</b><i>705</i></span>
+    </div>
+  </div><div class="drow" style="--i:7" data-tip="Canadian Grand Prix, round 5: Max Verstappen, 690 across the league, 15 a pick for 46 pickers">
+    <div class="lab"><span class="lt">Canada<small>R5</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:76.66666666666667%"></span>
+      <span class="dmark" style="left:76.66666666666667%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(23.33333333333333% + 22px)"><b>Verstappen</b><i>690</i></span>
+    </div>
+  </div><div class="drow" style="--i:8" data-tip="Chinese Grand Prix, round 2: George Russell, 684 across the league, 18 a pick for 38 pickers">
+    <div class="lab"><span class="lt">China<small>R2</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:76%"></span>
+      <span class="dmark" style="left:76%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(24% + 22px)"><b>Russell</b><i>684</i></span>
+    </div>
+  </div><div class="drow" style="--i:9" data-tip="Monaco Grand Prix, round 6: Pierre Gasly, 645 across the league, 15 a pick for 43 pickers">
+    <div class="lab"><span class="lt">Monaco<small>R6</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:71.66666666666667%"></span>
+      <span class="dmark" style="left:71.66666666666667%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(28.33333333333333% + 22px)"><b>Gasly</b><i>645</i></span>
+    </div>
+  </div><div class="drow" style="--i:10" data-tip="Spanish Grand Prix, round 7: George Russell, 594 across the league, 18 a pick for 33 pickers">
+    <div class="lab"><span class="lt">Spain<small>R7</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:66%"></span>
+      <span class="dmark" style="left:66%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(34% + 22px)"><b>Russell</b><i>594</i></span>
+    </div>
+  </div><div class="drow" style="--i:11" data-tip="British Grand Prix, round 9: George Russell, 594 across the league, 18 a pick for 33 pickers">
+    <div class="lab"><span class="lt">Britain<small>R9</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:66%"></span>
+      <span class="dmark" style="left:66%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(34% + 22px)"><b>Russell</b><i>594</i></span>
+    </div>
+  </div><div class="drow" style="--i:12" data-tip="Miami Grand Prix, round 4: Andrea Kimi Antonelli, 525 across the league, 25 a pick for 21 pickers">
+    <div class="lab"><span class="lt">Miami<small>R4</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:58.333333333333336%"></span>
+      <span class="dmark" style="left:58.333333333333336%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab" style="left:calc(58.333333333333336% + 22px)"><b>Antonelli</b><i>525</i></span>
+    </div>
+  </div><div class="drow" style="--i:13" data-tip="Dutch Grand Prix, round 12: Oscar Piastri, 368 across the league, 8 a pick for 46 pickers">
+    <div class="lab"><span class="lt">Zandvoort<small>R12</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:40.88888888888889%"></span>
+      <span class="dmark" style="left:40.88888888888889%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab" style="left:calc(40.88888888888889% + 22px)"><b>Piastri</b><i>368</i></span>
+    </div>
+  </div><div class="drow me" style="--i:14" data-tip="Azerbaijan Grand Prix, round 15: Arvid Lindblad, 168 across the league, 6 a pick for 28 pickers">
+    <div class="lab"><span class="lt">Azerbaijan<small>R15</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:18.666666666666668%"></span>
+      <span class="dmark" style="left:18.666666666666668%"><span class="head head-t" style="width:34px;height:34px">AL</span></span>
+      <span class="dlab" style="left:calc(18.666666666666668% + 22px)"><b>Lindblad</b><i>168</i></span>
     </div>
   </div>
     <div class="sub" style="margin-top:18px">The worst driver of the week, every week</div>
     <p class="note" style="margin:0 0 6px">Gasly's -40 was not the worst a driver has done. Norris cost the league -47 in China, and Gasly himself did -40 in Miami. And the mechanism is the same every time: a driver who finishes outside the points costs a point to everybody holding him, so the damage is the size of his following.</p>
-    <div class="cols down">
-    <div class="grid"><span style="top:0%"><i>0</i></span><span style="top:20%"><i>-10</i></span><span style="top:40%"><i>-20</i></span><span style="top:60%"><i>-30</i></span><span style="top:80%"><i>-40</i></span><span style="top:100%"><i>-50</i></span></div>
-    <div class="col" style="--i:0" data-tip="Chinese Grand Prix, round 2: Lando Norris, -47 across the league, -1 a pick for 47 pickers">
-      <span class="bw"><span class="cv on" style="top:calc(94% + 3px)">-47</span><span class="cb" style="height:94%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">China</span>
-    </div><div class="col" style="--i:1" data-tip="Dutch Grand Prix, round 12: Max Verstappen, -47 across the league, -1 a pick for 47 pickers">
-      <span class="bw"><span class="cv" style="top:calc(94% + 3px)">-47</span><span class="cb" style="height:94%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Zandvoort</span>
-    </div><div class="col" style="--i:2" data-tip="Miami Grand Prix, round 4: Pierre Gasly, -40 across the league, -1 a pick for 40 pickers">
-      <span class="bw"><span class="cv" style="top:calc(80% + 3px)">-40</span><span class="cb" style="height:80%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Miami</span>
-    </div><div class="col me" style="--i:3" data-tip="Azerbaijan Grand Prix, round 15: Pierre Gasly, -40 across the league, -1 a pick for 40 pickers">
-      <span class="bw"><span class="cv on" style="top:calc(80% + 3px)">-40</span><span class="cb" style="height:80%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Azerbaijan</span>
-    </div><div class="col" style="--i:4" data-tip="Japanese Grand Prix, round 3: Oliver Bearman, -34 across the league, -1 a pick for 34 pickers">
-      <span class="bw"><span class="cv" style="top:calc(68% + 3px)">-34</span><span class="cb" style="height:68%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OLIBEA01_Oliver_Bearman/olibea01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Japan</span>
-    </div><div class="col" style="--i:5" data-tip="Canadian Grand Prix, round 5: George Russell, -33 across the league, -1 a pick for 33 pickers">
-      <span class="bw"><span class="cv" style="top:calc(66% + 3px)">-33</span><span class="cb" style="height:66%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Canada</span>
-    </div><div class="col" style="--i:6" data-tip="Monaco Grand Prix, round 6: Charles Leclerc, -33 across the league, -1 a pick for 33 pickers">
-      <span class="bw"><span class="cv" style="top:calc(66% + 3px)">-33</span><span class="cb" style="height:66%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Monaco</span>
-    </div><div class="col" style="--i:7" data-tip="Australian Grand Prix, round 1: Isack Hadjar, -30 across the league, -1 a pick for 30 pickers">
-      <span class="bw"><span class="cv" style="top:calc(60% + 3px)">-30</span><span class="cb" style="height:60%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/I/ISAHAD01_Isack_Hadjar/isahad01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Australia</span>
-    </div><div class="col" style="--i:8" data-tip="British Grand Prix, round 9: Alex Albon, -11 across the league, -1 a pick for 11 pickers">
-      <span class="bw"><span class="cv" style="top:calc(22% + 3px)">-11</span><span class="cb" style="height:22%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ALEALB01_Alexander_Albon/alealb01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Britain</span>
-    </div><div class="col" style="--i:9" data-tip="Spanish Grand Prix, round 7: Alex Albon, -10 across the league, -1 a pick for 10 pickers">
-      <span class="bw"><span class="cv" style="top:calc(20% + 3px)">-10</span><span class="cb" style="height:20%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ALEALB01_Alexander_Albon/alealb01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Spain</span>
-    </div><div class="col" style="--i:10" data-tip="Austrian Grand Prix, round 8: Carlos Sainz, -10 across the league, -1 a pick for 10 pickers">
-      <span class="bw"><span class="cv" style="top:calc(20% + 3px)">-10</span><span class="cb" style="height:20%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Austria</span>
-    </div><div class="col" style="--i:11" data-tip="Belgian Grand Prix, round 10: George Russell, -6 across the league, -1 a pick for 6 pickers">
-      <span class="bw"><span class="cv" style="top:calc(12% + 3px)">-6</span><span class="cb" style="height:12%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Belgium</span>
-    </div><div class="col" style="--i:12" data-tip="Italian Grand Prix, round 13: Charles Leclerc, -6 across the league, -1 a pick for 6 pickers">
-      <span class="bw"><span class="cv" style="top:calc(12% + 3px)">-6</span><span class="cb" style="height:12%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Monza</span>
-    </div><div class="col" style="--i:13" data-tip="Spanish Grand Prix, round 14: Carlos Sainz, -4 across the league, -1 a pick for 4 pickers">
-      <span class="bw"><span class="cv" style="top:calc(8% + 3px)">-4</span><span class="cb" style="height:8%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Spain</span>
-    </div><div class="col" style="--i:14" data-tip="Hungarian Grand Prix, round 11: Franco Colapinto, 0 across the league, 0 a pick for 15 pickers">
-      <span class="bw"><span class="cv" style="top:calc(0% + 3px)">0</span><span class="cb" style="height:0%"></span></span>
-      <span class="cp"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FRACOL01_Franco_Colapinto/fracol01.png.transform/1col/image.png" alt="" width="26" height="26" loading="lazy" style="width:26px;height:26px"></span>
-      <span class="cl">Hungary</span>
+    <div class="drow" style="--i:0" data-tip="Chinese Grand Prix, round 2: Lando Norris, -47 across the league, -1 a pick for 47 pickers">
+    <div class="lab"><span class="lt">China<small>R2</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:94%"></span>
+      <span class="dmark" style="left:94%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(6% + 22px)"><b>Norris</b><i>-47</i></span>
+    </div>
+  </div><div class="drow" style="--i:1" data-tip="Dutch Grand Prix, round 12: Max Verstappen, -47 across the league, -1 a pick for 47 pickers">
+    <div class="lab"><span class="lt">Zandvoort<small>R12</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:94%"></span>
+      <span class="dmark" style="left:94%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(6% + 22px)"><b>Verstappen</b><i>-47</i></span>
+    </div>
+  </div><div class="drow" style="--i:2" data-tip="Miami Grand Prix, round 4: Pierre Gasly, -40 across the league, -1 a pick for 40 pickers">
+    <div class="lab"><span class="lt">Miami<small>R4</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:80%"></span>
+      <span class="dmark" style="left:80%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(20% + 22px)"><b>Gasly</b><i>-40</i></span>
+    </div>
+  </div><div class="drow me" style="--i:3" data-tip="Azerbaijan Grand Prix, round 15: Pierre Gasly, -40 across the league, -1 a pick for 40 pickers">
+    <div class="lab"><span class="lt">Azerbaijan<small>R15</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:80%"></span>
+      <span class="dmark" style="left:80%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(20% + 22px)"><b>Gasly</b><i>-40</i></span>
+    </div>
+  </div><div class="drow" style="--i:4" data-tip="Japanese Grand Prix, round 3: Oliver Bearman, -34 across the league, -1 a pick for 34 pickers">
+    <div class="lab"><span class="lt">Japan<small>R3</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:68%"></span>
+      <span class="dmark" style="left:68%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OLIBEA01_Oliver_Bearman/olibea01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(32% + 22px)"><b>Bearman</b><i>-34</i></span>
+    </div>
+  </div><div class="drow" style="--i:5" data-tip="Canadian Grand Prix, round 5: George Russell, -33 across the league, -1 a pick for 33 pickers">
+    <div class="lab"><span class="lt">Canada<small>R5</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:66%"></span>
+      <span class="dmark" style="left:66%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(34% + 22px)"><b>Russell</b><i>-33</i></span>
+    </div>
+  </div><div class="drow" style="--i:6" data-tip="Monaco Grand Prix, round 6: Charles Leclerc, -33 across the league, -1 a pick for 33 pickers">
+    <div class="lab"><span class="lt">Monaco<small>R6</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:66%"></span>
+      <span class="dmark" style="left:66%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab flip" style="right:calc(34% + 22px)"><b>Leclerc</b><i>-33</i></span>
+    </div>
+  </div><div class="drow" style="--i:7" data-tip="Australian Grand Prix, round 1: Isack Hadjar, -30 across the league, -1 a pick for 30 pickers">
+    <div class="lab"><span class="lt">Australia<small>R1</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:60%"></span>
+      <span class="dmark" style="left:60%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/I/ISAHAD01_Isack_Hadjar/isahad01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab" style="left:calc(60% + 22px)"><b>Hadjar</b><i>-30</i></span>
+    </div>
+  </div><div class="drow" style="--i:8" data-tip="British Grand Prix, round 9: Alex Albon, -11 across the league, -1 a pick for 11 pickers">
+    <div class="lab"><span class="lt">Britain<small>R9</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:22%"></span>
+      <span class="dmark" style="left:22%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ALEALB01_Alexander_Albon/alealb01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab" style="left:calc(22% + 22px)"><b>Albon</b><i>-11</i></span>
+    </div>
+  </div><div class="drow" style="--i:9" data-tip="Spanish Grand Prix, round 7: Alex Albon, -10 across the league, -1 a pick for 10 pickers">
+    <div class="lab"><span class="lt">Spain<small>R7</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:20%"></span>
+      <span class="dmark" style="left:20%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ALEALB01_Alexander_Albon/alealb01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab" style="left:calc(20% + 22px)"><b>Albon</b><i>-10</i></span>
+    </div>
+  </div><div class="drow" style="--i:10" data-tip="Austrian Grand Prix, round 8: Carlos Sainz, -10 across the league, -1 a pick for 10 pickers">
+    <div class="lab"><span class="lt">Austria<small>R8</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:20%"></span>
+      <span class="dmark" style="left:20%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab" style="left:calc(20% + 22px)"><b>Sainz</b><i>-10</i></span>
+    </div>
+  </div><div class="drow" style="--i:11" data-tip="Belgian Grand Prix, round 10: George Russell, -6 across the league, -1 a pick for 6 pickers">
+    <div class="lab"><span class="lt">Belgium<small>R10</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:12%"></span>
+      <span class="dmark" style="left:12%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab" style="left:calc(12% + 22px)"><b>Russell</b><i>-6</i></span>
+    </div>
+  </div><div class="drow" style="--i:12" data-tip="Italian Grand Prix, round 13: Charles Leclerc, -6 across the league, -1 a pick for 6 pickers">
+    <div class="lab"><span class="lt">Monza<small>R13</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:12%"></span>
+      <span class="dmark" style="left:12%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab" style="left:calc(12% + 22px)"><b>Leclerc</b><i>-6</i></span>
+    </div>
+  </div><div class="drow" style="--i:13" data-tip="Spanish Grand Prix, round 14: Carlos Sainz, -4 across the league, -1 a pick for 4 pickers">
+    <div class="lab"><span class="lt">Spain<small>R14</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:8%"></span>
+      <span class="dmark" style="left:8%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab" style="left:calc(8% + 22px)"><b>Sainz</b><i>-4</i></span>
+    </div>
+  </div><div class="drow" style="--i:14" data-tip="Hungarian Grand Prix, round 11: Franco Colapinto, 0 across the league, 0 a pick for 15 pickers">
+    <div class="lab"><span class="lt">Hungary<small>R11</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:0%"></span>
+      <span class="dmark" style="left:0%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FRACOL01_Franco_Colapinto/fracol01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
+      <span class="dlab" style="left:calc(0% + 22px)"><b>Colapinto</b><i>0</i></span>
     </div>
   </div>
     <div class="sub" style="margin-top:18px">This week's pool, across the league</div>

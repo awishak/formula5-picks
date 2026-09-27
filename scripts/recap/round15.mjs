@@ -232,16 +232,29 @@ const colChart = (items, { max, down = false, fmt = v => String(v) }) => {
     </div>`).join("")}
   </div>`;
 };
+// Andrew, 2026-09-26: no bars here. The face sits where the bar's end would
+// be, then the name, then the points. One row a race, sorted, this week pink.
+const dotRows = (items, { max }) => items.map((x, i) => {
+  const pct = Math.abs(x.v) / max * 100;
+  const flip = pct > 62;
+  return `<div class="drow${x.me ? " me" : ""}" style="--i:${i}" data-tip="${esc(x.tip)}">
+    <div class="lab"><span class="lt">${esc(x.label)}<small>R${x.round}</small></span></div>
+    <div class="dtrack"><span class="dline" style="width:${pct}%"></span>
+      <span class="dmark" style="left:${pct}%">${x.pic}</span>
+      <span class="dlab${flip ? " flip" : ""}" style="${flip ? "right" : "left"}:calc(${flip ? 100 - pct : pct}% + 22px)"><b>${esc(x.name)}</b><i>${x.v}</i></span>
+    </div>
+  </div>`;
+}).join("");
 const dowMax = Math.ceil(Math.max(...driverWeeks.map(w => w.top.tot)) / 100) * 100;
-const chart4a = colChart(dowSorted.map((w, i) => ({
-  v: w.top.tot, label: w.name, me: w.round === ROUND, on: i === 0 || w.round === ROUND, pic: head(w.top.driver, 26),
+const chart4a = dotRows(dowSorted.map(w => ({
+  v: w.top.tot, label: w.name, round: w.round, me: w.round === ROUND, name: surname(w.top.driver), pic: head(w.top.driver, 34),
   tip: `${w.full}, round ${w.round}: ${w.top.driver}, ${w.top.tot} across the league, ${w.top.each} a pick for ${w.top.n} pickers`,
 })), { max: dowMax });
 const worstMax = Math.ceil(Math.max(...driverWeeks.map(w => -w.bottom.tot)) / 10) * 10;
-const chart4b = colChart(worstSorted.map((w, i) => ({
-  v: w.bottom.tot, label: w.name, me: w.round === ROUND, on: i === 0 || w.round === ROUND, pic: head(w.bottom.driver, 26),
+const chart4b = dotRows(worstSorted.map(w => ({
+  v: w.bottom.tot, label: w.name, round: w.round, me: w.round === ROUND, name: surname(w.bottom.driver), pic: head(w.bottom.driver, 34),
   tip: `${w.full}, round ${w.round}: ${w.bottom.driver}, ${w.bottom.tot} across the league, ${w.bottom.each} a pick for ${w.bottom.n} pickers`,
-})), { max: worstMax, down: true });
+})), { max: worstMax });
 
 /* the pool, this week */
 const c4per = pool.map((d, i) => barRow({
@@ -322,6 +335,18 @@ h1{font-family:var(--fn);font-weight:700;font-size:clamp(26px,7.4vw,40px);line-h
 .cp{display:flex;justify-content:center;margin-top:6px;min-height:0}
 .cp:empty{display:none}
 .sub{font-family:var(--fn);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin:10px 0 0}
+.drow{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:8px;height:42px;animation:fade .5s both;animation-delay:calc(var(--i)*35ms)}
+.dtrack{position:relative;height:42px;margin-right:18px}
+.dline{position:absolute;left:0;top:50%;height:1px;background:var(--border2)}
+.dmark{position:absolute;top:50%;transform:translate(-50%,-50%);display:flex}
+.dmark .head{width:34px;height:34px;border-color:var(--blue);box-shadow:0 0 8px rgba(0,217,255,.35)}
+.drow.me .dmark .head{border-color:var(--pink);box-shadow:0 0 10px rgba(255,45,149,.6)}
+.dlab{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:13px;line-height:1.1;display:flex;flex-direction:column}
+.dlab.flip{text-align:right;align-items:flex-end}
+.dlab b{font-weight:600;color:var(--text)}
+.dlab i{font-style:normal;font-family:var(--fn);font-weight:700;color:var(--blue)}
+.drow.me .dlab i{color:var(--pink)}
+.drow.me .lt{color:var(--pink)}
 .cols.wide{padding-left:36px}.cols.wide .grid span{left:36px}.cols.wide .grid span i{left:-36px}
 .cols.down .bw{align-items:flex-start;margin-top:0;margin-bottom:20px}
 .cols.down .cb{transform-origin:top;border-radius:0 0 3px 3px}
@@ -406,7 +431,7 @@ td:nth-child(2){font-family:var(--fd);font-size:14px;white-space:nowrap}
 tr.hl td{color:var(--pink)}
 .tw{overflow-x:auto}
 .foot{font-size:13px;color:var(--text3);margin-top:30px;line-height:1.5}
-@media (max-width:420px){.row{grid-template-columns:122px 1fr 42px;gap:6px}.row.db{grid-template-columns:110px 1fr 74px}.lt{font-size:13px}.tile .n{font-size:32px}.val{font-size:15px}}
+@media (max-width:420px){.drow{grid-template-columns:78px 1fr}.row{grid-template-columns:122px 1fr 42px;gap:6px}.row.db{grid-template-columns:110px 1fr 74px}.lt{font-size:13px}.tile .n{font-size:32px}.val{font-size:15px}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}}
 </style></head>
 <body>
