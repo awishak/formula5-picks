@@ -417,7 +417,7 @@ tr.hl td{color:var(--pink)}
   <h1>The Azerbaijan GP in Numbers</h1>
   <p class="stand">The lowest scoring week in league history, the Azerbaijan GP stands as an outlier in this F5 season. Scores were low across the board, including the first ever negative scores, achieved by ${W[negatives.length]} people. And the team matchups were just as strange: one team won their matchup by scoring exactly one point.</p>
   <div class="lead">
-    <div class="ch"><span class="num">1</span><div><h2>The Azerbaijan GP led to the lowest F5 scores of the season by every measure, and by a wide margin.</h2><p>Every F5 week has an average score, and for fourteen rounds it sat between ${one(prevLowAvg.avg)} and ${one(Math.max(...byRound.map(b => b.avg)))}. Then Baku came in at ${one(thisRound.avg)}, including a median of ${thisRound.med}, less than a third of the previous low. And the buttons show it was not the missing pit stop: take the Needle and the weekly bonus out and the gap is the same.</p></div></div>
+    <div class="ch"><span class="num">1</span><div><h2>The Azerbaijan GP led to the lowest F5 scores of the season by every measure, and by a wide margin.</h2><p>Through fourteen rounds the average F5 score had never dipped below ${one(prevLowAvg.avg)}, and ${W[byRound.filter(b => b.round !== ROUND && b.avg > 38).length]} of those weeks averaged over 38. Azerbaijan came in at ${one(thisRound.avg)}, with half the league on ${thisRound.med} points or fewer. And the drop holds with the Needle and the weekly bonus stripped out: it was the drivers that sank the week, not the missing pit stop.</p></div></div>
     <div class="acts" role="group" aria-label="Chart 1 view">
       <button class="act" aria-pressed="true" data-k="ind">Individual</button>
       <button class="act" aria-pressed="false" data-k="drv">Drivers only</button>
@@ -485,7 +485,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">7</span><div><h2>The twenty lowest scores in league history all happened in Baku.</h2><p>League history is ${rounds.length} rounds and ${rows.length} scores, and the twenty lowest are now all from one afternoon. ${W[negatives.length][0].toUpperCase() + W[negatives.length].slice(1)} of them are the minus threes, including both Kohlis. And the old record low no longer makes the list: ${prevLowScore} would have been the ${thisRound.under10 + 1}th-lowest score of the week.</p></div></div>
+    <div class="ch"><span class="num">7</span><div><h2>The twenty lowest scores in league history all happened in Baku.</h2><p>League history is ${rounds.length} rounds and ${rows.length} scores, and the twenty lowest are now all from one afternoon. ${W[negatives.length][0].toUpperCase() + W[negatives.length].slice(1)} of them are the minus threes, and the other twelve are people who scored exactly four. And the old record low is nowhere near the list: ${prevLowScore} would have been the ${thisRound.under10 + 1}th-lowest score of the week.</p></div></div>
     <div class="wall">${lowestEver.map(r => `<div class="w" data-tip="${esc(`${r.player.name}, round ${r.round}: ${r.ind}`)}">${face(r.player, 40, r.ind < 0 ? "#ff2d95" : null)}<b>${signed(r.ind)}</b>${esc(surname(r.player.name))}</div>`).join("")}</div>
   </div>
 </section>
@@ -499,7 +499,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">8</span><div><h2>Every score this week, and every round's averages.</h2><p>Everything above comes from two tables, and both are here. The first is every player's score this week broken into its parts, including the previous season low beside it. And the second is every round's averages: the season the charts were drawn from.</p></div></div>
+    <div class="ch"><span class="num">8</span><div><h2>Every score this week, and every round's averages.</h2><p>Everything above comes from two tables, and both are here. The first is every player's score this week broken into its parts, with their previous season low beside it. And the second is every round's averages: the whole season, so the charts can be checked.</p></div></div>
     <details open><summary>This week, all 48</summary><div class="tw">${table}</div></details>
     <details><summary>Every round</summary><div class="tw">${roundTable}</div></details>
   </div>
