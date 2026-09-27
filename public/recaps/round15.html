@@ -19,7 +19,23 @@ h1{font-family:var(--fn);font-weight:700;font-size:clamp(34px,9vw,52px);line-hei
 .tile{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:14px 14px 12px}
 .tile .n{font-family:var(--fn);font-weight:700;font-size:38px;line-height:1;color:var(--pink);text-shadow:0 0 10px rgba(255,45,149,.45)}
 .tile .n.blue{color:var(--blue);text-shadow:0 0 10px rgba(0,217,255,.45)}
-.tile .c{font-size:13px;color:var(--text2);margin-top:6px;line-height:1.35}
+.tile .c{font-size:13px;color:var(--text2);margin-top:8px;line-height:1.35}
+.lead{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:16px 14px 14px;margin-top:18px}
+.cols{position:relative;display:flex;align-items:flex-end;gap:2px;padding:0 0 0 26px;margin-top:6px}
+.grid{position:absolute;left:0;right:0;top:20px;height:180px;pointer-events:none}
+.grid span{position:absolute;left:26px;right:0;height:1px;background:var(--border)}
+.grid span i{position:absolute;left:-26px;top:-8px;font-style:normal;font-family:var(--fn);font-size:13px;color:var(--text3)}
+.col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;position:relative}
+.bw{display:flex;align-items:flex-end;width:100%;height:180px;margin-top:20px;position:relative}
+.cb{display:block;width:100%;background:var(--blue);border-radius:3px 3px 0 0;transform-origin:bottom;animation:rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*35ms);transition:height .5s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 8px rgba(0,217,255,.25)}
+.col.me .cb{background:var(--pink);box-shadow:0 0 12px rgba(255,45,149,.6)}
+.cv{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--fn);font-weight:700;font-size:13px;color:var(--text2);line-height:1;visibility:hidden;white-space:nowrap;transition:bottom .5s cubic-bezier(.2,.8,.2,1)}
+.cv.on{visibility:visible}
+.col.me .cv{color:var(--pink)}
+.cl{height:76px;margin-top:5px;writing-mode:vertical-rl;transform:rotate(180deg);font-size:13px;color:var(--text2);line-height:1;white-space:nowrap;overflow:hidden}
+.col.me .cl{color:var(--pink);font-weight:700}
+.col:hover .cv{visibility:visible}
+@keyframes rise{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 .tile .c b{color:var(--text)}
 section{margin:22px 0}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:16px 14px 14px;margin-bottom:14px}
@@ -30,7 +46,7 @@ section{margin:22px 0}
 .note{margin-top:10px;line-height:1.45}
 .note b{color:var(--text)}
 .acts{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
-.act{font-family:var(--fd);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:999px;padding:9px 14px;min-height:36px;cursor:pointer}
+.act{font-family:var(--fd);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:999px;padding:9px 12px;min-height:36px;cursor:pointer}
 .act[aria-pressed="true"]{color:#000;background:var(--blue);border-color:var(--blue)}
 .act:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--text2);margin:0 0 10px}
@@ -106,87 +122,71 @@ tr.hl td{color:var(--pink)}
   <div class="kicker">Round 15 · Azerbaijan Grand Prix</div>
   <h1>The floor</h1>
   <p class="stand">The lowest-scoring week in Formula 5 history, by every number the league keeps. <b>Aston Martin never pitted</b>, so the Needle paid nobody and BOX BOX was a push in all twelve matchups. That is not the story. The pool was.</p>
-  <div class="tiles">
-    <div class="tile"><div class="n">6.9</div><div class="c">Average score. The previous low was <b>26.1</b>, Canada.</div></div>
-    <div class="tile"><div class="n">8</div><div class="c">Negative scores. <b>The first ever.</b> Nobody had scored below zero before Saturday.</div></div>
-    <div class="tile"><div class="n">43<span style="font-size:20px;color:var(--text2)">/48</span></div><div class="c">Players who had their <b>worst week of the season</b>.</div></div>
-    <div class="tile"><div class="n blue">30</div><div class="c">The winning score, Brett Dillon. <b>Lowest ever.</b> Every other week's leader scored 48 or more.</div></div>
-  </div>
-</header>
-
-<section>
-  <div class="card">
-    <div class="ch"><span class="num">1</span><div><h2>Average score, every round</h2><p>All fifteen scored rounds. Press a button to take the Needle and the weekly bonus out, or to see the team game.</p></div></div>
+  <div class="lead">
+    <div class="ch"><span class="num">1</span><div><h2>Average score, every week of the season</h2><p>Best week first. Press a button to take the Needle and the weekly bonus out, or to see the team game.</p></div></div>
     <div class="acts" role="group" aria-label="Chart 1 view">
       <button class="act" aria-pressed="true" data-k="ind">Individual</button>
       <button class="act" aria-pressed="false" data-k="drv">Drivers only</button>
       <button class="act" aria-pressed="false" data-k="team">Team score</button>
     </div>
-    <div class="legend"><span><i class="blue"></i>Other rounds</span><span><i class="pink"></i>This week</span></div>
-    <div id="c1" data-max="100"><div class="row" data-tip="Australian Grand Prix: average 38.8, median 40, high 61, low 13" style="--i:0">
-    <div class="lab"><span class="lt">Australia<small>R1</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:38.833333333333336%" data-ind="38.833333333333336" data-drv="36.083333333333336" data-team="74.16666666666667"></span></div>
-    <div class="val blue">38.8</div>
-  </div><div class="row" data-tip="Chinese Grand Prix: average 32.1, median 31, high 52, low 21" style="--i:1">
-    <div class="lab"><span class="lt">China<small>R2</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:32.145833333333336%" data-ind="32.145833333333336" data-drv="31" data-team="62"></span></div>
-    <div class="val blue">32.1</div>
-  </div><div class="row" data-tip="Japanese Grand Prix: average 42.5, median 44, high 67, low 15" style="--i:2">
-    <div class="lab"><span class="lt">Japan<small>R3</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:42.479166666666664%" data-ind="42.479166666666664" data-drv="41.333333333333336" data-team="84.66666666666667"></span></div>
-    <div class="val blue">42.5</div>
-  </div><div class="row" data-tip="Miami Grand Prix: average 31.2, median 27, high 57, low 13" style="--i:3">
-    <div class="lab"><span class="lt">Miami<small>R4</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:31.229166666666668%" data-ind="31.229166666666668" data-drv="28.125" data-team="58.25"></span></div>
-    <div class="val blue">31.2</div>
-  </div><div class="row" data-tip="Canadian Grand Prix: average 26.1, median 25.5, high 48, low 11" style="--i:4">
-    <div class="lab"><span class="lt">Canada<small>R5</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:26.145833333333336%" data-ind="26.145833333333332" data-drv="23.416666666666668" data-team="48.833333333333336"></span></div>
-    <div class="val blue">26.1</div>
-  </div><div class="row" data-tip="Monaco Grand Prix: average 32.2, median 35, high 64, low 9" style="--i:5">
-    <div class="lab"><span class="lt">Monaco<small>R6</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:32.229166666666664%" data-ind="32.229166666666664" data-drv="31.083333333333332" data-team="64.16666666666667"></span></div>
-    <div class="val blue">32.2</div>
-  </div><div class="row" data-tip="Spanish Grand Prix: average 44.0, median 45.5, high 68, low 17" style="--i:6">
-    <div class="lab"><span class="lt">Spain<small>R7</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:44.020833333333336%" data-ind="44.020833333333336" data-drv="42.25" data-team="86.5"></span></div>
-    <div class="val blue">44.0</div>
-  </div><div class="row" data-tip="Austrian Grand Prix: average 42.8, median 46, high 67, low 19" style="--i:7">
-    <div class="lab"><span class="lt">Austria<small>R8</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:42.833333333333336%" data-ind="42.833333333333336" data-drv="40.541666666666664" data-team="83.08333333333333"></span></div>
-    <div class="val blue">42.8</div>
-  </div><div class="row" data-tip="British Grand Prix: average 35.0, median 34, high 54, low 22" style="--i:8">
-    <div class="lab"><span class="lt">Britain<small>R9</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:34.958333333333336%" data-ind="34.958333333333336" data-drv="33.8125" data-team="69.625"></span></div>
-    <div class="val blue">35.0</div>
-  </div><div class="row" data-tip="Belgian Grand Prix: average 48.4, median 53, high 70, low 19" style="--i:9">
-    <div class="lab"><span class="lt">Belgium<small>R10</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:48.4375%" data-ind="48.4375" data-drv="47.291666666666664" data-team="96.58333333333333"></span></div>
-    <div class="val blue">48.4</div>
-  </div><div class="row" data-tip="Hungarian Grand Prix: average 41.6, median 41, high 74, low 18" style="--i:10">
-    <div class="lab"><span class="lt">Hungary<small>R11</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:41.583333333333336%" data-ind="41.583333333333336" data-drv="39.4375" data-team="80.875"></span></div>
-    <div class="val blue">41.6</div>
-  </div><div class="row" data-tip="Dutch Grand Prix: average 31.4, median 29, high 54, low 16" style="--i:11">
-    <div class="lab"><span class="lt">Zandvoort<small>R12</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:31.374999999999996%" data-ind="31.375" data-drv="28.625" data-team="59.25"></span></div>
-    <div class="val blue">31.4</div>
-  </div><div class="row" data-tip="Italian Grand Prix: average 41.5, median 43, high 58, low 24" style="--i:12">
-    <div class="lab"><span class="lt">Monza<small>R13</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:41.520833333333336%" data-ind="41.520833333333336" data-drv="39.333333333333336" data-team="80.66666666666667"></span></div>
-    <div class="val blue">41.5</div>
-  </div><div class="row" data-tip="Spanish Grand Prix: average 40.9, median 39, high 59, low 30" style="--i:13">
-    <div class="lab"><span class="lt">Spain<small>R14</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:40.875%" data-ind="40.875" data-drv="38.375" data-team="78.58333333333333"></span></div>
-    <div class="val blue">40.9</div>
-  </div><div class="row" data-tip="Azerbaijan Grand Prix: average 6.9, median 4, high 30, low -3" style="--i:14">
-    <div class="lab"><span class="lt">Azerbaijan<small>R15</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar pink" style="left:0%;width:6.895833333333333%" data-ind="6.895833333333333" data-drv="5.75" data-team="11.5"></span></div>
-    <div class="val pink">6.9</div>
-  </div></div>
-    <p class="note">Take the Needle out and this week is <b>5.8</b> against a previous low of <b>23.4</b>. The missing pit stop cost a few points a head. The pool cost the rest.</p>
+    <div id="c1" data-max-ind="50" data-max-drv="50" data-max-team="100"><div class="cols" style="--max:50">
+  <div class="grid"><span style="bottom:0%"><i>0</i></span><span style="bottom:20%"><i>10</i></span><span style="bottom:40%"><i>20</i></span><span style="bottom:60%"><i>30</i></span><span style="bottom:80%"><i>40</i></span><span style="bottom:100%"><i>50</i></span></div>
+  <div class="col" style="--i:0" data-tip="Belgian Grand Prix, round 10: average 48.4, median 53, high 70, low 19">
+    <span class="bw"><span class="cv on" style="bottom:calc(96.875% + 3px)">48.4</span><span class="cb" style="height:96.875%" data-ind="48.4375" data-drv="47.291666666666664" data-team="96.58333333333333"></span></span>
+    <span class="cl">Belgium</span>
+  </div><div class="col" style="--i:1" data-tip="Spanish Grand Prix, round 7: average 44.0, median 45.5, high 68, low 17">
+    <span class="bw"><span class="cv" style="bottom:calc(88.04166666666667% + 3px)">44.0</span><span class="cb" style="height:88.04166666666667%" data-ind="44.020833333333336" data-drv="42.25" data-team="86.5"></span></span>
+    <span class="cl">Spain</span>
+  </div><div class="col" style="--i:2" data-tip="Austrian Grand Prix, round 8: average 42.8, median 46, high 67, low 19">
+    <span class="bw"><span class="cv" style="bottom:calc(85.66666666666667% + 3px)">42.8</span><span class="cb" style="height:85.66666666666667%" data-ind="42.833333333333336" data-drv="40.541666666666664" data-team="83.08333333333333"></span></span>
+    <span class="cl">Austria</span>
+  </div><div class="col" style="--i:3" data-tip="Japanese Grand Prix, round 3: average 42.5, median 44, high 67, low 15">
+    <span class="bw"><span class="cv" style="bottom:calc(84.95833333333333% + 3px)">42.5</span><span class="cb" style="height:84.95833333333333%" data-ind="42.479166666666664" data-drv="41.333333333333336" data-team="84.66666666666667"></span></span>
+    <span class="cl">Japan</span>
+  </div><div class="col" style="--i:4" data-tip="Hungarian Grand Prix, round 11: average 41.6, median 41, high 74, low 18">
+    <span class="bw"><span class="cv" style="bottom:calc(83.16666666666667% + 3px)">41.6</span><span class="cb" style="height:83.16666666666667%" data-ind="41.583333333333336" data-drv="39.4375" data-team="80.875"></span></span>
+    <span class="cl">Hungary</span>
+  </div><div class="col" style="--i:5" data-tip="Italian Grand Prix, round 13: average 41.5, median 43, high 58, low 24">
+    <span class="bw"><span class="cv" style="bottom:calc(83.04166666666667% + 3px)">41.5</span><span class="cb" style="height:83.04166666666667%" data-ind="41.520833333333336" data-drv="39.333333333333336" data-team="80.66666666666667"></span></span>
+    <span class="cl">Monza</span>
+  </div><div class="col" style="--i:6" data-tip="Spanish Grand Prix, round 14: average 40.9, median 39, high 59, low 30">
+    <span class="bw"><span class="cv" style="bottom:calc(81.75% + 3px)">40.9</span><span class="cb" style="height:81.75%" data-ind="40.875" data-drv="38.375" data-team="78.58333333333333"></span></span>
+    <span class="cl">Spain</span>
+  </div><div class="col" style="--i:7" data-tip="Australian Grand Prix, round 1: average 38.8, median 40, high 61, low 13">
+    <span class="bw"><span class="cv" style="bottom:calc(77.66666666666667% + 3px)">38.8</span><span class="cb" style="height:77.66666666666667%" data-ind="38.833333333333336" data-drv="36.083333333333336" data-team="74.16666666666667"></span></span>
+    <span class="cl">Australia</span>
+  </div><div class="col" style="--i:8" data-tip="British Grand Prix, round 9: average 35.0, median 34, high 54, low 22">
+    <span class="bw"><span class="cv" style="bottom:calc(69.91666666666667% + 3px)">35.0</span><span class="cb" style="height:69.91666666666667%" data-ind="34.958333333333336" data-drv="33.8125" data-team="69.625"></span></span>
+    <span class="cl">Britain</span>
+  </div><div class="col" style="--i:9" data-tip="Monaco Grand Prix, round 6: average 32.2, median 35, high 64, low 9">
+    <span class="bw"><span class="cv" style="bottom:calc(64.45833333333333% + 3px)">32.2</span><span class="cb" style="height:64.45833333333333%" data-ind="32.229166666666664" data-drv="31.083333333333332" data-team="64.16666666666667"></span></span>
+    <span class="cl">Monaco</span>
+  </div><div class="col" style="--i:10" data-tip="Chinese Grand Prix, round 2: average 32.1, median 31, high 52, low 21">
+    <span class="bw"><span class="cv" style="bottom:calc(64.29166666666667% + 3px)">32.1</span><span class="cb" style="height:64.29166666666667%" data-ind="32.145833333333336" data-drv="31" data-team="62"></span></span>
+    <span class="cl">China</span>
+  </div><div class="col" style="--i:11" data-tip="Dutch Grand Prix, round 12: average 31.4, median 29, high 54, low 16">
+    <span class="bw"><span class="cv" style="bottom:calc(62.74999999999999% + 3px)">31.4</span><span class="cb" style="height:62.74999999999999%" data-ind="31.375" data-drv="28.625" data-team="59.25"></span></span>
+    <span class="cl">Zandvoort</span>
+  </div><div class="col" style="--i:12" data-tip="Miami Grand Prix, round 4: average 31.2, median 27, high 57, low 13">
+    <span class="bw"><span class="cv" style="bottom:calc(62.458333333333336% + 3px)">31.2</span><span class="cb" style="height:62.458333333333336%" data-ind="31.229166666666668" data-drv="28.125" data-team="58.25"></span></span>
+    <span class="cl">Miami</span>
+  </div><div class="col" style="--i:13" data-tip="Canadian Grand Prix, round 5: average 26.1, median 25.5, high 48, low 11">
+    <span class="bw"><span class="cv" style="bottom:calc(52.29166666666667% + 3px)">26.1</span><span class="cb" style="height:52.29166666666667%" data-ind="26.145833333333332" data-drv="23.416666666666668" data-team="48.833333333333336"></span></span>
+    <span class="cl">Canada</span>
+  </div><div class="col me" style="--i:14" data-tip="Azerbaijan Grand Prix, round 15: average 6.9, median 4, high 30, low -3">
+    <span class="bw"><span class="cv on" style="bottom:calc(13.791666666666666% + 3px)">6.9</span><span class="cb" style="height:13.791666666666666%" data-ind="6.895833333333333" data-drv="5.75" data-team="11.5"></span></span>
+    <span class="cl">Azerbaijan</span>
   </div>
-</section>
+</div></div>
+    <p class="note">The other fourteen weeks run from <b>26.1</b> to <b>48.4</b>. Take the Needle out and this week is <b>5.8</b> against a previous low of <b>23.4</b>. The missing pit stop cost a few points a head. The pool cost the rest.</p>
+  </div>
+  <div class="tiles">
+    <div class="tile"><div class="n">6.9</div><div class="c">Average score. The previous low was <b>26.1</b>, Canada.</div></div>
+    <div class="tile"><div class="n">8</div><div class="c">Negative scores. <b>The first ever.</b> Nobody had scored below zero before Saturday.</div></div>
+    <div class="tile"><div class="n">43<span style="font-size:20px;color:var(--text2)">/48</span></div><div class="c">Players who had their <b>worst week of the season</b>.</div></div>
+    <div class="tile"><div class="n">30</div><div class="c">The winning score, Brett Dillon. <b>Lowest ever.</b> Every other week's leader scored 48 or more.</div></div>
+  </div>
+</header>
 
 <section>
   <div class="card">
@@ -898,7 +898,7 @@ tr.hl td{color:var(--pink)}
   </div>
 </section>
 
-<p class="foot">Individual score is drivers plus order bonus, best finish, the Needle and the weekly bonus. Team score is both players' driver points plus BOX BOX. Built from the scores table on 2026-09-26 by scripts/recap/round15.mjs.</p>
+<p class="foot">Individual score is drivers plus order bonus, best finish, the Needle and the weekly bonus. Team score is both players' driver points plus BOX BOX. Built from the scores table on 2026-09-27 by scripts/recap/round15.mjs.</p>
 
 <script>
 (function(){
@@ -915,10 +915,12 @@ tr.hl td{color:var(--pink)}
   // Chart 1: the same fifteen bars, three measures. Widths move, nothing is redrawn.
   var c1=document.getElementById('c1');
   c1.parentNode.querySelectorAll('.act[data-k]').forEach(function(b){b.addEventListener('click',function(){
-    var k=b.getAttribute('data-k');var max=+c1.getAttribute('data-max');
+    var k=b.getAttribute('data-k');var max=+c1.getAttribute('data-max-'+k);
     b.parentNode.querySelectorAll('.act').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
-    c1.querySelectorAll('.row').forEach(function(r){var bar=r.querySelector('.bar');var v=+bar.getAttribute('data-'+k);
-      bar.style.width=(v/max*100)+'%';r.querySelector('.val').textContent=(Math.round(v*10)/10).toFixed(1);});
+    var step=max>60?20:10,g='';for(var t=0;t<=max;t+=step){g+='<span style="bottom:'+(t/max*100)+'%"><i>'+t+'</i></span>';}
+    c1.querySelector('.grid').innerHTML=g;
+    c1.querySelectorAll('.col').forEach(function(r){var bar=r.querySelector('.cb');var v=+bar.getAttribute('data-'+k);
+      bar.style.height=(v/max*100)+'%';var cv=r.querySelector('.cv');cv.textContent=(Math.round(v*10)/10).toFixed(1);cv.style.bottom='calc('+(v/max*100)+'% + 3px)';});
   });});
   // Chart 4: a pick, or the whole league.
   var c4=document.getElementById('c4');

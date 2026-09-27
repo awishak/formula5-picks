@@ -142,14 +142,37 @@ const barRow = ({ label, pic = "", value, max, min = 0, tone, tip, sub = "", i =
   </div>`;
 };
 
-/* chart 1: average score by round, three ways */
-const c1max = Math.ceil(Math.max(...byRound.map(b => Math.max(b.avg, b.drvAvg, b.teamAvg))) / 10) * 10;
-const chart1 = byRound.map((b, i) => barRow({
-  label: b.name, sub: `R${b.round}`, value: b.avg, max: c1max,
-  tone: b.round === ROUND ? "pink" : "blue", i,
-  tip: `${b.full}: average ${one(b.avg)}, median ${b.med}, high ${b.max}, low ${b.min}`,
-  extra: ` data-ind="${b.avg}" data-drv="${b.drvAvg}" data-team="${b.teamAvg}"`,
-})).join("");
+// Andrew, 2026-09-26: a comparison of two numbers is shown, not said. Every
+// week as a bar, sorted by the value, this one pink, so the gap is visible
+// against the rest of the field.
+const strip = (items, { fmt = v => String(v), tone = "blue" } = {}) => {
+  const max = Math.max(...items.map(x => x.v), 1);
+  const sorted = items.slice().sort((a, b) => a.v - b.v);
+  return `<div class="strip">${sorted.map((x, i) => `<span class="sb${x.me ? " me" : ""}" style="height:${Math.max(2, x.v / max * 100)}%;--i:${i}" data-tip="${esc(`${x.label}: ${fmt(x.v)}`)}"></span>`).join("")}</div>`;
+};
+const weeks = (key, fmt) => strip(byRound.map(b => ({ label: `${b.full} (R${b.round})`, v: b[key], me: b.round === ROUND })), { fmt });
+// How many players' season low sits in each round, for the worst-week tile.
+const lowIn = {};
+players.forEach(p => { const mine = rows.filter(r => r.player_id === p.id); if (!mine.length) return;
+  const lo = Math.min(...mine.map(r => r.ind)); const at = mine.filter(r => r.ind === lo).sort((a, b) => b.round - a.round)[0]; lowIn[at.round] = (lowIn[at.round] || 0) + 1; });
+
+/* chart 1, the lead: every week as a column, sorted by average, this one pink.
+   Andrew, 2026-09-26: take the chart, turn it sideways, lead with it, and keep
+   the bars tight. Values sit on the pink column and the tallest; the rest are
+   on hover, because fifteen numbers over fifteen 22px columns collide. */
+// One scale a view. The team game runs to a hundred and the individual game to
+// fifty, and a shared scale drew the individual bars at half height.
+const c1maxOf = { ind: Math.ceil(Math.max(...byRound.map(b => b.avg)) / 10) * 10, drv: Math.ceil(Math.max(...byRound.map(b => b.drvAvg)) / 10) * 10, team: Math.ceil(Math.max(...byRound.map(b => b.teamAvg)) / 10) * 10 };
+const c1max = c1maxOf.ind;
+const ticks = max => { const step = max > 60 ? 20 : 10; const t = []; for (let g = 0; g <= max; g += step) t.push(g); return t; };
+const c1sorted = byRound.slice().sort((a, b) => b.avg - a.avg);
+const chart1 = `<div class="cols" style="--max:${c1max}">
+  <div class="grid">${ticks(c1max).map(g => `<span style="bottom:${g / c1max * 100}%"><i>${g}</i></span>`).join("")}</div>
+  ${c1sorted.map((b, i) => `<div class="col${b.round === ROUND ? " me" : ""}" style="--i:${i}" data-tip="${esc(`${b.full}, round ${b.round}: average ${one(b.avg)}, median ${b.med}, high ${b.max}, low ${b.min}`)}">
+    <span class="bw"><span class="cv${i === 0 || b.round === ROUND ? " on" : ""}" style="bottom:calc(${b.avg / c1max * 100}% + 3px)">${one(b.avg)}</span><span class="cb" style="height:${b.avg / c1max * 100}%" data-ind="${b.avg}" data-drv="${b.drvAvg}" data-team="${b.teamAvg}"></span></span>
+    <span class="cl">${esc(b.name)}</span>
+  </div>`).join("")}
+</div>`;
 
 /* chart 2: every score this week, avatars stacked on their value */
 const values = [...new Set(week.map(r => r.ind))].sort((a, b) => a - b);
@@ -241,7 +264,23 @@ h1{font-family:var(--fn);font-weight:700;font-size:clamp(34px,9vw,52px);line-hei
 .tile{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:14px 14px 12px}
 .tile .n{font-family:var(--fn);font-weight:700;font-size:38px;line-height:1;color:var(--pink);text-shadow:0 0 10px rgba(255,45,149,.45)}
 .tile .n.blue{color:var(--blue);text-shadow:0 0 10px rgba(0,217,255,.45)}
-.tile .c{font-size:13px;color:var(--text2);margin-top:6px;line-height:1.35}
+.tile .c{font-size:13px;color:var(--text2);margin-top:8px;line-height:1.35}
+.lead{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:16px 14px 14px;margin-top:18px}
+.cols{position:relative;display:flex;align-items:flex-end;gap:2px;padding:0 0 0 26px;margin-top:6px}
+.grid{position:absolute;left:0;right:0;top:20px;height:180px;pointer-events:none}
+.grid span{position:absolute;left:26px;right:0;height:1px;background:var(--border)}
+.grid span i{position:absolute;left:-26px;top:-8px;font-style:normal;font-family:var(--fn);font-size:13px;color:var(--text3)}
+.col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;position:relative}
+.bw{display:flex;align-items:flex-end;width:100%;height:180px;margin-top:20px;position:relative}
+.cb{display:block;width:100%;background:var(--blue);border-radius:3px 3px 0 0;transform-origin:bottom;animation:rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*35ms);transition:height .5s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 8px rgba(0,217,255,.25)}
+.col.me .cb{background:var(--pink);box-shadow:0 0 12px rgba(255,45,149,.6)}
+.cv{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--fn);font-weight:700;font-size:13px;color:var(--text2);line-height:1;visibility:hidden;white-space:nowrap;transition:bottom .5s cubic-bezier(.2,.8,.2,1)}
+.cv.on{visibility:visible}
+.col.me .cv{color:var(--pink)}
+.cl{height:76px;margin-top:5px;writing-mode:vertical-rl;transform:rotate(180deg);font-size:13px;color:var(--text2);line-height:1;white-space:nowrap;overflow:hidden}
+.col.me .cl{color:var(--pink);font-weight:700}
+.col:hover .cv{visibility:visible}
+@keyframes rise{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 .tile .c b{color:var(--text)}
 section{margin:22px 0}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:16px 14px 14px;margin-bottom:14px}
@@ -252,7 +291,7 @@ section{margin:22px 0}
 .note{margin-top:10px;line-height:1.45}
 .note b{color:var(--text)}
 .acts{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
-.act{font-family:var(--fd);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:999px;padding:9px 14px;min-height:36px;cursor:pointer}
+.act{font-family:var(--fd);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:999px;padding:9px 12px;min-height:36px;cursor:pointer}
 .act[aria-pressed="true"]{color:#000;background:var(--blue);border-color:var(--blue)}
 .act:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--text2);margin:0 0 10px}
@@ -328,27 +367,23 @@ tr.hl td{color:var(--pink)}
   <div class="kicker">Round ${ROUND} · ${esc(race.race_name)}</div>
   <h1>The floor</h1>
   <p class="stand">The lowest-scoring week in Formula 5 history, by every number the league keeps. <b>Aston Martin never pitted</b>, so the Needle paid nobody and BOX BOX was a push in all twelve matchups. That is not the story. The pool was.</p>
-  <div class="tiles">
-    <div class="tile"><div class="n">${one(thisRound.avg)}</div><div class="c">Average score. The previous low was <b>${one(prevLowAvg.avg)}</b>, ${esc(prevLowAvg.name)}.</div></div>
-    <div class="tile"><div class="n">${negatives.length}</div><div class="c">Negative scores. <b>The first ever.</b> Nobody had scored below zero before Saturday.</div></div>
-    <div class="tile"><div class="n">${worstCount}<span style="font-size:20px;color:var(--text2)">/48</span></div><div class="c">Players who had their <b>worst week of the season</b>.</div></div>
-    <div class="tile"><div class="n blue">${thisRound.max}</div><div class="c">The winning score, ${esc(thisRound.leader.name)}. <b>Lowest ever.</b> Every other week's leader scored ${prevLowHigh} or more.</div></div>
-  </div>
-</header>
-
-<section>
-  <div class="card">
-    <div class="ch"><span class="num">1</span><div><h2>Average score, every round</h2><p>All fifteen scored rounds. Press a button to take the Needle and the weekly bonus out, or to see the team game.</p></div></div>
+  <div class="lead">
+    <div class="ch"><span class="num">1</span><div><h2>Average score, every week of the season</h2><p>Best week first. Press a button to take the Needle and the weekly bonus out, or to see the team game.</p></div></div>
     <div class="acts" role="group" aria-label="Chart 1 view">
       <button class="act" aria-pressed="true" data-k="ind">Individual</button>
       <button class="act" aria-pressed="false" data-k="drv">Drivers only</button>
       <button class="act" aria-pressed="false" data-k="team">Team score</button>
     </div>
-    <div class="legend"><span><i class="blue"></i>Other rounds</span><span><i class="pink"></i>This week</span></div>
-    <div id="c1" data-max="${c1max}">${chart1}</div>
-    <p class="note">Take the Needle out and this week is <b>${one(thisRound.drvAvg)}</b> against a previous low of <b>${one(Math.min(...byRound.filter(b => b.round !== ROUND).map(b => b.drvAvg)))}</b>. The missing pit stop cost a few points a head. The pool cost the rest.</p>
+    <div id="c1" data-max-ind="${c1maxOf.ind}" data-max-drv="${c1maxOf.drv}" data-max-team="${c1maxOf.team}">${chart1}</div>
+    <p class="note">The other fourteen weeks run from <b>${one(prevLowAvg.avg)}</b> to <b>${one(Math.max(...byRound.map(b => b.avg)))}</b>. Take the Needle out and this week is <b>${one(thisRound.drvAvg)}</b> against a previous low of <b>${one(Math.min(...byRound.filter(b => b.round !== ROUND).map(b => b.drvAvg)))}</b>. The missing pit stop cost a few points a head. The pool cost the rest.</p>
   </div>
-</section>
+  <div class="tiles">
+    <div class="tile"><div class="n">${one(thisRound.avg)}</div><div class="c">Average score. The previous low was <b>${one(prevLowAvg.avg)}</b>, ${esc(prevLowAvg.name)}.</div></div>
+    <div class="tile"><div class="n">${negatives.length}</div><div class="c">Negative scores. <b>The first ever.</b> Nobody had scored below zero before Saturday.</div></div>
+    <div class="tile"><div class="n">${worstCount}<span style="font-size:20px;color:var(--text2)">/48</span></div><div class="c">Players who had their <b>worst week of the season</b>.</div></div>
+    <div class="tile"><div class="n">${thisRound.max}</div><div class="c">The winning score, ${esc(thisRound.leader.name)}. <b>Lowest ever.</b> Every other week's leader scored ${prevLowHigh} or more.</div></div>
+  </div>
+</header>
 
 <section>
   <div class="card">
@@ -437,10 +472,12 @@ tr.hl td{color:var(--pink)}
   // Chart 1: the same fifteen bars, three measures. Widths move, nothing is redrawn.
   var c1=document.getElementById('c1');
   c1.parentNode.querySelectorAll('.act[data-k]').forEach(function(b){b.addEventListener('click',function(){
-    var k=b.getAttribute('data-k');var max=+c1.getAttribute('data-max');
+    var k=b.getAttribute('data-k');var max=+c1.getAttribute('data-max-'+k);
     b.parentNode.querySelectorAll('.act').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
-    c1.querySelectorAll('.row').forEach(function(r){var bar=r.querySelector('.bar');var v=+bar.getAttribute('data-'+k);
-      bar.style.width=(v/max*100)+'%';r.querySelector('.val').textContent=(Math.round(v*10)/10).toFixed(1);});
+    var step=max>60?20:10,g='';for(var t=0;t<=max;t+=step){g+='<span style="bottom:'+(t/max*100)+'%"><i>'+t+'</i></span>';}
+    c1.querySelector('.grid').innerHTML=g;
+    c1.querySelectorAll('.col').forEach(function(r){var bar=r.querySelector('.cb');var v=+bar.getAttribute('data-'+k);
+      bar.style.height=(v/max*100)+'%';var cv=r.querySelector('.cv');cv.textContent=(Math.round(v*10)/10).toFixed(1);cv.style.bottom='calc('+(v/max*100)+'% + 3px)';});
   });});
   // Chart 4: a pick, or the whole league.
   var c4=document.getElementById('c4');
