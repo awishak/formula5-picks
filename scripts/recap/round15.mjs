@@ -805,8 +805,11 @@ body{padding:0;max-width:none}
 .dc section{margin:0 0 8px}
 .dc .hero{margin:0 0 8px}
 .dbar{position:fixed;left:0;right:0;bottom:0;height:64px;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--bg2);border-top:1px solid var(--border);z-index:5}
-.dc .row{min-height:24px;padding:0}
-.dc .track{height:14px}
+.dc .row{min-height:22px;padding:0}
+.dc .track{height:12px}
+.dc .val{font-size:14px}
+.dc #c4t .lt small{display:none}
+.dc #c4t .row{min-height:20px}
 .dc .lt{font-size:13px;line-height:1.05}
 .dc .lt small{font-size:12px;line-height:1}
 .dc .stand{font-size:15px}
@@ -816,8 +819,10 @@ body{padding:0;max-width:none}
 .dc .who{margin:8px 0 10px}
 .dc .who select{min-height:36px;padding:6px 8px;font-size:15px}
 .dc .mine{font-size:14px}
-.dc .wall25{gap:6px 4px;padding-bottom:6px;margin-top:6px}
-.dc .wall25 .w2 .logo{width:34px;height:34px}
+.dc .wall25{grid-template-columns:repeat(7,1fr);gap:6px 3px;padding-bottom:6px;margin-top:6px}
+.dc .wall25 .w2 .logo{width:32px;height:32px}
+.dc .wall25 .w2 b{font-size:13px;gap:2px}
+.dc .wall25 .w2 b .wl{font-size:12px}
 .dc .wall25 .w2 span{display:none}
 .dc .wall25 .w2 b{font-size:15px}
 .dc .wall25 .w2 i{display:none}
