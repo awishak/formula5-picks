@@ -655,7 +655,14 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">3</span><div><h2>${lowestTeam100ThisWeek} of the ${TEAM_N} lowest team scores in league history were set in Baku.</h2><p>A team's week is two hands of driver points plus BOX BOX, and ${teamWeeks.length} of them have been posted across ${rounds.length} rounds. These are the ${W[TEAM_N] || TEAM_N} lowest, in order, and every one of this week's 24 teams is on the list, from Garra Dynamics on ${teamWeek[0].v} to Bronco and Peloton on ${bestTeamThisWeek}. And the only other team here is ${esc(teamOutsider.team.name)}, whose ${teamOutsider.v} in ${esc(byRound.find(b => b.round === teamOutsider.round).name)} was the lowest team score in the league until Saturday.</p></div></div>
+    <div class="ch"><span class="num">3</span><div><h2>${W[negatives.length][0].toUpperCase() + W[negatives.length].slice(1)} players and one team finished the week below zero, which nobody had done before.</h2><p>An F5 score is five drivers, a finishing-order bonus, a best-finish guess, the Needle and a weekly bonus for the top ten, and a driver who finishes outside the points costs the people holding him a point. These ${W[negatives.length]} had Norris on top for minus one and two midfielders who finished out of the points, with nothing from the order, the best finish or the Needle to cover it. And Garra Dynamics put two of them on the same team: ${esc(playerOf[teamWeek[0].team.player1_id].name)} and ${esc(playerOf[teamWeek[0].team.player2_id].name)}, for a team score of ${teamWeek[0].v}.</p></div></div>
+    <div class="negs">${negWall}</div>
+  </div>
+</section>
+
+<section>
+  <div class="card">
+    <div class="ch"><span class="num">4</span><div><h2>${lowestTeam100ThisWeek} of the ${TEAM_N} lowest team scores in league history were set in Baku.</h2><p>A team's week is two hands of driver points plus BOX BOX, and ${teamWeeks.length} of them have been posted across ${rounds.length} rounds. These are the ${W[TEAM_N] || TEAM_N} lowest, in order, and every one of this week's 24 teams is on the list, from Garra Dynamics on ${teamWeek[0].v} to Bronco and Peloton on ${bestTeamThisWeek}. And the only other team here is ${esc(teamOutsider.team.name)}, whose ${teamOutsider.v} in ${esc(byRound.find(b => b.round === teamOutsider.round).name)} was the lowest team score in the league until Saturday.</p></div></div>
     <div class="legend"><span><i class="pink"></i>This week</span><span><i class="blue"></i>Any other week</span><span class="youleg"><i class="amber"></i>Your team</span></div>
     <div class="wall25">${wallTeam100}</div>
   </div>
@@ -663,16 +670,9 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">4</span><div><h2>The average team score was ${one(thisRound.teamAvg)}, against a previous low of ${one(prevLowTeamAvg)}.</h2><p>Across fourteen rounds the league's 24 teams had averaged between ${one(prevLowTeamAvg)} and ${one(Math.max(...byRound.map(b => b.teamAvg)))} a week, with the Canadian GP the only one under sixty. Azerbaijan came in at ${one(thisRound.teamAvg)}. And that is with nothing lost on the line: BOX BOX was a push for every team, so no one gave up the point a losing side usually does.</p></div></div>
+    <div class="ch"><span class="num">5</span><div><h2>The average team score was ${one(thisRound.teamAvg)}, against a previous low of ${one(prevLowTeamAvg)}.</h2><p>Across fourteen rounds the league's 24 teams had averaged between ${one(prevLowTeamAvg)} and ${one(Math.max(...byRound.map(b => b.teamAvg)))} a week, with the Canadian GP the only one under sixty. Azerbaijan came in at ${one(thisRound.teamAvg)}. And that is with nothing lost on the line: BOX BOX was a push for every team, so no one gave up the point a losing side usually does.</p></div></div>
     <div class="legend"><span><i class="blue"></i>Other weeks</span><span><i class="pink"></i>This week</span><span class="youleg"><i class="amber round"></i>Your team's score that week</span></div>
     <div id="c4t">${chart4t}</div>
-  </div>
-</section>
-
-<section>
-  <div class="card">
-    <div class="ch"><span class="num">5</span><div><h2>${W[negatives.length][0].toUpperCase() + W[negatives.length].slice(1)} players and one team finished the week below zero, which nobody had done before.</h2><p>An F5 score is five drivers, a finishing-order bonus, a best-finish guess, the Needle and a weekly bonus for the top ten, and a driver who finishes outside the points costs the people holding him a point. These ${W[negatives.length]} had Norris on top for minus one and two midfielders who finished out of the points, with nothing from the order, the best finish or the Needle to cover it. And Garra Dynamics put two of them on the same team: ${esc(playerOf[teamWeek[0].team.player1_id].name)} and ${esc(playerOf[teamWeek[0].team.player2_id].name)}, for a team score of ${teamWeek[0].v}.</p></div></div>
-    <div class="negs">${negWall}</div>
   </div>
 </section>
 
@@ -690,7 +690,7 @@ tr.hl td{color:var(--pink)}
   <div class="card">
     <div class="ch"><span class="num">7</span><div><h2>${esc(thisRound.leader.name)} won the week with ${thisRound.max}, the lowest winning score the league has seen.</h2><p>Somebody wins every F5 week, and through fourteen rounds the winning score had never been under ${prevLowHigh}. ${esc(thisRound.leader.name)} won this one with ${thisRound.max}, including a best-finish bonus that only two people collected. And the drop is bigger than it looks: ${W[byRound.filter(b => b.max >= 60).length]} of the season's weekly winners scored 60 or more.</p></div></div>
     <div id="c6">${chart6}</div>
-    <p class="note">${esc(thisRound.leader.name)} won the week with <b>${thisRound.max}</b>. Every other round's leader scored ${prevLowHigh} or more, and ${byRound.filter(b => b.max >= 60).length} of them scored 60 or more.</p>
+
   </div>
 </section>
 
@@ -757,6 +757,87 @@ var ME=${JSON.stringify(ME)};
 </script>
 </body></html>`;
 
-fs.writeFileSync("public/recaps/round15.html", html);
+// A deck, since 2026-09-27: five cards, one on screen at a time. Card 1 is
+// the title and the lead chart; the rest pair up. Each card is measured and
+// scaled to fit the phone, floored at 0.72, and scrolls only past the floor.
+const bodyStart = html.indexOf("<body>") + "<body>".length, scriptAt = html.indexOf("<script>");
+const body = html.slice(bodyStart, scriptAt);
+const tip = body.slice(0, body.indexOf("</div>") + "</div>".length);
+const rest = body.slice(tip.length);
+const headerEnd = rest.indexOf("</header>") + "</header>".length;
+const header = rest.slice(0, headerEnd);
+const after = rest.slice(headerEnd);
+const sections = after.split("<section>").slice(1).map(x => "<section>" + x.slice(0, x.indexOf("</section>") + "</section>".length));
+const foot = after.slice(after.indexOf("<p class=\"foot\">"));
+if (sections.length !== 7) throw new Error("expected 7 sections, got " + sections.length);
+const cards = [[header], [sections[0], sections[1]], [sections[2], sections[3]], [sections[4]], [sections[5], sections[6], foot]];
+const deck = cards.map((c, i) => `<section class="dc${i === 0 ? " on" : ""}" data-i="${i}"><div class="fit">${c.join("\n")}</div></section>`).join("\n");
+const bar = `<div class="dbar"><button class="nav" id="back" aria-label="Back">&#8249;</button><div class="lights">${cards.map((_, i) => `<i${i === 0 ? ' class="on"' : ""}></i>`).join("")}</div><button class="nav next" id="next">NEXT</button></div>`;
+const deckJs = `<script>
+(function(){
+  var cards=[].slice.call(document.querySelectorAll('.dc')),lights=[].slice.call(document.querySelectorAll('.lights i')),back=document.getElementById('back'),next=document.getElementById('next');
+  var i=Math.max(0,Math.min(cards.length-1,(+new URLSearchParams(location.search).get('card')||1)-1));
+  var MIN=0.72;
+  function fit(card){var f=card.querySelector('.fit');f.style.transform='';f.style.width='';var have=card.clientHeight,nat=f.scrollHeight;
+    var k=Math.min(1,have/nat);if(k<MIN)k=MIN;if(k<1){f.style.width=(100/k)+'%';f.style.transform='scale('+k+')';}
+    card.classList.toggle('scrolls',f.scrollHeight*k>have+2);document.documentElement.dataset.fit=k.toFixed(3);}
+  function show(n){i=n;cards.forEach(function(c,j){c.classList.toggle('on',j===n);c.scrollTop=0;});lights.forEach(function(l,j){l.classList.toggle('on',j<=n);});
+    back.disabled=n===0;next.textContent=n===cards.length-1?'DONE':'NEXT';fit(cards[n]);
+    try{history.replaceState(null,'',location.pathname+'?'+(function(){var q=new URLSearchParams(location.search);q.set('card',n+1);return q.toString();})());}catch(e){}}
+  next.addEventListener('click',function(){if(i<cards.length-1)show(i+1);else location.href='/';});
+  back.addEventListener('click',function(){if(i>0)show(i-1);});
+  document.addEventListener('keydown',function(e){if(e.key==='ArrowRight')next.click();if(e.key==='ArrowLeft')back.click();});
+  window.addEventListener('resize',function(){fit(cards[i]);});
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){fit(cards[i]);});
+  [].forEach.call(document.images,function(im){im.addEventListener('load',function(){if(cards[i].contains(im))fit(cards[i]);});});
+  show(i);setTimeout(function(){fit(cards[i]);},400);
+})();
+</script>`;
+const deckCss = `<style>
+html,body{height:100%;overflow:hidden}
+body{padding:0;max-width:none}
+.deck{position:fixed;inset:0 0 64px 0;overflow:hidden}
+.dc{position:absolute;inset:0;display:none;overflow:hidden;padding:12px 16px 8px;box-sizing:border-box}
+.dc.on{display:block}
+.dc.scrolls{overflow-y:auto}
+.fit{transform-origin:top left;max-width:660px;margin:0 auto}
+.dc .card,.dc .lead{margin-bottom:10px}
+.dc section{margin:0 0 8px}
+.dc .hero{margin:0 0 8px}
+.dbar{position:fixed;left:0;right:0;bottom:0;height:64px;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--bg2);border-top:1px solid var(--border);z-index:5}
+.dc .row{min-height:24px;padding:0}
+.dc .track{height:14px}
+.dc .lt{font-size:13px;line-height:1.05}
+.dc .lt small{font-size:12px;line-height:1}
+.dc .stand{font-size:15px}
+.dc h1{font-size:clamp(24px,6.6vw,34px)}
+.dc .ch h2{font-size:18px}
+.dc .ch p{font-size:13px}
+.dc .who{margin:8px 0 10px}
+.dc .who select{min-height:36px;padding:6px 8px;font-size:15px}
+.dc .mine{font-size:14px}
+.dc .wall25{gap:6px 4px;padding-bottom:6px;margin-top:6px}
+.dc .wall25 .w2 .logo{width:34px;height:34px}
+.dc .wall25 .w2 span{display:none}
+.dc .wall25 .w2 b{font-size:15px}
+.dc .wall25 .w2 i{display:none}
+.dc .drow,.dc .dtrack{height:36px}
+.dc .dmark .head{width:30px;height:30px}
+.dc .negs{gap:8px 6px}
+.dc .w3{width:64px}
+.dc .w3 .face,.dc .w3 .logo{width:46px;height:46px}
+.dc .w3 b{font-size:17px}
+.dc .legend{margin-bottom:6px}
+.dc .swarm.one .ss{max-height:260px;width:auto;max-width:100%;margin:0 auto;display:block}
+.nav{font-family:var(--fn);font-weight:700;font-size:16px;letter-spacing:.08em;color:var(--text);background:var(--bg3);border:1px solid var(--border2);border-radius:12px;min-height:44px;min-width:44px;padding:0 14px;cursor:pointer}
+.nav:disabled{opacity:.35;cursor:default}
+.nav.next{margin-left:auto;background:var(--blue);color:#000;border-color:var(--blue);padding:0 26px;box-shadow:0 0 14px rgba(0,217,255,.45)}
+.lights{display:flex;gap:6px}
+.lights i{width:9px;height:9px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2)}
+.lights i.on{background:var(--blue);border-color:var(--blue);box-shadow:0 0 6px var(--blue)}
+.foot{margin-top:14px}
+</style>`;
+const out = html.slice(0, bodyStart).replace("</head>", deckCss + "\n</head>") + tip + `\n<div class="deck">${deck}</div>\n${bar}\n` + html.slice(scriptAt).replace("</body>", deckJs + "\n</body>");
+fs.writeFileSync("public/recaps/round15.html", out);
 console.log(`wrote public/recaps/round15.html (${(html.length / 1024).toFixed(0)}KB)`);
 console.log(`avg ${one(thisRound.avg)} prev ${one(prevLowAvg.avg)} (${prevLowAvg.name}); negatives ${negatives.length}; worst ${worstCount}/48; high ${thisRound.max} prev ${prevLowHigh}; team avg ${one(thisRound.teamAvg)} prev ${one(prevLowTeamAvg)}; low team ever prev ${prevLowTeam}, this week holds the ${lowTeamAllThisWeek} lowest`);
