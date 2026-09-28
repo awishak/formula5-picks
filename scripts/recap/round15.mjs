@@ -231,12 +231,12 @@ const c1sorted = byRound.slice().sort((a, b) => b.avg - a.avg);
 // The scale runs to the best score anybody posted, not the best average, so
 // the reader's own dot always lands on the track.
 const C1MAX = Math.ceil(pMax0 / 10) * 10, C4MAX = Math.ceil(tMax0 / 10) * 10;
-const chart1 = c1sorted.map((b, i) => barRow({
+const chart1 = byRound.map((b, i) => barRow({
   label: b.name, sub: `R${b.round}`, value: b.avg, max: C1MAX, tone: b.round === ROUND ? "pink" : "blue", i,
   tip: `${b.full}, round ${b.round}: average ${one(b.avg)}, median ${b.med}, high ${b.max}, low ${b.min}`,
   extra: ` data-round="${b.round}"`, dot: true, fmt: one,
 })).join("");
-const chart4t = byRound.slice().sort((a, b) => b.teamAvg - a.teamAvg).map((b, i) => barRow({
+const chart4t = byRound.map((b, i) => barRow({
   label: b.name, sub: `R${b.round}`, value: b.teamAvg, max: C4MAX, tone: b.round === ROUND ? "pink" : "blue", i,
   extra: ` data-round="${b.round}"`, dot: true, fmt: one,
   tip: `${b.full}, round ${b.round}: team average ${one(b.teamAvg)}, best team ${Math.max(...teamWeeks.filter(t => t.round === b.round).map(t => t.v))}, worst ${Math.min(...teamWeeks.filter(t => t.round === b.round).map(t => t.v))}`,
@@ -373,7 +373,7 @@ const dotRows = (items, { max }) => items.map((x, i) => {
   const pct = Math.abs(x.v) / max * 100;
   const flip = pct > 62;
   return `<div class="drow${x.me ? " me" : ""}" style="--i:${i}" data-tip="${esc(x.tip)}">
-    <div class="lab"><span class="lt">${esc(x.label)}<small>R${x.round}</small></span></div>
+    <div class="lab"><span class="lt">${esc(x.label)} <small>R${x.round}</small></span></div>
     <div class="dtrack"><span class="dline" style="width:${pct}%"></span>
       <span class="dmark" style="left:${pct}%">${x.pic}</span>
       <span class="dlab${flip ? " flip" : ""}" style="${flip ? "right" : "left"}:calc(${flip ? 100 - pct : pct}% + 22px)"><b>${esc(x.name)}</b><i>${x.v}</i></span>
@@ -407,7 +407,7 @@ const chart5 = teamWeek.map((t, i) => barRow({
 
 /* chart 6: the weekly leader, every round */
 const chart6 = byRound.map((b, i) => barRow({
-  label: b.name, sub: `R${b.round}`, sub2: surname(b.leader.name), pic: face(b.leader, 30), value: b.max, max: 80, who: `data-player="${esc(b.leader.name)}"`,
+  label: b.name, sub: `R${b.round} · ${surname(b.leader.name)}`, pic: face(b.leader, 30), value: b.max, max: 80, who: `data-player="${esc(b.leader.name)}"`,
   tone: b.round === ROUND ? "pink" : "blue", i,
   tip: `${b.full}: ${b.leader.name} led the week with ${b.max}`,
 })).join("");
@@ -460,7 +460,7 @@ const html = `<!DOCTYPE html>
 html{background:var(--bg)}
 body{font-family:var(--fd);background:var(--bg);color:var(--text);padding:16px 16px 60px;max-width:660px;margin:0 auto;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
 a{color:var(--blue)}
-.kicker{font-family:var(--fn);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+.kicker{font-family:var(--fn);font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
 h1{font-family:var(--fn);font-weight:700;font-size:clamp(26px,7.4vw,40px);line-height:1;letter-spacing:.02em;text-transform:uppercase;margin:8px 0 6px;color:var(--pink);text-shadow:0 0 6px rgba(255,45,149,.55),0 0 22px rgba(255,45,149,.35)}
 .stand{font-size:17px;color:var(--text);max-width:520px}
 .ch p.andrew{font-size:16px;color:var(--text);margin-top:6px;line-height:1.45}
@@ -514,7 +514,7 @@ tr.you td{color:var(--amber)}
 .cols{position:relative;display:flex;align-items:flex-end;gap:2px;padding:0 0 0 26px;margin-top:6px}
 .grid{position:absolute;left:0;right:0;top:20px;height:180px;pointer-events:none}
 .grid span{position:absolute;left:26px;right:0;height:1px;background:var(--border)}
-.grid span i{position:absolute;left:-26px;top:-8px;font-style:normal;font-family:var(--fn);font-size:13px;color:var(--text3)}
+.grid span i{position:absolute;left:-26px;top:-8px;font-style:normal;font-family:var(--fn);font-size:14px;color:var(--text)}
 .col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;position:relative}
 .bw{display:flex;align-items:flex-end;width:100%;height:180px;margin-top:20px;position:relative}
 .cb{display:block;width:100%;background:var(--blue);border-radius:3px 3px 0 0;transform-origin:bottom;animation:rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*35ms);transition:height .5s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 8px rgba(0,217,255,.25)}
@@ -525,13 +525,13 @@ tr.you td{color:var(--amber)}
 .cp{display:flex;justify-content:center;margin-top:6px;min-height:0}
 .cp:empty{display:none}
 .sub{font-family:var(--fn);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin:10px 0 0}
-.drow{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:8px;height:42px;animation:fade .5s both;animation-delay:calc(var(--i)*35ms)}
+.drow{display:grid;grid-template-columns:124px 1fr;align-items:center;gap:8px;height:42px;animation:fade .5s both;animation-delay:calc(var(--i)*35ms)}
 .dtrack{position:relative;height:42px;margin-right:18px}
 .dline{position:absolute;left:0;top:50%;height:1px;background:var(--border2)}
 .dmark{position:absolute;top:50%;transform:translate(-50%,-50%);display:flex}
 .dmark .head{width:34px;height:34px;border-color:var(--blue);box-shadow:0 0 8px rgba(0,217,255,.35)}
 .drow.me .dmark .head{border-color:var(--pink);box-shadow:0 0 10px rgba(255,45,149,.6)}
-.dlab{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:13px;line-height:1.1;display:flex;flex-direction:column}
+.dlab{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:14px;line-height:1.1;display:flex;flex-direction:column}
 .dlab.flip{text-align:right;align-items:flex-end}
 .dlab b{font-weight:600;color:var(--text);font-size:14px}
 .dlab i{font-style:normal;font-family:var(--fn);font-weight:700;color:var(--blue);font-size:16px}
@@ -549,7 +549,7 @@ tr.you td{color:var(--amber)}
 section{margin:22px 0}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:16px 14px 14px;margin-bottom:14px}
 .ch{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
-.num{font-family:var(--fn);font-weight:700;font-size:13px;color:var(--blue);border:1px solid var(--blue);border-radius:6px;padding:1px 6px;letter-spacing:.06em;flex-shrink:0;margin-top:2px}
+.num{font-family:var(--fn);font-weight:700;font-size:14px;color:var(--blue);border:1px solid var(--blue);border-radius:6px;padding:1px 6px;letter-spacing:.06em;flex-shrink:0;margin-top:2px}
 .ch h2{font-size:20px;line-height:1.2;font-weight:700}
 .ch p,.note{font-size:14px;color:var(--text2);margin-top:4px}
 .note{margin-top:10px;line-height:1.45}
@@ -577,15 +577,20 @@ section{margin:22px 0}
 .w3 .face,.w3 .logo{width:48px;height:48px}
 .w3 .logo{border:2px solid var(--pink)}
 .w3 b{font-family:var(--fn);font-size:18px;color:var(--pink);line-height:1}
-.w3 span{font-size:13px;color:var(--text);line-height:1.15}
+.w3 span{font-size:14px;color:var(--text);line-height:1.15}
 .w3.you .face,.w3.you .logo{border-color:var(--amber)!important;box-shadow:0 0 12px rgba(255,201,60,.8)}
 .youleg{display:none}body.has-you .youleg{display:inline}
 .row{display:grid;grid-template-columns:132px 1fr 66px;align-items:center;gap:8px;min-height:34px;padding:0}
 .row.db{grid-template-columns:112px 1fr 84px}
 .lab{display:flex;align-items:center;gap:7px;min-width:0}
 .lt{font-size:15px;font-weight:600;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lt small{font-size:13px;font-weight:600;color:var(--text2)}
-.lt b{display:block;font-size:13px;font-weight:600;color:var(--text);line-height:1.1}
+.lt small{font-size:14px;font-weight:600;color:var(--text2)}
+.lt b{display:block;font-size:14px;font-weight:600;color:var(--text);line-height:1.1}
+.wide-lab .row{grid-template-columns:200px 1fr 52px}
+.wide-lab .lt{font-size:13px}
+.wide-lab .row{min-height:26px}
+.wide-lab .track{height:22px}
+.wide-lab .val{font-size:22px}
 .track{position:relative;height:30px;background:transparent;border-radius:0;overflow:hidden}
 .zero{position:absolute;top:0;bottom:0;width:1px;background:var(--border2)}
 .bar{position:absolute;top:1px;bottom:1px;border-radius:0 4px 4px 0;transform-origin:left center;animation:grow .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*35ms)}
@@ -641,7 +646,7 @@ td:nth-child(2){font-family:var(--fd);font-size:14px;white-space:nowrap}
 tr.hl td{color:var(--pink)}
 .tw{overflow-x:auto}
 .foot{font-size:13px;color:var(--text3);margin-top:30px;line-height:1.5}
-@media (max-width:420px){.drow,.srow{grid-template-columns:78px 1fr}.w2 .face{width:26px;height:26px}.row{grid-template-columns:122px 1fr 42px;gap:6px}.row.db{grid-template-columns:110px 1fr 74px}.lt{font-size:13px}.tile .n{font-size:32px}.val{font-size:15px}}
+@media (max-width:420px){.wide-lab .row{grid-template-columns:198px 1fr 44px}.drow{grid-template-columns:112px 1fr}.srow{grid-template-columns:78px 1fr}.w2 .face{width:26px;height:26px}.row{grid-template-columns:122px 1fr 42px;gap:6px}.row.db{grid-template-columns:110px 1fr 74px}.lt{font-size:13px}.tile .n{font-size:32px}.val{font-size:15px}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}}
 </style></head>
 <body>
@@ -692,14 +697,14 @@ tr.hl td{color:var(--pink)}
 <section>
   <div class="card">
     <div class="ch"><span class="num">5</span><div><h2>${esc(thisRound.leader.name)} won the week with ${thisRound.max}, the lowest winning score the league has seen.</h2></div></div>
-    <div id="c6">${chart6}</div>
+    <div id="c6" class="wide-lab">${chart6}</div>
 
   </div>
 </section>
 
 <section>
   <div class="card">
-    <div class="ch"><div><h2>And there was no pit stop.</h2><p class="andrew">On top of the craziness of this week, Aston Martin retired without a pit stop, meaning there were no pit stop points in both the team and individual competitions. However, there were only ${bbFlippable} matchups that could have potentially been decided by the BOX BOX line.</p></div></div>
+    <div class="ch"><div><p class="andrew" style="margin-top:0">On top of the craziness of this week, Aston Martin retired without a pit stop, meaning there were no pit stop points in both the team and individual competitions. However, there were only ${bbFlippable} matchups that could have potentially been decided by the BOX BOX line.</p></div></div>
   </div>
 </section>
 
@@ -782,7 +787,7 @@ const deckJs = `<script>
   var q0=new URLSearchParams(location.search),embed=q0.get('embed')==='1';
   if(embed)document.documentElement.classList.add('embed');
   var i=Math.max(0,Math.min(cards.length-1,(+q0.get('card')||1)-1));
-  var MIN=0.72;
+  var MIN=0.92; // Andrew, 2026-09-28: nothing under 12px. A card past this scrolls.
   function fit(card){var f=card.querySelector('.fit');f.style.transform='';f.style.width='';var have=card.clientHeight,nat=f.scrollHeight;
     var k=Math.min(1,have/nat);if(k<MIN)k=MIN;if(k<1){f.style.width=(100/k)+'%';f.style.transform='scale('+k+')';}
     card.classList.toggle('scrolls',f.scrollHeight*k>have+2);document.documentElement.dataset.fit=k.toFixed(3);}
@@ -814,6 +819,12 @@ body{padding:0;max-width:none}
 .dc .row{min-height:30px}
 .dc .track{height:26px}
 .dc .val{font-size:22px}
+.dc .wide-lab .row{min-height:25px}
+.dc .wide-lab .track{height:21px}
+.dc .wide-lab .val{font-size:20px}
+.dc .wide-lab .face{width:22px!important;height:22px!important;font-size:11px}
+.dc .wide-lab .lab{gap:5px}
+.dc .andrew{font-size:15px;line-height:1.4}
 
 .dc .stand{font-size:15px}
 .dc h1{font-size:clamp(24px,6.6vw,34px)}
@@ -843,7 +854,7 @@ body{padding:0;max-width:none}
 .lights i{width:9px;height:9px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2)}
 .lights i.on{background:var(--blue);border-color:var(--blue);box-shadow:0 0 6px var(--blue)}
 .foot{margin-top:14px}
-html.embed .dbar,html.embed .who,html.embed .kicker{display:none}
+html.embed .dbar,html.embed .who,html.embed .kicker,html.embed .hero h1,html.embed .hero .stand{display:none}
 html.embed .deck{inset:0}
 html.embed .dc{padding:4px 2px 0}
 html.embed .hero{margin-top:0}

@@ -293,7 +293,7 @@ const TRACKS = {
   velvet: { src: THEME_SRC, name: "Velvet Thunder" },
   // Tubey's song for the Bahlaysian Grand Prix, offered on round 15's last
   // card and left playing over the picker. The file is Andrew's; see CLAUDE.md.
-  bahlaysia: { src: "/bahlaysian-gp.mp3", name: "Welcome to Bahlaysia" },
+  bahlaysia: { src: "/bahlaysian-gp.mp3", name: "The official Bahlaysian GP song" },
 };
 // What a round is called on its deck when Andrew calls it something else.
 // Round 16, the Bahrain Grand Prix at Sepang, is the Bahlaysian Grand Prix.
@@ -2684,7 +2684,9 @@ function CardRecap({ d, stage }) {
   const src = `/recaps/round15.html?embed=1&card=${stage + 1}&player=${encodeURIComponent(d.player.name)}`;
   return (
     <iframe title={`Round 15 in numbers, card ${stage + 1}`} src={src}
-      style={{ width: "100%", height: "calc(100dvh - 128px)", border: 0, display: "block",
+      // Sized to the card's room, so the app's own fit scale stays at 1 and the
+      // page inside is the only thing deciding how big its type is.
+      style={{ width: "100%", height: "calc(100dvh - 166px)", border: 0, display: "block",
                borderRadius: 14, background: V.bg }} />
   );
 }
@@ -2705,7 +2707,7 @@ function CardSendoff({ d, onPicks, onExit, song }) {
           ...display("h3", { fontSize: 17, color: V.bg }), background: V.blue,
           border: "none", borderRadius: 999, padding: "14px 20px", cursor: "pointer",
           boxShadow: `0 0 18px ${V.blue}77`,
-        }}>LISTEN TO TUBEY&rsquo;S SONG</button>
+        }}>LISTEN TO THE OFFICIAL BAHLAYSIAN GP SONG</button>
         <button onClick={() => { song.stop(); go(); }} style={{
           ...display("h3", { fontSize: 17, color: V.blue }), background: V.bg,
           border: `1.5px solid ${V.blue}`, borderRadius: 999, padding: "14px 20px",

@@ -10,7 +10,7 @@
 html{background:var(--bg)}
 body{font-family:var(--fd);background:var(--bg);color:var(--text);padding:16px 16px 60px;max-width:660px;margin:0 auto;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
 a{color:var(--blue)}
-.kicker{font-family:var(--fn);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+.kicker{font-family:var(--fn);font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
 h1{font-family:var(--fn);font-weight:700;font-size:clamp(26px,7.4vw,40px);line-height:1;letter-spacing:.02em;text-transform:uppercase;margin:8px 0 6px;color:var(--pink);text-shadow:0 0 6px rgba(255,45,149,.55),0 0 22px rgba(255,45,149,.35)}
 .stand{font-size:17px;color:var(--text);max-width:520px}
 .ch p.andrew{font-size:16px;color:var(--text);margin-top:6px;line-height:1.45}
@@ -64,7 +64,7 @@ tr.you td{color:var(--amber)}
 .cols{position:relative;display:flex;align-items:flex-end;gap:2px;padding:0 0 0 26px;margin-top:6px}
 .grid{position:absolute;left:0;right:0;top:20px;height:180px;pointer-events:none}
 .grid span{position:absolute;left:26px;right:0;height:1px;background:var(--border)}
-.grid span i{position:absolute;left:-26px;top:-8px;font-style:normal;font-family:var(--fn);font-size:13px;color:var(--text3)}
+.grid span i{position:absolute;left:-26px;top:-8px;font-style:normal;font-family:var(--fn);font-size:14px;color:var(--text)}
 .col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;position:relative}
 .bw{display:flex;align-items:flex-end;width:100%;height:180px;margin-top:20px;position:relative}
 .cb{display:block;width:100%;background:var(--blue);border-radius:3px 3px 0 0;transform-origin:bottom;animation:rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*35ms);transition:height .5s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 8px rgba(0,217,255,.25)}
@@ -75,13 +75,13 @@ tr.you td{color:var(--amber)}
 .cp{display:flex;justify-content:center;margin-top:6px;min-height:0}
 .cp:empty{display:none}
 .sub{font-family:var(--fn);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin:10px 0 0}
-.drow{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:8px;height:42px;animation:fade .5s both;animation-delay:calc(var(--i)*35ms)}
+.drow{display:grid;grid-template-columns:124px 1fr;align-items:center;gap:8px;height:42px;animation:fade .5s both;animation-delay:calc(var(--i)*35ms)}
 .dtrack{position:relative;height:42px;margin-right:18px}
 .dline{position:absolute;left:0;top:50%;height:1px;background:var(--border2)}
 .dmark{position:absolute;top:50%;transform:translate(-50%,-50%);display:flex}
 .dmark .head{width:34px;height:34px;border-color:var(--blue);box-shadow:0 0 8px rgba(0,217,255,.35)}
 .drow.me .dmark .head{border-color:var(--pink);box-shadow:0 0 10px rgba(255,45,149,.6)}
-.dlab{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:13px;line-height:1.1;display:flex;flex-direction:column}
+.dlab{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:14px;line-height:1.1;display:flex;flex-direction:column}
 .dlab.flip{text-align:right;align-items:flex-end}
 .dlab b{font-weight:600;color:var(--text);font-size:14px}
 .dlab i{font-style:normal;font-family:var(--fn);font-weight:700;color:var(--blue);font-size:16px}
@@ -99,7 +99,7 @@ tr.you td{color:var(--amber)}
 section{margin:22px 0}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:16px 14px 14px;margin-bottom:14px}
 .ch{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
-.num{font-family:var(--fn);font-weight:700;font-size:13px;color:var(--blue);border:1px solid var(--blue);border-radius:6px;padding:1px 6px;letter-spacing:.06em;flex-shrink:0;margin-top:2px}
+.num{font-family:var(--fn);font-weight:700;font-size:14px;color:var(--blue);border:1px solid var(--blue);border-radius:6px;padding:1px 6px;letter-spacing:.06em;flex-shrink:0;margin-top:2px}
 .ch h2{font-size:20px;line-height:1.2;font-weight:700}
 .ch p,.note{font-size:14px;color:var(--text2);margin-top:4px}
 .note{margin-top:10px;line-height:1.45}
@@ -127,15 +127,20 @@ section{margin:22px 0}
 .w3 .face,.w3 .logo{width:48px;height:48px}
 .w3 .logo{border:2px solid var(--pink)}
 .w3 b{font-family:var(--fn);font-size:18px;color:var(--pink);line-height:1}
-.w3 span{font-size:13px;color:var(--text);line-height:1.15}
+.w3 span{font-size:14px;color:var(--text);line-height:1.15}
 .w3.you .face,.w3.you .logo{border-color:var(--amber)!important;box-shadow:0 0 12px rgba(255,201,60,.8)}
 .youleg{display:none}body.has-you .youleg{display:inline}
 .row{display:grid;grid-template-columns:132px 1fr 66px;align-items:center;gap:8px;min-height:34px;padding:0}
 .row.db{grid-template-columns:112px 1fr 84px}
 .lab{display:flex;align-items:center;gap:7px;min-width:0}
 .lt{font-size:15px;font-weight:600;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lt small{font-size:13px;font-weight:600;color:var(--text2)}
-.lt b{display:block;font-size:13px;font-weight:600;color:var(--text);line-height:1.1}
+.lt small{font-size:14px;font-weight:600;color:var(--text2)}
+.lt b{display:block;font-size:14px;font-weight:600;color:var(--text);line-height:1.1}
+.wide-lab .row{grid-template-columns:200px 1fr 52px}
+.wide-lab .lt{font-size:13px}
+.wide-lab .row{min-height:26px}
+.wide-lab .track{height:22px}
+.wide-lab .val{font-size:22px}
 .track{position:relative;height:30px;background:transparent;border-radius:0;overflow:hidden}
 .zero{position:absolute;top:0;bottom:0;width:1px;background:var(--border2)}
 .bar{position:absolute;top:1px;bottom:1px;border-radius:0 4px 4px 0;transform-origin:left center;animation:grow .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*35ms)}
@@ -191,7 +196,7 @@ td:nth-child(2){font-family:var(--fd);font-size:14px;white-space:nowrap}
 tr.hl td{color:var(--pink)}
 .tw{overflow-x:auto}
 .foot{font-size:13px;color:var(--text3);margin-top:30px;line-height:1.5}
-@media (max-width:420px){.drow,.srow{grid-template-columns:78px 1fr}.w2 .face{width:26px;height:26px}.row{grid-template-columns:122px 1fr 42px;gap:6px}.row.db{grid-template-columns:110px 1fr 74px}.lt{font-size:13px}.tile .n{font-size:32px}.val{font-size:15px}}
+@media (max-width:420px){.wide-lab .row{grid-template-columns:198px 1fr 44px}.drow{grid-template-columns:112px 1fr}.srow{grid-template-columns:78px 1fr}.w2 .face{width:26px;height:26px}.row{grid-template-columns:122px 1fr 42px;gap:6px}.row.db{grid-template-columns:110px 1fr 74px}.lt{font-size:13px}.tile .n{font-size:32px}.val{font-size:15px}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}}
 </style><style>
 html,body{height:100%;overflow:hidden}
@@ -208,6 +213,12 @@ body{padding:0;max-width:none}
 .dc .row{min-height:30px}
 .dc .track{height:26px}
 .dc .val{font-size:22px}
+.dc .wide-lab .row{min-height:25px}
+.dc .wide-lab .track{height:21px}
+.dc .wide-lab .val{font-size:20px}
+.dc .wide-lab .face{width:22px!important;height:22px!important;font-size:11px}
+.dc .wide-lab .lab{gap:5px}
+.dc .andrew{font-size:15px;line-height:1.4}
 
 .dc .stand{font-size:15px}
 .dc h1{font-size:clamp(24px,6.6vw,34px)}
@@ -237,7 +248,7 @@ body{padding:0;max-width:none}
 .lights i{width:9px;height:9px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2)}
 .lights i.on{background:var(--blue);border-color:var(--blue);box-shadow:0 0 6px var(--blue)}
 .foot{margin-top:14px}
-html.embed .dbar,html.embed .who,html.embed .kicker{display:none}
+html.embed .dbar,html.embed .who,html.embed .kicker,html.embed .hero h1,html.embed .hero .stand{display:none}
 html.embed .deck{inset:0}
 html.embed .dc{padding:4px 2px 0}
 html.embed .hero{margin-top:0}
@@ -259,62 +270,62 @@ html.embed .hero{margin-top:0}
   <div class="lead">
     <div class="ch"><span class="num">1</span><div><h2>The Azerbaijan GP led to the lowest F5 scores of the season by every measure, and by a wide margin.</h2></div></div>
     <div class="legend"><span><i class="blue"></i>Other weeks</span><span><i class="pink"></i>This week</span><span class="youleg"><i class="amber round"></i>Your score that week</span></div>
-    <div id="c1"><div class="row"  data-tip="Belgian Grand Prix, round 10: average 48.4, median 53, high 70, low 19" style="--i:0">
-    <div class="lab"><span class="lt">Belgium <small>R10</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:60.546875%" data-round="10"></span><span class="ydot" data-max="80"></span></div>
-    <div class="val blue">48.4</div>
-  </div><div class="row"  data-tip="Spanish Grand Prix, round 7: average 44.0, median 45.5, high 68, low 17" style="--i:1">
-    <div class="lab"><span class="lt">Spain <small>R7</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:55.02604166666667%" data-round="7"></span><span class="ydot" data-max="80"></span></div>
-    <div class="val blue">44.0</div>
-  </div><div class="row"  data-tip="Austrian Grand Prix, round 8: average 42.8, median 46, high 67, low 19" style="--i:2">
-    <div class="lab"><span class="lt">Austria <small>R8</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:53.541666666666664%" data-round="8"></span><span class="ydot" data-max="80"></span></div>
-    <div class="val blue">42.8</div>
-  </div><div class="row"  data-tip="Japanese Grand Prix, round 3: average 42.5, median 44, high 67, low 15" style="--i:3">
-    <div class="lab"><span class="lt">Japan <small>R3</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:53.098958333333336%" data-round="3"></span><span class="ydot" data-max="80"></span></div>
-    <div class="val blue">42.5</div>
-  </div><div class="row"  data-tip="Hungarian Grand Prix, round 11: average 41.6, median 41, high 74, low 18" style="--i:4">
-    <div class="lab"><span class="lt">Hungary <small>R11</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:51.979166666666664%" data-round="11"></span><span class="ydot" data-max="80"></span></div>
-    <div class="val blue">41.6</div>
-  </div><div class="row"  data-tip="Italian Grand Prix, round 13: average 41.5, median 43, high 58, low 24" style="--i:5">
-    <div class="lab"><span class="lt">Monza <small>R13</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:51.90104166666667%" data-round="13"></span><span class="ydot" data-max="80"></span></div>
-    <div class="val blue">41.5</div>
-  </div><div class="row"  data-tip="Spanish Grand Prix, round 14: average 40.9, median 39, high 59, low 30" style="--i:6">
-    <div class="lab"><span class="lt">Spain <small>R14</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:51.09375000000001%" data-round="14"></span><span class="ydot" data-max="80"></span></div>
-    <div class="val blue">40.9</div>
-  </div><div class="row"  data-tip="Australian Grand Prix, round 1: average 38.8, median 40, high 61, low 13" style="--i:7">
+    <div id="c1"><div class="row"  data-tip="Australian Grand Prix, round 1: average 38.8, median 40, high 61, low 13" style="--i:0">
     <div class="lab"><span class="lt">Australia <small>R1</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:48.54166666666667%" data-round="1"></span><span class="ydot" data-max="80"></span></div>
     <div class="val blue">38.8</div>
+  </div><div class="row"  data-tip="Chinese Grand Prix, round 2: average 32.1, median 31, high 52, low 21" style="--i:1">
+    <div class="lab"><span class="lt">China <small>R2</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:40.18229166666667%" data-round="2"></span><span class="ydot" data-max="80"></span></div>
+    <div class="val blue">32.1</div>
+  </div><div class="row"  data-tip="Japanese Grand Prix, round 3: average 42.5, median 44, high 67, low 15" style="--i:2">
+    <div class="lab"><span class="lt">Japan <small>R3</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:53.098958333333336%" data-round="3"></span><span class="ydot" data-max="80"></span></div>
+    <div class="val blue">42.5</div>
+  </div><div class="row"  data-tip="Miami Grand Prix, round 4: average 31.2, median 27, high 57, low 13" style="--i:3">
+    <div class="lab"><span class="lt">Miami <small>R4</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:39.036458333333336%" data-round="4"></span><span class="ydot" data-max="80"></span></div>
+    <div class="val blue">31.2</div>
+  </div><div class="row"  data-tip="Canadian Grand Prix, round 5: average 26.1, median 25.5, high 48, low 11" style="--i:4">
+    <div class="lab"><span class="lt">Canada <small>R5</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:32.682291666666664%" data-round="5"></span><span class="ydot" data-max="80"></span></div>
+    <div class="val blue">26.1</div>
+  </div><div class="row"  data-tip="Monaco Grand Prix, round 6: average 32.2, median 35, high 64, low 9" style="--i:5">
+    <div class="lab"><span class="lt">Monaco <small>R6</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:40.28645833333333%" data-round="6"></span><span class="ydot" data-max="80"></span></div>
+    <div class="val blue">32.2</div>
+  </div><div class="row"  data-tip="Spanish Grand Prix, round 7: average 44.0, median 45.5, high 68, low 17" style="--i:6">
+    <div class="lab"><span class="lt">Spain <small>R7</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:55.02604166666667%" data-round="7"></span><span class="ydot" data-max="80"></span></div>
+    <div class="val blue">44.0</div>
+  </div><div class="row"  data-tip="Austrian Grand Prix, round 8: average 42.8, median 46, high 67, low 19" style="--i:7">
+    <div class="lab"><span class="lt">Austria <small>R8</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:53.541666666666664%" data-round="8"></span><span class="ydot" data-max="80"></span></div>
+    <div class="val blue">42.8</div>
   </div><div class="row"  data-tip="British Grand Prix, round 9: average 35.0, median 34, high 54, low 22" style="--i:8">
     <div class="lab"><span class="lt">Britain <small>R9</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:43.69791666666667%" data-round="9"></span><span class="ydot" data-max="80"></span></div>
     <div class="val blue">35.0</div>
-  </div><div class="row"  data-tip="Monaco Grand Prix, round 6: average 32.2, median 35, high 64, low 9" style="--i:9">
-    <div class="lab"><span class="lt">Monaco <small>R6</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:40.28645833333333%" data-round="6"></span><span class="ydot" data-max="80"></span></div>
-    <div class="val blue">32.2</div>
-  </div><div class="row"  data-tip="Chinese Grand Prix, round 2: average 32.1, median 31, high 52, low 21" style="--i:10">
-    <div class="lab"><span class="lt">China <small>R2</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:40.18229166666667%" data-round="2"></span><span class="ydot" data-max="80"></span></div>
-    <div class="val blue">32.1</div>
+  </div><div class="row"  data-tip="Belgian Grand Prix, round 10: average 48.4, median 53, high 70, low 19" style="--i:9">
+    <div class="lab"><span class="lt">Belgium <small>R10</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:60.546875%" data-round="10"></span><span class="ydot" data-max="80"></span></div>
+    <div class="val blue">48.4</div>
+  </div><div class="row"  data-tip="Hungarian Grand Prix, round 11: average 41.6, median 41, high 74, low 18" style="--i:10">
+    <div class="lab"><span class="lt">Hungary <small>R11</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:51.979166666666664%" data-round="11"></span><span class="ydot" data-max="80"></span></div>
+    <div class="val blue">41.6</div>
   </div><div class="row"  data-tip="Dutch Grand Prix, round 12: average 31.4, median 29, high 54, low 16" style="--i:11">
     <div class="lab"><span class="lt">Zandvoort <small>R12</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:39.21875%" data-round="12"></span><span class="ydot" data-max="80"></span></div>
     <div class="val blue">31.4</div>
-  </div><div class="row"  data-tip="Miami Grand Prix, round 4: average 31.2, median 27, high 57, low 13" style="--i:12">
-    <div class="lab"><span class="lt">Miami <small>R4</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:39.036458333333336%" data-round="4"></span><span class="ydot" data-max="80"></span></div>
-    <div class="val blue">31.2</div>
-  </div><div class="row"  data-tip="Canadian Grand Prix, round 5: average 26.1, median 25.5, high 48, low 11" style="--i:13">
-    <div class="lab"><span class="lt">Canada <small>R5</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:32.682291666666664%" data-round="5"></span><span class="ydot" data-max="80"></span></div>
-    <div class="val blue">26.1</div>
+  </div><div class="row"  data-tip="Italian Grand Prix, round 13: average 41.5, median 43, high 58, low 24" style="--i:12">
+    <div class="lab"><span class="lt">Monza <small>R13</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:51.90104166666667%" data-round="13"></span><span class="ydot" data-max="80"></span></div>
+    <div class="val blue">41.5</div>
+  </div><div class="row"  data-tip="Spanish Grand Prix, round 14: average 40.9, median 39, high 59, low 30" style="--i:13">
+    <div class="lab"><span class="lt">Spain <small>R14</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:51.09375000000001%" data-round="14"></span><span class="ydot" data-max="80"></span></div>
+    <div class="val blue">40.9</div>
   </div><div class="row"  data-tip="Azerbaijan Grand Prix, round 15: average 6.9, median 4, high 30, low -3" style="--i:14">
     <div class="lab"><span class="lt">Azerbaijan <small>R15</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar pink" style="left:0%;width:8.619791666666666%" data-round="15"></span><span class="ydot" data-max="80"></span></div>
@@ -336,62 +347,62 @@ html.embed .hero{margin-top:0}
   <div class="card">
     <div class="ch"><span class="num">3</span><div><h2>The average team score was 11.5, against a previous low of 48.8.</h2></div></div>
     <div class="legend"><span><i class="blue"></i>Other weeks</span><span><i class="pink"></i>This week</span><span class="youleg"><i class="amber round"></i>Your team's score that week</span></div>
-    <div id="c4t"><div class="row"  data-tip="Belgian Grand Prix, round 10: team average 96.6, best team 121, worst 47" style="--i:0">
-    <div class="lab"><span class="lt">Belgium <small>R10</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:74.29487179487178%" data-round="10"></span><span class="ydot" data-max="130"></span></div>
-    <div class="val blue">96.6</div>
-  </div><div class="row"  data-tip="Spanish Grand Prix, round 7: team average 86.5, best team 107, worst 55" style="--i:1">
-    <div class="lab"><span class="lt">Spain <small>R7</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:66.53846153846153%" data-round="7"></span><span class="ydot" data-max="130"></span></div>
-    <div class="val blue">86.5</div>
+    <div id="c4t"><div class="row"  data-tip="Australian Grand Prix, round 1: team average 74.2, best team 91, worst 49" style="--i:0">
+    <div class="lab"><span class="lt">Australia <small>R1</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:57.05128205128206%" data-round="1"></span><span class="ydot" data-max="130"></span></div>
+    <div class="val blue">74.2</div>
+  </div><div class="row"  data-tip="Chinese Grand Prix, round 2: team average 62.0, best team 79, worst 51" style="--i:1">
+    <div class="lab"><span class="lt">China <small>R2</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:47.69230769230769%" data-round="2"></span><span class="ydot" data-max="130"></span></div>
+    <div class="val blue">62.0</div>
   </div><div class="row"  data-tip="Japanese Grand Prix, round 3: team average 84.7, best team 119, worst 46" style="--i:2">
     <div class="lab"><span class="lt">Japan <small>R3</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:65.12820512820512%" data-round="3"></span><span class="ydot" data-max="130"></span></div>
     <div class="val blue">84.7</div>
-  </div><div class="row"  data-tip="Austrian Grand Prix, round 8: team average 83.1, best team 102, worst 41" style="--i:3">
+  </div><div class="row"  data-tip="Miami Grand Prix, round 4: team average 58.3, best team 89, worst 39" style="--i:3">
+    <div class="lab"><span class="lt">Miami <small>R4</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:44.80769230769231%" data-round="4"></span><span class="ydot" data-max="130"></span></div>
+    <div class="val blue">58.3</div>
+  </div><div class="row"  data-tip="Canadian Grand Prix, round 5: team average 48.8, best team 66, worst 21" style="--i:4">
+    <div class="lab"><span class="lt">Canada <small>R5</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:37.56410256410256%" data-round="5"></span><span class="ydot" data-max="130"></span></div>
+    <div class="val blue">48.8</div>
+  </div><div class="row"  data-tip="Monaco Grand Prix, round 6: team average 64.2, best team 89, worst 36" style="--i:5">
+    <div class="lab"><span class="lt">Monaco <small>R6</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:49.358974358974365%" data-round="6"></span><span class="ydot" data-max="130"></span></div>
+    <div class="val blue">64.2</div>
+  </div><div class="row"  data-tip="Spanish Grand Prix, round 7: team average 86.5, best team 107, worst 55" style="--i:6">
+    <div class="lab"><span class="lt">Spain <small>R7</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:66.53846153846153%" data-round="7"></span><span class="ydot" data-max="130"></span></div>
+    <div class="val blue">86.5</div>
+  </div><div class="row"  data-tip="Austrian Grand Prix, round 8: team average 83.1, best team 102, worst 41" style="--i:7">
     <div class="lab"><span class="lt">Austria <small>R8</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:63.91025641025641%" data-round="8"></span><span class="ydot" data-max="130"></span></div>
     <div class="val blue">83.1</div>
-  </div><div class="row"  data-tip="Hungarian Grand Prix, round 11: team average 80.9, best team 107, worst 53" style="--i:4">
-    <div class="lab"><span class="lt">Hungary <small>R11</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:62.21153846153846%" data-round="11"></span><span class="ydot" data-max="130"></span></div>
-    <div class="val blue">80.9</div>
-  </div><div class="row"  data-tip="Italian Grand Prix, round 13: team average 80.7, best team 93, worst 60" style="--i:5">
-    <div class="lab"><span class="lt">Monza <small>R13</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:62.05128205128205%" data-round="13"></span><span class="ydot" data-max="130"></span></div>
-    <div class="val blue">80.7</div>
-  </div><div class="row"  data-tip="Spanish Grand Prix, round 14: team average 78.6, best team 88, worst 59" style="--i:6">
-    <div class="lab"><span class="lt">Spain <small>R14</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:60.44871794871794%" data-round="14"></span><span class="ydot" data-max="130"></span></div>
-    <div class="val blue">78.6</div>
-  </div><div class="row"  data-tip="Australian Grand Prix, round 1: team average 74.2, best team 91, worst 49" style="--i:7">
-    <div class="lab"><span class="lt">Australia <small>R1</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:57.05128205128206%" data-round="1"></span><span class="ydot" data-max="130"></span></div>
-    <div class="val blue">74.2</div>
   </div><div class="row"  data-tip="British Grand Prix, round 9: team average 69.6, best team 87, worst 50" style="--i:8">
     <div class="lab"><span class="lt">Britain <small>R9</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:53.55769230769231%" data-round="9"></span><span class="ydot" data-max="130"></span></div>
     <div class="val blue">69.6</div>
-  </div><div class="row"  data-tip="Monaco Grand Prix, round 6: team average 64.2, best team 89, worst 36" style="--i:9">
-    <div class="lab"><span class="lt">Monaco <small>R6</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:49.358974358974365%" data-round="6"></span><span class="ydot" data-max="130"></span></div>
-    <div class="val blue">64.2</div>
-  </div><div class="row"  data-tip="Chinese Grand Prix, round 2: team average 62.0, best team 79, worst 51" style="--i:10">
-    <div class="lab"><span class="lt">China <small>R2</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:47.69230769230769%" data-round="2"></span><span class="ydot" data-max="130"></span></div>
-    <div class="val blue">62.0</div>
+  </div><div class="row"  data-tip="Belgian Grand Prix, round 10: team average 96.6, best team 121, worst 47" style="--i:9">
+    <div class="lab"><span class="lt">Belgium <small>R10</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:74.29487179487178%" data-round="10"></span><span class="ydot" data-max="130"></span></div>
+    <div class="val blue">96.6</div>
+  </div><div class="row"  data-tip="Hungarian Grand Prix, round 11: team average 80.9, best team 107, worst 53" style="--i:10">
+    <div class="lab"><span class="lt">Hungary <small>R11</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:62.21153846153846%" data-round="11"></span><span class="ydot" data-max="130"></span></div>
+    <div class="val blue">80.9</div>
   </div><div class="row"  data-tip="Dutch Grand Prix, round 12: team average 59.3, best team 79, worst 29" style="--i:11">
     <div class="lab"><span class="lt">Zandvoort <small>R12</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:45.57692307692307%" data-round="12"></span><span class="ydot" data-max="130"></span></div>
     <div class="val blue">59.3</div>
-  </div><div class="row"  data-tip="Miami Grand Prix, round 4: team average 58.3, best team 89, worst 39" style="--i:12">
-    <div class="lab"><span class="lt">Miami <small>R4</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:44.80769230769231%" data-round="4"></span><span class="ydot" data-max="130"></span></div>
-    <div class="val blue">58.3</div>
-  </div><div class="row"  data-tip="Canadian Grand Prix, round 5: team average 48.8, best team 66, worst 21" style="--i:13">
-    <div class="lab"><span class="lt">Canada <small>R5</small></span></div>
-    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:37.56410256410256%" data-round="5"></span><span class="ydot" data-max="130"></span></div>
-    <div class="val blue">48.8</div>
+  </div><div class="row"  data-tip="Italian Grand Prix, round 13: team average 80.7, best team 93, worst 60" style="--i:12">
+    <div class="lab"><span class="lt">Monza <small>R13</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:62.05128205128205%" data-round="13"></span><span class="ydot" data-max="130"></span></div>
+    <div class="val blue">80.7</div>
+  </div><div class="row"  data-tip="Spanish Grand Prix, round 14: team average 78.6, best team 88, worst 59" style="--i:13">
+    <div class="lab"><span class="lt">Spain <small>R14</small></span></div>
+    <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:60.44871794871794%" data-round="14"></span><span class="ydot" data-max="130"></span></div>
+    <div class="val blue">78.6</div>
   </div><div class="row"  data-tip="Azerbaijan Grand Prix, round 15: team average 11.5, best team 26, worst -6" style="--i:14">
     <div class="lab"><span class="lt">Azerbaijan <small>R15</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar pink" style="left:0%;width:8.846153846153847%" data-round="15"></span><span class="ydot" data-max="130"></span></div>
@@ -403,91 +414,91 @@ html.embed .hero{margin-top:0}
   <div class="card">
     <div class="ch"><span class="num">4</span><div><h2>Lindblad was F5 driver of the week with 168 points, the lowest winning total of the season and less than half the previous low.</h2></div></div>
     <div class="drow" style="--i:0" data-tip="Australian Grand Prix, round 1: Andrea Kimi Antonelli, 756 across the league, 18 a pick for 42 pickers">
-    <div class="lab"><span class="lt">Australia<small>R1</small></span></div>
+    <div class="lab"><span class="lt">Australia <small>R1</small></span></div>
     <div class="dtrack"><span class="dline" style="width:84%"></span>
       <span class="dmark" style="left:84%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(16% + 22px)"><b>Antonelli</b><i>756</i></span>
     </div>
   </div><div class="drow" style="--i:1" data-tip="Chinese Grand Prix, round 2: George Russell, 684 across the league, 18 a pick for 38 pickers">
-    <div class="lab"><span class="lt">China<small>R2</small></span></div>
+    <div class="lab"><span class="lt">China <small>R2</small></span></div>
     <div class="dtrack"><span class="dline" style="width:76%"></span>
       <span class="dmark" style="left:76%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(24% + 22px)"><b>Russell</b><i>684</i></span>
     </div>
   </div><div class="drow" style="--i:2" data-tip="Japanese Grand Prix, round 3: Andrea Kimi Antonelli, 850 across the league, 25 a pick for 34 pickers">
-    <div class="lab"><span class="lt">Japan<small>R3</small></span></div>
+    <div class="lab"><span class="lt">Japan <small>R3</small></span></div>
     <div class="dtrack"><span class="dline" style="width:94.44444444444444%"></span>
       <span class="dmark" style="left:94.44444444444444%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(5.555555555555557% + 22px)"><b>Antonelli</b><i>850</i></span>
     </div>
   </div><div class="drow" style="--i:3" data-tip="Miami Grand Prix, round 4: Andrea Kimi Antonelli, 525 across the league, 25 a pick for 21 pickers">
-    <div class="lab"><span class="lt">Miami<small>R4</small></span></div>
+    <div class="lab"><span class="lt">Miami <small>R4</small></span></div>
     <div class="dtrack"><span class="dline" style="width:58.333333333333336%"></span>
       <span class="dmark" style="left:58.333333333333336%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab" style="left:calc(58.333333333333336% + 22px)"><b>Antonelli</b><i>525</i></span>
     </div>
   </div><div class="drow" style="--i:4" data-tip="Canadian Grand Prix, round 5: Max Verstappen, 690 across the league, 15 a pick for 46 pickers">
-    <div class="lab"><span class="lt">Canada<small>R5</small></span></div>
+    <div class="lab"><span class="lt">Canada <small>R5</small></span></div>
     <div class="dtrack"><span class="dline" style="width:76.66666666666667%"></span>
       <span class="dmark" style="left:76.66666666666667%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(23.33333333333333% + 22px)"><b>Verstappen</b><i>690</i></span>
     </div>
   </div><div class="drow" style="--i:5" data-tip="Monaco Grand Prix, round 6: Pierre Gasly, 645 across the league, 15 a pick for 43 pickers">
-    <div class="lab"><span class="lt">Monaco<small>R6</small></span></div>
+    <div class="lab"><span class="lt">Monaco <small>R6</small></span></div>
     <div class="dtrack"><span class="dline" style="width:71.66666666666667%"></span>
       <span class="dmark" style="left:71.66666666666667%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(28.33333333333333% + 22px)"><b>Gasly</b><i>645</i></span>
     </div>
   </div><div class="drow" style="--i:6" data-tip="Spanish Grand Prix, round 7: George Russell, 594 across the league, 18 a pick for 33 pickers">
-    <div class="lab"><span class="lt">Spain<small>R7</small></span></div>
+    <div class="lab"><span class="lt">Spain <small>R7</small></span></div>
     <div class="dtrack"><span class="dline" style="width:66%"></span>
       <span class="dmark" style="left:66%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(34% + 22px)"><b>Russell</b><i>594</i></span>
     </div>
   </div><div class="drow" style="--i:7" data-tip="Austrian Grand Prix, round 8: George Russell, 875 across the league, 25 a pick for 35 pickers">
-    <div class="lab"><span class="lt">Austria<small>R8</small></span></div>
+    <div class="lab"><span class="lt">Austria <small>R8</small></span></div>
     <div class="dtrack"><span class="dline" style="width:97.22222222222221%"></span>
       <span class="dmark" style="left:97.22222222222221%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(2.7777777777777857% + 22px)"><b>Russell</b><i>875</i></span>
     </div>
   </div><div class="drow" style="--i:8" data-tip="British Grand Prix, round 9: George Russell, 594 across the league, 18 a pick for 33 pickers">
-    <div class="lab"><span class="lt">Britain<small>R9</small></span></div>
+    <div class="lab"><span class="lt">Britain <small>R9</small></span></div>
     <div class="dtrack"><span class="dline" style="width:66%"></span>
       <span class="dmark" style="left:66%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(34% + 22px)"><b>Russell</b><i>594</i></span>
     </div>
   </div><div class="drow" style="--i:9" data-tip="Belgian Grand Prix, round 10: Andrea Kimi Antonelli, 900 across the league, 25 a pick for 36 pickers">
-    <div class="lab"><span class="lt">Belgium<small>R10</small></span></div>
+    <div class="lab"><span class="lt">Belgium <small>R10</small></span></div>
     <div class="dtrack"><span class="dline" style="width:100%"></span>
       <span class="dmark" style="left:100%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ANDANT01_Andrea%20Kimi_Antonelli/andant01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(0% + 22px)"><b>Antonelli</b><i>900</i></span>
     </div>
   </div><div class="drow" style="--i:10" data-tip="Hungarian Grand Prix, round 11: Max Verstappen, 774 across the league, 18 a pick for 43 pickers">
-    <div class="lab"><span class="lt">Hungary<small>R11</small></span></div>
+    <div class="lab"><span class="lt">Hungary <small>R11</small></span></div>
     <div class="dtrack"><span class="dline" style="width:86%"></span>
       <span class="dmark" style="left:86%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(14% + 22px)"><b>Verstappen</b><i>774</i></span>
     </div>
   </div><div class="drow" style="--i:11" data-tip="Dutch Grand Prix, round 12: Oscar Piastri, 368 across the league, 8 a pick for 46 pickers">
-    <div class="lab"><span class="lt">Zandvoort<small>R12</small></span></div>
+    <div class="lab"><span class="lt">Zandvoort <small>R12</small></span></div>
     <div class="dtrack"><span class="dline" style="width:40.88888888888889%"></span>
       <span class="dmark" style="left:40.88888888888889%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab" style="left:calc(40.88888888888889% + 22px)"><b>Piastri</b><i>368</i></span>
     </div>
   </div><div class="drow" style="--i:12" data-tip="Italian Grand Prix, round 13: Max Verstappen, 705 across the league, 15 a pick for 47 pickers">
-    <div class="lab"><span class="lt">Monza<small>R13</small></span></div>
+    <div class="lab"><span class="lt">Monza <small>R13</small></span></div>
     <div class="dtrack"><span class="dline" style="width:78.33333333333333%"></span>
       <span class="dmark" style="left:78.33333333333333%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(21.66666666666667% + 22px)"><b>Verstappen</b><i>705</i></span>
     </div>
   </div><div class="drow" style="--i:13" data-tip="Spanish Grand Prix, round 14: Max Verstappen, 864 across the league, 18 a pick for 48 pickers">
-    <div class="lab"><span class="lt">Spain<small>R14</small></span></div>
+    <div class="lab"><span class="lt">Spain <small>R14</small></span></div>
     <div class="dtrack"><span class="dline" style="width:96%"></span>
       <span class="dmark" style="left:96%"><img class="head" src="https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png" alt="" width="34" height="34" loading="lazy" style="width:34px;height:34px"></span>
       <span class="dlab flip" style="right:calc(4% + 22px)"><b>Verstappen</b><i>864</i></span>
     </div>
   </div><div class="drow me" style="--i:14" data-tip="Azerbaijan Grand Prix, round 15: Arvid Lindblad, 168 across the league, 6 a pick for 28 pickers">
-    <div class="lab"><span class="lt">Azerbaijan<small>R15</small></span></div>
+    <div class="lab"><span class="lt">Azerbaijan <small>R15</small></span></div>
     <div class="dtrack"><span class="dline" style="width:18.666666666666668%"></span>
       <span class="dmark" style="left:18.666666666666668%"><span class="head head-t" style="width:34px;height:34px">AL</span></span>
       <span class="dlab" style="left:calc(18.666666666666668% + 22px)"><b>Lindblad</b><i>168</i></span>
@@ -500,64 +511,64 @@ html.embed .hero{margin-top:0}
 <section class="dc" data-i="4"><div class="fit"><section>
   <div class="card">
     <div class="ch"><span class="num">5</span><div><h2>Brett Dillon won the week with 30, the lowest winning score the league has seen.</h2></div></div>
-    <div id="c6"><div class="row" data-player="Formula5 Bot" data-tip="Australian Grand Prix: Formula5 Bot led the week with 61" style="--i:0">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/857170ed-6313-40de-9b7e-9d41b339e690.png?t=1773084768500" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Australia <small>R1</small><b>Bot</b></span></div>
+    <div id="c6" class="wide-lab"><div class="row" data-player="Formula5 Bot" data-tip="Australian Grand Prix: Formula5 Bot led the week with 61" style="--i:0">
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/857170ed-6313-40de-9b7e-9d41b339e690.png?t=1773084768500" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Australia <small>R1 · Bot</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:76.25%"></span></div>
     <div class="val blue">61</div>
   </div><div class="row" data-player="Heather Ishak" data-tip="Chinese Grand Prix: Heather Ishak led the week with 52" style="--i:1">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d68bc062-2314-4441-85cb-81cd1f4f5f6b.png?t=1772503446727" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">China <small>R2</small><b>H. Ishak</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d68bc062-2314-4441-85cb-81cd1f4f5f6b.png?t=1772503446727" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">China <small>R2 · H. Ishak</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:65%"></span></div>
     <div class="val blue">52</div>
   </div><div class="row" data-player="Chris Fondacaro" data-tip="Japanese Grand Prix: Chris Fondacaro led the week with 67" style="--i:2">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c55c6192-2f81-4188-8e00-705b8a5744e4.png?t=1772503743937" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Japan <small>R3</small><b>Fondacaro</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/c55c6192-2f81-4188-8e00-705b8a5744e4.png?t=1772503743937" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Japan <small>R3 · Fondacaro</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:83.75%"></span></div>
     <div class="val blue">67</div>
   </div><div class="row" data-player="Grant Wong" data-tip="Miami Grand Prix: Grant Wong led the week with 57" style="--i:3">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/061ca7b2-411b-4405-b425-13c6aebfbb51.png?t=1772503464761" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Miami <small>R4</small><b>Wong</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/061ca7b2-411b-4405-b425-13c6aebfbb51.png?t=1772503464761" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Miami <small>R4 · Wong</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:71.25%"></span></div>
     <div class="val blue">57</div>
   </div><div class="row" data-player="Brian Dong" data-tip="Canadian Grand Prix: Brian Dong led the week with 48" style="--i:4">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d777878f-40a4-4c1d-850c-aad1fb4e2472.png?t=1772503373890" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Canada <small>R5</small><b>Dong</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d777878f-40a4-4c1d-850c-aad1fb4e2472.png?t=1772503373890" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Canada <small>R5 · Dong</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:60%"></span></div>
     <div class="val blue">48</div>
   </div><div class="row" data-player="Rafik Zarifa" data-tip="Monaco Grand Prix: Rafik Zarifa led the week with 64" style="--i:5">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/34ed0f7d-81ed-4a72-b018-f25941106902.png?t=1772680006315" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Monaco <small>R6</small><b>Zarifa</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/34ed0f7d-81ed-4a72-b018-f25941106902.png?t=1772680006315" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Monaco <small>R6 · Zarifa</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:80%"></span></div>
     <div class="val blue">64</div>
   </div><div class="row" data-player="Joe McGlynn" data-tip="Spanish Grand Prix: Joe McGlynn led the week with 68" style="--i:6">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/447a215c-371d-4212-95e1-dcef174e95f9.png?t=1772503336906" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Spain <small>R7</small><b>McGlynn</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/447a215c-371d-4212-95e1-dcef174e95f9.png?t=1772503336906" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Spain <small>R7 · McGlynn</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:85%"></span></div>
     <div class="val blue">68</div>
   </div><div class="row" data-player="Sam Bottoms" data-tip="Austrian Grand Prix: Sam Bottoms led the week with 67" style="--i:7">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Austria <small>R8</small><b>Bottoms</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Austria <small>R8 · Bottoms</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:83.75%"></span></div>
     <div class="val blue">67</div>
   </div><div class="row" data-player="Harold Gutmann" data-tip="British Grand Prix: Harold Gutmann led the week with 54" style="--i:8">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2a1d8e8a-bc94-4105-abc9-5445bc58befa.png?t=1772682503476" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Britain <small>R9</small><b>Gutmann</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2a1d8e8a-bc94-4105-abc9-5445bc58befa.png?t=1772682503476" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Britain <small>R9 · Gutmann</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:67.5%"></span></div>
     <div class="val blue">54</div>
   </div><div class="row" data-player="Sam Bottoms" data-tip="Belgian Grand Prix: Sam Bottoms led the week with 70" style="--i:9">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Belgium <small>R10</small><b>Bottoms</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/e9002856-d1f1-4134-bb2f-efe995eafcf8.png?t=1772682722860" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Belgium <small>R10 · Bottoms</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:87.5%"></span></div>
     <div class="val blue">70</div>
   </div><div class="row" data-player="Ronnie Nobar" data-tip="Hungarian Grand Prix: Ronnie Nobar led the week with 74" style="--i:10">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/754831c9-864d-4a49-b95a-c98ad6d3d59d.png?t=1773533357437" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Hungary <small>R11</small><b>R. Nobar</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/754831c9-864d-4a49-b95a-c98ad6d3d59d.png?t=1773533357437" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Hungary <small>R11 · R. Nobar</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:92.5%"></span></div>
     <div class="val blue">74</div>
   </div><div class="row" data-player="Francisco Soldavini" data-tip="Dutch Grand Prix: Francisco Soldavini led the week with 54" style="--i:11">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/40d29a8a-3349-4d7a-87b9-e74cedda7c19.png?t=1775102877270" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Zandvoort <small>R12</small><b>Soldavini</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/40d29a8a-3349-4d7a-87b9-e74cedda7c19.png?t=1775102877270" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Zandvoort <small>R12 · Soldavini</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:67.5%"></span></div>
     <div class="val blue">54</div>
   </div><div class="row" data-player="Jack Civitts" data-tip="Italian Grand Prix: Jack Civitts led the week with 58" style="--i:12">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ad3adcf9-af83-4139-aa13-120bdf0b6fae.png?t=1772680121672" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Monza <small>R13</small><b>Civitts</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/ad3adcf9-af83-4139-aa13-120bdf0b6fae.png?t=1772680121672" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Monza <small>R13 · Civitts</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:72.5%"></span></div>
     <div class="val blue">58</div>
   </div><div class="row" data-player="Harold Gutmann" data-tip="Spanish Grand Prix: Harold Gutmann led the week with 59" style="--i:13">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2a1d8e8a-bc94-4105-abc9-5445bc58befa.png?t=1772682503476" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Spain <small>R14</small><b>Gutmann</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/2a1d8e8a-bc94-4105-abc9-5445bc58befa.png?t=1772682503476" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Spain <small>R14 · Gutmann</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar blue" style="left:0%;width:73.75%"></span></div>
     <div class="val blue">59</div>
   </div><div class="row" data-player="Brett Dillon" data-tip="Azerbaijan Grand Prix: Brett Dillon led the week with 30" style="--i:14">
-    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d9e8e2f9-ddb4-4aca-a67e-43264d19751c.png?t=1772428753985" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Azerbaijan <small>R15</small><b>Dillon</b></span></div>
+    <div class="lab"><img class="face" src="https://fhtwjpohfomnhxjefjwq.supabase.co/storage/v1/object/public/player-photos/d9e8e2f9-ddb4-4aca-a67e-43264d19751c.png?t=1772428753985" alt="" width="30" height="30" loading="lazy" style="width:30px;height:30px"><span class="lt">Azerbaijan <small>R15 · Dillon</small></span></div>
     <div class="track"><span class="zero" style="left:0%"></span><span class="bar pink" style="left:0%;width:37.5%"></span></div>
     <div class="val pink">30</div>
   </div></div>
@@ -566,7 +577,7 @@ html.embed .hero{margin-top:0}
 </section>
 <section>
   <div class="card">
-    <div class="ch"><div><h2>And there was no pit stop.</h2><p class="andrew">On top of the craziness of this week, Aston Martin retired without a pit stop, meaning there were no pit stop points in both the team and individual competitions. However, there were only 4 matchups that could have potentially been decided by the BOX BOX line.</p></div></div>
+    <div class="ch"><div><p class="andrew" style="margin-top:0">On top of the craziness of this week, Aston Martin retired without a pit stop, meaning there were no pit stop points in both the team and individual competitions. However, there were only 4 matchups that could have potentially been decided by the BOX BOX line.</p></div></div>
   </div>
 </section></div></section></div>
 <div class="dbar"><button class="nav" id="back" aria-label="Back">&#8249;</button><div class="lights"><i class="on"></i><i></i><i></i><i></i><i></i></div><button class="nav next" id="next">NEXT</button></div>
@@ -629,7 +640,7 @@ var ME={"Aditya Satish":{"score":25,"rank":3,"team":"Wildcat Motors","mine":21,"
   var q0=new URLSearchParams(location.search),embed=q0.get('embed')==='1';
   if(embed)document.documentElement.classList.add('embed');
   var i=Math.max(0,Math.min(cards.length-1,(+q0.get('card')||1)-1));
-  var MIN=0.72;
+  var MIN=0.92; // Andrew, 2026-09-28: nothing under 12px. A card past this scrolls.
   function fit(card){var f=card.querySelector('.fit');f.style.transform='';f.style.width='';var have=card.clientHeight,nat=f.scrollHeight;
     var k=Math.min(1,have/nat);if(k<MIN)k=MIN;if(k<1){f.style.width=(100/k)+'%';f.style.transform='scale('+k+')';}
     card.classList.toggle('scrolls',f.scrollHeight*k>have+2);document.documentElement.dataset.fit=k.toFixed(3);}

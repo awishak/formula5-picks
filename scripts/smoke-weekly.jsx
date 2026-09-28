@@ -203,7 +203,7 @@ for (const s of ["held", "solo", "pair", "notEnough", "locked"]) {
   });
   check("round 15 send-off offers the song and the way out", () => {
     const html = renderToString(<WeeklyDeck data={r15} initialCard={3} />);
-    if (!/LISTEN TO TUBEY/.test(html) || !/CONTINUE WITHOUT THE SONG/.test(html)) throw new Error("send-off buttons missing");
+    if (!/LISTEN TO THE OFFICIAL BAHLAYSIAN GP SONG/.test(html) || !/CONTINUE WITHOUT THE SONG/.test(html)) throw new Error("send-off buttons missing");
     if (!/Let Tubey explain how to fix it/.test(html)) throw new Error("send-off copy is not Andrew's");
   });
   check("round 16's deck is called the Bahlaysia Grand Prix", () => {
