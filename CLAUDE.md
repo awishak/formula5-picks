@@ -86,7 +86,8 @@ plays over the picker, not the recap**, so the theme audio moved out of React
 into src/themeSong.js, one Audio object for the app; on every other round
 leaving the deck still pauses it, on round 15 it plays on and
 src/NowPlaying.jsx puts STOP THE SONG beside Viewing as while it does. The
-track is `TRACKS.bahlaysia`, `public/bahlaysian-gp.mp3`, Andrew's file.
+track is `TRACKS.bahlaysia`, "Welcome to Bahlaysia", `public/bahlaysian-gp.mp3`,
+95 seconds, copied from the file Andrew dropped in the project root.
 The seen flag was left alone, as with round 14. `npm run smoke:weekly` renders
 all four cards for round 15 and `check:nav`'s gate walk crosses either deck.
 
