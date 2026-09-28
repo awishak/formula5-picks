@@ -293,7 +293,7 @@ const TRACKS = {
   velvet: { src: THEME_SRC, name: "Velvet Thunder" },
   // Tubey's song for the Bahlaysian Grand Prix, offered on round 15's last
   // card and left playing over the picker. The file is Andrew's; see CLAUDE.md.
-  bahlaysia: { src: "/bahlaysian-gp.mp3", name: "Tubey's Bahlaysian song" },
+  bahlaysia: { src: "/bahlaysian-gp.mp3", name: "Welcome to Bahlaysia" },
 };
 // What a round is called on its deck when Andrew calls it something else.
 // Round 15, the Azerbaijan Grand Prix, is the Bahlaysian Grand Prix.
