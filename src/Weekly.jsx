@@ -296,8 +296,8 @@ const TRACKS = {
   bahlaysia: { src: "/bahlaysian-gp.mp3", name: "Welcome to Bahlaysia" },
 };
 // What a round is called on its deck when Andrew calls it something else.
-// Round 15, the Azerbaijan Grand Prix, is the Bahlaysian Grand Prix.
-const RACE_NAME = { 15: "Bahlaysian Grand Prix" };
+// Round 16, the Bahrain Grand Prix at Sepang, is the Bahlaysian Grand Prix.
+const RACE_NAME = { 16: "Bahlaysian Grand Prix" };
 // Round 15's deck is its own thing, set 2026-09-27: a drama card, the five
 // recap cards, the result, and a send-off that starts the song and leaves it
 // playing on the picker. Every other round runs the standard deck.
@@ -2697,8 +2697,9 @@ function CardSendoff({ d, onPicks, onExit, song }) {
   return (
     <>
       <Kicker>ROUND {d.round} · {d.raceName.toUpperCase()}</Kicker>
-      <Head color={V.blue} glow size="h1">That was the Bahlaysian Grand Prix.</Head>
-      <Line color={V.text}>Listen to Tubey&rsquo;s song for the next race. Or continue without the song.</Line>
+      {/* Andrew's words, 2026-09-27. The song is the explanation. */}
+      <Head color={V.blue} glow size="h1">That was the Azerbaijan Grand Prix.</Head>
+      <Line color={V.text}>Now we&rsquo;re on to the Bahrain Grand Prix, but it&rsquo;s in Malaysia. Is that confusing to you? Let Tubey explain how to fix it.</Line>
       <div style={{ display: "grid", gap: 10, width: "100%", maxWidth: 340, margin: "8px auto 0" }}>
         <button onClick={() => { song.play("bahlaysia"); go(); }} style={{
           ...display("h3", { fontSize: 17, color: V.bg }), background: V.blue,
@@ -2711,7 +2712,6 @@ function CardSendoff({ d, onPicks, onExit, song }) {
           cursor: "pointer",
         }}>CONTINUE WITHOUT THE SONG</button>
       </div>
-      <Line color={V.text3}>The song plays on while you make your picks. There is a stop button up top.</Line>
     </>
   );
 }

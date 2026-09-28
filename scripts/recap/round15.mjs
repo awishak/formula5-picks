@@ -41,8 +41,9 @@ const med = a => { const b = [...a].sort((x, y) => x - y); const m = b.length >>
 const PLACE = { Australian: "Australia", Chinese: "China", Japanese: "Japan", Canadian: "Canada", Spanish: "Spain", Austrian: "Austria",
   British: "Britain", Belgian: "Belgium", Hungarian: "Hungary", Dutch: "Zandvoort", Italian: "Monza", "United States": "Austin", "Mexico City": "Mexico", "São Paulo": "Brazil" };
 // Round 15 is the Bahlaysian Grand Prix, Andrew's name for it, 2026-09-27.
-const RACE_ALIAS = { "Azerbaijan Grand Prix": "Bahlaysian Grand Prix" };
-const PLACE_ALIAS = { Azerbaijan: "Bahlaysia" };
+// Round 16, not this one, is the Bahlaysian Grand Prix. Nothing aliased here.
+const RACE_ALIAS = {};
+const PLACE_ALIAS = {};
 const shortRace = name => { const k = name.replace(/ Grand Prix.*$/, ""); return PLACE_ALIAS[k] || PLACE[k] || k; };
 const raceTitle = name => RACE_ALIAS[name] || name;
 
@@ -188,13 +189,13 @@ const surname = n => { const k = n.split(" ").pop(); return surnameCount[k] > 1 
 
 // A horizontal bar row: label, optional picture, bar, value. Bars run from
 // zero; a negative bar runs left of a zero line that sits at `zeroPct`.
-const barRow = ({ label, pic = "", value, max, min = 0, tone, tip, sub = "", i = 0, extra = "", who = "", dot = false, fmt = null }) => {
+const barRow = ({ label, pic = "", value, max, min = 0, tone, tip, sub = "", sub2 = "", i = 0, extra = "", who = "", dot = false, fmt = null }) => {
   const span = max - min;
   const zero = ((0 - min) / span) * 100;
   const w = (Math.abs(value) / span) * 100;
   const left = value >= 0 ? zero : zero - w;
   return `<div class="row" ${who} data-tip="${esc(tip)}" style="--i:${i}">
-    <div class="lab">${pic}<span class="lt">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ""}</span></div>
+    <div class="lab">${pic}<span class="lt">${esc(label)}${sub ? ` <small>${esc(sub)}</small>` : ""}${sub2 ? `<b>${esc(sub2)}</b>` : ""}</span></div>
     <div class="track"><span class="zero" style="left:${zero}%"></span><span class="bar ${tone}" style="left:${left}%;width:${w}%"${extra}></span>${dot ? `<span class="ydot" data-max="${max}"></span>` : ""}</div>
     <div class="val ${tone}">${esc(fmt ? fmt(value) : typeof value === "number" && !Number.isInteger(value) ? one(value) : value)}</div>
   </div>`;
@@ -274,7 +275,7 @@ const pMin = Math.min(...rows.map(r => r.ind)), pMax = Math.max(...rows.map(r =>
 // One swarm, every score the league has posted. Taller, so 720 dots fit.
 // A flat-bottomed swarm: every dot rests on the axis or on the dots under it,
 // so the pile reads as a histogram of faces-sized dots. Andrew, 2026-09-27.
-const swarmOne = (dots, { min, max, ticks: tks }) => {
+const swarmOne = (dots, { min, max, ticks: tks, faces = [] }) => {
   const W = 320, R = 2.7, STEP = R * 2 + 0.3;
   const x = v => 6 + (v - min) / (max - min) * (W - 12);
   const cands = [];
@@ -293,11 +294,15 @@ const swarmOne = (dots, { min, max, ticks: tks }) => {
   // Height is whatever the tallest pile needs, and y counts up from the axis.
   const H = Math.ceil(Math.max(...placed.map(p => p.y)) + R + 4);
   placed.forEach(p => { p.y = H - p.y; });
-  return `<div class="swarm one"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="ss" style="aspect-ratio:${W}/${H}"><line x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}" class="base"/>${placed.map(p => `<circle class="${p.me ? "me" : ""}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${R}" ${p.who || ""} data-tip="${esc(p.tip)}"/>`).join("")}</svg>
+  // Faces on the axis, stacked on their value: the eight below zero.
+  const FS = 22;
+  const faceEls = faces.map((f, i) => { const cx = x(f.v), cy = H - FS / 2 - 1 - i * (FS + 2); const id = `f${i}`;
+    return `<clipPath id="${id}"><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${FS / 2}"/></clipPath><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${FS / 2 + 1.5}" class="ring"/>${f.photo ? `<image href="${esc(f.photo)}" x="${(cx - FS / 2).toFixed(1)}" y="${(cy - FS / 2).toFixed(1)}" width="${FS}" height="${FS}" clip-path="url(#${id})" preserveAspectRatio="xMidYMid slice" data-player="${esc(f.name)}" data-tip="${esc(`${f.name}: ${f.v}`)}"/>` : `<text x="${cx.toFixed(1)}" y="${(cy + 4).toFixed(1)}" text-anchor="middle" class="fi" data-player="${esc(f.name)}" data-tip="${esc(`${f.name}: ${f.v}`)}">${esc(initials(f.name))}</text>`}`; }).join("");
+  return `<div class="swarm one"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="ss" style="aspect-ratio:${W}/${H}"><line x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}" class="base"/>${faceEls}${placed.map(p => `<circle class="${p.me ? "me" : ""}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${R}" ${p.who || ""} data-tip="${esc(p.tip)}"/>`).join("")}</svg>
     <div class="axis">${tks.map(t => `<span style="left:${(x(t) / W * 100).toFixed(1)}%">${t}</span>`).join("")}</div></div>`;
 };
-const chart2one = swarmOne(rows.map(r => ({ v: r.ind, me: r.round === ROUND, who: `data-player="${esc(r.player.name)}"`, tip: `${r.player.name}, ${raceTitle(r.race.race_name)}: ${r.ind}` })),
-  { min: pMin, max: pMax, ticks: [0, 20, 40, 60] });
+const chart2one = swarmOne(rows.filter(r => !(r.round === ROUND && r.ind < 0)).map(r => ({ v: r.ind, me: r.round === ROUND, who: `data-player="${esc(r.player.name)}"`, tip: `${r.player.name}, ${raceTitle(r.race.race_name)}: ${r.ind}` })),
+  { min: pMin, max: pMax, ticks: [0, 20, 40, 60], faces: negatives.map(r => ({ v: r.ind, name: r.player.name, photo: r.player.photo_url })) });
 const chart2s = swarm(byRound.map(b => ({ round: b.round, name: b.name, me: b.round === ROUND,
   dots: rows.filter(r => r.round === b.round).map(r => ({ v: r.ind, who: `data-player="${esc(r.player.name)}"`, tip: `${r.player.name}, ${b.full}: ${r.ind}` })) })),
   { min: pMin, max: pMax, ticks: [0, 20, 40, 60] });
@@ -399,7 +404,7 @@ const chart5 = teamWeek.map((t, i) => barRow({
 
 /* chart 6: the weekly leader, every round */
 const chart6 = byRound.map((b, i) => barRow({
-  label: b.name, sub: `R${b.round} · ${surname(b.leader.name)}`, pic: face(b.leader, 28), value: b.max, max: 80, who: `data-player="${esc(b.leader.name)}"`,
+  label: b.name, sub: `R${b.round}`, sub2: surname(b.leader.name), pic: face(b.leader, 30), value: b.max, max: 80, who: `data-player="${esc(b.leader.name)}"`,
   tone: b.round === ROUND ? "pink" : "blue", i,
   tip: `${b.full}: ${b.leader.name} led the week with ${b.max}`,
 })).join("");
@@ -442,8 +447,8 @@ const PLAYER_NAMES = players.map(p => p.name).sort((a, b) => a.localeCompare(b))
 
 const html = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>The Bahlaysian GP in Numbers</title>
-<meta name="description" content="Round 15, the Bahlaysian Grand Prix: the lowest-scoring week in Formula 5 history, in numbers.">
+<title>The Azerbaijan GP in Numbers</title>
+<meta name="description" content="Round 15, the Azerbaijan Grand Prix: the lowest-scoring week in Formula 5 history, in numbers.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet">
 <style>
@@ -454,7 +459,8 @@ body{font-family:var(--fd);background:var(--bg);color:var(--text);padding:16px 1
 a{color:var(--blue)}
 .kicker{font-family:var(--fn);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
 h1{font-family:var(--fn);font-weight:700;font-size:clamp(26px,7.4vw,40px);line-height:1;letter-spacing:.02em;text-transform:uppercase;margin:8px 0 6px;color:var(--pink);text-shadow:0 0 6px rgba(255,45,149,.55),0 0 22px rgba(255,45,149,.35)}
-.stand{font-size:17px;color:var(--text2);max-width:520px}
+.stand{font-size:17px;color:var(--text);max-width:520px}
+.ch p.andrew{font-size:16px;color:var(--text);margin-top:6px;line-height:1.45}
 .who{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:10px 0 14px}
 .who label{font-family:var(--fn);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber)}
 .who select{font-family:var(--fd);font-size:16px;font-weight:600;color:var(--text);background:var(--bg3);border:1px solid var(--amber);border-radius:10px;padding:8px 10px;min-height:40px}
@@ -498,7 +504,7 @@ tr.you td{color:var(--amber)}
 .wall25 .w2 b .wl{font-style:normal;font-size:13px;font-weight:700;color:var(--text3)}
 .wall25 .w2 b .wl.W{color:var(--blue)}
 .wall25 .w2:not(.me) .logo{filter:grayscale(1) brightness(.7);border-color:var(--text3)}
-.wall25 .w2 span{font-size:13px;color:var(--text2);line-height:1.1;text-align:center;max-width:72px;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wall25 .w2 span{font-size:13px;color:var(--text);line-height:1.1;text-align:center;max-width:72px;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .w2 i{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:1px;font-style:normal;font-size:13px;line-height:1;color:var(--text);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
 .w2.hi i{left:auto;right:0;transform:none}
 .lead{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:16px 14px 14px;margin-top:18px}
@@ -524,8 +530,8 @@ tr.you td{color:var(--amber)}
 .drow.me .dmark .head{border-color:var(--pink);box-shadow:0 0 10px rgba(255,45,149,.6)}
 .dlab{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:13px;line-height:1.1;display:flex;flex-direction:column}
 .dlab.flip{text-align:right;align-items:flex-end}
-.dlab b{font-weight:600;color:var(--text)}
-.dlab i{font-style:normal;font-family:var(--fn);font-weight:700;color:var(--blue)}
+.dlab b{font-weight:600;color:var(--text);font-size:14px}
+.dlab i{font-style:normal;font-family:var(--fn);font-weight:700;color:var(--blue);font-size:16px}
 .drow.me .dlab i{color:var(--pink)}
 .drow.me .lt{color:var(--pink)}
 .cols.wide{padding-left:36px}.cols.wide .grid span{left:36px}.cols.wide .grid span i{left:-36px}
@@ -549,13 +555,17 @@ section{margin:22px 0}
 .act{font-family:var(--fd);font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--text2);background:var(--bg3);border:1px solid var(--border2);border-radius:999px;padding:9px 12px;min-height:36px;cursor:pointer}
 .act[aria-pressed="true"]{color:#000;background:var(--blue);border-color:var(--blue)}
 .act:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--text2);margin:0 0 10px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--text);margin:0 0 10px}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px}
 .legend i.blue{background:var(--blue)}.legend i.pink{background:var(--pink)}.legend i.muted{background:var(--text3)}.legend i.amber{background:var(--amber)}.legend i.round{border-radius:50%}
 .ydot{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--amber);border:2px solid #000;box-shadow:0 0 8px rgba(255,201,60,.8);display:none;z-index:2}
 .swarm.one .ss{height:auto}
 .swarm.one .axis{margin-top:6px}
 .swarm.one .ss line.base{stroke:var(--border2);stroke-width:1}
+.swarm.one .ss circle.ring{fill:var(--bg2);stroke:var(--pink);stroke-width:1.5}
+.swarm.one .ss text.fi{font-family:var(--fn);font-weight:700;font-size:9px;fill:var(--pink)}
+.swarm.one .ss image.you{outline:none}
+.axis span{font-size:15px;color:var(--text)}
 .swarm.one .ss circle{fill:var(--blue);fill-opacity:.55}
 .swarm.one .ss circle.me{fill:var(--pink);fill-opacity:1}
 .gone{display:none}
@@ -567,18 +577,19 @@ section{margin:22px 0}
 .w3 span{font-size:13px;color:var(--text2);line-height:1.15}
 .w3.you .face,.w3.you .logo{border-color:var(--amber)!important;box-shadow:0 0 12px rgba(255,201,60,.8)}
 .youleg{display:none}body.has-you .youleg{display:inline}
-.row{display:grid;grid-template-columns:132px 1fr 58px;align-items:center;gap:8px;min-height:32px;padding:2px 0}
+.row{display:grid;grid-template-columns:132px 1fr 66px;align-items:center;gap:8px;min-height:34px;padding:0}
 .row.db{grid-template-columns:112px 1fr 84px}
 .lab{display:flex;align-items:center;gap:7px;min-width:0}
-.lt{font-size:14px;font-weight:600;line-height:1.15;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.lt small{display:block;font-size:13px;font-weight:400;color:var(--text3)}
-.track{position:relative;height:20px;background:var(--bg3);border-radius:6px;overflow:hidden}
+.lt{font-size:15px;font-weight:600;line-height:1.1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lt small{font-size:13px;font-weight:600;color:var(--text2)}
+.lt b{display:block;font-size:13px;font-weight:600;color:var(--text);line-height:1.1}
+.track{position:relative;height:30px;background:transparent;border-radius:0;overflow:hidden}
 .zero{position:absolute;top:0;bottom:0;width:1px;background:var(--border2)}
-.bar{position:absolute;top:2px;bottom:2px;border-radius:4px;transform-origin:left center;animation:grow .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*35ms)}
+.bar{position:absolute;top:1px;bottom:1px;border-radius:0 4px 4px 0;transform-origin:left center;animation:grow .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*35ms)}
 .bar.blue{background:var(--blue);box-shadow:0 0 10px rgba(0,217,255,.35)}
 .bar.pink{background:var(--pink);box-shadow:0 0 10px rgba(255,45,149,.35)}
 .bar.muted{background:var(--text3)}
-.val{font-family:var(--fn);font-weight:700;font-size:16px;text-align:right;white-space:nowrap}
+.val{font-family:var(--fn);font-weight:700;font-size:24px;text-align:right;white-space:nowrap;line-height:1}
 .val.blue,.blue{color:var(--blue)}.val.pink,.pink{color:var(--pink)}.val.muted,.muted{color:var(--text2)}
 @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .face,.logo,.head{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;object-fit:cover;background:var(--bg4);border:2px solid var(--border2);flex-shrink:0;font-family:var(--fn);font-weight:700;color:var(--text2);font-size:13px}
@@ -635,15 +646,15 @@ tr.hl td{color:var(--pink)}
 
 <header class="hero">
   <div class="kicker">Round ${ROUND} · ${esc(raceTitle(race.race_name))}</div>
-  <h1>The Bahlaysian GP in Numbers</h1>
+  <h1>The Azerbaijan GP in Numbers</h1>
   <div class="who">
     <label for="me">Viewing as</label>
     <select id="me"><option value="">Nobody</option>${PLAYER_NAMES.map(n => `<option>${esc(n)}</option>`).join("")}</select>
     <p id="mine" class="mine"></p>
   </div>
-  <p class="stand">The lowest scoring week in league history, the Bahlaysian GP stands as an outlier in this F5 season. Scores were low across the board, including the first ever negative scores, achieved by ${W[negatives.length]} people. And the team matchups were just as strange: one team won their matchup by scoring exactly one point.</p>
+  <p class="stand">The lowest scoring week in league history, the Azerbaijan GP stands as an outlier in this F5 season. Scores were low across the board, including the first ever negative scores, achieved by ${W[negatives.length]} people. And the team matchups were just as strange: one team won their matchup by scoring exactly one point.</p>
   <div class="lead">
-    <div class="ch"><span class="num">1</span><div><h2>The Bahlaysian GP led to the lowest F5 scores of the season by every measure, and by a wide margin.</h2><p>Through fourteen rounds the average F5 score had never dipped below ${one(prevLowAvg.avg)}, and ${W[byRound.filter(b => b.round !== ROUND && b.avg > 38).length]} of those weeks averaged over 38. Bahlaysia came in at ${one(thisRound.avg)}, with half the league on ${thisRound.med} points or fewer. And the drop holds with the Needle and the weekly bonus stripped out: it was the drivers that sank the week, not the missing pit stop.</p></div></div>
+    <div class="ch"><span class="num">1</span><div><h2>The Azerbaijan GP led to the lowest F5 scores of the season by every measure, and by a wide margin.</h2></div></div>
     <div class="legend"><span><i class="blue"></i>Other weeks</span><span><i class="pink"></i>This week</span><span class="youleg"><i class="amber round"></i>Your score that week</span></div>
     <div id="c1">${chart1}</div>
   </div>
@@ -651,30 +662,23 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">2</span><div><h2>${week.filter(r => r.ind < prevLowAvg.avg).length} of the 48 scores in Baku were lower than the average score of any other week.</h2><p>Every dot is one player's score in one week, ${rows.length} in all, and the league's scores pile up between the twenties and the fifties. Baku's 48 sit in a clump against the left edge, with ${thisRound.under10} people under ten. And the best score of the week, ${esc(thisRound.leader.name)}'s ${thisRound.max}, would have been in the bottom half of the field in ${W[medianOtherAbove]} of the other fourteen.</p></div></div>
-    <div class="legend"><span><i class="blue"></i>A score, any other week</span><span><i class="pink"></i>A score this week</span><span class="youleg"><i class="amber"></i>You</span></div>
+    <div class="ch"><span class="num">2</span><div><h2>${week.filter(r => r.ind < prevLowAvg.avg).length} of the 48 scores in Baku were lower than the average score of any other week.</h2></div></div>
+    <div class="legend"><span><i class="blue"></i>All individual scores from this season</span><span><i class="pink"></i>This week</span><span class="youleg"><i class="amber"></i>You</span></div>
     ${chart2one}
   </div>
 </section>
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">3</span><div><h2>${W[negatives.length][0].toUpperCase() + W[negatives.length].slice(1)} players and one team finished the week below zero, which nobody had done before.</h2><p>An F5 score is five drivers, a finishing-order bonus, a best-finish guess, the Needle and a weekly bonus for the top ten, and a driver who finishes outside the points costs the people holding him a point. These ${W[negatives.length]} had Norris on top for minus one and two midfielders who finished out of the points, with nothing from the order, the best finish or the Needle to cover it. And Garra Dynamics put two of them on the same team: ${esc(playerOf[teamWeek[0].team.player1_id].name)} and ${esc(playerOf[teamWeek[0].team.player2_id].name)}, for a team score of ${teamWeek[0].v}.</p></div></div>
-    <div class="negs">${negWall}</div>
-  </div>
-</section>
-
-<section>
-  <div class="card">
-    <div class="ch"><span class="num">4</span><div><h2>${lowestTeam100ThisWeek} of the ${TEAM_N} lowest team scores in league history were set in Baku.</h2><p>A team's week is two hands of driver points plus BOX BOX, and ${teamWeeks.length} of them have been posted across ${rounds.length} rounds. These are the ${W[TEAM_N] || TEAM_N} lowest, in order, and every one of this week's 24 teams is on the list, from Garra Dynamics on ${teamWeek[0].v} to Bronco and Peloton on ${bestTeamThisWeek}. And the only other team here is ${esc(teamOutsider.team.name)}, whose ${teamOutsider.v} in ${esc(byRound.find(b => b.round === teamOutsider.round).name)} was the lowest team score in the league until Saturday.</p></div></div>
-    <div class="legend"><span><i class="pink"></i>This week</span><span><i class="blue"></i>Any other week</span><span class="youleg"><i class="amber"></i>Your team</span></div>
+    <div class="ch"><span class="num">3</span><div><h2>${lowestTeam100ThisWeek} of the ${TEAM_N} lowest team scores in league history were set in Baku.</h2></div></div>
+    <div class="legend"><span><i class="pink"></i>This week</span><span><i class="blue"></i>Other weeks</span><span class="youleg"><i class="amber"></i>Your team</span></div>
     <div class="wall25">${wallTeam100}</div>
   </div>
 </section>
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">5</span><div><h2>The average team score was ${one(thisRound.teamAvg)}, against a previous low of ${one(prevLowTeamAvg)}.</h2><p>Across fourteen rounds the league's 24 teams had averaged between ${one(prevLowTeamAvg)} and ${one(Math.max(...byRound.map(b => b.teamAvg)))} a week, with the Canadian GP the only one under sixty. Bahlaysia came in at ${one(thisRound.teamAvg)}. And that is with nothing lost on the line: BOX BOX was a push for every team, so no one gave up the point a losing side usually does.</p></div></div>
+    <div class="ch"><span class="num">4</span><div><h2>The average team score was ${one(thisRound.teamAvg)}, against a previous low of ${one(prevLowTeamAvg)}.</h2></div></div>
     <div class="legend"><span><i class="blue"></i>Other weeks</span><span><i class="pink"></i>This week</span><span class="youleg"><i class="amber round"></i>Your team's score that week</span></div>
     <div id="c4t">${chart4t}</div>
   </div>
@@ -682,17 +686,16 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">6</span><div><h2>${esc(surname(dowThis.top.driver))} was F5 driver of the week with ${dowThis.top.tot} points, the lowest winning total of the season and less than half the previous low.</h2><p>Every driver in the pool earns each of his pickers the same points, and adding those up across all 48 hands gives his league total for the week, which is how the driver of the week is named. Fourteen rounds in, the driver of the week had never scored the league fewer than ${dowPrevLow}, including ${driverWeeks.filter(w => w.top.tot >= 850).length} weeks over 850. And Lindblad's ${dowThis.top.tot} came off ${dowThis.top.n} pickers at ${dowThis.top.each} points each: the best driver in the pool finished seventh.</p></div></div>
+    <div class="ch"><span class="num">5</span><div><h2>${esc(surname(dowThis.top.driver))} was F5 driver of the week with ${dowThis.top.tot} points, the lowest winning total of the season and less than half the previous low.</h2></div></div>
     ${chart4a}
     <div class="gone">
-    <p class="note" style="margin:0 0 6px">${esc(surname(dowThis.bottom.driver))}'s ${dowThis.bottom.tot} was not the worst a driver has done. ${esc(surname(worstEver.bottom.driver))} cost the league ${worstEver.bottom.tot} in ${esc(worstEver.name)}, and Gasly himself did ${driverWeeks.find(w => w.round === 4).bottom.tot} in Miami. And the mechanism is the same every time: a driver who finishes outside the points costs a point to everybody holding him, so the damage is the size of his following.</p>
     </div>
   </div>
 </section>
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">7</span><div><h2>${esc(thisRound.leader.name)} won the week with ${thisRound.max}, the lowest winning score the league has seen.</h2><p>Somebody wins every F5 week, and through fourteen rounds the winning score had never been under ${prevLowHigh}. ${esc(thisRound.leader.name)} won this one with ${thisRound.max}, including a best-finish bonus that only two people collected. And the drop is bigger than it looks: ${W[byRound.filter(b => b.max >= 60).length]} of the season's weekly winners scored 60 or more.</p></div></div>
+    <div class="ch"><span class="num">6</span><div><h2>${esc(thisRound.leader.name)} won the week with ${thisRound.max}, the lowest winning score the league has seen.</h2></div></div>
     <div id="c6">${chart6}</div>
 
   </div>
@@ -700,7 +703,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><div><h2>And there was no pit stop.</h2><p>On top of the craziness of this week, Aston Martin retired without a pit stop, meaning there were no pit stop points in either the team or the individual competition. The Needle paid nobody and BOX BOX was a push in all twelve matchups. However, a BOX BOX moves a matchup by six points, and only ${W[bbFlippable]} of the twelve were close enough that the line could have decided them.</p></div></div>
+    <div class="ch"><div><h2>And there was no pit stop.</h2><p class="andrew">On top of the craziness of this week, Aston Martin retired without a pit stop, meaning there were no pit stop points in both the team and individual competitions. However, there were only ${bbFlippable} matchups that could have potentially been decided by the BOX BOX line.</p></div></div>
   </div>
 </section>
 
@@ -773,8 +776,8 @@ const header = rest.slice(0, headerEnd);
 const after = rest.slice(headerEnd);
 const sections = after.split("<section>").slice(1).map(x => "<section>" + x.slice(0, x.indexOf("</section>") + "</section>".length));
 const foot = after.slice(after.indexOf("<p class=\"foot\">"));
-if (sections.length !== 7) throw new Error("expected 7 sections, got " + sections.length);
-const cards = [[header], [sections[0], sections[1]], [sections[2], sections[3]], [sections[4]], [sections[5], sections[6], foot]];
+if (sections.length !== 6) throw new Error("expected 6 sections, got " + sections.length);
+const cards = [[header], [sections[0]], [sections[1], sections[2]], [sections[3]], [sections[4], sections[5]]];
 const deck = cards.map((c, i) => `<section class="dc${i === 0 ? " on" : ""}" data-i="${i}"><div class="fit">${c.join("\n")}</div></section>`).join("\n");
 const bar = `<div class="dbar"><button class="nav" id="back" aria-label="Back">&#8249;</button><div class="lights">${cards.map((_, i) => `<i${i === 0 ? ' class="on"' : ""}></i>`).join("")}</div><button class="nav next" id="next">NEXT</button></div>`;
 const deckJs = `<script>
@@ -794,6 +797,7 @@ const deckJs = `<script>
   back.addEventListener('click',function(){if(i>0)show(i-1);});
   if(!embed)document.addEventListener('keydown',function(e){if(e.key==='ArrowRight')next.click();if(e.key==='ArrowLeft')back.click();});
   window.addEventListener('resize',function(){fit(cards[i]);});
+  if(window.ResizeObserver){var ro=new ResizeObserver(function(){fit(cards[i]);});cards.forEach(function(c){ro.observe(c.querySelector('.fit'));});}
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){fit(cards[i]);});
   [].forEach.call(document.images,function(im){im.addEventListener('load',function(){if(cards[i].contains(im))fit(cards[i]);});});
   show(i);setTimeout(function(){fit(cards[i]);},400);
@@ -811,17 +815,17 @@ body{padding:0;max-width:none}
 .dc section{margin:0 0 8px}
 .dc .hero{margin:0 0 8px}
 .dbar{position:fixed;left:0;right:0;bottom:0;height:64px;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--bg2);border-top:1px solid var(--border);z-index:5}
-.dc .row{min-height:22px;padding:0}
-.dc .track{height:12px}
-.dc .val{font-size:14px}
-.dc #c4t .lt small{display:none}
-.dc #c4t .row{min-height:20px}
-.dc .lt{font-size:13px;line-height:1.05}
-.dc .lt small{font-size:12px;line-height:1}
+.dc .row{min-height:30px}
+.dc .track{height:26px}
+.dc .val{font-size:22px}
+/* The team averages share a card with the wall, so they run a little shorter. */
+.dc #c4t .row{min-height:25px}
+.dc #c4t .track{height:21px}
+.dc #c4t .val{font-size:19px}
+.dc #c4t .lt{font-size:14px}
 .dc .stand{font-size:15px}
 .dc h1{font-size:clamp(24px,6.6vw,34px)}
-.dc .ch h2{font-size:18px}
-.dc .ch p{font-size:13px}
+.dc .ch h2{font-size:19px}
 .dc .who{margin:8px 0 10px}
 .dc .who select{min-height:36px;padding:6px 8px;font-size:15px}
 .dc .mine{font-size:14px}

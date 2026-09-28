@@ -185,9 +185,9 @@ for (const s of ["held", "solo", "pair", "notEnough", "locked"]) {
   const base = buildWeekly(DB, names[0]);
   const r15 = { ...base, round: 15 };
   const check = (label, fn) => { total++; try { fn(); console.log(`  ok    ${label}`); } catch (e) { failed++; console.log(`  FAIL  ${label}\n        ${e.message}`); } };
-  check("round 15 opens on the drama card, named the Bahlaysian Grand Prix", () => {
+  check("round 15 opens on the drama card", () => {
     const html = renderToString(<WeeklyDeck data={r15} initialCard={0} />);
-    if (!/BAHLAYSIAN GRAND PRIX/.test(html)) throw new Error("not the Bahlaysian Grand Prix");
+    if (/BAHLAYSIAN/.test(html)) throw new Error("round 15 is not the Bahlaysian Grand Prix; round 16 is");
     if (!/What a crazy week in Azerbaijan\./.test(html)) throw new Error("no drama headline");
     if (!/did not finish in the points/.test(html)) throw new Error("no drama subtitle");
     if (/PLAY THE NEW SONG/.test(html)) throw new Error("the music offer is on card 1");
@@ -204,6 +204,11 @@ for (const s of ["held", "solo", "pair", "notEnough", "locked"]) {
   check("round 15 send-off offers the song and the way out", () => {
     const html = renderToString(<WeeklyDeck data={r15} initialCard={3} />);
     if (!/LISTEN TO TUBEY/.test(html) || !/CONTINUE WITHOUT THE SONG/.test(html)) throw new Error("send-off buttons missing");
+    if (!/Let Tubey explain how to fix it/.test(html)) throw new Error("send-off copy is not Andrew's");
+  });
+  check("round 16's deck is called the Bahlaysian Grand Prix", () => {
+    const html = renderToString(<WeeklyDeck data={{ ...base, round: 16 }} initialCard={0} />);
+    if (!/BAHLAYSIAN GRAND PRIX/.test(html)) throw new Error("round 16 not renamed");
   });
 }
 
