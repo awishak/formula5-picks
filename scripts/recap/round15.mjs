@@ -260,23 +260,28 @@ const swarm = (weeks, { min, max, ticks: tks }) => {
 };
 const pMin = Math.min(...rows.map(r => r.ind)), pMax = Math.max(...rows.map(r => r.ind));
 // One swarm, every score the league has posted. Taller, so 720 dots fit.
-const swarmOne = (dots, { min, max, ticks: tks, H = 250 }) => {
+// A flat-bottomed swarm: every dot rests on the axis or on the dots under it,
+// so the pile reads as a histogram of faces-sized dots. Andrew, 2026-09-27.
+const swarmOne = (dots, { min, max, ticks: tks }) => {
   const W = 320, R = 2.7, STEP = R * 2 + 0.3;
   const x = v => 6 + (v - min) / (max - min) * (W - 12);
   const cands = [];
-  for (let dx = 0; dx <= 4; dx++) for (let dy = 0; dy <= 21; dy++) for (const sx of dx ? [1, -1] : [0]) for (const sy of dy ? [1, -1] : [0])
-    cands.push({ dx: sx * dx * (R * 0.9), dy: sy * dy * STEP, d: (dx * R * 0.9) ** 2 * 4 + (dy * STEP) ** 2 });
+  for (let dx = 0; dx <= 4; dx++) for (let dy = 0; dy <= 80; dy++) for (const sx of dx ? [1, -1] : [0])
+    cands.push({ dx: sx * dx * (R * 0.9), dy: dy * STEP, d: (dx * R * 0.9) ** 2 * 4 + (dy * STEP) ** 2 });
   cands.sort((a, b) => a.d - b.d);
-  // This week's dots go down first, so they sit on top of the pile.
+  // This week's dots go down first, so they sit on the axis.
   const pts = dots.slice().sort((a, b) => (b.me ? 1 : 0) - (a.me ? 1 : 0) || a.v - b.v).map(d => ({ ...d, x0: x(d.v) }));
   const placed = [];
   pts.forEach(p => {
-    for (const c of cands) { const px = p.x0 + c.dx, py = H / 2 + c.dy;
+    for (const c of cands) { const px = p.x0 + c.dx, py = R + c.dy;
       if (!placed.some(q => (q.x - px) ** 2 + (q.y - py) ** 2 < (R * 2) ** 2)) { p.x = px; p.y = py; break; } }
-    if (p.y == null) { p.x = p.x0; p.y = H / 2; }
+    if (p.y == null) { p.x = p.x0; p.y = R; }
     placed.push(p);
   });
-  return `<div class="swarm one"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="ss">${placed.map(p => `<circle class="${p.me ? "me" : ""}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${R}" ${p.who || ""} data-tip="${esc(p.tip)}"/>`).join("")}</svg>
+  // Height is whatever the tallest pile needs, and y counts up from the axis.
+  const H = Math.ceil(Math.max(...placed.map(p => p.y)) + R + 4);
+  placed.forEach(p => { p.y = H - p.y; });
+  return `<div class="swarm one"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="ss" style="aspect-ratio:${W}/${H}"><line x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}" class="base"/>${placed.map(p => `<circle class="${p.me ? "me" : ""}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${R}" ${p.who || ""} data-tip="${esc(p.tip)}"/>`).join("")}</svg>
     <div class="axis">${tks.map(t => `<span style="left:${(x(t) / W * 100).toFixed(1)}%">${t}</span>`).join("")}</div></div>`;
 };
 const chart2one = swarmOne(rows.map(r => ({ v: r.ind, me: r.round === ROUND, who: `data-player="${esc(r.player.name)}"`, tip: `${r.player.name}, ${r.race.race_name}: ${r.ind}` })),
@@ -478,7 +483,7 @@ tr.you td{color:var(--amber)}
 .wall25 .w2.me .logo{border-color:var(--pink)}
 .wall25 .w2:not(.me) .logo{border-color:var(--blue)}
 .wall25 .w2 b{font-size:16px}
-.wall25 .w2 span{font-size:13px;color:var(--text2);line-height:1.1;text-align:center;max-width:72px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wall25 .w2 span{font-size:13px;color:var(--text2);line-height:1.1;text-align:center;max-width:72px;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .w2 i{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:1px;font-style:normal;font-size:13px;line-height:1;color:var(--text);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
 .w2.hi i{left:auto;right:0;transform:none}
 .lead{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:16px 14px 14px;margin-top:18px}
@@ -533,7 +538,9 @@ section{margin:22px 0}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px}
 .legend i.blue{background:var(--blue)}.legend i.pink{background:var(--pink)}.legend i.muted{background:var(--text3)}.legend i.amber{background:var(--amber)}.legend i.round{border-radius:50%}
 .ydot{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--amber);border:2px solid #000;box-shadow:0 0 8px rgba(255,201,60,.8);display:none;z-index:2}
-.swarm.one .ss{height:auto;aspect-ratio:320/250}
+.swarm.one .ss{height:auto}
+.swarm.one .axis{margin-top:6px}
+.swarm.one .ss line.base{stroke:var(--border2);stroke-width:1}
 .swarm.one .ss circle{fill:var(--blue);fill-opacity:.55}
 .swarm.one .ss circle.me{fill:var(--pink);fill-opacity:1}
 .gone{display:none}
