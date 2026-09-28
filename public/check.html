@@ -20,7 +20,7 @@
   if (!q.get("gate")) {
     try {
       localStorage.setItem("f1_user", player);
-      for (let r = 1; r < 30; r++) localStorage.setItem(`f5_week_seen_r${r}_${player}`, "1");
+      for (let r = 1; r < 30; r++) { localStorage.setItem(`f5_week_seen_r${r}_${player}`, "1"); localStorage.setItem(`f5_week_seen_r${r}v2_${player}`, "1"); }
     } catch (e) {}
   }
   const f = document.getElementById("f");

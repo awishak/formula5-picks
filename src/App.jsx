@@ -28,6 +28,10 @@ import VegasNav from "./VegasNav.jsx";
 import Recap from "./Recap.jsx";
 import Weekly from "./Weekly.jsx";
 import NowPlaying from "./NowPlaying.jsx";
+// A round whose deck was rebuilt after people had closed it gets a new seen
+// key, so the gate opens once more for everyone. Round 15's deck became the
+// Bahlaysian deck on 2026-09-27, a day after it was scored.
+const WEEK_SEEN_V = { 15: "v2" };
 import Paddock from "./Paddock.jsx";
 import { NEWS } from "./news";
 
@@ -1140,7 +1144,7 @@ export default function App() {
   // "you have watched it" that costs nothing to lose. The worst case is that a
   // new device shows it again.
   const weekKey = weekRound && currentUser
-    ? `f5_week_seen_r${weekRound}_${currentUser}` : null;
+    ? `f5_week_seen_r${weekRound}${WEEK_SEEN_V[weekRound] || ""}_${currentUser}` : null;
   const showWeekGate =
     activePage !== "weekly" && weekKey && !weekSeen &&
     (() => { try { return localStorage.getItem(weekKey) !== "1"; } catch (e) { return true; } })();

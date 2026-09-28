@@ -2641,18 +2641,13 @@ function CardVideo({ d, video }) {
 function CardDrama({ d }) {
   const board = (d.context && d.context.poolBoard) || (d.cards || []).map(c => c && c.poolBoard).find(Boolean) || [];
   const zero = board.filter(x => (x.pts || 0) <= 0);
-  const dnf = board.filter(x => x.pos == null);
-  const scored = board.filter(x => (x.pts || 0) > 0);
-  const WORDS = ["none", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
   return (
     <>
       <Kicker>ROUND {d.round} · {d.raceName.toUpperCase()}</Kicker>
-      <Head color={V.pink} glow size="h1">
-        {zero.length} of the {board.length} drivers in the pool scored nothing. Or worse.
-      </Head>
+      {/* Andrew's words, 2026-09-27. */}
+      <Head color={V.pink} glow size="h1">What a crazy week in Azerbaijan.</Head>
       <Line color={V.text}>
-        {WORDS[dnf.length] ? WORDS[dnf.length][0].toUpperCase() + WORDS[dnf.length].slice(1) : dnf.length} of them never saw the flag.
-        {scored.length ? ` Only ${WORDS[scored.length]} scored: ${scored.map(x => shortName(x.driver).split(" ").pop()).join(", ")}.` : ""}
+        {zero.length} of our {board.length} drivers in the pool did not finish in the points, leading to the lowest F5 scores of the season.
       </Line>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "14px 6px", width: "100%", maxWidth: 380, margin: "6px auto 0" }}>
         {board.slice().sort((a, b) => (b.pts || 0) - (a.pts || 0) || (a.pos || 99) - (b.pos || 99)).map(x => {
@@ -3714,8 +3709,10 @@ export function WeeklyDeck({ data: given, onExit, onPicks, initialCard = 0, init
         </button>
       )}
 
-      {/* Skip. Subtle, on every card, and it counts as seen. */}
-      <button onClick={onExit} style={{
+      {/* Skip. Subtle, on every card, and it counts as seen. On round 15 it
+          goes to the send-off instead of out, so a reader who skips the recap
+          is still offered the song; the send-off's own buttons are the exit. */}
+      <button onClick={special && !last ? () => { setI(cards.length - 1); setStage(0); } : onExit} style={{
         position: "fixed", top: 26, right: 14, zIndex: 31,
         ...label({ fontSize: 12, color: V.text3 }), background: "transparent",
         border: "none", cursor: "pointer", padding: "6px 4px",

@@ -188,7 +188,8 @@ for (const s of ["held", "solo", "pair", "notEnough", "locked"]) {
   check("round 15 opens on the drama card, named the Bahlaysian Grand Prix", () => {
     const html = renderToString(<WeeklyDeck data={r15} initialCard={0} />);
     if (!/BAHLAYSIAN GRAND PRIX/.test(html)) throw new Error("not the Bahlaysian Grand Prix");
-    if (!/scored nothing\. Or worse\./.test(html)) throw new Error("no drama headline");
+    if (!/What a crazy week in Azerbaijan\./.test(html)) throw new Error("no drama headline");
+    if (!/did not finish in the points/.test(html)) throw new Error("no drama subtitle");
     if (/PLAY THE NEW SONG/.test(html)) throw new Error("the music offer is on card 1");
   });
   for (let st = 0; st < 5; st++) check(`round 15 recap press ${st + 1} embeds card ${st + 1}`, () => {

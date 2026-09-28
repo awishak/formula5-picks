@@ -88,7 +88,7 @@ leaving the deck still pauses it, on round 15 it plays on and
 src/NowPlaying.jsx puts STOP THE SONG beside Viewing as while it does. The
 track is `TRACKS.bahlaysia`, "Welcome to Bahlaysia", `public/bahlaysian-gp.mp3`,
 95 seconds, copied from the file Andrew dropped in the project root.
-The seen flag was left alone, as with round 14. `npm run smoke:weekly` renders
+**The seen flag was reset for round 15**: `WEEK_SEEN_V` in App.jsx gives the round a `v2` key, so everyone who had closed the first round 15 deck gets this one once; fit.html, check.html and check-nav set both spellings. **SKIP on this deck goes to the send-off**, not out, so a reader who skips the recap is still offered the song; the send-off's two buttons are the only exits. `npm run smoke:weekly` renders
 all four cards for round 15 and `check:nav`'s gate walk crosses either deck.
 
 **Round 14 alone opens on a video**, added 2026-09-13: a six-second clip ahead

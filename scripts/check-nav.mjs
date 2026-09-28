@@ -25,9 +25,11 @@ const PLAYER = process.argv[2] || "Andrew Ishak";
 // REVIEW" button that no longer exists, so every one of them missed the gate,
 // logged NOTFOUND, and passed anyway. That is how #300 shipped twice.
 const WALKS = [
-  { gate: true, taps: ["SKIP"] },
-  { gate: true, taps: ["SKIP", "PLAYERS"] },
-  { gate: true, taps: ["SKIP", "PLAYERS", "TEAMS", "HOME"] },
+  // On round 15's deck SKIP lands on the send-off rather than out, so the
+  // optional tap after it is what leaves; on the standard deck it is not there.
+  { gate: true, taps: ["SKIP", "CONTINUE WITHOUT THE SONG?"] },
+  { gate: true, taps: ["SKIP", "CONTINUE WITHOUT THE SONG?", "PLAYERS"] },
+  { gate: true, taps: ["SKIP", "CONTINUE WITHOUT THE SONG?", "PLAYERS", "TEAMS", "HOME"] },
   // Out of the deck by its own button, which lands on the new home.
   // Round 14 opens on a video with a NEXT, so that tap is optional: a trailing
   // ? taps the button only if it is there. Then card 1 offers the music instead
@@ -49,8 +51,8 @@ const page = walk => `<meta charset="utf-8"><body style="margin:0">
 <iframe id="f" style="width:393px;height:820px;border:0"></iframe>
 <script>
 try{localStorage.setItem("f1_user",${JSON.stringify(PLAYER)});
-for(let r=1;r<40;r++){const k="f5_week_seen_r"+r+"_"+${JSON.stringify(PLAYER)};
-${walk.gate ? "localStorage.removeItem(k)" : 'localStorage.setItem(k,"1")'};}}catch(e){}
+for(let r=1;r<40;r++){for(const k of ["f5_week_seen_r"+r+"_"+${JSON.stringify(PLAYER)},"f5_week_seen_r"+r+"v2_"+${JSON.stringify(PLAYER)}]){
+${walk.gate ? "localStorage.removeItem(k)" : 'localStorage.setItem(k,"1")'};}}}catch(e){}
 const steps=${JSON.stringify(walk.taps)};
 const f=document.getElementById("f"); f.src="/";
 let i=0;
