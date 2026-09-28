@@ -30,6 +30,7 @@ import TubeyCover, { COVERS } from "./TubeyCover.jsx";
 import { shortOf } from "./teams.js";
 import { boxBoxLine, boxBoxSide } from "./pitStop.js";
 import { useFirstStop, stopLabel, teamOfQuestion } from "./firstStop.js";
+import { playSong, pauseSong, toggleSong, songPlaying, onSong } from "./themeSong.js";
 import { F1_TEAM_COLORS } from "./theme";
 import {
   V, FM, FD, FN, FB, TYPE, display, numeric, body, label,
@@ -290,7 +291,17 @@ const THEME_CREDIT = "Written by Andrea Buttacavoli, majority owner of Prestissi
 const TRACKS = {
   tubey: { src: "/tubey-the-worm.mp3", name: "Velvet Thunder (feat. Tubey)" },
   velvet: { src: THEME_SRC, name: "Velvet Thunder" },
+  // Tubey's song for the Bahlaysian Grand Prix, offered on round 15's last
+  // card and left playing over the picker. The file is Andrew's; see CLAUDE.md.
+  bahlaysia: { src: "/bahlaysian-gp.mp3", name: "Tubey's Bahlaysian song" },
 };
+// What a round is called on its deck when Andrew calls it something else.
+// Round 15, the Azerbaijan Grand Prix, is the Bahlaysian Grand Prix.
+const RACE_NAME = { 15: "Bahlaysian Grand Prix" };
+// Round 15's deck is its own thing, set 2026-09-27: a drama card, the five
+// recap cards, the result, and a send-off that starts the song and leaves it
+// playing on the picker. Every other round runs the standard deck.
+const SPECIAL_ROUND = 15;
 // Which of the four drawn sleeves in TubeyCover.jsx runs. ?cover= overrides it.
 const TUBEY_COVER = "neon";
 
@@ -2625,6 +2636,91 @@ function CardVideo({ d, video }) {
   );
 }
 
+// Round 15, card 1: how the pool went. Seven of ten scored nothing or worse and
+// four never finished. The ten faces, the scorers lit, the rest greyed.
+function CardDrama({ d }) {
+  const board = (d.context && d.context.poolBoard) || (d.cards || []).map(c => c && c.poolBoard).find(Boolean) || [];
+  const zero = board.filter(x => (x.pts || 0) <= 0);
+  const dnf = board.filter(x => x.pos == null);
+  const scored = board.filter(x => (x.pts || 0) > 0);
+  const WORDS = ["none", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  return (
+    <>
+      <Kicker>ROUND {d.round} · {d.raceName.toUpperCase()}</Kicker>
+      <Head color={V.pink} glow size="h1">
+        {zero.length} of the {board.length} drivers in the pool scored nothing. Or worse.
+      </Head>
+      <Line color={V.text}>
+        {WORDS[dnf.length] ? WORDS[dnf.length][0].toUpperCase() + WORDS[dnf.length].slice(1) : dnf.length} of them never saw the flag.
+        {scored.length ? ` Only ${WORDS[scored.length]} scored: ${scored.map(x => shortName(x.driver).split(" ").pop()).join(", ")}.` : ""}
+      </Line>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "14px 6px", width: "100%", maxWidth: 380, margin: "6px auto 0" }}>
+        {board.slice().sort((a, b) => (b.pts || 0) - (a.pts || 0) || (a.pos || 99) - (b.pos || 99)).map(x => {
+          const off = (x.pts || 0) <= 0;
+          const url = DRIVER_HEADSHOTS[canonicalName(x.driver)];
+          return (
+            <div key={x.driver} style={{ display: "grid", justifyItems: "center", gap: 3 }}>
+              <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden",
+                border: `2px solid ${off ? V.text3 : V.blue}`, background: V.bg3,
+                boxShadow: off ? "none" : `0 0 12px ${V.blue}77`,
+                filter: off ? "grayscale(1) brightness(.6)" : "none" }}>
+                {url ? <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />
+                     : <span style={{ ...display("chip"), color: V.text2, lineHeight: "50px" }}>{x.driver.split(" ").map(w => w[0]).join("")}</span>}
+              </div>
+              <span style={{ ...body("bodySm", { fontSize: 13, color: off ? V.text3 : V.text }), lineHeight: 1.1, textAlign: "center" }}>
+                {shortName(x.driver).split(" ").pop()}
+              </span>
+              <span style={{ ...numeric("chip"), fontSize: 14, color: x.pos == null ? V.pink : off ? V.text3 : V.blue }}>
+                {x.pos == null ? "DNF" : (x.pts > 0 ? `+${x.pts}` : x.pts)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <Ask>How bad was it? Let&rsquo;s look.</Ask>
+    </>
+  );
+}
+
+// Round 15, cards 2 to 6: the recap page, one of its five cards at a time.
+// It is the same page at /recaps/round15.html, in embed mode, which hides its
+// own bar and picker and shows the card asked for. Same charts, same reader.
+function CardRecap({ d, stage }) {
+  const src = `/recaps/round15.html?embed=1&card=${stage + 1}&player=${encodeURIComponent(d.player.name)}`;
+  return (
+    <iframe title={`Round 15 in numbers, card ${stage + 1}`} src={src}
+      style={{ width: "100%", height: "calc(100dvh - 128px)", border: 0, display: "block",
+               borderRadius: 14, background: V.bg }} />
+  );
+}
+
+// Round 15, the last card: the song for the next race, or not, and then the
+// picker either way. The song is started here, in the tap, and lives outside
+// the deck, so it is still playing when the picker is on screen.
+function CardSendoff({ d, onPicks, onExit, song }) {
+  const go = d.card8 && d.card8.poolReady ? onPicks : onExit;
+  return (
+    <>
+      <Kicker>ROUND {d.round} · {d.raceName.toUpperCase()}</Kicker>
+      <Head color={V.blue} glow size="h1">That was the Bahlaysian Grand Prix.</Head>
+      <Line color={V.text}>Listen to Tubey&rsquo;s song for the next race. Or continue without the song.</Line>
+      <div style={{ display: "grid", gap: 10, width: "100%", maxWidth: 340, margin: "8px auto 0" }}>
+        <button onClick={() => { song.play("bahlaysia"); go(); }} style={{
+          ...display("h3", { fontSize: 17, color: V.bg }), background: V.blue,
+          border: "none", borderRadius: 999, padding: "14px 20px", cursor: "pointer",
+          boxShadow: `0 0 18px ${V.blue}77`,
+        }}>LISTEN TO TUBEY&rsquo;S SONG</button>
+        <button onClick={() => { song.stop(); go(); }} style={{
+          ...display("h3", { fontSize: 17, color: V.blue }), background: V.bg,
+          border: `1.5px solid ${V.blue}`, borderRadius: 999, padding: "14px 20px",
+          cursor: "pointer",
+        }}>CONTINUE WITHOUT THE SONG</button>
+      </div>
+      <Line color={V.text3}>The song plays on while you make your picks. There is a stop button up top.</Line>
+    </>
+  );
+}
+
 function CardResult({ d, theme }) {
   const c = d.card1;
   const won = c.outcome === "won", lost = c.outcome === "lost";
@@ -2651,12 +2747,18 @@ function CardResult({ d, theme }) {
           maxWidth: 460, textWrap: "pretty" }}>{say.fact}</div>
       )}
       {say.line && <Line color={V.text}>{say.line}</Line>}
+      {/* Round 15's deck has no race card, so your own week is said here. */}
+      {!theme && c.place != null && (
+        <Line color={V.blue}>
+          You scored {c.ind}, {apOrdinal(c.place)} of {c.field}.
+        </Line>
+      )}
 
       {theme && (
         <ThemeOffer won={won} onWith={theme.onWith} onOld={theme.onOld} onWithout={theme.onWithout} cover={theme.cover} />
       )}
 
-      <Ask>And how did you do yourself?</Ask>
+      <Ask>{theme ? "And how did you do yourself?" : "One more thing before your picks."}</Ask>
     </>
   );
 }
@@ -3391,12 +3493,20 @@ function CardNext({ d, onPicks, onExit }) {
  * The deck itself, given data from buildWeekly. Split from the loader so the
  * smoke script can render all 48 without a network.
  */
-export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStage = 0 }) {
+export function WeeklyDeck({ data: given, onExit, onPicks, initialCard = 0, initialStage = 0 }) {
+  // The round's name on its deck, when Andrew calls it something else.
+  const data = given && RACE_NAME[given.round] ? { ...given, raceName: RACE_NAME[given.round] } : given;
+  const special = Boolean(data) && data.round === SPECIAL_ROUND;
   // The cards this round's deck runs, by name rather than by position, because
   // a round with an intro video has every card one place later. `scrolls` and
   // `stages` ride on the card so nothing below counts positions.
   const clip = data ? INTRO_VIDEO[data.round] : null;
-  const cards = [
+  const cards = special ? [
+    { kind: "drama", Body: CardDrama, stages: 1 },
+    { kind: "recap", Body: CardRecap, stages: 5 },
+    { kind: "result", Body: CardResult, stages: 1 },
+    { kind: "sendoff", Body: CardSendoff, stages: 1 },
+  ] : [
     ...(clip ? [{ kind: "video", Body: CardVideo, stages: 1 }] : []),
     // The grid card is cut: card 2 already puts every player on screen.
     { kind: "result", Body: CardResult, stages: 1 },
@@ -3424,27 +3534,21 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
   };
   // The video with sound and the theme never play over each other, which only
   // comes up if somebody backs up to the video from a later card.
-  const pauseTheme = () => {
-    if (audio.current && !audio.current.paused) audio.current.pause();
-  };
+  const pauseTheme = () => pauseSong();
 
-  // The theme track. The element lives up here rather than inside card 1 so it
-  // survives the card changing, and unmounting the deck is what stops the
-  // music: leaving the deck by SKIP, by MAKE YOUR PICKS or by the last card all
-  // take the <audio> with them.
-  const audio = useRef(null);
-  const [playing, setPlaying] = useState(false);
+  // The theme track. It lives in themeSong.js, outside React, so it survives
+  // the card changing AND the deck unmounting: round 15's send-off starts a
+  // song and hands over to the picker with it still playing. On every other
+  // round leaving the deck stops it, below, the way it always did.
+  const [playing, setPlaying] = useState(() => songPlaying());
+  useEffect(() => onSong(setPlaying), []);
+  useEffect(() => () => { if (!special) pauseSong(); }, [special]);
   const toggleTheme = () => {
-    const el = audio.current;
-    if (!el) return;
     // Set the state before awaiting play(), or the button sits dead for as long
     // as the first bytes take to arrive: preload is off, so the tap is what
-    // starts the download. onPlay and onPause below correct it either way.
-    // The element carries no src until a song is chosen, so a reader who went on
-    // without music gets the new song from the pill.
-    if (!el.getAttribute("src")) el.src = TRACKS[track].src;
-    if (el.paused) { setPlaying(true); el.play().catch(() => setPlaying(false)); }
-    else el.pause();
+    // starts the download. onSong above corrects it either way.
+    setPlaying(!playing);
+    toggleSong(TRACKS[track].src);
   };
   // Card 1's offer starts the track and never stops it, so the two buttons
   // there cannot be a toggle: tapping WITH THE MUSIC on a deck that is already
@@ -3454,15 +3558,9 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
   // tap, before play(), because play() has to run inside the gesture.
   const [track, setTrack] = useState("tubey");
   const playTheme = (which = "tubey") => {
-    const el = audio.current;
-    if (!el) return;
-    if (which !== track || !el.getAttribute("src")) {
-      el.pause();
-      el.src = TRACKS[which].src;
-      setTrack(which);
-    } else if (!el.paused) return;
+    setTrack(which);
     setPlaying(true);
-    el.play().catch(() => setPlaying(false));
+    playSong(TRACKS[which].src);
   };
   // ?cover= shows one of the other sleeves in place, so all four can be
   // looked at on the real card.
@@ -3495,7 +3593,8 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
   const { kind, Body, scrolls } = cards[i];
   const last = i === cards.length - 1;
   // The result card makes the music offer in its body and has no bottom bar.
-  const offer = kind === "result";
+  // Not on round 15's deck, where the song is offered on the way out instead.
+  const offer = kind === "result" && !special;
 
   return (
     <div style={{ background: V.bg, minHeight: "100dvh", position: "relative", overflowX: "hidden" }}>
@@ -3625,14 +3724,13 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
       {/* The last card has no bottom bar, so the chrome carries the control
           there and nowhere else. Looped, because four cards outlast most of a
           track and the deck should not fall silent halfway through card 2. */}
-      {last && <ThemeButton playing={playing} onToggle={toggleTheme} name={TRACKS[track].name} />}
-      <audio ref={audio} preload="none" loop
-        onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
+      {last && !special && <ThemeButton playing={playing} onToggle={toggleTheme} name={TRACKS[track].name} />}
 
       <Card dep={`${i}-${stage}-${data.player.name}`}
         bottom={0}
         scrolls={Boolean(scrolls)}>
         <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit}
+          song={kind === "sendoff" ? { play: playTheme, stop: pauseSong } : undefined}
           video={kind === "video" ? { clip, ref: videoRef, soundOn, toggleSound, pauseTheme } : undefined}
           theme={offer ? {
             onWith: () => { playTheme("tubey"); advance(); },
@@ -3664,7 +3762,7 @@ export function WeeklyDeck({ data, onExit, onPicks, initialCard = 0, initialStag
           )}
           {kind === "video"
             ? <SoundButton on={soundOn} onToggle={toggleSound} />
-            : !offer && <ThemeButton playing={playing} onToggle={toggleTheme} variant="inline" name={TRACKS[track].name} />}
+            : !offer && !special && <ThemeButton playing={playing} onToggle={toggleTheme} variant="inline" name={TRACKS[track].name} />}
           {/* Wider when it is the only thing in the bar. On the cards that
               share the row with the pill it gives back the width, or the two
               together run past the edge of a 320px phone. */}

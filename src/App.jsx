@@ -27,6 +27,7 @@ import HandsIdeas from "./HandsIdeas.jsx";
 import VegasNav from "./VegasNav.jsx";
 import Recap from "./Recap.jsx";
 import Weekly from "./Weekly.jsx";
+import NowPlaying from "./NowPlaying.jsx";
 import Paddock from "./Paddock.jsx";
 import { NEWS } from "./news";
 
@@ -1189,6 +1190,8 @@ export default function App() {
           gap: 12, padding: "12px 16px 8px",
         }}>
           <img src={LOGO_B64} alt="Formula 5" style={{ height: 40, maxWidth: "36%", objectFit: "contain", objectPosition: "left", flexShrink: 1, minWidth: 0 }} />
+          {/* The theme song, when a deck left it playing. Tap to stop. */}
+          <NowPlaying />
           <ViewingAs currentUser={currentUser} onSelect={handleSelectName} />
         </div>
         {/* The Home tab. It used to render outside .app-wrap as a standalone

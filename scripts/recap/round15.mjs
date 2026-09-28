@@ -40,7 +40,11 @@ const med = a => { const b = [...a].sort((x, y) => x - y); const m = b.length >>
 // Race names are adjectives; a bar wants the place.
 const PLACE = { Australian: "Australia", Chinese: "China", Japanese: "Japan", Canadian: "Canada", Spanish: "Spain", Austrian: "Austria",
   British: "Britain", Belgian: "Belgium", Hungarian: "Hungary", Dutch: "Zandvoort", Italian: "Monza", "United States": "Austin", "Mexico City": "Mexico", "São Paulo": "Brazil" };
-const shortRace = name => { const k = name.replace(/ Grand Prix.*$/, ""); return PLACE[k] || k; };
+// Round 15 is the Bahlaysian Grand Prix, Andrew's name for it, 2026-09-27.
+const RACE_ALIAS = { "Azerbaijan Grand Prix": "Bahlaysian Grand Prix" };
+const PLACE_ALIAS = { Azerbaijan: "Bahlaysia" };
+const shortRace = name => { const k = name.replace(/ Grand Prix.*$/, ""); return PLACE_ALIAS[k] || PLACE[k] || k; };
+const raceTitle = name => RACE_ALIAS[name] || name;
 
 const rows = scores.map(s => ({ ...s, round: raceOf[s.race_id]?.round, race: raceOf[s.race_id], player: playerOf[s.player_id], ind: ind(s), drv: drv(s) }))
   .filter(r => r.round != null && r.player);
@@ -292,7 +296,7 @@ const swarmOne = (dots, { min, max, ticks: tks }) => {
   return `<div class="swarm one"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="ss" style="aspect-ratio:${W}/${H}"><line x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}" class="base"/>${placed.map(p => `<circle class="${p.me ? "me" : ""}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${R}" ${p.who || ""} data-tip="${esc(p.tip)}"/>`).join("")}</svg>
     <div class="axis">${tks.map(t => `<span style="left:${(x(t) / W * 100).toFixed(1)}%">${t}</span>`).join("")}</div></div>`;
 };
-const chart2one = swarmOne(rows.map(r => ({ v: r.ind, me: r.round === ROUND, who: `data-player="${esc(r.player.name)}"`, tip: `${r.player.name}, ${r.race.race_name}: ${r.ind}` })),
+const chart2one = swarmOne(rows.map(r => ({ v: r.ind, me: r.round === ROUND, who: `data-player="${esc(r.player.name)}"`, tip: `${r.player.name}, ${raceTitle(r.race.race_name)}: ${r.ind}` })),
   { min: pMin, max: pMax, ticks: [0, 20, 40, 60] });
 const chart2s = swarm(byRound.map(b => ({ round: b.round, name: b.name, me: b.round === ROUND,
   dots: rows.filter(r => r.round === b.round).map(r => ({ v: r.ind, who: `data-player="${esc(r.player.name)}"`, tip: `${r.player.name}, ${b.full}: ${r.ind}` })) })),
@@ -438,8 +442,8 @@ const PLAYER_NAMES = players.map(p => p.name).sort((a, b) => a.localeCompare(b))
 
 const html = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>The Azerbaijan GP in Numbers</title>
-<meta name="description" content="Round 15, the Azerbaijan Grand Prix: the lowest-scoring week in Formula 5 history, in numbers.">
+<title>The Bahlaysian GP in Numbers</title>
+<meta name="description" content="Round 15, the Bahlaysian Grand Prix: the lowest-scoring week in Formula 5 history, in numbers.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet">
 <style>
@@ -630,16 +634,16 @@ tr.hl td{color:var(--pink)}
 <div id="tip" role="status" aria-live="polite"></div>
 
 <header class="hero">
-  <div class="kicker">Round ${ROUND} · ${esc(race.race_name)}</div>
-  <h1>The Azerbaijan GP in Numbers</h1>
+  <div class="kicker">Round ${ROUND} · ${esc(raceTitle(race.race_name))}</div>
+  <h1>The Bahlaysian GP in Numbers</h1>
   <div class="who">
     <label for="me">Viewing as</label>
     <select id="me"><option value="">Nobody</option>${PLAYER_NAMES.map(n => `<option>${esc(n)}</option>`).join("")}</select>
     <p id="mine" class="mine"></p>
   </div>
-  <p class="stand">The lowest scoring week in league history, the Azerbaijan GP stands as an outlier in this F5 season. Scores were low across the board, including the first ever negative scores, achieved by ${W[negatives.length]} people. And the team matchups were just as strange: one team won their matchup by scoring exactly one point.</p>
+  <p class="stand">The lowest scoring week in league history, the Bahlaysian GP stands as an outlier in this F5 season. Scores were low across the board, including the first ever negative scores, achieved by ${W[negatives.length]} people. And the team matchups were just as strange: one team won their matchup by scoring exactly one point.</p>
   <div class="lead">
-    <div class="ch"><span class="num">1</span><div><h2>The Azerbaijan GP led to the lowest F5 scores of the season by every measure, and by a wide margin.</h2><p>Through fourteen rounds the average F5 score had never dipped below ${one(prevLowAvg.avg)}, and ${W[byRound.filter(b => b.round !== ROUND && b.avg > 38).length]} of those weeks averaged over 38. Azerbaijan came in at ${one(thisRound.avg)}, with half the league on ${thisRound.med} points or fewer. And the drop holds with the Needle and the weekly bonus stripped out: it was the drivers that sank the week, not the missing pit stop.</p></div></div>
+    <div class="ch"><span class="num">1</span><div><h2>The Bahlaysian GP led to the lowest F5 scores of the season by every measure, and by a wide margin.</h2><p>Through fourteen rounds the average F5 score had never dipped below ${one(prevLowAvg.avg)}, and ${W[byRound.filter(b => b.round !== ROUND && b.avg > 38).length]} of those weeks averaged over 38. Bahlaysia came in at ${one(thisRound.avg)}, with half the league on ${thisRound.med} points or fewer. And the drop holds with the Needle and the weekly bonus stripped out: it was the drivers that sank the week, not the missing pit stop.</p></div></div>
     <div class="legend"><span><i class="blue"></i>Other weeks</span><span><i class="pink"></i>This week</span><span class="youleg"><i class="amber round"></i>Your score that week</span></div>
     <div id="c1">${chart1}</div>
   </div>
@@ -670,7 +674,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">5</span><div><h2>The average team score was ${one(thisRound.teamAvg)}, against a previous low of ${one(prevLowTeamAvg)}.</h2><p>Across fourteen rounds the league's 24 teams had averaged between ${one(prevLowTeamAvg)} and ${one(Math.max(...byRound.map(b => b.teamAvg)))} a week, with the Canadian GP the only one under sixty. Azerbaijan came in at ${one(thisRound.teamAvg)}. And that is with nothing lost on the line: BOX BOX was a push for every team, so no one gave up the point a losing side usually does.</p></div></div>
+    <div class="ch"><span class="num">5</span><div><h2>The average team score was ${one(thisRound.teamAvg)}, against a previous low of ${one(prevLowTeamAvg)}.</h2><p>Across fourteen rounds the league's 24 teams had averaged between ${one(prevLowTeamAvg)} and ${one(Math.max(...byRound.map(b => b.teamAvg)))} a week, with the Canadian GP the only one under sixty. Bahlaysia came in at ${one(thisRound.teamAvg)}. And that is with nothing lost on the line: BOX BOX was a push for every team, so no one gave up the point a losing side usually does.</p></div></div>
     <div class="legend"><span><i class="blue"></i>Other weeks</span><span><i class="pink"></i>This week</span><span class="youleg"><i class="amber round"></i>Your team's score that week</span></div>
     <div id="c4t">${chart4t}</div>
   </div>
@@ -776,17 +780,19 @@ const bar = `<div class="dbar"><button class="nav" id="back" aria-label="Back">&
 const deckJs = `<script>
 (function(){
   var cards=[].slice.call(document.querySelectorAll('.dc')),lights=[].slice.call(document.querySelectorAll('.lights i')),back=document.getElementById('back'),next=document.getElementById('next');
-  var i=Math.max(0,Math.min(cards.length-1,(+new URLSearchParams(location.search).get('card')||1)-1));
+  var q0=new URLSearchParams(location.search),embed=q0.get('embed')==='1';
+  if(embed)document.documentElement.classList.add('embed');
+  var i=Math.max(0,Math.min(cards.length-1,(+q0.get('card')||1)-1));
   var MIN=0.72;
   function fit(card){var f=card.querySelector('.fit');f.style.transform='';f.style.width='';var have=card.clientHeight,nat=f.scrollHeight;
     var k=Math.min(1,have/nat);if(k<MIN)k=MIN;if(k<1){f.style.width=(100/k)+'%';f.style.transform='scale('+k+')';}
     card.classList.toggle('scrolls',f.scrollHeight*k>have+2);document.documentElement.dataset.fit=k.toFixed(3);}
   function show(n){i=n;cards.forEach(function(c,j){c.classList.toggle('on',j===n);c.scrollTop=0;});lights.forEach(function(l,j){l.classList.toggle('on',j<=n);});
     back.disabled=n===0;next.textContent=n===cards.length-1?'DONE':'NEXT';fit(cards[n]);
-    try{history.replaceState(null,'',location.pathname+'?'+(function(){var q=new URLSearchParams(location.search);q.set('card',n+1);return q.toString();})());}catch(e){}}
+    if(!embed)try{history.replaceState(null,'',location.pathname+'?'+(function(){var q=new URLSearchParams(location.search);q.set('card',n+1);return q.toString();})());}catch(e){}}
   next.addEventListener('click',function(){if(i<cards.length-1)show(i+1);else location.href='/';});
   back.addEventListener('click',function(){if(i>0)show(i-1);});
-  document.addEventListener('keydown',function(e){if(e.key==='ArrowRight')next.click();if(e.key==='ArrowLeft')back.click();});
+  if(!embed)document.addEventListener('keydown',function(e){if(e.key==='ArrowRight')next.click();if(e.key==='ArrowLeft')back.click();});
   window.addEventListener('resize',function(){fit(cards[i]);});
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){fit(cards[i]);});
   [].forEach.call(document.images,function(im){im.addEventListener('load',function(){if(cards[i].contains(im))fit(cards[i]);});});
@@ -841,6 +847,10 @@ body{padding:0;max-width:none}
 .lights i{width:9px;height:9px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2)}
 .lights i.on{background:var(--blue);border-color:var(--blue);box-shadow:0 0 6px var(--blue)}
 .foot{margin-top:14px}
+html.embed .dbar,html.embed .who,html.embed .kicker{display:none}
+html.embed .deck{inset:0}
+html.embed .dc{padding:4px 2px 0}
+html.embed .hero{margin-top:0}
 </style>`;
 const out = html.slice(0, bodyStart).replace("</head>", deckCss + "\n</head>") + tip + `\n<div class="deck">${deck}</div>\n${bar}\n` + html.slice(scriptAt).replace("</body>", deckJs + "\n</body>");
 fs.writeFileSync("public/recaps/round15.html", out);

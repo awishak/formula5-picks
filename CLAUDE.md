@@ -73,6 +73,23 @@ reads to find the most recently scored round; the deck loads the rest itself.
 Four cards, nine presses. `/week` opens it, with `?player=`, `?card=`, `?stage=`
 and `?round=` overrides so every press can be photographed.
 
+**Round 15 runs its own deck**, set 2026-09-27, keyed on `SPECIAL_ROUND` in
+Weekly.jsx, and the round is called the **Bahlaysian Grand Prix** there and on
+its recap page (`RACE_NAME` in Weekly.jsx, `RACE_ALIAS` in
+scripts/recap/round15.mjs). Four cards: a drama card (seven of the ten pool
+drivers scored nothing or worse, four never finished, off `context.poolBoard`),
+the five cards of /recaps/round15.html embedded one per press in an iframe with
+`?embed=1`, which hides the page's own bar and picker, the result card with a
+"You scored X, Nth of 48" line and no music offer, and a send-off: LISTEN TO
+TUBEY'S SONG or CONTINUE WITHOUT THE SONG, both to the picker. **The song
+plays over the picker, not the recap**, so the theme audio moved out of React
+into src/themeSong.js, one Audio object for the app; on every other round
+leaving the deck still pauses it, on round 15 it plays on and
+src/NowPlaying.jsx puts STOP THE SONG beside Viewing as while it does. The
+track is `TRACKS.bahlaysia`, `public/bahlaysian-gp.mp3`, Andrew's file.
+The seen flag was left alone, as with round 14. `npm run smoke:weekly` renders
+all four cards for round 15 and `check:nav`'s gate walk crosses either deck.
+
 **Round 14 alone opens on a video**, added 2026-09-13: a six-second clip ahead
 of card 1, with a Sound pill beside NEXT. **It waits for the play button and
 plays with sound on**, Andrew's call the same day; it had shipped muted and

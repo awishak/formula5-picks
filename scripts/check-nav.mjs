@@ -33,7 +33,12 @@ const WALKS = [
   // ? taps the button only if it is there. Then card 1 offers the music instead
   // of NEXT, card 2's three presses and card 3 before card 4's button, which
   // reads DONE until the next round's pools are drawn on the Tuesday.
-  { gate: true, taps: ["NEXT?", "CONTINUE WITHOUT", "NEXT", "NEXT", "NEXT", "NEXT", "MAKE YOUR PICKS|DONE"] },
+  // Round 15's deck (2026-09-27) is a drama card, five recap cards, the
+  // result and a send-off, so it is NEXT seven times and CONTINUE WITHOUT at
+  // the end; the standard deck is CONTINUE WITHOUT first and NEXT four times.
+  // Optional taps skip what a deck does not have, and the last tap is required
+  // on both, so the walk still has to cross the gate to pass.
+  { gate: true, taps: ["NEXT?", "CONTINUE WITHOUT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "CONTINUE WITHOUT THE SONG|MAKE YOUR PICKS|DONE"] },
   { taps: ["PLAYERS", "TEAMS", "MORE", "HOME"] },
   { taps: ["TEAMS", "SCHEDULE", "HOME", "PLAYERS"] },
   // Into the Power Rankings from More and back out by the nav.

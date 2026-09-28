@@ -178,5 +178,33 @@ for (const s of ["held", "solo", "pair", "notEnough", "locked"]) {
   if (!bad) console.log(`  ok    no-stop round renders for all ${names.length}, BOX BOX a push, nothing prints null`);
 }
 
+// Round 15's own deck: four cards, the second with five presses, and the
+// round called the Bahlaysian Grand Prix. Rendered off the fixture with the
+// round number swapped, which is enough to prove every card builds.
+{
+  const base = buildWeekly(DB, names[0]);
+  const r15 = { ...base, round: 15 };
+  const check = (label, fn) => { total++; try { fn(); console.log(`  ok    ${label}`); } catch (e) { failed++; console.log(`  FAIL  ${label}\n        ${e.message}`); } };
+  check("round 15 opens on the drama card, named the Bahlaysian Grand Prix", () => {
+    const html = renderToString(<WeeklyDeck data={r15} initialCard={0} />);
+    if (!/BAHLAYSIAN GRAND PRIX/.test(html)) throw new Error("not the Bahlaysian Grand Prix");
+    if (!/scored nothing\. Or worse\./.test(html)) throw new Error("no drama headline");
+    if (/PLAY THE NEW SONG/.test(html)) throw new Error("the music offer is on card 1");
+  });
+  for (let st = 0; st < 5; st++) check(`round 15 recap press ${st + 1} embeds card ${st + 1}`, () => {
+    const html = renderToString(<WeeklyDeck data={r15} initialCard={1} initialStage={st} />);
+    if (!new RegExp(`recaps/round15\\.html\\?embed=1&amp;card=${st + 1}`).test(html)) throw new Error("wrong card in the iframe");
+  });
+  check("round 15 result card says where you placed and makes no offer", () => {
+    const html = renderToString(<WeeklyDeck data={r15} initialCard={2} />);
+    if (!/You scored \d+, \w+ of \d+/.test(html.replace(/<!-- -->/g, ""))) throw new Error("no placing line");
+    if (/PLAY THE NEW SONG/.test(html)) throw new Error("offer on the result card");
+  });
+  check("round 15 send-off offers the song and the way out", () => {
+    const html = renderToString(<WeeklyDeck data={r15} initialCard={3} />);
+    if (!/LISTEN TO TUBEY/.test(html) || !/CONTINUE WITHOUT THE SONG/.test(html)) throw new Error("send-off buttons missing");
+  });
+}
+
 console.log(`\n${failed ? "FAILED" : "OK"}  ${total - failed}/${total} renders`);
 process.exit(failed ? 1 : 0);
