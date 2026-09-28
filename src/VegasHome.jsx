@@ -1857,7 +1857,7 @@ function NextPicks({ next, onOpen }) {
         {next.picked ? "Picks in" : "Picks open"}
       </p>
       <p style={{ ...display("h2"), ...textGlow(c), margin: "4px 0 0", textTransform: "uppercase" }}>
-        {next.name}
+        {(RACE_SIGN[next.round] || {}).name || next.name}
       </p>
       <p style={{ ...body("bodySm"), color: V.text2, margin: "6px 0 0" }}>
         {next.picked ? "Change them until" : "Close"} {whenPT(next.deadline, { date: false })}
