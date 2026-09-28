@@ -74,9 +74,10 @@ Four cards, nine presses. `/week` opens it, with `?player=`, `?card=`, `?stage=`
 and `?round=` overrides so every press can be photographed.
 
 **Round 15 runs its own deck**, set 2026-09-27, keyed on `SPECIAL_ROUND` in
-Weekly.jsx, and the round is called the **Bahlaysian Grand Prix** there and on
-its recap page (`RACE_NAME` in Weekly.jsx, `RACE_ALIAS` in
-scripts/recap/round15.mjs). Four cards: a drama card (seven of the ten pool
+Weekly.jsx. **Round 16 is the Bahlaysia Grand Prix**: `RACE_NAME` in Weekly.jsx
+names it on its deck and `RACE_SIGN` in VegasHome.jsx puts it on the home
+page's sign with Andrew's subtitle, the Formula 1 Gulf Air Bahrain Grand Prix in
+Malaysia, brought to you by HomeworkTubes.com. Welcome to Bahlaysia. Four cards: a drama card (seven of the ten pool
 drivers scored nothing or worse, four never finished, off `context.poolBoard`),
 the five cards of /recaps/round15.html embedded one per press in an iframe with
 `?embed=1`, which hides the page's own bar and picker, the result card with a

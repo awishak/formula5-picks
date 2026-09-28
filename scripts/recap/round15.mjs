@@ -301,8 +301,11 @@ const swarmOne = (dots, { min, max, ticks: tks, faces = [] }) => {
   return `<div class="swarm one"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="ss" style="aspect-ratio:${W}/${H}"><line x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}" class="base"/>${faceEls}${placed.map(p => `<circle class="${p.me ? "me" : ""}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${R}" ${p.who || ""} data-tip="${esc(p.tip)}"/>`).join("")}</svg>
     <div class="axis">${tks.map(t => `<span style="left:${(x(t) / W * 100).toFixed(1)}%">${t}</span>`).join("")}</div></div>`;
 };
-const chart2one = swarmOne(rows.filter(r => !(r.round === ROUND && r.ind < 0)).map(r => ({ v: r.ind, me: r.round === ROUND, who: `data-player="${esc(r.player.name)}"`, tip: `${r.player.name}, ${raceTitle(r.race.race_name)}: ${r.ind}` })),
-  { min: pMin, max: pMax, ticks: [0, 20, 40, 60], faces: negatives.map(r => ({ v: r.ind, name: r.player.name, photo: r.player.photo_url })) });
+const chart2one = swarmOne(rows.map(r => ({ v: r.ind, me: r.round === ROUND, who: `data-player="${esc(r.player.name)}"`, tip: `${r.player.name}, ${raceTitle(r.race.race_name)}: ${r.ind}` })),
+  { min: pMin, max: pMax, ticks: [0, 20, 40, 60] });
+// Andrew, 2026-09-27: the negatives, named under the swarm.
+const negRow = `<p class="andrew" style="margin-top:14px">These ${W[negatives.length] || negatives.length} players managed to score negative points. Impressive!</p>
+<div class="negs">${negatives.map(r => `<div class="w3" data-player="${esc(r.player.name)}" data-tip="${esc(`${r.player.name}: ${r.ind}`)}">${face(r.player, 48, "#ff2d95")}<b>${r.ind}</b><span>${esc(surname(r.player.name))}</span></div>`).join("")}</div>`;
 const chart2s = swarm(byRound.map(b => ({ round: b.round, name: b.name, me: b.round === ROUND,
   dots: rows.filter(r => r.round === b.round).map(r => ({ v: r.ind, who: `data-player="${esc(r.player.name)}"`, tip: `${r.player.name}, ${b.full}: ${r.ind}` })) })),
   { min: pMin, max: pMax, ticks: [0, 20, 40, 60] });
@@ -569,12 +572,12 @@ section{margin:22px 0}
 .swarm.one .ss circle{fill:var(--blue);fill-opacity:.55}
 .swarm.one .ss circle.me{fill:var(--pink);fill-opacity:1}
 .gone{display:none}
-.negs{display:flex;flex-wrap:wrap;gap:12px 10px;justify-content:center;margin-top:12px}
-.w3{display:flex;flex-direction:column;align-items:center;gap:3px;width:76px;text-align:center}
-.w3 .face,.w3 .logo{width:56px;height:56px}
+.negs{display:flex;flex-wrap:wrap;gap:10px 6px;justify-content:center;margin-top:10px}
+.w3{display:flex;flex-direction:column;align-items:center;gap:2px;width:72px;text-align:center}
+.w3 .face,.w3 .logo{width:48px;height:48px}
 .w3 .logo{border:2px solid var(--pink)}
-.w3 b{font-family:var(--fn);font-size:20px;color:var(--pink);line-height:1}
-.w3 span{font-size:13px;color:var(--text2);line-height:1.15}
+.w3 b{font-family:var(--fn);font-size:18px;color:var(--pink);line-height:1}
+.w3 span{font-size:13px;color:var(--text);line-height:1.15}
 .w3.you .face,.w3.you .logo{border-color:var(--amber)!important;box-shadow:0 0 12px rgba(255,201,60,.8)}
 .youleg{display:none}body.has-you .youleg{display:inline}
 .row{display:grid;grid-template-columns:132px 1fr 66px;align-items:center;gap:8px;min-height:34px;padding:0}
@@ -665,20 +668,13 @@ tr.hl td{color:var(--pink)}
     <div class="ch"><span class="num">2</span><div><h2>${week.filter(r => r.ind < prevLowAvg.avg).length} of the 48 scores in Baku were lower than the average score of any other week.</h2></div></div>
     <div class="legend"><span><i class="blue"></i>All individual scores from this season</span><span><i class="pink"></i>This week</span><span class="youleg"><i class="amber"></i>You</span></div>
     ${chart2one}
+    ${negRow}
   </div>
 </section>
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">3</span><div><h2>${lowestTeam100ThisWeek} of the ${TEAM_N} lowest team scores in league history were set in Baku.</h2></div></div>
-    <div class="legend"><span><i class="pink"></i>This week</span><span><i class="blue"></i>Other weeks</span><span class="youleg"><i class="amber"></i>Your team</span></div>
-    <div class="wall25">${wallTeam100}</div>
-  </div>
-</section>
-
-<section>
-  <div class="card">
-    <div class="ch"><span class="num">4</span><div><h2>The average team score was ${one(thisRound.teamAvg)}, against a previous low of ${one(prevLowTeamAvg)}.</h2></div></div>
+    <div class="ch"><span class="num">3</span><div><h2>The average team score was ${one(thisRound.teamAvg)}, against a previous low of ${one(prevLowTeamAvg)}.</h2></div></div>
     <div class="legend"><span><i class="blue"></i>Other weeks</span><span><i class="pink"></i>This week</span><span class="youleg"><i class="amber round"></i>Your team's score that week</span></div>
     <div id="c4t">${chart4t}</div>
   </div>
@@ -686,7 +682,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">5</span><div><h2>${esc(surname(dowThis.top.driver))} was F5 driver of the week with ${dowThis.top.tot} points, the lowest winning total of the season and less than half the previous low.</h2></div></div>
+    <div class="ch"><span class="num">4</span><div><h2>${esc(surname(dowThis.top.driver))} was F5 driver of the week with ${dowThis.top.tot} points, the lowest winning total of the season and less than half the previous low.</h2></div></div>
     ${chart4a}
     <div class="gone">
     </div>
@@ -695,7 +691,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">6</span><div><h2>${esc(thisRound.leader.name)} won the week with ${thisRound.max}, the lowest winning score the league has seen.</h2></div></div>
+    <div class="ch"><span class="num">5</span><div><h2>${esc(thisRound.leader.name)} won the week with ${thisRound.max}, the lowest winning score the league has seen.</h2></div></div>
     <div id="c6">${chart6}</div>
 
   </div>
@@ -776,8 +772,8 @@ const header = rest.slice(0, headerEnd);
 const after = rest.slice(headerEnd);
 const sections = after.split("<section>").slice(1).map(x => "<section>" + x.slice(0, x.indexOf("</section>") + "</section>".length));
 const foot = after.slice(after.indexOf("<p class=\"foot\">"));
-if (sections.length !== 6) throw new Error("expected 6 sections, got " + sections.length);
-const cards = [[header], [sections[0]], [sections[1], sections[2]], [sections[3]], [sections[4], sections[5]]];
+if (sections.length !== 5) throw new Error("expected 5 sections, got " + sections.length);
+const cards = [[header], [sections[0]], [sections[1]], [sections[2]], [sections[3], sections[4]]];
 const deck = cards.map((c, i) => `<section class="dc${i === 0 ? " on" : ""}" data-i="${i}"><div class="fit">${c.join("\n")}</div></section>`).join("\n");
 const bar = `<div class="dbar"><button class="nav" id="back" aria-label="Back">&#8249;</button><div class="lights">${cards.map((_, i) => `<i${i === 0 ? ' class="on"' : ""}></i>`).join("")}</div><button class="nav next" id="next">NEXT</button></div>`;
 const deckJs = `<script>
@@ -818,11 +814,7 @@ body{padding:0;max-width:none}
 .dc .row{min-height:30px}
 .dc .track{height:26px}
 .dc .val{font-size:22px}
-/* The team averages share a card with the wall, so they run a little shorter. */
-.dc #c4t .row{min-height:25px}
-.dc #c4t .track{height:21px}
-.dc #c4t .val{font-size:19px}
-.dc #c4t .lt{font-size:14px}
+
 .dc .stand{font-size:15px}
 .dc h1{font-size:clamp(24px,6.6vw,34px)}
 .dc .ch h2{font-size:19px}

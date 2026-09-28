@@ -206,9 +206,9 @@ for (const s of ["held", "solo", "pair", "notEnough", "locked"]) {
     if (!/LISTEN TO TUBEY/.test(html) || !/CONTINUE WITHOUT THE SONG/.test(html)) throw new Error("send-off buttons missing");
     if (!/Let Tubey explain how to fix it/.test(html)) throw new Error("send-off copy is not Andrew's");
   });
-  check("round 16's deck is called the Bahlaysian Grand Prix", () => {
+  check("round 16's deck is called the Bahlaysia Grand Prix", () => {
     const html = renderToString(<WeeklyDeck data={{ ...base, round: 16 }} initialCard={0} />);
-    if (!/BAHLAYSIAN GRAND PRIX/.test(html)) throw new Error("round 16 not renamed");
+    if (!/BAHLAYSIA GRAND PRIX/.test(html)) throw new Error("round 16 not renamed");
   });
 }
 

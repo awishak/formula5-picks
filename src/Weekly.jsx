@@ -297,7 +297,7 @@ const TRACKS = {
 };
 // What a round is called on its deck when Andrew calls it something else.
 // Round 16, the Bahrain Grand Prix at Sepang, is the Bahlaysian Grand Prix.
-const RACE_NAME = { 16: "Bahlaysian Grand Prix" };
+const RACE_NAME = { 16: "Bahlaysia Grand Prix" };
 // Round 15's deck is its own thing, set 2026-09-27: a drama card, the five
 // recap cards, the result, and a send-off that starts the song and leaves it
 // playing on the picker. Every other round runs the standard deck.

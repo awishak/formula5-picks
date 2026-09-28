@@ -208,6 +208,13 @@ const lastName = (n) => (n || "").split(" ").slice(-1)[0];
 const code3 = (n) => lastName(n).slice(0, 3).toUpperCase();
 // The marquee carries the place, not the words "Grand Prix", which sit on the line below.
 const shortRace = (n) => (n || "").replace(/\s*Grand Prix\s*/i, "").trim();
+// A round the sign calls something else. Round 16, the Bahrain Grand Prix at
+// Sepang, is the Bahlaysia Grand Prix on the picks page, Andrew 2026-09-27,
+// with his subtitle under the sign.
+const RACE_SIGN = {
+  16: { name: "Bahlaysia Grand Prix",
+        sub: "The Formula 1 Gulf Air Bahrain Grand Prix in Malaysia (brought to you by HomeworkTubes.com). Welcome to Bahlaysia!" },
+};
 
 // ── Primitives ───────────────────────────────────────────
 
@@ -455,7 +462,9 @@ function PickBadges({ players }) {
 // Carries the round, the race, who has picked, and what the event is doing right
 // now. The circuit name used to sit at the bottom; event status is what people
 // actually open the app for.
-function Marquee({ race, status, time, flicker = false }) {
+function Marquee({ race: given, status, time, flicker = false }) {
+  const sign = RACE_SIGN[given && given.round];
+  const race = sign ? { ...given, name: sign.name } : given;
   return (
     <div style={{
       ...card({ padding: "18px 20px 20px", marginBottom: 18, position: "relative", overflow: "hidden" }),
@@ -478,6 +487,10 @@ function Marquee({ race, status, time, flicker = false }) {
         textTransform: "uppercase", margin: "2px 0 0",
       }}>Grand Prix</p>
       </div>
+      {sign && sign.sub && (
+        <p style={{ ...body("bodySm"), fontSize: 14, color: V.text, textAlign: "center",
+                    margin: "10px auto 0", maxWidth: 340, lineHeight: 1.35 }}>{sign.sub}</p>
+      )}
       {/* Small, under the sign. Before the deadline the loud line is the clock,
           and the start time is the thing you plan around. */}
       {time && (
