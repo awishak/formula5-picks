@@ -144,8 +144,10 @@ const lowest100 = rows.slice().sort((a, b) => a.ind - b.ind || (a.round === ROUN
 const lowest100ThisWeek = lowest100.filter(r => r.round === ROUND).length;
 const medianOtherAbove = rounds.filter(r => r !== ROUND && byRound.find(b => b.round === r).med > thisRound.max).length;
 // The hundred lowest team scores ever.
-const lowestTeam100 = teamWeeks.slice().sort((a, b) => a.v - b.v || (a.round === ROUND ? -1 : 1) || a.team.name.localeCompare(b.team.name)).slice(0, 100);
+const TEAM_N = 25;
+const lowestTeam100 = teamWeeks.slice().sort((a, b) => a.v - b.v || (a.round === ROUND ? -1 : 1) || a.team.name.localeCompare(b.team.name)).slice(0, TEAM_N);
 const lowestTeam100ThisWeek = lowestTeam100.filter(t => t.round === ROUND).length;
+const teamOutsider = lowestTeam100.find(t => t.round !== ROUND);
 const result = results.find(r => r.race_id === race.id);
 const podium = (result.finishing_order || []).slice(0, 3);
 
@@ -274,7 +276,7 @@ const swarmOne = (dots, { min, max, ticks: tks, H = 250 }) => {
     if (p.y == null) { p.x = p.x0; p.y = H / 2; }
     placed.push(p);
   });
-  return `<div class="swarm one"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="ss" style="height:${H}px">${placed.map(p => `<circle class="${p.me ? "me" : ""}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${R}" ${p.who || ""} data-tip="${esc(p.tip)}"/>`).join("")}</svg>
+  return `<div class="swarm one"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="ss">${placed.map(p => `<circle class="${p.me ? "me" : ""}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${R}" ${p.who || ""} data-tip="${esc(p.tip)}"/>`).join("")}</svg>
     <div class="axis">${tks.map(t => `<span style="left:${(x(t) / W * 100).toFixed(1)}%">${t}</span>`).join("")}</div></div>`;
 };
 const chart2one = swarmOne(rows.map(r => ({ v: r.ind, me: r.round === ROUND, who: `data-player="${esc(r.player.name)}"`, tip: `${r.player.name}, ${r.race.race_name}: ${r.ind}` })),
@@ -288,7 +290,7 @@ const chart3s = swarm(byRound.map(b => ({ round: b.round, name: b.name, me: b.ro
   { min: tMin, max: tMax, ticks: [0, 40, 80, 120] });
 
 /* the hundred lowest team scores, ten by ten */
-const wallTeam100 = lowestTeam100.map((t, i) => `<div class="w2${t.round === ROUND ? " me" : ""}${i === 0 ? " lo" : i === 99 ? " hi" : ""}" data-team="${esc(t.team.name)}" data-tip="${esc(`${i + 1}. ${t.team.name}, ${byRound.find(b => b.round === t.round).full}: ${t.v}`)}">${logo(t.team, 28)}<b>${t.v}</b>${i === 0 ? "<i>lowest</i>" : i === 99 ? "<i>100th</i>" : ""}</div>`).join("");
+const wallTeam100 = lowestTeam100.map((t, i) => `<div class="w2${t.round === ROUND ? " me" : ""}${i === 0 ? " lo" : i === TEAM_N - 1 ? " hi" : ""}" data-team="${esc(t.team.name)}" data-tip="${esc(`${i + 1}. ${t.team.name}, ${byRound.find(b => b.round === t.round).full}: ${t.v}`)}">${logo(t.team, 48)}<b>${t.v}</b><span>${esc(shortTeam(t.team.name))}</span>${i === 0 ? "<i>lowest</i>" : i === TEAM_N - 1 ? `<i>${TEAM_N}th</i>` : ""}</div>`).join("");
 /* the negatives */
 const negWall = [...negatives.map(r => `<div class="w3" data-player="${esc(r.player.name)}" data-tip="${esc(`${r.player.name}: ${r.ind}. Top ${signed(r.top_pick_pts || 0)}, midfield ${signed(r.midfield_pts || 0)}`)}">${face(r.player, 56, "#ff2d95")}<b>${r.ind}</b><span>${esc(surname(r.player.name))}</span></div>`),
   ...teamWeek.filter(t => t.v < 0).map(t => `<div class="w3" data-team="${esc(t.team.name)}" data-tip="${esc(`${t.team.name}: ${t.v}`)}">${logo(t.team, 56)}<b>${t.v}</b><span>${esc(shortTeam(t.team.name))}</span></div>`)].join("");
@@ -471,6 +473,12 @@ tr.you td{color:var(--amber)}
 .w2 b{font-family:var(--fn);font-size:13px;color:var(--text2);line-height:1}
 .w2.me b{color:var(--pink)}
 .w2.lo .face,.w2.hi .face{border-color:#fff;box-shadow:0 0 10px #fff}
+.wall25{display:grid;grid-template-columns:repeat(5,1fr);gap:16px 4px;margin-top:10px;padding-bottom:14px}
+.wall25 .w2 .logo{width:48px;height:48px;border-width:2px}
+.wall25 .w2.me .logo{border-color:var(--pink)}
+.wall25 .w2:not(.me) .logo{border-color:var(--blue)}
+.wall25 .w2 b{font-size:16px}
+.wall25 .w2 span{font-size:13px;color:var(--text2);line-height:1.1;text-align:center;max-width:72px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .w2 i{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:1px;font-style:normal;font-size:13px;line-height:1;color:var(--text);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
 .w2.hi i{left:auto;right:0;transform:none}
 .lead{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:16px 14px 14px;margin-top:18px}
@@ -525,7 +533,7 @@ section{margin:22px 0}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px}
 .legend i.blue{background:var(--blue)}.legend i.pink{background:var(--pink)}.legend i.muted{background:var(--text3)}.legend i.amber{background:var(--amber)}.legend i.round{border-radius:50%}
 .ydot{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--amber);border:2px solid #000;box-shadow:0 0 8px rgba(255,201,60,.8);display:none;z-index:2}
-.swarm.one .ss{height:250px}
+.swarm.one .ss{height:auto;aspect-ratio:320/250}
 .swarm.one .ss circle{fill:var(--blue);fill-opacity:.55}
 .swarm.one .ss circle.me{fill:var(--pink);fill-opacity:1}
 .gone{display:none}
@@ -629,9 +637,9 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">3</span><div><h2>${lowestTeam100ThisWeek} of the 100 lowest team scores in league history were set in Baku, including all of the bottom ${lowTeamAllThisWeek}.</h2><p>A team's week is two hands of driver points plus BOX BOX, and ${teamWeeks.length} of them have been posted across ${rounds.length} rounds. These are the hundred lowest, in order, and the top of the wall is all one afternoon: every one of this week's 24 teams is on it, from Garra Dynamics on ${teamWeek[0].v} to Bronco and Peloton on ${bestTeamThisWeek}. And the best team score of the week would have beaten ${teamScoresBelowBest === 1 ? "one team score" : W[teamScoresBelowBest] + " team scores"} from the other fourteen rounds: every other week's best team scored at least ${minOtherWeeklyTeamHigh}.</p></div></div>
+    <div class="ch"><span class="num">3</span><div><h2>${lowestTeam100ThisWeek} of the ${TEAM_N} lowest team scores in league history were set in Baku.</h2><p>A team's week is two hands of driver points plus BOX BOX, and ${teamWeeks.length} of them have been posted across ${rounds.length} rounds. These are the ${W[TEAM_N] || TEAM_N} lowest, in order, and every one of this week's 24 teams is on the list, from Garra Dynamics on ${teamWeek[0].v} to Bronco and Peloton on ${bestTeamThisWeek}. And the only other team here is ${esc(teamOutsider.team.name)}, whose ${teamOutsider.v} in ${esc(byRound.find(b => b.round === teamOutsider.round).name)} was the lowest team score in the league until Saturday.</p></div></div>
     <div class="legend"><span><i class="pink"></i>This week</span><span><i class="blue"></i>Any other week</span><span class="youleg"><i class="amber"></i>Your team</span></div>
-    <div class="wall100">${wallTeam100}</div>
+    <div class="wall25">${wallTeam100}</div>
   </div>
 </section>
 
