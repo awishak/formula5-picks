@@ -144,6 +144,14 @@ const lowest100 = rows.slice().sort((a, b) => a.ind - b.ind || (a.round === ROUN
 const lowest100ThisWeek = lowest100.filter(r => r.round === ROUND).length;
 const medianOtherAbove = rounds.filter(r => r !== ROUND && byRound.find(b => b.round === r).med > thisRound.max).length;
 // The hundred lowest team scores ever.
+// W, L or D for a team in a round, off the schedule and the scores of that week.
+const resultOf = (team, round) => {
+  const r = races.find(x => x.round === round); const m = r && schedule.find(x => x.race_id === r.id && (x.home_team_id === team.id || x.away_team_id === team.id));
+  if (!m) return "";
+  const rs = rows.filter(x => x.round === round); const other = teamOf[m.home_team_id === team.id ? m.away_team_id : m.home_team_id];
+  const mine = teamScore(team, rs), theirs = teamScore(other, rs);
+  return mine > theirs ? "W" : mine < theirs ? "L" : "D";
+};
 const TEAM_N = 25;
 const lowestTeam100 = teamWeeks.slice().sort((a, b) => a.v - b.v || (a.round === ROUND ? -1 : 1) || a.team.name.localeCompare(b.team.name)).slice(0, TEAM_N);
 const lowestTeam100ThisWeek = lowestTeam100.filter(t => t.round === ROUND).length;
@@ -295,7 +303,7 @@ const chart3s = swarm(byRound.map(b => ({ round: b.round, name: b.name, me: b.ro
   { min: tMin, max: tMax, ticks: [0, 40, 80, 120] });
 
 /* the hundred lowest team scores, ten by ten */
-const wallTeam100 = lowestTeam100.map((t, i) => `<div class="w2${t.round === ROUND ? " me" : ""}${i === 0 ? " lo" : i === TEAM_N - 1 ? " hi" : ""}" data-team="${esc(t.team.name)}" data-tip="${esc(`${i + 1}. ${t.team.name}, ${byRound.find(b => b.round === t.round).full}: ${t.v}`)}">${logo(t.team, 48)}<b>${t.v}</b><span>${esc(shortTeam(t.team.name))}</span>${i === 0 ? "<i>lowest</i>" : i === TEAM_N - 1 ? `<i>${TEAM_N}th</i>` : ""}</div>`).join("");
+const wallTeam100 = lowestTeam100.map((t, i) => `<div class="w2${t.round === ROUND ? " me" : ""}${i === 0 ? " lo" : i === TEAM_N - 1 ? " hi" : ""}" data-team="${esc(t.team.name)}" data-tip="${esc(`${i + 1}. ${t.team.name}, ${byRound.find(b => b.round === t.round).full}: ${t.v}`)}">${logo(t.team, 48)}<b>${t.v}<em class="wl ${resultOf(t.team, t.round)}">${resultOf(t.team, t.round)}</em></b><span>${esc(shortTeam(t.team.name))}</span>${i === 0 ? "<i>lowest</i>" : i === TEAM_N - 1 ? `<i>${TEAM_N}th</i>` : ""}</div>`).join("");
 /* the negatives */
 const negWall = [...negatives.map(r => `<div class="w3" data-player="${esc(r.player.name)}" data-tip="${esc(`${r.player.name}: ${r.ind}. Top ${signed(r.top_pick_pts || 0)}, midfield ${signed(r.midfield_pts || 0)}`)}">${face(r.player, 56, "#ff2d95")}<b>${r.ind}</b><span>${esc(surname(r.player.name))}</span></div>`),
   ...teamWeek.filter(t => t.v < 0).map(t => `<div class="w3" data-team="${esc(t.team.name)}" data-tip="${esc(`${t.team.name}: ${t.v}`)}">${logo(t.team, 56)}<b>${t.v}</b><span>${esc(shortTeam(t.team.name))}</span></div>`)].join("");
@@ -482,7 +490,10 @@ tr.you td{color:var(--amber)}
 .wall25 .w2 .logo{width:48px;height:48px;border-width:2px}
 .wall25 .w2.me .logo{border-color:var(--pink)}
 .wall25 .w2:not(.me) .logo{border-color:var(--blue)}
-.wall25 .w2 b{font-size:16px}
+.wall25 .w2 b{font-size:16px;display:flex;align-items:baseline;gap:3px}
+.wall25 .w2 b .wl{font-style:normal;font-size:13px;font-weight:700;color:var(--text3)}
+.wall25 .w2 b .wl.W{color:var(--blue)}
+.wall25 .w2:not(.me) .logo{filter:grayscale(1) brightness(.7);border-color:var(--text3)}
 .wall25 .w2 span{font-size:13px;color:var(--text2);line-height:1.1;text-align:center;max-width:72px;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .w2 i{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:1px;font-style:normal;font-size:13px;line-height:1;color:var(--text);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
 .w2.hi i{left:auto;right:0;transform:none}
@@ -660,22 +671,14 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">5</span><div><h2>${lowest100ThisWeek} of the 100 lowest scores in league history were set in Baku.</h2><p>${rows.length} scores have been posted across ${rounds.length} rounds, and these are the hundred lowest, in order. The lowest is a minus three from Saturday and the hundredth is a ${lowest100[99].ind} from ${esc(shortRace(lowest100[99].race.race_name))}. And every score this week under ${lowest100[99].ind + 1} is on the wall: ${lowest100ThisWeek} faces in pink, ${100 - lowest100ThisWeek} in blue from the other fourteen rounds put together.</p></div></div>
-    <div class="legend"><span><i class="pink"></i>This week</span><span><i class="blue"></i>Any other week</span><span class="youleg"><i class="amber"></i>You</span></div>
-    <div class="wall100">${wall100}</div>
-  </div>
-</section>
-
-<section>
-  <div class="card">
-    <div class="ch"><span class="num">6</span><div><h2>${W[negatives.length][0].toUpperCase() + W[negatives.length].slice(1)} players and one team finished the week below zero, which nobody had done before.</h2><p>An F5 score is five drivers, a finishing-order bonus, a best-finish guess, the Needle and a weekly bonus for the top ten, and a driver who finishes outside the points costs the people holding him a point. These ${W[negatives.length]} had Norris on top for minus one and two midfielders who finished out of the points, with nothing from the order, the best finish or the Needle to cover it. And Garra Dynamics put two of them on the same team: ${esc(playerOf[teamWeek[0].team.player1_id].name)} and ${esc(playerOf[teamWeek[0].team.player2_id].name)}, for a team score of ${teamWeek[0].v}.</p></div></div>
+    <div class="ch"><span class="num">5</span><div><h2>${W[negatives.length][0].toUpperCase() + W[negatives.length].slice(1)} players and one team finished the week below zero, which nobody had done before.</h2><p>An F5 score is five drivers, a finishing-order bonus, a best-finish guess, the Needle and a weekly bonus for the top ten, and a driver who finishes outside the points costs the people holding him a point. These ${W[negatives.length]} had Norris on top for minus one and two midfielders who finished out of the points, with nothing from the order, the best finish or the Needle to cover it. And Garra Dynamics put two of them on the same team: ${esc(playerOf[teamWeek[0].team.player1_id].name)} and ${esc(playerOf[teamWeek[0].team.player2_id].name)}, for a team score of ${teamWeek[0].v}.</p></div></div>
     <div class="negs">${negWall}</div>
   </div>
 </section>
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">7</span><div><h2>${esc(surname(dowThis.top.driver))} was F5 driver of the week with ${dowThis.top.tot} points, the lowest winning total of the season and less than half the previous low.</h2><p>Every driver in the pool earns each of his pickers the same points, and adding those up across all 48 hands gives his league total for the week, which is how the driver of the week is named. Fourteen rounds in, the driver of the week had never scored the league fewer than ${dowPrevLow}, including ${driverWeeks.filter(w => w.top.tot >= 850).length} weeks over 850. And Lindblad's ${dowThis.top.tot} came off ${dowThis.top.n} pickers at ${dowThis.top.each} points each: the best driver in the pool finished seventh.</p></div></div>
+    <div class="ch"><span class="num">6</span><div><h2>${esc(surname(dowThis.top.driver))} was F5 driver of the week with ${dowThis.top.tot} points, the lowest winning total of the season and less than half the previous low.</h2><p>Every driver in the pool earns each of his pickers the same points, and adding those up across all 48 hands gives his league total for the week, which is how the driver of the week is named. Fourteen rounds in, the driver of the week had never scored the league fewer than ${dowPrevLow}, including ${driverWeeks.filter(w => w.top.tot >= 850).length} weeks over 850. And Lindblad's ${dowThis.top.tot} came off ${dowThis.top.n} pickers at ${dowThis.top.each} points each: the best driver in the pool finished seventh.</p></div></div>
     ${chart4a}
     <div class="gone">
     <p class="note" style="margin:0 0 6px">${esc(surname(dowThis.bottom.driver))}'s ${dowThis.bottom.tot} was not the worst a driver has done. ${esc(surname(worstEver.bottom.driver))} cost the league ${worstEver.bottom.tot} in ${esc(worstEver.name)}, and Gasly himself did ${driverWeeks.find(w => w.round === 4).bottom.tot} in Miami. And the mechanism is the same every time: a driver who finishes outside the points costs a point to everybody holding him, so the damage is the size of his following.</p>
@@ -685,7 +688,7 @@ tr.hl td{color:var(--pink)}
 
 <section>
   <div class="card">
-    <div class="ch"><span class="num">8</span><div><h2>${esc(thisRound.leader.name)} won the week with ${thisRound.max}, the lowest winning score the league has seen.</h2><p>Somebody wins every F5 week, and through fourteen rounds the winning score had never been under ${prevLowHigh}. ${esc(thisRound.leader.name)} won this one with ${thisRound.max}, including a best-finish bonus that only two people collected. And the drop is bigger than it looks: ${W[byRound.filter(b => b.max >= 60).length]} of the season's weekly winners scored 60 or more.</p></div></div>
+    <div class="ch"><span class="num">7</span><div><h2>${esc(thisRound.leader.name)} won the week with ${thisRound.max}, the lowest winning score the league has seen.</h2><p>Somebody wins every F5 week, and through fourteen rounds the winning score had never been under ${prevLowHigh}. ${esc(thisRound.leader.name)} won this one with ${thisRound.max}, including a best-finish bonus that only two people collected. And the drop is bigger than it looks: ${W[byRound.filter(b => b.max >= 60).length]} of the season's weekly winners scored 60 or more.</p></div></div>
     <div id="c6">${chart6}</div>
     <p class="note">${esc(thisRound.leader.name)} won the week with <b>${thisRound.max}</b>. Every other round's leader scored ${prevLowHigh} or more, and ${byRound.filter(b => b.max >= 60).length} of them scored 60 or more.</p>
   </div>
@@ -723,7 +726,6 @@ var ME=${JSON.stringify(ME)};
       if(v==null){d.style.display='none';}else{d.style.display='block';d.style.left=(v/ +d.getAttribute('data-max')*100)+'%';d.setAttribute('data-tip',m.team+': '+v);}});
     var s='You scored '+m.score+', '+ord(m.rank)+' of 48'+(m.low?', your lowest of the season (it was '+m.prev+')':'')+'. ';
     if(m.team)s+=m.team+' '+(m.won?'beat':'lost to')+' '+m.opp+', '+m.mine+' to '+m.theirs+'. ';
-    if(m.wall)s+='Your face is on the wall of the hundred lowest.';
     line.textContent=s;
   }
   function ord(n){return n+(n%10==1&&n!=11?'st':n%10==2&&n!=12?'nd':n%10==3&&n!=13?'rd':'th');}
