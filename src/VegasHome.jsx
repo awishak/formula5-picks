@@ -49,8 +49,10 @@ const SNAP = {
     name: "Peloton Aubergine", rank: 5, champPts: 99, record: "5-6",
     avg: 76.3, avgRank: 11, divRank: null,
     players: [
-      { name: "Brett Dillon", ppr: 33.5, rank: 40 },
-      { name: "Stacy Michaelsen", ppr: 42.5, rank: 5 },
+      { name: "Brett Dillon", ppr: 33.5, rank: 40,
+        lean: { OVER: { avg: 2.36, n: 5 }, UNDER: { avg: 2.73, n: 7 } } },
+      { name: "Stacy Michaelsen", ppr: 42.5, rank: 5,
+        lean: { OVER: { avg: 2.72, n: 5 }, UNDER: { avg: 2.87, n: 7 } } },
     ],
     p1: "Brett Dillon", p2: "Stacy Michaelsen",
   },
@@ -1442,8 +1444,10 @@ function HomeSubmitted({ onEdit }) {
 // form. Both of their players sit where your teammate does on your own card,
 // because on this page they are the two people you are playing.
 function OpponentCard() {
-  const { opp, oppWeeks = [] } = useWeek();
+  const { opp, oppWeeks = [], boxBox } = useWeek();
   if (!opp) return null;
+  // They hold the side you do not.
+  const theirSide = boxBox && boxBox.side ? (boxBox.side === "OVER" ? "UNDER" : "OVER") : null;
   const DIV = { championship: "Championship Division", second: "Second Division" };
   const last = oppWeeks.slice(-10);
   return (
@@ -1488,25 +1492,43 @@ function OpponentCard() {
               than beside the results, and ranked rather than averaged: in a rank you can see where
               they sit without you having to know what a good average is. */}
           <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-            {opp.players.map(pl => (
-              <div key={pl.name} style={{
-                flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 9,
-                padding: "9px 11px", borderRadius: 12,
-                background: V.bg3, border: `1px solid ${V.border}`,
-              }}>
-                <PlayerBadge name={pl.name} picked={false} dim={false} ring={V.pink}
-                             photo={pl.photo} size={34} />
-                <div style={{ minWidth: 0 }}>
-                  <p style={{
-                    ...display("chip"), fontSize: 14, color: V.text, margin: 0,
-                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                  }}>{shortName(pl.name)}</p>
-                  <p style={{ ...numeric("chip"), fontSize: 15, ...textGlow(V.pink, 0.5), margin: "1px 0 0" }}>
-                    {pl.rank ? ordinal(pl.rank) : "-"}
-                  </p>
+            {opp.players.map(pl => {
+              // What they guess, on average, in a week on the side they hold
+              // now. Nothing is drawn for a side they have never held.
+              const lean = theirSide && pl.lean ? pl.lean[theirSide] : null;
+              const sideColor = theirSide === "OVER" ? V.gold : V.purple;
+              return (
+                <div key={pl.name} style={{
+                  flex: 1, minWidth: 0,
+                  padding: "9px 11px", borderRadius: 12,
+                  background: V.bg3, border: `1px solid ${V.border}`,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                    <PlayerBadge name={pl.name} picked={false} dim={false} ring={V.pink}
+                                 photo={pl.photo} size={34} />
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{
+                        ...display("chip"), fontSize: 14, color: V.text, margin: 0,
+                        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                      }}>{shortName(pl.name)}</p>
+                      <p style={{ ...numeric("chip"), fontSize: 15, ...textGlow(V.pink, 0.5), margin: "1px 0 0" }}>
+                        {pl.rank ? ordinal(pl.rank) : "-"}
+                      </p>
+                    </div>
+                  </div>
+                  {lean && lean.avg != null && (
+                    <div style={{ marginTop: 9, paddingTop: 8, borderTop: `1px solid ${V.border}` }}>
+                      <p style={{ ...body("bodySm"), fontSize: 13, color: V.text2, lineHeight: 1.3, margin: 0 }}>
+                        Average {theirSide === "OVER" ? "over" : "under"} selection
+                      </p>
+                      <p style={{ ...numeric("chip"), fontSize: 19, ...textGlow(sideColor, 0.5), margin: "2px 0 0" }}>
+                        {lean.avg.toFixed(2)}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

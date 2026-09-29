@@ -5,6 +5,7 @@ import { buildPlayerTable, placesBy } from "./playerTable";
 import { displayOf, shortOf, codeOf } from "./teams";
 import { currentRace } from "./raceTimes";
 import { boxBoxLine, boxBoxSide } from "./pitStop";
+import { buildLean } from "./needleLean";
 
 // The week, for real. Everything the Home page needs about the next race, who
 // you are playing, and whether the picks are in.
@@ -88,6 +89,20 @@ export function useLeague(currentUser, { round = null } = {}) {
               ? fixture.away_team_id : fixture.home_team_id))
           : null;
 
+        // What the four people in this matchup have guessed on the pit stop all
+        // season, split by the side they held. Only rounds whose deadline has
+        // gone, so nothing from an open week is read, and only these four, so
+        // the read never meets the 1000 row cap.
+        const leanIds = [myTeamRow, oppRow].filter(Boolean)
+          .flatMap(t => [t.player1_id, t.player2_id]).filter(Boolean);
+        const closed = races.filter(r => r.id !== race.id &&
+          (scored.has(r.id) || (r.pick_deadline && r.pick_deadline <= now))).map(r => r.id);
+        const pastPicks = leanIds.length && closed.length
+          ? (await supabase.from("picks").select("*")
+              .in("player_id", leanIds).in("race_id", closed)).data || []
+          : [];
+        const leanOf = buildLean({ picks: pastPicks, schedule, teams });
+
         const teamShape = (row) => {
           if (!row) return null;
           const s = seasonOf[row.id], h = halfOf[row.id];
@@ -108,6 +123,7 @@ export function useLeague(currentUser, { round = null } = {}) {
               name: p.name, photo: p.photo_url || null,
               avg: byPlayer[p.id] ? byPlayer[p.id].avg : 0,
               rank: playerRank[p.id] || null,
+              lean: leanOf[p.id] || null,
             })),
           };
         };
