@@ -293,7 +293,8 @@ const TRACKS = {
   velvet: { src: THEME_SRC, name: "Velvet Thunder" },
   // Tubey's song for the Bahlaysian Grand Prix, offered on round 15's last
   // card and left playing over the picker. The file is Andrew's; see CLAUDE.md.
-  bahlaysia: { src: "/bahlaysian-gp.mp3", name: "The official Bahlaysian GP song" },
+  // Named by Andrew 2026-09-28; the name prints under the buttons that play it.
+  bahlaysia: { src: "/bahlaysian-gp.mp3", name: "Welcome to Bahlaysia!" },
 };
 // What a round is called on its deck when Andrew calls it something else.
 // Round 16, the Bahrain Grand Prix at Sepang, is the Bahlaysian Grand Prix.
@@ -2683,12 +2684,16 @@ function CardDrama({ d, onNext, onPicks, onExit, song }) {
           ...display("h3", { fontSize: 16, color: V.bg }), background: V.blue,
           border: "none", borderRadius: 999, padding: "12px 18px", cursor: "pointer",
           lineHeight: 1.2, boxShadow: `0 0 18px ${V.blue}77`,
-        }}>Let&rsquo;s Review the Azerbaijan GP!</button>
+        }}>Let&rsquo;s Review the Azerbaijan GP!
+          {/* Andrew's line, 2026-09-28. */}
+          <span style={{ display: "block", ...body("bodySm", { fontSize: 13, color: V.bg }),
+            fontWeight: 500, opacity: 0.85, marginTop: 3 }}>Don&rsquo;t worry, you can still listen to the song later.</span>
+        </button>
         <button onClick={() => { song.play("bahlaysia"); go(); }} style={{
           ...display("h3", { fontSize: 16, color: V.blue }), background: V.bg,
           border: `1.5px solid ${V.blue}`, borderRadius: 999, padding: "12px 18px",
           cursor: "pointer", lineHeight: 1.2,
-        }}>Who Cares? Let&rsquo;s Make Our Bahrain picks WITH MUSIC!</button>
+        }}>Who Cares? Let&rsquo;s Make Our Bahrain picks WITH MUSIC!<NewSong color={V.blue} /></button>
         <button onClick={() => { song.stop(); go(); }} style={{
           ...display("h3", { fontSize: 16, color: V.pink }), background: V.bg,
           border: `1.5px solid ${V.pink}`, borderRadius: 999, padding: "12px 18px",
@@ -2716,6 +2721,20 @@ function CardRecap({ d, stage }) {
 // Round 15, the last card: the song for the next race, or not, and then the
 // picker either way. The song is started here, in the tap, and lives outside
 // the deck, so it is still playing when the picker is on screen.
+// The song's name under a button that plays it, with NEW in front, because
+// the song is new and nothing else on the card says so. Andrew, 2026-09-28.
+// `color` is the button's text colour; the NEW chip is always pink.
+function NewSong({ color }) {
+  return (
+    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+      marginTop: 4, ...body("bodySm", { fontSize: 13, color }), fontWeight: 600, lineHeight: 1.2 }}>
+      <span style={{ ...display("chip"), fontSize: 13, letterSpacing: "0.08em", color: V.bg,
+        background: V.pink, borderRadius: 999, padding: "2px 7px", lineHeight: 1.3 }}>NEW</span>
+      &ldquo;{TRACKS.bahlaysia.name}&rdquo;
+    </span>
+  );
+}
+
 // Where the deck's exits land: the picks when the next round's pool is drawn,
 // the home otherwise. Card 1's choices and the send-off both take it.
 const wayOut = (d, onPicks, onExit) => (d.card8 && d.card8.poolReady ? onPicks : onExit);
@@ -2733,7 +2752,7 @@ function CardSendoff({ d, onPicks, onExit, song }) {
           ...display("h3", { fontSize: 17, color: V.bg }), background: V.blue,
           border: "none", borderRadius: 999, padding: "14px 20px", cursor: "pointer",
           boxShadow: `0 0 18px ${V.blue}77`,
-        }}>LISTEN TO THE OFFICIAL BAHLAYSIAN GP SONG</button>
+        }}>LISTEN TO THE OFFICIAL BAHLAYSIAN GP SONG<NewSong color={V.bg} /></button>
         <button onClick={() => { song.stop(); go(); }} style={{
           ...display("h3", { fontSize: 17, color: V.blue }), background: V.bg,
           border: `1.5px solid ${V.blue}`, borderRadius: 999, padding: "14px 20px",
