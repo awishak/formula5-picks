@@ -191,6 +191,10 @@ for (const s of ["held", "solo", "pair", "notEnough", "locked"]) {
     if (!/What a crazy week in Azerbaijan\./.test(html)) throw new Error("no drama headline");
     if (!/did not finish in the points/.test(html)) throw new Error("no drama subtitle");
     if (/PLAY THE NEW SONG/.test(html)) throw new Error("the music offer is on card 1");
+    // Choose your own adventure, 2026-09-28: three ways on and no NEXT.
+    for (const want of ["Review the Azerbaijan GP!", "Bahrain picks WITH MUSIC!", "your stupid song, Tubey!"])
+      if (!html.includes(want)) throw new Error(`card 1 choice missing: ${want}`);
+    if (/>NEXT</.test(html)) throw new Error("card 1 still has a NEXT");
   });
   for (let st = 0; st < 5; st++) check(`round 15 recap press ${st + 1} embeds card ${st + 1}`, () => {
     const html = renderToString(<WeeklyDeck data={r15} initialCard={1} initialStage={st} />);

@@ -2638,9 +2638,10 @@ function CardVideo({ d, video }) {
 
 // Round 15, card 1: how the pool went. Seven of ten scored nothing or worse and
 // four never finished. The ten faces, the scorers lit, the rest greyed.
-function CardDrama({ d }) {
+function CardDrama({ d, onNext, onPicks, onExit, song }) {
   const board = (d.context && d.context.poolBoard) || (d.cards || []).map(c => c && c.poolBoard).find(Boolean) || [];
   const zero = board.filter(x => (x.pts || 0) <= 0);
+  const go = wayOut(d, onPicks, onExit);
   return (
     <>
       <Kicker>ROUND {d.round} · {d.raceName.toUpperCase()}</Kicker>
@@ -2672,7 +2673,28 @@ function CardDrama({ d }) {
           );
         })}
       </div>
-      <Ask>How bad was it? Let&rsquo;s look.</Ask>
+      {/* Choose your own adventure, Andrew's words 2026-09-28: on to the
+          recap, or straight to the picks with the song or without it. These
+          three are the only way on, so the card carries no bottom bar. The
+          song starts here, in the tap, and lives outside the deck, the same
+          as the send-off. */}
+      <div style={{ display: "grid", gap: 8, width: "100%", maxWidth: 340, margin: "8px auto 0" }}>
+        <button onClick={onNext} style={{
+          ...display("h3", { fontSize: 16, color: V.bg }), background: V.blue,
+          border: "none", borderRadius: 999, padding: "12px 18px", cursor: "pointer",
+          lineHeight: 1.2, boxShadow: `0 0 18px ${V.blue}77`,
+        }}>Let&rsquo;s Review the Azerbaijan GP!</button>
+        <button onClick={() => { song.play("bahlaysia"); go(); }} style={{
+          ...display("h3", { fontSize: 16, color: V.blue }), background: V.bg,
+          border: `1.5px solid ${V.blue}`, borderRadius: 999, padding: "12px 18px",
+          cursor: "pointer", lineHeight: 1.2,
+        }}>Who Cares? Let&rsquo;s Make Our Bahrain picks WITH MUSIC!</button>
+        <button onClick={() => { song.stop(); go(); }} style={{
+          ...display("h3", { fontSize: 16, color: V.pink }), background: V.bg,
+          border: `1.5px solid ${V.pink}`, borderRadius: 999, padding: "12px 18px",
+          cursor: "pointer", lineHeight: 1.2,
+        }}>Who Cares about that or your stupid song, Tubey! Let&rsquo;s make Bahrain Picks with no music.</button>
+      </div>
     </>
   );
 }
@@ -2694,8 +2716,12 @@ function CardRecap({ d, stage }) {
 // Round 15, the last card: the song for the next race, or not, and then the
 // picker either way. The song is started here, in the tap, and lives outside
 // the deck, so it is still playing when the picker is on screen.
+// Where the deck's exits land: the picks when the next round's pool is drawn,
+// the home otherwise. Card 1's choices and the send-off both take it.
+const wayOut = (d, onPicks, onExit) => (d.card8 && d.card8.poolReady ? onPicks : onExit);
+
 function CardSendoff({ d, onPicks, onExit, song }) {
-  const go = d.card8 && d.card8.poolReady ? onPicks : onExit;
+  const go = wayOut(d, onPicks, onExit);
   return (
     <>
       <Kicker>ROUND {d.round} · {d.raceName.toUpperCase()}</Kicker>
@@ -3592,6 +3618,9 @@ export function WeeklyDeck({ data: given, onExit, onPicks, initialCard = 0, init
   // The result card makes the music offer in its body and has no bottom bar.
   // Not on round 15's deck, where the song is offered on the way out instead.
   const offer = kind === "result" && !special;
+  // Round 15's first card is a choose your own adventure, three buttons in
+  // the body and no bottom bar, the same shape as the offer.
+  const choose = kind === "drama";
 
   return (
     <div style={{ background: V.bg, minHeight: "100dvh", position: "relative", overflowX: "hidden" }}>
@@ -3729,7 +3758,8 @@ export function WeeklyDeck({ data: given, onExit, onPicks, initialCard = 0, init
         bottom={0}
         scrolls={Boolean(scrolls)}>
         <Body d={data} stage={stage} onPicks={onPicks} onExit={onExit}
-          song={kind === "sendoff" ? { play: playTheme, stop: pauseSong } : undefined}
+          song={kind === "sendoff" || kind === "drama" ? { play: playTheme, stop: pauseSong } : undefined}
+          onNext={kind === "drama" ? advance : undefined}
           video={kind === "video" ? { clip, ref: videoRef, soundOn, toggleSound, pauseTheme } : undefined}
           theme={offer ? {
             onWith: () => { playTheme("tubey"); advance(); },
@@ -3739,7 +3769,7 @@ export function WeeklyDeck({ data: given, onExit, onPicks, initialCard = 0, init
           } : undefined} />
       </Card>
 
-      {!last && !offer && (
+      {!last && !offer && !choose && (
         <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 30,
           display: "flex", flexDirection: offer ? "column" : "row",
           alignItems: "center", justifyContent: "center", gap: 10,

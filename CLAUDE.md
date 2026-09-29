@@ -78,7 +78,11 @@ Weekly.jsx. **Round 16 is the Bahlaysia Grand Prix**: `RACE_NAME` in Weekly.jsx
 names it on its deck and `RACE_SIGN` in VegasHome.jsx puts it on the home
 page's sign with Andrew's subtitle, the Formula 1 Gulf Air Bahrain Grand Prix in
 Malaysia, brought to you by HomeworkTubes.com. Welcome to Bahlaysia. Four cards: a drama card (seven of the ten pool
-drivers scored nothing or worse, four never finished, off `context.poolBoard`),
+drivers scored nothing or worse, four never finished, off `context.poolBoard`;
+**since 2026-09-28 it is a choose your own adventure**, three buttons in Andrew's
+words and no NEXT: review the Azerbaijan GP, which goes on to the recap, or
+straight to the picks with the song or without it, the same exits as the
+send-off),
 the five cards of /recaps/round15.html embedded one per press in an iframe with
 `?embed=1`, which hides the page's own bar and picker, the result card with a
 "You scored X, Nth of 48" line and no music offer, and a send-off: LISTEN TO
@@ -88,7 +92,7 @@ into src/themeSong.js, one Audio object for the app; on every other round
 leaving the deck still pauses it, on round 15 it plays on and
 src/NowPlaying.jsx puts STOP THE SONG beside Viewing as while it does. The
 track is `TRACKS.bahlaysia`, "Welcome to Bahlaysia", `public/bahlaysian-gp.mp3`,
-95 seconds, copied from the file Andrew dropped in the project root.
+168 seconds, copied from the file Andrew dropped in the project root; replaced 2026-09-28.
 **The seen flag was reset for round 15**: `WEEK_SEEN_V` in App.jsx gives the round a `v2` key, so everyone who had closed the first round 15 deck gets this one once; fit.html, check.html and check-nav set both spellings. **SKIP on this deck goes to the send-off**, not out, so a reader who skips the recap is still offered the song; the send-off's two buttons are the only exits. `npm run smoke:weekly` renders
 all four cards for round 15 and `check:nav`'s gate walk crosses either deck.
 
