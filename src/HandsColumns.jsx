@@ -19,6 +19,7 @@ import { V, FD, display, numeric, card } from "./theme.vegas";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS, av } from "./theme";
 import FernoloSeal from "./FernoloSeal";
+import { PlayerTap } from "./PlayerCard.jsx";
 
 export const MINE = V.green, THEIRS = V.pink, DIVIDE = V.blue;
 
@@ -230,9 +231,12 @@ export default function HandsColumns({ seats, under, driverPts = {}, scored = tr
                 position: "absolute", left: cx(c) - colW / 2, top: 0, width: colW,
                 display: "flex", flexDirection: "column", alignItems: "center",
               }}>
-                <PlayerBadge name={h.name} picked={false} dim={false} ring={col}
-                             photo={h.photo} size={av(66)} seal={h.auto} />
-                <Plate text={h.mine ? "You" : shortName(h.name)} c={col} size={13} top={-8} />
+                {/* Face and plate together open the player's card. */}
+                <PlayerTap name={h.name} style={{ flexDirection: "column", alignItems: "center" }}>
+                  <PlayerBadge name={h.name} picked={false} dim={false} ring={col}
+                               photo={h.photo} size={av(66)} seal={h.auto} />
+                  <Plate text={h.mine ? "You" : shortName(h.name)} c={col} size={13} top={-8} />
+                </PlayerTap>
                 {scored && (
                   <div style={{ ...numeric("h3"), fontSize: 22, color: col, marginTop: 4 }}>
                     {h.score ? h.score.total : "\u2014"}

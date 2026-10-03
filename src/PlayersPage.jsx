@@ -6,6 +6,7 @@ import { buildPlayerTable, placesBy } from "./playerTable";
 import { ordinal } from "./teamTable";
 import FernoloSeal from "./FernoloSeal";
 import { av } from "./theme";
+import { usePlayerCard } from "./PlayerCard.jsx";
 
 // The individual standings. Built to the same pattern as TeamsPage on purpose:
 // same header, same row shape, same rules about what scales and what does not.
@@ -198,9 +199,14 @@ function TrophyRow({ row }) {
 // sealed: the randomizer made this player's picks for the last scored race,
 // so the last-race number carries Fernolo's seal in whichever spot it sits.
 function Row({ row, place, mine, move, mode, sealed = false }) {
+  // The whole row opens the player's card. A tap target the width of the row,
+  // not a face to hunt for.
+  const openCard = usePlayerCard();
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 8,
+    <div role="button" tabIndex={0} onClick={() => openCard(row.name)}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCard(row.name); } }}
+      style={{
+      display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
       padding: "8px 10px", borderRadius: 14, marginBottom: 6,
       background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
       border: `1px solid ${mine ? V.blue : V.border}`,

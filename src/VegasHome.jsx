@@ -21,6 +21,7 @@ import HandsColumns from "./HandsColumns.jsx";
 import { boxBoxSide } from "./pitStop.js";
 import { useFirstStop, stopLabel } from "./firstStop.js";
 import FernoloSeal from "./FernoloSeal";
+import { PlayerTap } from "./PlayerCard.jsx";
 
 // ── Real league snapshot, round 11 ───────────────────────
 const PLAYER_PHOTOS = {
@@ -1503,7 +1504,8 @@ function OpponentCard() {
                   padding: "9px 11px", borderRadius: 12,
                   background: V.bg3, border: `1px solid ${V.border}`,
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                  {/* Face and name open the player's card. */}
+                  <PlayerTap name={pl.name} style={{ display: "flex", alignItems: "center", gap: 9 }}>
                     <PlayerBadge name={pl.name} picked={false} dim={false} ring={V.pink}
                                  photo={pl.photo} size={av(34)} />
                     <div style={{ minWidth: 0 }}>
@@ -1515,7 +1517,7 @@ function OpponentCard() {
                         {pl.rank ? ordinal(pl.rank) : "-"}
                       </p>
                     </div>
-                  </div>
+                  </PlayerTap>
                   {lean && lean.avg != null && (
                     <div style={{ marginTop: 9, paddingTop: 8, borderTop: `1px solid ${V.border}` }}>
                       <p style={{ ...body("bodySm"), fontSize: 13, color: V.text2, lineHeight: 1.3, margin: 0 }}>
@@ -1545,8 +1547,8 @@ function MatchupCard({ compact = false }) {
       <Label color={V.text3}>{rank}th · {record}</Label>
       {!compact && (
         <div style={{ marginTop: 10 }}>
-          <p style={{ ...body("bodySm"), color: mine ? V.blue : V.text3, margin: 0 }}>{p1}</p>
-          <p style={{ ...body("bodySm"), color: mine ? V.blue : V.text3, margin: 0 }}>{p2}</p>
+          <p style={{ ...body("bodySm"), color: mine ? V.blue : V.text3, margin: 0 }}><PlayerTap name={p1}>{p1}</PlayerTap></p>
+          <p style={{ ...body("bodySm"), color: mine ? V.blue : V.text3, margin: 0 }}><PlayerTap name={p2}>{p2}</PlayerTap></p>
         </div>
       )}
     </div>
@@ -2879,11 +2881,13 @@ function HomeLocked({ scored: scoredWeek = true, onAhead }) {
       border: `1px solid ${seat.mine ? V.blue : V.border}`,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: seat.pick ? 9 : 0 }}>
-        <PlayerBadge name={seat.name} picked={seat.picked} dim={!seat.picked}
-                     photo={seat.photo} size={av(30)} />
-        <span style={{ ...body("bodyMd"), fontSize: 16, color: seat.mine ? V.blue : V.text }}>
-          {seat.name}
-        </span>
+        <PlayerTap name={seat.name} style={{ gap: 9 }}>
+          <PlayerBadge name={seat.name} picked={seat.picked} dim={!seat.picked}
+                       photo={seat.photo} size={av(30)} />
+          <span style={{ ...body("bodyMd"), fontSize: 16, color: seat.mine ? V.blue : V.text }}>
+            {seat.name}
+          </span>
+        </PlayerTap>
         {!seat.picked && (
           <span style={{ ...display("chip"), fontSize: 13, color: V.pink, marginLeft: "auto" }}>
             No picks

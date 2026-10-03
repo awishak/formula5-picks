@@ -3,43 +3,10 @@ import { supabase } from "./supabaseClient";
 
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB, avatarColor, av } from "./theme";
+import { PTS_2025, TROPHIES_2025 } from "./history";
 
 // Players who played in prior F5 seasons but not 2025
 const DID_NOT_PLAY_2025 = new Set(["Stacy Michaelsen"]);
-const PTS_2025 = {
-  "Andrew Ishak": 473, "George Fahmy": 459, "Krista Nabil": 457, "Rafik Zarifa": 438,
-  "Mena Yousef": 436, "Aditya Satish": 431, "Heather Ishak": 421, "Martin Nobar": 416,
-  "Moses Abdelshaid": 410, "Alicia Cho": 404, "Kerolos Nakhla": 401, "Joe McGlynn": 398,
-  "Scott Schertler": 392, "Anthony Carnesecca": 392, "Evie Ishak": 390, "Jack Civitts": 388,
-  "Nick Brody": 381, "Ryan Kohli": 378, "Harold Gutmann": 378, "Theo Ishak": 376,
-  "Joe Hanna": 376, "Kevin Coolidge": 375, "Zack Girgis": 375, "Lucia Thompson": 373,
-  "Paul Kohli": 366, "Brett Dillon": 362, "Sam Bottoms": 349, "Andy Thompson": 344,
-  "Chris Fondacaro": 339, "Maggie Mudge": 334, "Jacob Ford": 322, "Ronnie Nobar": 319,
-  "Anthony Zamary": 313, "Dan Patry": 313, "Grant Wong": 309, "Chris Malek": 303,
-  "Ramy Stephanos": 280, "Brian Dong": 275, "Kristin Eskind": 267, "Pavly Attalah": 210
-};
-
-// 2025 trophies — used for "2025 Trophies" sort
-const TROPHIES_2025 = {
-  "Andrew Ishak": "🚾🏆🥈🥈🥉🥉🛞", "George Fahmy": "🏆🏆🏆🏆🥉",
-  "Krista Nabil": "🏆🥉", "Rafik Zarifa": "🏆🥈🥈🥈🥉",
-  "Mena Yousef": "🏆🥈🥉", "Aditya Satish": "🏆🏆🥈",
-  "Heather Ishak": "🏆🛞🏁", "Martin Nobar": "🥉🥉",
-  "Moses Abdelshaid": "🏆", "Alicia Cho": "🥈🥉",
-  "Kerolos Nakhla": "🥈🥉", "Joe McGlynn": "🥉",
-  "Scott Schertler": "🏆🥈🛞", "Anthony Carnesecca": "🏆",
-  "Evie Ishak": "🥈🥉", "Jack Civitts": "🏆🥈🥈",
-  "Nick Brody": "🏆🥉🛞", "Ryan Kohli": "🥈🥈",
-  "Harold Gutmann": "🥉", "Theo Ishak": "🥉",
-  "Kevin Coolidge": "🏆🏆🥈🥉", "Zack Girgis": "🥈🛞",
-  "Lucia Thompson": "🏆🥉", "Paul Kohli": "🥉🥉🛞",
-  "Brett Dillon": "🏆", "Andy Thompson": "🥈🥈",
-  "Chris Fondacaro": "🥈", "Maggie Mudge": "🥉",
-  "Jacob Ford": "🏆", "Anthony Zamary": "🥉",
-  "Grant Wong": "🏆🥈", "Chris Malek": "🏆",
-  "Ramy Stephanos": "🥈🥈🥉", "Brian Dong": "🏆🥉",
-  "Kristin Eskind": "🥈🥉"
-};
 
 function countTrophies2025(name) {
   const str = TROPHIES_2025[name];

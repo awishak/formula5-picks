@@ -5,6 +5,7 @@ import { buildTeamTable, FIRST_H2_ROUND, ordinal } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { shortOf } from "./teams";
 import { raceTimePT, scheduleRace } from "./raceTimes";
+import { PlayerTap } from "./PlayerCard.jsx";
 
 // The round, every matchup in it.
 //
@@ -548,7 +549,7 @@ function Fixture({ f, scored, variant = 1, live = false }) {
                                  overflow: "hidden", textOverflow: "ellipsis",
                                  textAlign: mirror ? "right" : "left" }}
                         title={r.auto ? "Picks made by the randomizer" : undefined}>
-                    {r.name ? initialLast(r.name) : "\u2014"}
+                    {r.name ? <PlayerTap name={r.name}>{initialLast(r.name)}</PlayerTap> : "\u2014"}
                   </span>
                 </span>
               ) : (
@@ -557,7 +558,7 @@ function Fixture({ f, scored, variant = 1, live = false }) {
                                overflow: "hidden", textOverflow: "ellipsis",
                                textAlign: mirror ? "right" : "left" }}
                       title={r.auto ? "Picks made by the randomizer" : undefined}>
-                  {r.name ? initialLast(r.name) : "\u2014"}
+                  {r.name ? <PlayerTap name={r.name}>{initialLast(r.name)}</PlayerTap> : "\u2014"}
                 </span>
               ),
               <span key="v" style={{ ...numeric("chip"), fontSize: 15, color: V.text,
