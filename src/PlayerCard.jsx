@@ -145,15 +145,64 @@ function Podium({ f }) {
   const c = METAL[f.place];
   const place = f.place === 1 ? "Winner" : `P${f.place}`;
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "6px 2px",
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 2px",
       borderBottom: `1px solid ${V.border}` }}>
-      <span style={{ fontSize: 17, lineHeight: 1, flexShrink: 0, alignSelf: "center" }}>{MARK[f.place]}</span>
-      <span style={{ ...numeric("chip", { fontSize: 15, letterSpacing: "0.04em" }), ...textGlow(c, 0.5),
-        width: 62, flexShrink: 0, textTransform: "uppercase" }}>{place}</span>
+      <span style={{ fontSize: 15, lineHeight: 1, flexShrink: 0 }}>{MARK[f.place]}</span>
+      <span style={{ ...numeric("chip", { fontSize: 14, letterSpacing: "0.04em" }), ...textGlow(c, 0.5),
+        width: 58, flexShrink: 0, textTransform: "uppercase" }}>{place}</span>
       <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text, minWidth: 0,
-        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1.2 }}>
         {f.year} {f.race || (f.where ? `${f.where} Grand Prix` : "")}
       </span>
+    </div>
+  );
+}
+
+// The podiums, folded by default: the count and the whole trophy case as
+// marks on one wrapping line, and a tap opens the list, one line a podium.
+// Andrew, 2026-10-02: expandable, and smaller. `open` is the smoke script's
+// way in, since a server render cannot tap.
+function Podiums({ career, open = false }) {
+  const [shown, setShown] = useState(open);
+  const n = career.podiums.length + career.extras.length;
+  const marks = [...career.podiums.map(f => MARK[f.place]), ...career.extras.map(x => x.mark)];
+  return (
+    <div style={{ marginTop: 14 }}>
+      <button onClick={() => setShown(s => !s)} aria-expanded={shown} style={{
+        display: "flex", alignItems: "center", gap: 8, width: "100%",
+        background: "transparent", border: "none", padding: 0, cursor: n ? "pointer" : "default",
+        textAlign: "left",
+      }}>
+        <span style={label({ fontSize: 13, color: V.text2 })}>Podiums</span>
+        {n > 0 && (
+          <span style={{ fontSize: 13, color: V.text2, lineHeight: 1, transform: shown ? "rotate(180deg)" : "none",
+            transition: "transform 160ms ease-out" }}>{"▼"}</span>
+        )}
+        <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text, marginLeft: "auto" }}>
+          {career.total} {career.total === 1 ? "podium" : "podiums"}, {career.wins} {career.wins === 1 ? "win" : "wins"}
+        </span>
+      </button>
+      {n === 0 ? (
+        <div style={body("bodySm", { fontSize: 15, color: V.text2, marginTop: 4 })}>None yet.</div>
+      ) : shown ? (
+        <div style={{ marginTop: 4, borderTop: `1px solid ${V.border2}` }}>
+          {career.podiums.map((f, i) => <Podium key={i} f={f} />)}
+          {/* The trophies that are not a podium, on their own line after. */}
+          {career.extras.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 2px" }}>
+              <span style={{ fontSize: 15, lineHeight: 1 }}>{career.extras.map(x => x.mark).join(" ")}</span>
+              <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text }}>
+                {[...new Set(career.extras.map(x => x.year))].join(", ")}
+              </span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div onClick={() => setShown(true)} title="Show every podium" style={{
+          fontSize: 17, lineHeight: 1.35, letterSpacing: "0.06em", marginTop: 5, cursor: "pointer",
+          wordBreak: "break-all",
+        }}>{marks.join("")}</div>
+      )}
     </div>
   );
 }
@@ -165,7 +214,7 @@ const HINTS = {
 };
 
 /** The card's content. Pure render of buildPlayerCard's output. */
-export function PlayerCardBody({ data, onClose }) {
+export function PlayerCardBody({ data, onClose, openPodiums = false }) {
   const { name, photo, nation, team, style, slogan, stats, career } = data;
   // Table numbers are white, 15px and in the numbers face. The gray is for
   // the headers, which are words.
@@ -246,30 +295,7 @@ export function PlayerCardBody({ data, onClose }) {
       {/* Every podium of their career, oldest first. First, second and third
           only: the sheets' top tens are not here. Then the trophies that are
           not a podium. */}
-      <div style={{ marginTop: 14 }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-          <div style={label({ fontSize: 13, color: V.text2 })}>Podiums</div>
-          <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text }}>
-            {career.total} {career.total === 1 ? "podium" : "podiums"}, {career.wins} {career.wins === 1 ? "win" : "wins"}
-          </div>
-        </div>
-        {career.podiums.length || career.extras.length ? (
-          <div style={{ marginTop: 4, borderTop: `1px solid ${V.border2}` }}>
-            {career.podiums.map((f, i) => <Podium key={i} f={f} />)}
-            {/* The trophies that are not a podium, on their own line after. */}
-            {career.extras.length > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 2px" }}>
-                <span style={{ fontSize: 17, lineHeight: 1 }}>{career.extras.map(x => x.mark).join(" ")}</span>
-                <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text }}>
-                  {[...new Set(career.extras.map(x => x.year))].join(", ")}
-                </span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div style={body("bodySm", { fontSize: 15, color: V.text2, marginTop: 6 })}>None yet.</div>
-        )}
-      </div>
+      <Podiums career={career} open={openPodiums} />
 
       {/* Career. One row a season, oldest first. */}
       <div style={{ marginTop: 14 }}>

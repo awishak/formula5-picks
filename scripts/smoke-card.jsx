@@ -44,7 +44,14 @@ for (const p of db.players) {
     if (s.year === 2026 && s.adjusted) fail(`${p.name}: 2026 marked adjusted`);
   });
   types[data.style.type] = (types[data.style.type] || 0) + 1;
-  const html = renderToStaticMarkup(<PlayerCardBody data={data} onClose={() => {}} />);
+  // Opened, so the list is in the markup; then folded, which must carry one
+  // mark a podium and no Grand Prix.
+  const html = renderToStaticMarkup(<PlayerCardBody data={data} onClose={() => {}} openPodiums />);
+  const folded = renderToStaticMarkup(<PlayerCardBody data={data} onClose={() => {}} />);
+  const marks = (folded.match(/\u{1F3C6}|\u{1F948}|\u{1F949}/gu) || []).length;
+  // The stat tile carries no mark, so every one in the folded card is the case.
+  if (marks !== data.career.podiums.length) fail(`${p.name}: folded case shows ${marks} marks for ${data.career.podiums.length} podiums`);
+  if (data.career.podiums.length && folded.includes("Grand Prix")) fail(`${p.name}: folded card lists podiums`);
   for (const part of [p.name, "Driving style", "Podiums", "Career", "PPR", ">2026<", data.style.type, ...(data.career.podiums.length ? ["Grand Prix"] : [])]) {
     // react-dom/server writes an apostrophe as an entity.
     if (!html.includes(part.replace(/'/g, "&#x27;"))) fail(`${p.name}: card missing "${part}"`);
