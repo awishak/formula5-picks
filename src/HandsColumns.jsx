@@ -17,7 +17,7 @@ import { useState, useRef, useEffect } from "react";
 import { shortName } from "./names.js";
 import { V, FD, display, numeric, card } from "./theme.vegas";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
-import { F1_TEAM_COLORS } from "./theme";
+import { F1_TEAM_COLORS, av } from "./theme";
 import FernoloSeal from "./FernoloSeal";
 
 export const MINE = V.green, THEIRS = V.pink, DIVIDE = V.blue;
@@ -99,7 +99,7 @@ export default function HandsColumns({ seats, under, driverPts = {}, scored = tr
   const colW = w > 0 ? (w - MID) / 4 : 0;
   // Columns 0 and 1 sit left of the label strip, 2 and 3 right of it.
   const cx = (c) => (c < 2 ? colW * (c + 0.5) : MID + colW * (c + 0.5));
-  const FACE = 46, HEAD = 96, ROW = 78;
+  const FACE = av(46), HEAD = 96, ROW = 78;
   const cy = (r) => HEAD + ROW * r + ROW / 2 - 10;
   const boardH = HEAD + ROW * 5;
 
@@ -231,7 +231,7 @@ export default function HandsColumns({ seats, under, driverPts = {}, scored = tr
                 display: "flex", flexDirection: "column", alignItems: "center",
               }}>
                 <PlayerBadge name={h.name} picked={false} dim={false} ring={col}
-                             photo={h.photo} size={54} seal={h.auto} />
+                             photo={h.photo} size={av(54)} seal={h.auto} />
                 <Plate text={h.mine ? "You" : shortName(h.name)} c={col} size={13} top={-8} />
                 {scored && (
                   <div style={{ ...numeric("h3"), fontSize: 22, color: col, marginTop: 4 }}>

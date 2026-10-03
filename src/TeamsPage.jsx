@@ -4,6 +4,7 @@ import { currentRace, raceStartMs } from "./raceTimes";
 import { Flagged } from "./Flag.jsx";
 import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
+import { av } from "./theme";
 
 // The team standings, second half. Deliberately thin: position, who you are,
 // your record, who you play next, and the number the title is won on.
@@ -129,7 +130,7 @@ function YourTeam({ row, season, place, avgRank, teammate }) {
         {teammate && (
           <div style={{ flexShrink: 0, textAlign: "center", width: 74 }}>
             <div style={label({ color: V.blue, fontSize: 12, marginBottom: 6 })}>Teammate</div>
-            <Face name={teammate.name} photo={teammate.photo_url} size={46} />
+            <Face name={teammate.name} photo={teammate.photo_url} size={av(46)} />
             <div style={{
               fontFamily: FD, fontWeight: 600, fontSize: 13, color: V.text2,
               lineHeight: 1.3, marginTop: 5,

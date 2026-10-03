@@ -16,7 +16,7 @@ import { lockedDemo } from "./lockedDemo";
 import { raceTimePT, whenPT } from "./raceTimes";
 import { ordinal } from "./teamTable";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
-import { F1_TEAM_COLORS } from "./theme";
+import { F1_TEAM_COLORS, av } from "./theme";
 import HandsColumns from "./HandsColumns.jsx";
 import { boxBoxSide } from "./pitStop.js";
 import { useFirstStop, stopLabel } from "./firstStop.js";
@@ -344,7 +344,7 @@ function DriverRow({ name, accent, badge, why, grid, dim = false }) {
           <Label style={{ fontSize: 13, letterSpacing: "0.06em" }} color={V.text3}>Grid</Label>
         </div>
       )}
-      <Face name={name} size={42} ring={dim ? V.text3 : undefined} />
+      <Face name={name} size={av(42)} ring={dim ? V.text3 : undefined} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <p style={{ ...body("bodyMd"), color: V.text, margin: 0 }}>{name}</p>
@@ -455,7 +455,7 @@ function PlayerBadge({ name, picked, size = 38, photo: given, dim = !picked, rin
 function PickBadges({ players }) {
   return (
     <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
-      {players.map(p => <PlayerBadge key={p.name} name={p.name} picked={p.picked} />)}
+      {players.map(p => <PlayerBadge key={p.name} name={p.name} picked={p.picked} size={av(38)} />)}
     </div>
   );
 }
@@ -673,7 +673,7 @@ function PickSign({ status }) {
 // the same driver was two different sizes two cards apart. Bigger face, shorter
 // row: the pool loses 18px a row over ten rows, and the picks list gains 8 over
 // five.
-const ROW_FACE = 44, ROW_NAME = 17, ROW_PAD = "5px 12px";
+const ROW_FACE = av(44), ROW_NAME = 17, ROW_PAD = "5px 12px";
 
 // Your five, in your order. The same list either side of the deadline: it was
 // two lists that happened to hold the same drivers, one with a green card and
@@ -893,7 +893,7 @@ function DriverCard({ name }) {
       padding: "12px 6px", borderRadius: 12, background: V.bg3,
       border: `1px solid ${c}44`, minWidth: 0,
     }}>
-      <Face name={name} size={48} ring={c} glow={0.7} />
+      <Face name={name} size={av(48)} ring={c} glow={0.7} />
       <div style={{ textAlign: "center", minWidth: 0, width: "100%" }}>
         <p style={{ ...body("bodyMd"), fontSize: 15, color: V.text, margin: 0, lineHeight: 1.2 }}>
           {lastName(name)}
@@ -1029,7 +1029,7 @@ function PickReview({ order, finish, needle, sent, onBack, onSubmit, saving, err
                   borderRadius: 10, background: V.bg3, border: `1px solid ${V.border}`,
                 }}>
                   <span style={{ ...numeric("h3"), color: V.blue, width: 46, flexShrink: 0 }}>{ordinal(i + 1)}</span>
-                  <Face name={d} size={30} ring={dColor(d)} glow={0} />
+                  <Face name={d} size={av(30)} ring={dColor(d)} glow={0} />
                   <span style={{ ...body("bodyMd"), fontSize: 16, color: V.text }}>{d}</span>
                 </div>
               ))}
@@ -1231,7 +1231,7 @@ function PickFlow() {
                 padding: "8px 12px 8px 8px", borderRadius: 999,
                 background: V.bg3, border: `1px solid ${dColor(d)}55`,
               }}>
-                <Face name={d} size={28} ring={dColor(d)} glow={0} />
+                <Face name={d} size={av(28)} ring={dColor(d)} glow={0} />
                 <span style={{ ...body("bodySm"), fontSize: 15, color: V.text }}>{lastName(d)}</span>
               </button>
             ))}
@@ -1261,7 +1261,7 @@ function PickFlow() {
                       flex: 1, display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
                       background: "transparent", border: "none", padding: 0, textAlign: "left",
                     }}>
-                      <Face name={name} size={36} ring={dColor(name)} glow={0.6} />
+                      <Face name={name} size={av(36)} ring={dColor(name)} glow={0.6} />
                       <span style={{ ...body("bodyMd"), fontSize: 16, color: V.text }}>{name}</span>
                     </button>
                   ) : (
@@ -1505,7 +1505,7 @@ function OpponentCard() {
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
                     <PlayerBadge name={pl.name} picked={false} dim={false} ring={V.pink}
-                                 photo={pl.photo} size={34} />
+                                 photo={pl.photo} size={av(34)} />
                     <div style={{ minWidth: 0 }}>
                       <p style={{
                         ...display("chip"), fontSize: 14, color: V.text, margin: 0,
@@ -1619,7 +1619,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
   // Faces pack to the face, so two guesses at the same tenth end up almost
   // touching, which is the truth about them. The plates are what would collide,
   // so they drop a step instead of pushing the faces apart.
-  const FACE = 42, GAP = 3, STEP = 45;
+  const FACE = av(42), GAP = 3, STEP = FACE + GAP;
   const guessed = seats.filter(s => s.pick && typeof s.pick.pitGuess === "number");
 
   // One lane, always. Two guesses at the same tenth sit shoulder to shoulder
@@ -2254,7 +2254,7 @@ function RootingCard({ seats, boxBox }) {
         ? <span style={{ ...body("bodySm"), color: V.text2 }}>Nobody</span>
         : names.map(n => (
           <div key={n} style={{ textAlign: "center", flexShrink: 0, width: 52 }}>
-            <Face name={n} size={48} ring={c} edge={3} glow={c === THEIRS ? 1 : 0} />
+            <Face name={n} size={av(48)} ring={c} edge={3} glow={c === THEIRS ? 1 : 0} />
             <div style={{
               marginTop: -6, display: "inline-block", position: "relative",
               padding: "2px 5px", borderRadius: 7, background: "#000", border: `1px solid ${c}`,
@@ -2724,7 +2724,7 @@ function HandsBoard({ seats }) {
   // and shrinking them to match the narrowest case wastes it.
   const big = w >= 430;
   const LABEL = big ? 66 : 58;
-  const FACE = big ? 50 : 42;
+  const FACE = av(big ? 50 : 42);
   const ROW = big ? 90 : 78;
   const PLATE = big ? 12 : 10;
   const EDGE = big ? 4 : 3;
@@ -2880,7 +2880,7 @@ function HomeLocked({ scored: scoredWeek = true, onAhead }) {
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: seat.pick ? 9 : 0 }}>
         <PlayerBadge name={seat.name} picked={seat.picked} dim={!seat.picked}
-                     photo={seat.photo} size={30} />
+                     photo={seat.photo} size={av(30)} />
         <span style={{ ...body("bodyMd"), fontSize: 16, color: seat.mine ? V.blue : V.text }}>
           {seat.name}
         </span>
@@ -3131,7 +3131,7 @@ function RootingBoard({ order, live, lapInfo, settled = false }) {
               }}>
                 {g.list.map(r => (
                   <div key={r.name} style={{ textAlign: "center" }}>
-                    <Face name={r.name} size={46} ring={g.c} glow={g.good ? 1.7 : 1} drained={!g.good} />
+                    <Face name={r.name} size={av(46)} ring={g.c} glow={g.good ? 1.7 : 1} drained={!g.good} />
                     <p style={{ ...display("chip"), color: V.text2, margin: "5px 0 0" }}>{code3(r.name)}</p>
                     <p style={{
                       ...display("h3"), margin: "1px 0 0", fontVariantNumeric: "tabular-nums",
@@ -3199,7 +3199,7 @@ function RootingBoard({ order, live, lapInfo, settled = false }) {
               }}>{r.pos}</p>
             </span>
             <span style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 9 }}>
-              <Face name={r.name} size={32}
+              <Face name={r.name} size={av(32)}
                 ring={vColor || undefined}
                 glow={good ? 1.6 : bad ? 1 : 1}
                 drained={bad} />

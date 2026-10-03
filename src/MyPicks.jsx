@@ -22,7 +22,7 @@ class MyPicksErrorBoundary extends Component {
 import { BG2, DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, FD, FB } from "./theme";
 
 // ── Shared UI ───────────────────────────────────────────
-import { F1_TEAM_COLORS } from "./theme";
+import { F1_TEAM_COLORS, av } from "./theme";
 import { useOpenF1Drivers, findDriver, canonicalName, TEAM_BY_NAME } from "./drivers";
 
 function Pts({ children, negative, team }) {
@@ -116,7 +116,7 @@ function StepTopPick({ drivers, selected, onSelect, driverMap }) {
             }}>
               {/* Driver headshot */}
               <div style={{
-                width: 52, height: 52, borderRadius: "50%", overflow: "hidden",
+                width: av(52), height: av(52), borderRadius: "50%", overflow: "hidden",
                 background: headshot ? `${teamColor}18` : `${BORDER}40`,
                 marginBottom: 4, display: "flex", alignItems: "center", justifyContent: "center",
                 border: a ? `2px solid ${teamColor}60` : "2px solid transparent",
@@ -188,7 +188,7 @@ function StepMidPicks({ drivers, selected, onToggle, driverMap }) {
             }}>
               {/* Driver headshot */}
               <div style={{
-                width: 40, height: 40, borderRadius: "50%", overflow: "hidden",
+                width: av(40), height: av(40), borderRadius: "50%", overflow: "hidden",
                 background: headshot ? `${teamColor}18` : `${BORDER}40`,
                 marginBottom: 3, display: "flex", alignItems: "center", justifyContent: "center",
                 border: a ? `2px solid ${teamColor}60` : "2px solid transparent",
@@ -290,7 +290,7 @@ function StepFinishingOrder({ order, onReorder, driverMap }) {
 
                 {/* Driver headshot */}
                 <div style={{
-                  width: 36, height: 36, borderRadius: "50%", overflow: "hidden", flexShrink: 0,
+                  width: av(36), height: av(36), borderRadius: "50%", overflow: "hidden", flexShrink: 0,
                   background: headshot ? `${teamColor}18` : `${BORDER}40`,
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
@@ -1162,7 +1162,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                           <div style={{ width: 4, height: 24, borderRadius: 2, background: dr.tc, margin: "0 8px", flexShrink: 0 }} />
                           {/* Driver headshot */}
                           <div style={{
-                            width: 28, height: 28, borderRadius: "50%", overflow: "hidden", flexShrink: 0, marginRight: 8,
+                            width: av(28), height: av(28), borderRadius: "50%", overflow: "hidden", flexShrink: 0, marginRight: 8,
                             background: `${dr.tc}20`, display: "flex", alignItems: "center", justifyContent: "center",
                             border: `2px solid ${dr.tc}40`, position: "relative"
                           }}>
@@ -1229,7 +1229,7 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
                   }}>
                     {isTop && <p style={{ fontFamily: FD, fontWeight: 700, fontSize: 7, color: BLUEDARK, textTransform: "uppercase", margin: "0 0 2px", letterSpacing: "0.08em" }}>TOP</p>}
                     <div style={{
-                      width: 36, height: 36, borderRadius: "50%", overflow: "hidden",
+                      width: av(36), height: av(36), borderRadius: "50%", overflow: "hidden",
                       background: `${tc}25`,
                       margin: "0 auto 3px", display: "flex", alignItems: "center", justifyContent: "center",
                       border: `2px solid ${tc}`, position: "relative"

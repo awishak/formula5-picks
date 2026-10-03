@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabaseClient";
 
 
-import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB, avatarColor } from "./theme";
+import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB, avatarColor, av } from "./theme";
 
 // Players who played in prior F5 seasons but not 2025
 const DID_NOT_PLAY_2025 = new Set(["Stacy Michaelsen"]);
@@ -103,7 +103,7 @@ function ScatterView({ standings, getTeamInfo, currentUser, myPlayerId }) {
   const rankInfo = competitionRanks(standings, p => p.totalPts);
 
   // Layout
-  const COL = 46, AV = 32, H = 340, PAD_TOP = 20, PAD_BOTTOM = 40, PAD_SIDE = COL / 2;
+  const COL = 46, AV = av(32), H = 340, PAD_TOP = 20, PAD_BOTTOM = 40, PAD_SIDE = COL / 2;
   const plotW = Math.max(N * COL, 300);
   const plotH = H - PAD_TOP - PAD_BOTTOM;
   const maxPts = Math.max(...standings.map(p => p.totalPts), 0);
@@ -182,7 +182,7 @@ function ScatterView({ standings, getTeamInfo, currentUser, myPlayerId }) {
       {/* Tap-to-inspect detail card */}
       {selected ? (
         <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 12, border: `2px solid ${BLUE}`, background: "rgba(108,184,224,0.08)" }}>
-          <PlayerAvatar name={selected.name} size={44} photoUrl={selected.photo_url} />
+          <PlayerAvatar name={selected.name} size={av(44)} photoUrl={selected.photo_url} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontFamily: FB, fontWeight: 700, fontSize: 16, color: TEXT, margin: 0 }}>
               {selected.name}{selected.name === currentUser ? " (you)" : ""}
@@ -509,7 +509,7 @@ export default function PlayerStandings({ currentUser }) {
                 display: "flex", alignItems: "center", gap: 0, cursor: "pointer", textAlign: "left"
               }}>
                 <div style={{ minWidth: 28, textAlign: "center", fontFamily: FD, fontWeight: 900, fontSize: isTied ? 13 : 16, color: TEXT2 }}>{isTied ? `T${rank}` : rank}</div>
-                <div style={{ marginLeft: 8 }}><PlayerAvatar name={p.name} size={36} photoUrl={p.photo_url} /></div>
+                <div style={{ marginLeft: 8 }}><PlayerAvatar name={p.name} size={av(36)} photoUrl={p.photo_url} /></div>
                 <div style={{ flex: 1, minWidth: 0, marginLeft: 6 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <p style={{ fontFamily: FB, fontWeight: isMe ? 700 : 500, fontSize: 16, color: isMe ? BLUEDARK : TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

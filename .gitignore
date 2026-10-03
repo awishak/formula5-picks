@@ -19,3 +19,4 @@ npm-debug.log*
 # claude code local
 .claude/
 .env*.local
+.env*

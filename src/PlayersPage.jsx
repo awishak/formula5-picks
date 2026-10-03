@@ -5,6 +5,7 @@ import { V, FM, FD, FB, display, numeric, label, body, card, textGlow, edgeGlow,
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { ordinal } from "./teamTable";
 import FernoloSeal from "./FernoloSeal";
+import { av } from "./theme";
 
 // The individual standings. Built to the same pattern as TeamsPage on purpose:
 // same header, same row shape, same rules about what scales and what does not.
@@ -208,7 +209,7 @@ function Row({ row, place, mine, move, mode, sealed = false }) {
         <div style={numeric("stat", { fontSize: 21, color: V.text2 })}>P{place}</div>
         <Move n={move} />
       </div>
-      <Face name={row.name} photo={row.photo} size={42} />
+      <Face name={row.name} photo={row.photo} size={av(42)} />
 
       {/* Who they are. */}
       <div style={{ flex: 1, minWidth: 0 }}>

@@ -24,6 +24,7 @@ import { shortOf } from "./teams.js";
 import Flag from "./Flag.jsx";
 import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
 import { SKINS, SkinProvider, useSkin, skinCSS } from "./paddockSkin.js";
+import { av } from "./theme";
 
 /* --------------------------------------------------------------- the kit */
 
@@ -127,7 +128,7 @@ function Art({ art, h = 220, round = 0, bleed = false }) {
         <div key={i} style={{ height: "86%", display: "grid", placeItems: "end center" }}>
           {dr.photo
             ? <img src={dr.photo} alt={dr.driver} loading="lazy" style={{ height: "100%", objectFit: "contain" }} />
-            : <Face name={dr.driver} size={56} />}
+            : <Face name={dr.driver} size={av(56)} />}
         </div>
       ))}
     </div>
@@ -347,7 +348,7 @@ function Frame({ f, big = false, onPicks }) {
     // Ten rows and three rows cannot carry the same padding: at ten the card
     // runs past the screen and every row shrinks to fit.
     const tight = (f.rows || []).length >= 8;
-    const face = tight ? 32 : (big ? 44 : 34);
+    const face = av(tight ? 32 : (big ? 44 : 34));
     const pad = tight ? "6px 0" : (big ? "11px 0" : "9px 0");
     const rowFont = tight ? 16 : (big ? 17 : 15);
     return (
@@ -442,7 +443,7 @@ function Frame({ f, big = false, onPicks }) {
             {x.photo
               ? <img src={x.photo} alt={x.d.driver} loading="lazy"
                   style={{ height: big ? 140 : 88, objectFit: "contain" }} />
-              : <Face name={x.d.driver} size={big ? 78 : 56} />}
+              : <Face name={x.d.driver} size={av(big ? 78 : 56)} />}
             <div className="pd-kicker" style={{ color: x.tone }}>{x.tag}</div>
             <div style={{ fontFamily: SANS, fontWeight: 600, fontSize: big ? 15 : 13, textAlign: "center" }}>
               {x.d.driver}</div>

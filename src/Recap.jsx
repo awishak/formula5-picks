@@ -27,7 +27,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import DATA from "./recapData.json";
-import { BG, BLUE, TEXT, TEXT2, BORDER, avatarColor } from "./theme";
+import { BG, BLUE, TEXT, TEXT2, BORDER, avatarColor, av } from "./theme";
 import { V, FM, FD as VFD, FB, edgeGlow, textGlow, VEGAS_CSS } from "./theme.vegas";
 
 const FD_LIGHT = "'Geologica', sans-serif";
@@ -322,7 +322,7 @@ function Ladder({ me, T, live, big }) {
               <div style={{ fontFamily: T.fd, fontSize: big ? 21 : 17, width: big ? 28 : 20,
                 textAlign: "right", flexShrink: 0,
                 color: you ? T.good : T.faint }}>{r.rank}</div>
-              <Avatar name={r.name} photo={r.photo} size={big ? 36 : 30} T={T}
+              <Avatar name={r.name} photo={r.photo} size={av(big ? 36 : 30)} T={T}
                 ring={you ? T.good : null} />
               <div style={{ fontFamily: T.fb, fontSize: big ? 18 : 14, fontWeight: you ? 700 : 400,
                 whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
@@ -908,7 +908,7 @@ export default function Recap({ playerName, onExit, onPicks, onChangeName, initi
       <Card T={T} dep={i}>
         <Head T={T}>The first half of the season is over. Let's take a look at how you're doing so far.</Head>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20 }}>
-          <Avatar name={deck.name} photo={deck.photo} size={116} T={T} ring={T.good} />
+          <Avatar name={deck.name} photo={deck.photo} size={av(116)} T={T} ring={T.good} />
           <Logo src={t.logo} name={t.name} size={92} T={T} />
         </div>
         <Line T={T} dim size={T.small}>{first}, of {t.name}</Line>
@@ -1232,7 +1232,7 @@ export default function Recap({ playerName, onExit, onPicks, onChangeName, initi
     // 19 ────────────────────────────────────────────────────────── send-off
     () => (
       <Card T={T} dep={i}>
-        <Avatar name={deck.name} photo={deck.photo} size={104} T={T} ring={V.blue} />
+        <Avatar name={deck.name} photo={deck.photo} size={av(104)} T={T} ring={V.blue} />
         <div style={{ fontFamily: FM, fontSize: 46, lineHeight: 1.3, ...textGlow(V.blue, 1) }}>
           Good luck
         </div>

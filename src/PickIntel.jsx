@@ -19,7 +19,7 @@ function TeamLogo({ name, size = 22, division, logoUrl }) {
   );
 }
 
-import { F1_TEAM_COLORS } from "./theme";
+import { F1_TEAM_COLORS, av } from "./theme";
 import { useOpenF1Drivers, findDriver, canonicalName, TEAM_BY_NAME } from "./drivers";
 
 function shortName(name) {
@@ -172,7 +172,7 @@ export default function PickIntel({ currentUser }) {
           textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 2
         }}>
           <div style={{
-            width: 44, height: 44, borderRadius: "50%", overflow: "hidden",
+            width: av(44), height: av(44), borderRadius: "50%", overflow: "hidden",
             background: `${tc}25`,
             marginBottom: 3, display: "flex", alignItems: "center", justifyContent: "center",
             border: `2px solid ${tc}`, position: "relative"

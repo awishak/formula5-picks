@@ -36,7 +36,7 @@ import Paddock from "./Paddock.jsx";
 import { NEWS } from "./news";
 
 
-import { BG, BG2, DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, avatarColor } from "./theme";
+import { BG, BG2, DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, avatarColor, av } from "./theme";
 // The admin gate is drawn here rather than in Admin.jsx, so the Vegas tokens
 // have to reach this file too.
 import { V, FD as VFD, FB as VFB } from "./theme.vegas";
@@ -155,7 +155,7 @@ function SeasonPreview() {
 const TONE = { good: GREEN, warn: ORANGE, bad: RED, dead: TEXT2 };
 
 function NewsAvatar({ story, playerPhoto }) {
-  const size = 32;
+  const size = av(32);
   const base = { width: size, height: size, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" };
   if (story.authorType === "auto") {
     return (
@@ -180,9 +180,9 @@ function PlayerChip({ name, playersByName }) {
   return (
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
       {photo ? (
-        <img src={photo} alt={name} style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", border: `1.5px solid ${color}40` }} />
+        <img src={photo} alt={name} style={{ width: av(30), height: av(30), borderRadius: "50%", objectFit: "cover", border: `1.5px solid ${color}40` }} />
       ) : (
-        <div style={{ width: 30, height: 30, borderRadius: "50%", background: `${color}20`, border: `1.5px solid ${color}50`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 10, color }}>
+        <div style={{ width: av(30), height: av(30), borderRadius: "50%", background: `${color}20`, border: `1.5px solid ${color}50`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Geologica', sans-serif", fontWeight: 800, fontSize: 10, color }}>
           {getInitials(name)}
         </div>
       )}
@@ -723,7 +723,7 @@ function WelcomeScreen({ onSelect }) {
                     transition: "all 0.15s",
                   }}>
                     <div style={{
-                      width: 44, height: 44, borderRadius: "50%", overflow: "hidden",
+                      width: av(44), height: av(44), borderRadius: "50%", overflow: "hidden",
                       background: photo_url ? "#eee" : `${color}20`,
                       border: `2px solid ${photo_url ? `${color}40` : `${color}50`}`,
                       display: "flex", alignItems: "center", justifyContent: "center",

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
 
 
-import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB, avatarColor } from "./theme";
+import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB, avatarColor, av } from "./theme";
 
 // Previous seasons participation
 const PLAYED_2023 = new Set(["Minatte Matta Garcia","George Fahmy","Anthony Carnesecca","Heather Brackett","Joe Hanna","Theodore Ishak","Sam Bottoms","Rafik Zarifa","Andrew Ishak","Zack Girgis","Stacy Michaelsen","Maggie Mudge","Evie Ishak","Kerolos Nakhla","Heather Ishak","Anthony Zamary","Harold Gutmann","Scott Schertler","Lucia Thompson","Kevin Coolidge","Kristin Eskind","Grant Wong","Ramy Stephanos","Joe McGlynn","Jacob Ford","Chris Fondacaro","Ryan Kohli","Dan Patry","Jeremiah Yassa","Brian Dong","Paul Kohli","Josh Masdary"]);
@@ -153,7 +153,7 @@ export default function Players({ currentUser }) {
                 cursor: "pointer", textAlign: "left",
                 display: "flex", alignItems: "center", gap: 10
               }}>
-                <PlayerAvatar name={p.name} size={44} photoUrl={p.photo_url} />
+                <PlayerAvatar name={p.name} size={av(44)} photoUrl={p.photo_url} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {/* Name + trophies on same line */}
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>

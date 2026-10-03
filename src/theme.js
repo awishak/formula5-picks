@@ -32,6 +32,11 @@ export const F1_TEAM_COLORS = {
 
 // Deterministic avatar color: hash a name to one of a fixed, curated palette.
 export const AVATAR_COLORS = ["#6cb8e0", "#e08a2e", "#22cc66", "#e04a4a", "#7B2D8E", "#C5A000", "#2a6fa8", "#e06080", "#40b090", "#d06030", "#6080d0", "#b050a0"];
+// Every avatar and face on the site is drawn at this multiple of its base
+// size. Call sites wrap their pixel size in av() so one number resizes them all.
+export const AVATAR_SCALE = 1.15;
+export const av = (n) => Math.round(n * AVATAR_SCALE);
+
 export function avatarColor(name) {
   let h = 0;
   for (let i = 0; i < (name || "").length; i++) h = (name || "").charCodeAt(i) + ((h << 5) - h);

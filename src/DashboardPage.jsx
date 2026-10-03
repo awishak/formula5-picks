@@ -10,6 +10,7 @@ import { currentRace } from "./raceTimes";
 import { PIT_FLOOR, PIT_CEIL } from "./weekly.js";
 import VegasHome from "./VegasHome.jsx";
 import PIT_TIMES from "./pitTimes.json";
+import { av } from "./theme";
 
 // Desktop mockup. Everything the phone spreads over five tabs, on one screen.
 //
@@ -136,7 +137,7 @@ function PlayerTable({ rows, place, meId, limit, pickState = {} }) {
             border: `1px solid ${mine ? V.blue : "transparent"}`,
           }}>
             <span style={{ ...numeric("chip"), fontSize: 15, color: V.text2, width: 30 }}>P{place[r.id]}</span>
-            <Face name={r.name} photo={r.photo} size={26}
+            <Face name={r.name} photo={r.photo} size={av(26)}
                   picked={pickState[r.id] ? true : pickState[r.id] === undefined ? false : false}
                   auto={Boolean(pickState[r.id] && pickState[r.id].auto)} />
             <span style={{ flex: 1, minWidth: 0, fontFamily: FD, fontWeight: 600, fontSize: 15,
@@ -390,7 +391,7 @@ function PodiumRuns({ rows, meId }) {
             {r.top.map((p, i) => (
               <div key={p.id} style={{ display: "grid", gap: 3, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-                  <Face name={p.name} photo={p.photo} size={22} />
+                  <Face name={p.name} photo={p.photo} size={av(22)} />
                   <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 14,
                     color: p.id === meId ? V.blue : V.text, minWidth: 0, flex: 1,
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>

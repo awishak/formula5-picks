@@ -31,7 +31,7 @@ import { shortOf } from "./teams.js";
 import { boxBoxLine, boxBoxSide } from "./pitStop.js";
 import { useFirstStop, stopLabel, teamOfQuestion } from "./firstStop.js";
 import { playSong, pauseSong, toggleSong, songPlaying, onSong } from "./themeSong.js";
-import { F1_TEAM_COLORS } from "./theme";
+import { F1_TEAM_COLORS, av } from "./theme";
 import {
   V, FM, FD, FN, FB, TYPE, display, numeric, body, label,
   edgeGlow, textGlow, card as vcard, titleFit, titleBox, VEGAS_CSS,
@@ -630,11 +630,11 @@ function Scatter({ c, focus, onFocus }) {
               fill={mine ? V.amber : V.text3}>
               {k.lines.map((ln, i) => <tspan key={i} x={cx} dy={i ? 10 : 0}>{ln}</tspan>)}
             </text>
-            <clipPath id={`av-${k.q}`}><circle cx={cx} cy={avCy} r="15" /></clipPath>
-            <circle cx={cx} cy={avCy} r="15" fill={V.bg3}
+            <clipPath id={`av-${k.q}`}><circle cx={cx} cy={avCy} r={av(30) / 2} /></clipPath>
+            <circle cx={cx} cy={avCy} r={av(30) / 2} fill={V.bg3}
               stroke={mine ? V.amber : tone} strokeWidth="1.5" />
             {w.photo && (
-              <image href={w.photo} x={cx - 15} y={avCy - 15} width="30" height="30"
+              <image href={w.photo} x={cx - av(30) / 2} y={avCy - av(30) / 2} width={av(30)} height={av(30)}
                 preserveAspectRatio="xMidYMid slice" clipPath={`url(#av-${k.q})`} />
             )}
             {/* Last name on a pill under the chin, the way the board draws one. */}
@@ -1045,7 +1045,7 @@ function RaceChart({ c, stage, beat }) {
           <div className="v-seg" style={{ position: "absolute", bottom: "100%",
             left: "50%", transform: "translateX(-50%)", marginBottom: 7,
             opacity: showFaces ? 1 : 0, pointerEvents: "none" }}>
-            <Face src={b.photo} size={b.me ? 30 : 23} ring={b.me ? V.amber : V.border2}
+            <Face src={b.photo} size={av(b.me ? 30 : 23)} ring={b.me ? V.amber : V.border2}
               width={b.me ? 3 : 2} />
           </div>
           {stage >= S_TEAM && !merged && (
@@ -1196,7 +1196,7 @@ function PoolBoard({ rows }) {
         background: r.mine ? V.bg4 : V.bg3,
         animationDelay: `${i * 45}ms`,
       }}>
-        <Face src={dShot(r.driver)} size={52} ring={col} width={2} />
+        <Face src={dShot(r.driver)} size={av(52)} ring={col} width={2} />
         <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
           <div style={{ ...body("bodySm", { fontSize: 12, lineHeight: 1.15, color: V.text3 }),
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{first}</div>
@@ -1276,7 +1276,7 @@ function TeamBarsH({ M, hands, merged, bb = false }) {
           <div key={r.key} style={{ display: "flex", alignItems: "center", gap: 9 }}>
             <span style={{ width: merged ? 30 : 26, flexShrink: 0 }}>
               {merged ? <Logo src={r.logo} size={28} />
-                : <Face src={r.photo} size={24} ring={col} />}
+                : <Face src={r.photo} size={av(24)} ring={col} />}
             </span>
             {/* 78px, not 62: the initial and its stop cost three characters and
                 the column was cutting them off. The bar loses the same 16px. */}
@@ -1751,7 +1751,7 @@ const Podium = ({ top3, meId, topTeam }) => {
         return (
           <PodiumRow key={p.id} accent={c} mine={mine} i={i} tall
             rank={`P${p.place}`}
-            face={<Face src={p.photo} size={52} ring={mine ? V.amber : c} width={3} />}
+            face={<Face src={p.photo} size={av(52)} ring={mine ? V.amber : c} width={3} />}
             name={shortName(p.name)} nation={p.nation}
             sub={p.team}
             chip={null}
@@ -2076,7 +2076,7 @@ function GridFace({ p, open, onOpen, below = false }) {
         zIndex: open ? 60 : 1 }}>
       <span style={{ display: "block",
         filter: p.me ? `drop-shadow(0 0 7px ${V.green})` : "none" }}>
-        <Face src={p.photo} size={p.me ? 34 : 30} ring={ring} width={p.me ? 3 : 2} />
+        <Face src={p.photo} size={av(p.me ? 34 : 30)} ring={ring} width={p.me ? 3 : 2} />
       </span>
       {open && (
         <span style={{
@@ -2087,7 +2087,7 @@ function GridFace({ p, open, onOpen, below = false }) {
           border: `1px solid ${ring === V.border2 ? tone : ring}`, whiteSpace: "nowrap",
           boxShadow: `0 0 18px #000e, 0 0 12px ${(ring === V.border2 ? tone : ring)}55`,
         }}>
-          <Face src={p.photo} size={44} ring={ring === V.border2 ? tone : ring} />
+          <Face src={p.photo} size={av(44)} ring={ring === V.border2 ? tone : ring} />
           <span style={{ fontFamily: FD, fontWeight: 700, fontSize: 13, lineHeight: 1.3,
             color: p.me ? V.green : "#fff" }}>{shortName(p.name)}</span>
           <span style={{ ...numeric("chip", { fontSize: 12, color: V.text2 }) }}>
@@ -2657,7 +2657,7 @@ function CardDrama({ d, onNext, onPicks, onExit, song }) {
           const url = DRIVER_HEADSHOTS[canonicalName(x.driver)];
           return (
             <div key={x.driver} style={{ display: "grid", justifyItems: "center", gap: 3 }}>
-              <div style={{ width: 54, height: 54, borderRadius: "50%", overflow: "hidden",
+              <div style={{ width: av(54), height: av(54), borderRadius: "50%", overflow: "hidden",
                 border: `2px solid ${off ? V.text3 : V.blue}`, background: V.bg3,
                 boxShadow: off ? "none" : `0 0 12px ${V.blue}77`,
                 filter: off ? "grayscale(1) brightness(.6)" : "none" }}>
@@ -2936,7 +2936,7 @@ function CardScatter({ d }) {
             return (
               <div key={p.id} className="v-pop" style={{ display: "grid", justifyItems: "center",
                 gap: 0, animationDelay: `${i * 120}ms` }}>
-                <Face src={p.photo} size={34} ring={mine ? V.amber : medal} />
+                <Face src={p.photo} size={av(34)} ring={mine ? V.amber : medal} />
                 {/* Last name on a pill under the chin. */}
                 <div style={{
                   marginTop: -8, padding: "2px 6px", borderRadius: 7, background: "#000",
@@ -3282,7 +3282,7 @@ function StandingsTable({ rows, kind, value = r => r.pts, unit = "PTS" }) {
               </span>
               {kind === "team"
                 ? <Logo src={r.logo} size={30} />
-                : <Face src={r.photo} size={30} ring={r.me ? V.amber : V.border2} />}
+                : <Face src={r.photo} size={av(30)} ring={r.me ? V.amber : V.border2} />}
               {(() => {
                 const label = kind === "team" ? shortOf(r.name) : r.name;
                 const longest = Math.max(...String(label).split(/\s+/).map(w => w.length));

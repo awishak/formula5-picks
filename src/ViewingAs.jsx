@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { V, FD, FB, label, body, card, edgeGlow } from "./theme.vegas";
+import { av } from "./theme";
 
 // Who you are looking at the app as, top right of every page.
 //
@@ -64,7 +65,7 @@ export default function ViewingAs({ currentUser, onSelect }) {
         // phone. The name inside already ellipsises.
         maxWidth: "min(232px, 64vw)", minWidth: 0, flexShrink: 1,
       }}>
-        <Avatar name={currentUser} photo={me && me.photo_url} size={38} />
+        <Avatar name={currentUser} photo={me && me.photo_url} size={av(38)} />
         <div style={{ minWidth: 0, textAlign: "left" }}>
           <div style={label({ color: V.text3, fontSize: 11, letterSpacing: "0.12em", lineHeight: 1.25 })}>Viewing as</div>
           <div style={{
@@ -106,7 +107,7 @@ export default function ViewingAs({ currentUser, onSelect }) {
                     background: on ? "rgba(0,217,255,0.10)" : "transparent",
                     border: `1px solid ${on ? V.blue : "transparent"}`,
                   }}>
-                    <Avatar name={p.name} photo={p.photo_url} size={36} />
+                    <Avatar name={p.name} photo={p.photo_url} size={av(36)} />
                     <span style={{
                       fontFamily: FD, fontWeight: 600, fontSize: 18, lineHeight: 1.35,
                       color: on ? V.blue : V.text,
