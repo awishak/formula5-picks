@@ -3,7 +3,7 @@
 // scripts/smoke-card.jsx renders it without a network.
 import { buildPlayerTable, placesBy } from "./playerTable.js";
 import { buildDrivingStyles } from "./drivingStyle.js";
-import { careerOf, yearDescriptor, LEAGUE_PPR } from "./history.js";
+import { careerOf, yearDescriptor, LEAGUE_PPR, gpName } from "./history.js";
 import { sloganOf } from "./slogans.js";
 import { codeOf, displayOf } from "./teams.js";
 
@@ -43,8 +43,13 @@ export function buildPlayerCard(db, name) {
   });
   // This season, in the same shape as a prior one. A podium is first, second
   // or third; the table's top tens are not one.
+  // The race's own name off the races table, the way the sheets' rounds carry
+  // theirs, so round 16 reads as the Bahrain Grand Prix it is.
+  const raceName = {};
+  (db.races || []).forEach(r => { raceName[r.round] = r.race_name || null; });
   const finishes = row.finishes.filter(f => f.place <= 3)
-    .map(f => ({ round: f.round, place: f.place, where: f.where, score: f.score }));
+    .map(f => ({ round: f.round, place: f.place, where: f.where,
+      race: raceName[f.round] || gpName(f.where), score: f.score }));
   const now = {
     year: 2026, pts: row.pts, place, wins: row.p1, podiums: finishes.length,
     races: row.races, ppr: row.avg, pprAdj: row.avg, adjusted: false,

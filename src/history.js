@@ -59,41 +59,38 @@ const T24 = [
   ["Lucia Thompson", 224], ["Brian Dong", 160],
 ];
 
-// 2025 points and trophies. These were in PlayerStandings.jsx, TeamStandings.jsx
-// and divisionTrends.js as three copies; this is the one the card reads.
-export const PTS_2025 = {
-  "Andrew Ishak": 473, "George Fahmy": 459, "Krista Nabil": 457, "Rafik Zarifa": 438,
-  "Mena Yousef": 436, "Aditya Satish": 431, "Heather Ishak": 421, "Martin Nobar": 416,
-  "Moses Abdelshaid": 410, "Alicia Cho": 404, "Kerolos Nakhla": 401, "Joe McGlynn": 398,
-  "Scott Schertler": 392, "Anthony Carnesecca": 392, "Evie Ishak": 390, "Jack Civitts": 388,
-  "Nick Brody": 381, "Ryan Kohli": 378, "Harold Gutmann": 378, "Theo Ishak": 376,
-  "Joe Hanna": 376, "Kevin Coolidge": 375, "Zack Girgis": 375, "Lucia Thompson": 373,
-  "Paul Kohli": 366, "Brett Dillon": 362, "Sam Bottoms": 349, "Andy Thompson": 344,
-  "Chris Fondacaro": 339, "Maggie Mudge": 334, "Jacob Ford": 322, "Ronnie Nobar": 319,
-  "Anthony Zamary": 313, "Dan Patry": 313, "Grant Wong": 309, "Chris Malek": 303,
-  "Ramy Stephanos": 280, "Brian Dong": 275, "Kristin Eskind": 267, "Pavly Attalah": 210
-};
+// 2025, the sheet's order, with its trophy case: cups and medals for the
+// podiums, the loo for the title, the wheel and the flag for whatever they are.
+// Podiums are still computed from the rounds; the case is kept for the wheel
+// and the flag, and for PlayerStandings.jsx's 2025 sort.
+const T25 = [
+  ["Andrew Ishak", 473, "🚾🏆🥈🥈🥉🥉🛞"], ["George Fahmy", 459, "🏆🏆🏆🏆🥉"],
+  ["Krista Nabil", 457, "🏆🥉"], ["Rafik Zarifa", 438, "🏆🥈🥈🥈🥉"],
+  ["Mena Yousef", 436, "🏆🥈🥉"], ["Aditya Satish", 431, "🏆🏆🥈"],
+  ["Heather Ishak", 421, "🏆🛞🏁"], ["Martin Nobar", 416, "🥉🥉"],
+  ["Moses Abdelshaid", 410, "🏆"], ["Alicia Cho", 404, "🥈🥉"],
+  ["Kerolos Nakhla", 401, "🥈🥉"], ["Joe McGlynn", 398, "🥉"],
+  ["Scott Schertler", 392, "🏆🥈🛞"], ["Anthony Carnesecca", 392, "🏆"],
+  ["Evie Ishak", 390, "🥈🥉"], ["Jack Civitts", 388, "🏆🥈🥈"],
+  ["Nick Brody", 381, "🏆🥉🛞"], ["Harold Gutmann", 378, "🥉"],
+  ["Ryan Kohli", 378, "🥈🥈"], ["Theo Ishak", 376, "🥉"],
+  ["Joe Hanna", 376, ""], ["Kevin Coolidge", 375, "🏆🏆🥈🥉"],
+  ["Zack Girgis", 375, "🥈🛞"], ["Lucia Thompson", 373, "🏆🥉"],
+  ["Paul Kohli", 366, "🥉🥉🛞"], ["Brett Dillon", 362, "🏆"],
+  ["Sam Bottoms", 349, ""], ["Andy Thompson", 344, "🥈🥈"],
+  ["Chris Fondacaro", 339, "🥈"], ["Maggie Mudge", 334, "🥉"],
+  ["Jacob Ford", 322, "🏆"], ["Ronnie Nobar", 319, ""],
+  ["Anthony Zamary", 313, "🥉"], ["Dan Patry", 313, ""],
+  ["Grant Wong", 309, "🏆🥈"], ["Chris Malek", 303, "🏆"],
+  ["Ramy Stephanos", 280, "🥈🥈🥉"], ["Brian Dong", 275, "🏆🥉"],
+  ["Kristin Eskind", 267, "🥈🥉"], ["Pavly Attalah", 210, ""],
+];
 
-export const TROPHIES_2025 = {
-  "Andrew Ishak": "🚾🏆🥈🥈🥉🥉🛞", "George Fahmy": "🏆🏆🏆🏆🥉",
-  "Krista Nabil": "🏆🥉", "Rafik Zarifa": "🏆🥈🥈🥈🥉",
-  "Mena Yousef": "🏆🥈🥉", "Aditya Satish": "🏆🏆🥈",
-  "Heather Ishak": "🏆🛞🏁", "Martin Nobar": "🥉🥉",
-  "Moses Abdelshaid": "🏆", "Alicia Cho": "🥈🥉",
-  "Kerolos Nakhla": "🥈🥉", "Joe McGlynn": "🥉",
-  "Scott Schertler": "🏆🥈🛞", "Anthony Carnesecca": "🏆",
-  "Evie Ishak": "🥈🥉", "Jack Civitts": "🏆🥈🥈",
-  "Nick Brody": "🏆🥉🛞", "Ryan Kohli": "🥈🥈",
-  "Harold Gutmann": "🥉", "Theo Ishak": "🥉",
-  "Kevin Coolidge": "🏆🏆🥈🥉", "Zack Girgis": "🥈🛞",
-  "Lucia Thompson": "🏆🥉", "Paul Kohli": "🥉🥉🛞",
-  "Brett Dillon": "🏆", "Andy Thompson": "🥈🥈",
-  "Chris Fondacaro": "🥈", "Maggie Mudge": "🥉",
-  "Jacob Ford": "🏆", "Anthony Zamary": "🥉",
-  "Grant Wong": "🏆🥈", "Chris Malek": "🏆",
-  "Ramy Stephanos": "🥈🥈🥉", "Brian Dong": "🏆🥉",
-  "Kristin Eskind": "🥈🥉"
-};
+// The 2025 points and trophy case by name. These were in PlayerStandings.jsx,
+// TeamStandings.jsx and divisionTrends.js as three copies; this is the one the
+// old standings page reads now.
+export const PTS_2025 = Object.fromEntries(T25.map(([n, pts]) => [n, pts]));
+export const TROPHIES_2025 = Object.fromEntries(T25.filter(r => r[2]).map(([n, , t]) => [n, t]));
 
 // Every podium a season's round scores hold, keyed on the sheet's name.
 // Competition ranking: level scores share the place and the next one skips.
@@ -109,13 +106,29 @@ function podiumsFromRounds(year) {
     week.forEach((w, k) => {
       const place = k > 0 && week[k - 1].s === w.s ? week[k - 1].place : k + 1;
       w.place = place;
-      if (place <= 3) out[w.n].push({ round: i + 1, place, where, score: w.s });
+      if (place <= 3) out[w.n].push({ round: i + 1, place, where, race: gpName(where), score: w.s });
     });
   });
   return out;
 }
 
-const PODIUMS = { 2023: podiumsFromRounds(2023), 2024: podiumsFromRounds(2024) };
+// The sheets name a round by its place; the card names the Grand Prix.
+const GP = {
+  "Bahrain": "Bahrain Grand Prix", "Saudi Arabia": "Saudi Arabian Grand Prix",
+  "Australia": "Australian Grand Prix", "Azerbaijan": "Azerbaijan Grand Prix",
+  "Miami": "Miami Grand Prix", "Imola": "Emilia Romagna Grand Prix", "Monaco": "Monaco Grand Prix",
+  "Spain": "Spanish Grand Prix", "Canada": "Canadian Grand Prix", "Austria": "Austrian Grand Prix",
+  "Britain": "British Grand Prix", "Hungary": "Hungarian Grand Prix", "Belgium": "Belgian Grand Prix",
+  "Netherlands": "Dutch Grand Prix", "Monza": "Italian Grand Prix", "Singapore": "Singapore Grand Prix",
+  "Japan": "Japanese Grand Prix", "Qatar": "Qatar Grand Prix", "USA": "United States Grand Prix",
+  "Mexico": "Mexico City Grand Prix", "Brazil": "São Paulo Grand Prix",
+  "Las Vegas": "Las Vegas Grand Prix", "Abu Dhabi": "Abu Dhabi Grand Prix", "China": "Chinese Grand Prix",
+  "Italy": "Italian Grand Prix", "Madrid": "Spanish Grand Prix",
+};
+export const gpName = where => GP[where] || (where ? `${where} Grand Prix` : null);
+
+// Declared after gpName, which the rounds pass through on the way in.
+const PODIUMS = { 2023: podiumsFromRounds(2023), 2024: podiumsFromRounds(2024), 2025: podiumsFromRounds(2025) };
 
 const season = (year, rows) => {
   const out = {};
@@ -134,7 +147,7 @@ const season = (year, rows) => {
       // sheet did not mark it at all, so the place decides.
       champion: place === 1,
       // Trophies that are not a podium and not the title: the wheel, the flag.
-      extras: [...extras].filter(m => m !== WC),
+      extras: [...extras].filter(m => m !== WC && m !== WIN && m !== P2 && m !== P3),
       shared: Boolean(sheetName),
     };
   });
@@ -142,26 +155,7 @@ const season = (year, rows) => {
 };
 const SEASON_2023 = season(2023, T23);
 const SEASON_2024 = season(2024, T24);
-
-// 2025 ran 24 rounds and the sheet has no round column, so everybody is
-// taken to have played all 24.
-const RACES_2025 = 24;
-const SEASON_2025 = {};
-Object.entries(PTS_2025).sort((a, b) => b[1] - a[1]).forEach(([name, pts], i, arr) => {
-  const place = i > 0 && arr[i - 1][1] === pts ? SEASON_2025[arr[i - 1][0]].place : i + 1;
-  const marks = [...(TROPHIES_2025[name] || "")];
-  const placeOf = { [WIN]: 1, [P2]: 2, [P3]: 3 };
-  const finishes = marks.filter(m => placeOf[m]).map(m => ({ round: null, place: placeOf[m], where: null }));
-  SEASON_2025[name] = {
-    year: 2025, pts, place, races: RACES_2025, ppr: Math.round((pts / RACES_2025) * 10) / 10,
-    wins: finishes.filter(f => f.place === 1).length,
-    podiums: finishes.length,
-    finishes,
-    champion: place === 1,
-    extras: marks.filter(m => !placeOf[m] && m !== WC),
-    shared: false,
-  };
-});
+const SEASON_2025 = season(2025, T25);
 
 export const FIELD = { 2023: T23.length, 2024: T24.length - 1, 2025: Object.keys(PTS_2025).length };
 

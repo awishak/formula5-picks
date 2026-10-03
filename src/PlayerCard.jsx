@@ -137,21 +137,24 @@ function Stat({ k, v, sub }) {
   );
 }
 
-// One podium: the metal, where, and the year. A 2025 podium has no round on
-// paper, so it carries the year alone.
+// One podium, one line, the way a driver's record is written: the place in
+// its metal, then the year and the Grand Prix. Andrew, 2026-10-02: not chips,
+// make it regal. "Winner 2026 Bahrain Grand Prix", "P2 2025 Monaco Grand Prix".
+const METAL = { 1: V.gold, 2: V.silver, 3: V.bronze };
 function Podium({ f }) {
-  const c = f.place === 1 ? V.gold : f.place === 2 ? V.silver : V.bronze;
+  const c = METAL[f.place];
+  const place = f.place === 1 ? "Winner" : `P${f.place}`;
   return (
-    <span title={f.where ? `P${f.place} ${f.where} ${f.year}` : `P${f.place} ${f.year}`} style={{
-      display: "inline-flex", alignItems: "center", gap: 5,
-      padding: "4px 9px 4px 6px", borderRadius: 999,
-      background: V.bg3, border: `1px solid ${c}66`,
-    }}>
-      <span style={{ fontSize: 17, lineHeight: 1 }}>{MARK[f.place]}</span>
-      <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 14, color: V.text, whiteSpace: "nowrap" }}>
-        {f.where ? `${f.where} ` : ""}<span style={{ color: c }}>{String(f.year).slice(2)}</span>
+    <div style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "6px 2px",
+      borderBottom: `1px solid ${V.border}` }}>
+      <span style={{ fontSize: 17, lineHeight: 1, flexShrink: 0, alignSelf: "center" }}>{MARK[f.place]}</span>
+      <span style={{ ...numeric("chip", { fontSize: 15, letterSpacing: "0.04em" }), ...textGlow(c, 0.5),
+        width: 62, flexShrink: 0, textTransform: "uppercase" }}>{place}</span>
+      <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text, minWidth: 0,
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {f.year} {f.race || (f.where ? `${f.where} Grand Prix` : "")}
       </span>
-    </span>
+    </div>
   );
 }
 
@@ -251,18 +254,17 @@ export function PlayerCardBody({ data, onClose }) {
           </div>
         </div>
         {career.podiums.length || career.extras.length ? (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 7 }}>
+          <div style={{ marginTop: 4, borderTop: `1px solid ${V.border2}` }}>
             {career.podiums.map((f, i) => <Podium key={i} f={f} />)}
-            {career.extras.map((x, i) => (
-              <span key={`x${i}`} title={`Trophy, ${x.year}`} style={{
-                display: "inline-flex", alignItems: "center", gap: 5,
-                padding: "4px 9px 4px 6px", borderRadius: 999,
-                background: V.bg3, border: `1px solid ${V.border2}`,
-              }}>
-                <span style={{ fontSize: 17, lineHeight: 1 }}>{x.mark}</span>
-                <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 14, color: V.text }}>{String(x.year).slice(2)}</span>
-              </span>
-            ))}
+            {/* The trophies that are not a podium, on their own line after. */}
+            {career.extras.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 2px" }}>
+                <span style={{ fontSize: 17, lineHeight: 1 }}>{career.extras.map(x => x.mark).join(" ")}</span>
+                <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text }}>
+                  {[...new Set(career.extras.map(x => x.year))].join(", ")}
+                </span>
+              </div>
+            )}
           </div>
         ) : (
           <div style={body("bodySm", { fontSize: 15, color: V.text2, marginTop: 6 })}>None yet.</div>
