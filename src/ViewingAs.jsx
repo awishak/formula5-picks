@@ -65,7 +65,7 @@ export default function ViewingAs({ currentUser, onSelect }) {
         // phone. The name inside already ellipsises.
         maxWidth: "min(232px, 64vw)", minWidth: 0, flexShrink: 1,
       }}>
-        <Avatar name={currentUser} photo={me && me.photo_url} size={av(38)} />
+        <Avatar name={currentUser} photo={me && me.photo_url} size={av(49)} />
         <div style={{ minWidth: 0, textAlign: "left" }}>
           <div style={label({ color: V.text3, fontSize: 11, letterSpacing: "0.12em", lineHeight: 1.25 })}>Viewing as</div>
           <div style={{

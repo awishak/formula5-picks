@@ -96,7 +96,7 @@ function Form({ weeks }) {
 
 // The one personalised thing on the page: where your team stands, how it has
 // been scoring, how the last ten weeks went, and who you are doing it with.
-function YourTeam({ row, season, place, avgRank, teammate }) {
+function YourTeam({ row, season, place, avgRank, drivers }) {
   if (!row) return null;
   return (
     <div style={{ ...card({ padding: 16, marginBottom: 20 }), ...edgeGlow(V.blue, 0.8) }}>
@@ -127,14 +127,18 @@ function YourTeam({ row, season, place, avgRank, teammate }) {
           <Form weeks={season.weeks} />
         </div>
 
-        {teammate && (
-          <div style={{ flexShrink: 0, textAlign: "center", width: 74 }}>
-            <div style={label({ color: V.blue, fontSize: 12, marginBottom: 6 })}>Teammate</div>
-            <Face name={teammate.name} photo={teammate.photo_url} size={av(46)} />
-            <div style={{
-              fontFamily: FD, fontWeight: 600, fontSize: 13, color: V.text2,
-              lineHeight: 1.3, marginTop: 5,
-            }}>{teammate.name.split(" ")[0]}<br />{teammate.name.split(" ").slice(1).join(" ")}</div>
+        {/* Both drivers, you first, side by side. */}
+        {drivers.length > 0 && (
+          <div style={{ flexShrink: 0, display: "flex", gap: 8 }}>
+            {drivers.map(d => (
+              <div key={d.id} style={{ textAlign: "center", width: av(63) }}>
+                <Face name={d.name} photo={d.photo_url} size={av(63)} />
+                <div style={{
+                  fontFamily: FD, fontWeight: 600, fontSize: 13, color: V.text2,
+                  lineHeight: 1.3, marginTop: 5,
+                }}>{d.name.split(" ")[0]}<br />{d.name.split(" ").slice(1).join(" ")}</div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -261,7 +265,7 @@ export default function TeamsPage({ currentUser }) {
         const upcoming = currentRace(races.filter(r => r.season === 2026), scoredIds);
         const nextStart = upcoming ? raceStartMs(upcoming) : null;
 
-        setState({ loading: false, rows, seasonOf, avgRankOf, fixtures, teammate, myTeamId: myTeam ? myTeam.id : null, teams, nextStart });
+        setState({ loading: false, rows, seasonOf, avgRankOf, fixtures, me, teammate, myTeamId: myTeam ? myTeam.id : null, teams, nextStart });
       } catch (e) {
         console.error(e);
         setState({ loading: false, error: true });
@@ -274,7 +278,7 @@ export default function TeamsPage({ currentUser }) {
   if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
   if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Standings did not load.</div>;
 
-  const { rows, seasonOf, avgRankOf, fixtures, teammate, myTeamId, nextStart } = state;
+  const { rows, seasonOf, avgRankOf, fixtures, me, teammate, myTeamId, nextStart } = state;
   // Inside three days of lights out the fixture is the live question; before
   // that, the week just gone is. One threshold, read once, so every row agrees.
   const soon = nextStart != null && nextStart - Date.now() <= 72 * 3600 * 1000;
@@ -309,7 +313,7 @@ export default function TeamsPage({ currentUser }) {
           season={mine ? seasonOf[mine.id] : null}
           place={mine ? posOf[mine.id] : 0}
           avgRank={mine ? avgRankOf[mine.id] : 0}
-          teammate={teammate}
+          drivers={[me, teammate].filter(Boolean)}
         />
 
         {groups.map(g => {
