@@ -210,7 +210,9 @@ function Podiums({ career, open = false }) {
 const HINTS = {
   good: "Where they sit in the individual standings, on points a race.",
   selfless: "Pit guesses further from the field than most, which is what moves the team's line.",
+  independent: "Pit guesses closer to the field than most: their own best guess, not the team's line.",
   daring: "Picks the field picks less often.",
+  conservative: "Picks the field picks more often.",
 };
 
 /** The card's content. Pure render of buildPlayerCard's output. */
@@ -273,8 +275,12 @@ export function PlayerCardBody({ data, onClose, openPodiums = false }) {
           <div style={display("h3", { fontSize: 24, marginTop: 3, ...textGlow(V.pink, 0.8) })}>{style.type}</div>
           <div style={{ display: "flex", justifyContent: "center", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
             <Trait text={style.bandLabel} on color={V.blue} hint={HINTS.good} />
-            <Trait text="Selfless" on={style.selfless} color={V.green} hint={HINTS.selfless} />
-            <Trait text="Daring" on={style.daring} color={V.amber} hint={HINTS.daring} />
+            {/* Each axis names the side the player is on (Andrew, 2026-10-03):
+                not selfless is independent, not daring is conservative. */}
+            <Trait text={style.selfless ? "Selfless" : "Independent"} on color={V.green}
+              hint={style.selfless ? HINTS.selfless : HINTS.independent} />
+            <Trait text={style.daring ? "Daring" : "Conservative"} on color={V.amber}
+              hint={style.daring ? HINTS.daring : HINTS.conservative} />
           </div>
         </div>
       )}

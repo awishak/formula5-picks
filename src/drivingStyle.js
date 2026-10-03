@@ -15,7 +15,9 @@
 //             Below the league's median popularity is daring.
 //
 // Both measures are relative to the league, so half the league is selfless and
-// half daring by construction. Twelve types, named in STYLE_NAMES.
+// half daring by construction. Twelve types, named in STYLE_NAMES. The other
+// side of each axis has its own name (Andrew, 2026-10-03): not selfless is
+// independent, not daring is conservative.
 import { buildPlayerTable, placesBy } from "./playerTable.js";
 
 export const BANDS = [
@@ -27,21 +29,21 @@ export const BANDS = [
 // [band][selfless][daring]. Andrew's names, 2026-10-02, verbatim.
 export const STYLE_NAMES = {
   top: {
-    selfless: { daring: "Legendary", safe: "Team Captain" },
-    selfish:  { daring: "Lone Wolf", safe: "Metronome" },
+    selfless: { daring: "Legendary", conservative: "Team Captain" },
+    independent: { daring: "Lone Wolf", conservative: "Metronome" },
   },
   mid: {
-    selfless: { daring: "Midfield Maverick", safe: "Wingman" },
-    selfish:  { daring: "The Gambler", safe: "In The Points" },
+    selfless: { daring: "Midfield Maverick", conservative: "Wingman" },
+    independent: { daring: "The Gambler", conservative: "In The Points" },
   },
   bottom: {
-    selfless: { daring: "At Least You're Trying", safe: "Happy to Be Second Driver" },
-    selfish:  { daring: "Wildcard", safe: "Special" },
+    selfless: { daring: "At Least You're Trying", conservative: "Happy to Be Second Driver" },
+    independent: { daring: "Wildcard", conservative: "Special" },
   },
 };
 
 export const styleName = (band, selfless, daring) =>
-  STYLE_NAMES[band][selfless ? "selfless" : "selfish"][daring ? "daring" : "safe"];
+  STYLE_NAMES[band][selfless ? "selfless" : "independent"][daring ? "daring" : "conservative"];
 
 const median = xs => {
   const a = xs.filter(x => Number.isFinite(x)).sort((x, y) => x - y);
@@ -109,7 +111,7 @@ export function buildDrivingStyles(db) {
   per.forEach(x => {
     const pl = place[x.id] || rows.length;
     const band = BANDS.find(b => b.test(pl)).id;
-    // No picks yet reads as neither: the safe, selfish default.
+    // No picks yet reads as neither: the conservative, independent default.
     const selfless = x.pitDev != null && league.pitDev != null && x.pitDev > league.pitDev;
     const daring = x.popularity != null && league.popularity != null && x.popularity < league.popularity;
     const s = {
