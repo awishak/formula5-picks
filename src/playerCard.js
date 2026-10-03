@@ -3,11 +3,9 @@
 // scripts/smoke-card.jsx renders it without a network.
 import { buildPlayerTable, placesBy } from "./playerTable.js";
 import { buildDrivingStyles } from "./drivingStyle.js";
-import { careerOf, yearDescriptor } from "./history.js";
+import { careerOf, yearDescriptor, LEAGUE_PPR } from "./history.js";
 import { sloganOf } from "./slogans.js";
 import { codeOf, displayOf } from "./teams.js";
-
-const WIN = "\u{1F3C6}", P2 = "\u{1F948}", P3 = "\u{1F949}";
 
 /**
  * @param {object} db { players, teams, races, scores, picks }
@@ -28,12 +26,31 @@ export function buildPlayerCard(db, name) {
     division: teamRow.division_h2 || teamRow.division || null,
   } : null;
 
+  // The league's scoring level this year, every point over every player-race,
+  // the same sum LEAGUE_PPR holds for the years on paper.
+  const totalPts = rows.reduce((a, r) => a + r.pts, 0);
+  const totalRaces = rows.reduce((a, r) => a + r.races, 0);
+  const levelNow = totalRaces ? totalPts / totalRaces : 0;
+
   const career = careerOf(name);
+  // A prior year's points a race, put on this year's footing: scaled by this
+  // year's level over that year's. Andrew, 2026-10-02: compare each year's
+  // average to 2026's and adjust. The raw figure stays on the row as `ppr`.
+  const prior = career.seasons.map(s => {
+    const lvl = LEAGUE_PPR[s.year];
+    const pprAdj = lvl && levelNow ? Math.round(s.ppr * (levelNow / lvl) * 10) / 10 : s.ppr;
+    return { ...s, pprAdj, adjusted: true };
+  });
+  // This season, in the same shape as a prior one. A podium is first, second
+  // or third; the table's top tens are not one.
+  const finishes = row.finishes.filter(f => f.place <= 3)
+    .map(f => ({ round: f.round, place: f.place, where: f.where, score: f.score }));
   const now = {
-    year: 2026, pts: row.pts, place, wins: row.p1, podiums: row.p1 + row.p2 + row.p3,
-    trophies: WIN.repeat(row.p1) + P2.repeat(row.p2) + P3.repeat(row.p3),
-    topTens: row.top10, races: row.races, live: true, shared: false,
+    year: 2026, pts: row.pts, place, wins: row.p1, podiums: finishes.length,
+    races: row.races, ppr: row.avg, pprAdj: row.avg, adjusted: false,
+    finishes, extras: [], topTens: row.top10, live: true, shared: false,
   };
+  const seasons = [...prior, now];
 
   return {
     id: row.id, name, photo: row.photo, nation: row.nation,
@@ -42,9 +59,18 @@ export function buildPlayerCard(db, name) {
     slogan: sloganOf(name),
     stats: {
       pts: row.pts, place, field: rows.length, avg: row.avg,
-      wins: row.p1, podiums: row.p1 + row.p2 + row.p3, topTens: row.top10,
+      wins: row.p1, podiums: finishes.length, topTens: row.top10,
       races: row.races, last: row.last, lastPlace: row.lastPlace,
     },
-    career: { ...career, seasons: [...career.seasons, now], years: yearDescriptor(name) },
+    career: {
+      ...career, seasons, years: yearDescriptor(name),
+      // Every podium of their career, oldest first, with the trophies that
+      // are not a podium after them.
+      podiums: seasons.flatMap(s => s.finishes.map(f => ({ ...f, year: s.year }))),
+      extras: seasons.flatMap(s => s.extras.map(m => ({ mark: m, year: s.year }))),
+      total: seasons.reduce((a, s) => a + s.podiums, 0),
+      wins: seasons.reduce((a, s) => a + s.wins, 0),
+      level: { now: levelNow, ...LEAGUE_PPR },
+    },
   };
 }

@@ -19,6 +19,7 @@ import { supabase } from "./supabaseClient";
 import { Flagged } from "./Flag.jsx";
 import { V, FD, display, numeric, label, body, card, textGlow, edgeGlow, VEGAS_CSS } from "./theme.vegas";
 import { buildPlayerCard } from "./playerCard.js";
+import { MARK } from "./history.js";
 
 const Ctx = createContext(null);
 
@@ -123,14 +124,34 @@ function Trait({ text, on, color, hint }) {
   );
 }
 
+// No small gray numbers anywhere on this card (Andrew, 2026-10-02). A number
+// is white and at least 15px; the gray is for the words that label it.
 function Stat({ k, v, sub }) {
   return (
     <div style={{ flex: 1, minWidth: 0, textAlign: "center", padding: "8px 4px",
       background: V.bg3, borderRadius: 12, border: `1px solid ${V.border}` }}>
       <div style={numeric("stat", { fontSize: 26, color: V.text, ...textGlow(V.blue, 0.6) })}>{v}</div>
       <div style={label({ fontSize: 13, color: V.text2, marginTop: 4 })}>{k}</div>
-      {sub && <div style={body("bodySm", { fontSize: 13, color: V.text3, marginTop: 1, whiteSpace: "nowrap" })}>{sub}</div>}
+      {sub && <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text, marginTop: 1, whiteSpace: "nowrap" }}>{sub}</div>}
     </div>
+  );
+}
+
+// One podium: the metal, where, and the year. A 2025 podium has no round on
+// paper, so it carries the year alone.
+function Podium({ f }) {
+  const c = f.place === 1 ? V.gold : f.place === 2 ? V.silver : V.bronze;
+  return (
+    <span title={f.where ? `P${f.place} ${f.where} ${f.year}` : `P${f.place} ${f.year}`} style={{
+      display: "inline-flex", alignItems: "center", gap: 5,
+      padding: "4px 9px 4px 6px", borderRadius: 999,
+      background: V.bg3, border: `1px solid ${c}66`,
+    }}>
+      <span style={{ fontSize: 17, lineHeight: 1 }}>{MARK[f.place]}</span>
+      <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 14, color: V.text, whiteSpace: "nowrap" }}>
+        {f.where ? `${f.where} ` : ""}<span style={{ color: c }}>{String(f.year).slice(2)}</span>
+      </span>
+    </span>
   );
 }
 
@@ -143,10 +164,12 @@ const HINTS = {
 /** The card's content. Pure render of buildPlayerCard's output. */
 export function PlayerCardBody({ data, onClose }) {
   const { name, photo, nation, team, style, slogan, stats, career } = data;
-  const cell = (extra = {}) => ({ ...body("bodySm", { fontSize: 14, color: V.text2 }), padding: "5px 4px",
+  // Table numbers are white, 15px and in the numbers face. The gray is for
+  // the headers, which are words.
+  const cell = (extra = {}) => ({ ...numeric("chip", { fontSize: 15, letterSpacing: 0, color: V.text }), padding: "6px 4px",
     textAlign: "right", whiteSpace: "nowrap", ...extra });
-  const head = (extra = {}) => cell({ ...label({ fontSize: 13, color: V.text3, letterSpacing: "0.05em" }),
-    fontWeight: 700, ...extra });
+  const head = (extra = {}) => ({ ...label({ fontSize: 13, color: V.text2, letterSpacing: "0.05em" }),
+    padding: "5px 4px", textAlign: "right", whiteSpace: "nowrap", ...extra });
   const dash = "–";
   return (
     <div>
@@ -162,10 +185,13 @@ export function PlayerCardBody({ data, onClose }) {
         <Face name={name} photo={photo} size={110} />
       </div>
 
-      <Flagged name={name} nation={nation} size={24} style={display("h2", {
-        fontSize: "clamp(24px, 7.6vw, 32px)", lineHeight: 1.1, color: V.text,
-        textAlign: "center", justifyContent: "center",
-      })} />
+      {/* Flagged is a flex row sized to its content, so centring is the
+          wrapper's job. */}
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <Flagged name={name} nation={nation} size={24} style={display("h2", {
+          fontSize: "clamp(24px, 7.6vw, 32px)", lineHeight: 1.1, color: V.text,
+        })} />
+      </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9, marginTop: 8 }}>
         <TeamMark team={team} size={30} />
@@ -200,12 +226,40 @@ export function PlayerCardBody({ data, onClose }) {
         <Stat k="Podiums" v={stats.podiums} sub={`${stats.wins} ${stats.wins === 1 ? "win" : "wins"}`} />
       </div>
 
-      {/* Career. One row a season, oldest first; 2023 is a year they were here
-          and nothing more, because that is all that was kept. */}
-      <div style={{ marginTop: 13 }}>
+      {/* Every podium of their career, oldest first. First, second and third
+          only: the sheets' top tens are not here. Then the trophies that are
+          not a podium. */}
+      <div style={{ marginTop: 14 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-          <div style={label({ fontSize: 13, color: V.text3 })}>Career</div>
-          <div style={body("bodySm", { fontSize: 13, color: V.text2 })}>
+          <div style={label({ fontSize: 13, color: V.text2 })}>Podiums</div>
+          <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text }}>
+            {career.total} {career.total === 1 ? "podium" : "podiums"}, {career.wins} {career.wins === 1 ? "win" : "wins"}
+          </div>
+        </div>
+        {career.podiums.length || career.extras.length ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 7 }}>
+            {career.podiums.map((f, i) => <Podium key={i} f={f} />)}
+            {career.extras.map((x, i) => (
+              <span key={`x${i}`} title={`Trophy, ${x.year}`} style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                padding: "4px 9px 4px 6px", borderRadius: 999,
+                background: V.bg3, border: `1px solid ${V.border2}`,
+              }}>
+                <span style={{ fontSize: 17, lineHeight: 1 }}>{x.mark}</span>
+                <span style={{ fontFamily: FD, fontWeight: 600, fontSize: 14, color: V.text }}>{String(x.year).slice(2)}</span>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div style={body("bodySm", { fontSize: 15, color: V.text2, marginTop: 6 })}>None yet.</div>
+        )}
+      </div>
+
+      {/* Career. One row a season, oldest first. */}
+      <div style={{ marginTop: 14 }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+          <div style={label({ fontSize: 13, color: V.text2 })}>Career</div>
+          <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, color: V.text }}>
             {career.years}{career.seasons.length > 1 ? ` · since ${career.firstYear}` : ""}
           </div>
         </div>
@@ -213,42 +267,39 @@ export function PlayerCardBody({ data, onClose }) {
             pushing the table past the card's edge, which a row of seven emoji
             did on a 375px phone. The year in play is blue, like every live
             number on the Vegas pages. */}
-        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 4, tableLayout: "fixed" }}>
-          <colgroup>
-            <col style={{ width: 46 }} /><col style={{ width: 40 }} /><col style={{ width: 54 }} />
-            <col style={{ width: 46 }} /><col style={{ width: 40 }} /><col />
-          </colgroup>
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 4 }}>
           <thead>
             <tr style={{ borderBottom: `1px solid ${V.border2}` }}>
               <th style={head({ textAlign: "left" })}>Year</th>
-              <th style={head()}>Pts</th>
+              <th style={head()}>PPR</th>
               <th style={head()}>Place</th>
               <th style={head()}>Wins</th>
-              <th style={head()}>Pod</th>
-              <th style={head({ textAlign: "left", paddingLeft: 10 })}>Trophies</th>
+              <th style={head()}>Podiums</th>
             </tr>
           </thead>
           <tbody>
             {career.seasons.map(s => (
               <tr key={s.year} style={{ borderBottom: `1px solid ${V.border}` }}>
                 <td title={s.live ? "This season so far" : undefined}
-                    style={cell({ textAlign: "left", fontFamily: FD, fontWeight: 600, color: s.live ? V.blue : V.text })}>
+                    style={cell({ textAlign: "left", color: s.live ? V.blue : V.text })}>
                   {s.year}{s.shared ? "*" : ""}
                 </td>
-                <td style={cell({ color: V.text })}>{s.pts != null ? s.pts : dash}</td>
+                <td title={s.adjusted ? `${s.ppr.toFixed(1)} on the ${s.year} scale, ${s.pts} points over ${s.races} races` : undefined}
+                    style={cell()}>{s.pprAdj != null ? s.pprAdj.toFixed(1) : dash}</td>
                 <td style={cell()}>{s.place != null ? `P${s.place}` : dash}</td>
-                <td style={cell()}>{s.wins != null ? s.wins : dash}</td>
-                <td style={cell()}>{s.podiums != null ? s.podiums : dash}</td>
-                <td style={cell({ textAlign: "left", paddingLeft: 10, fontSize: 14, lineHeight: 1.3,
-                  whiteSpace: "normal", wordBreak: "break-all" })}>
-                  {s.trophies || (s.live && s.topTens ? `${s.topTens} top ten${s.topTens === 1 ? "" : "s"}` : dash)}
-                </td>
+                <td style={cell()}>{s.wins}</td>
+                <td style={cell()}>{s.podiums}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        {career.seasons.some(s => s.adjusted) && (
+          <div style={body("bodySm", { fontSize: 14, color: V.text2, marginTop: 6 })}>
+            2023 to 2025 PPR are adjusted to 2026 scoring.
+          </div>
+        )}
         {career.seasons.some(s => s.shared) && (
-          <div style={body("bodySm", { fontSize: 13, color: V.text3, marginTop: 6 })}>
+          <div style={body("bodySm", { fontSize: 14, color: V.text2, marginTop: 6 })}>
             * Shared seat with {name === "Stacy Michaelsen" ? "Heather Ishak" : "Stacy Michaelsen"}.
           </div>
         )}

@@ -33,9 +33,19 @@ for (const p of db.players) {
   if (!data.slogan) fail(`${p.name}: no slogan`);
   if (!data.career || !data.career.seasons.length) fail(`${p.name}: no career`);
   if (data.career.seasons[data.career.seasons.length - 1].year !== 2026) fail(`${p.name}: career does not end on 2026`);
+  // Podiums are first, second and third only, listed once each, and every
+  // prior year's points a race is on the 2026 footing.
+  const listed = data.career.podiums.length;
+  const counted = data.career.seasons.reduce((a, s) => a + s.podiums, 0);
+  if (listed !== counted) fail(`${p.name}: ${listed} podiums listed, ${counted} counted`);
+  if (data.career.podiums.some(f => f.place > 3)) fail(`${p.name}: a podium past third`);
+  data.career.seasons.forEach(s => {
+    if (s.year < 2026 && !(s.adjusted && Number.isFinite(s.pprAdj))) fail(`${p.name}: ${s.year} PPR not adjusted`);
+    if (s.year === 2026 && s.adjusted) fail(`${p.name}: 2026 marked adjusted`);
+  });
   types[data.style.type] = (types[data.style.type] || 0) + 1;
   const html = renderToStaticMarkup(<PlayerCardBody data={data} onClose={() => {}} />);
-  for (const part of [p.name, "Driving style", "Career", "PPR", ">2026<", data.style.type]) {
+  for (const part of [p.name, "Driving style", "Podiums", "Career", "PPR", ">2026<", data.style.type]) {
     if (!html.includes(part)) fail(`${p.name}: card missing "${part}"`);
   }
   if (seen.has(html)) fail(`${p.name}: identical to another player's card`);

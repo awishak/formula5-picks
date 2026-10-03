@@ -1,9 +1,16 @@
 // Prior seasons. Pure, no React and no Supabase.
 //
 // The database is 2026 only. Everything before it is what Andrew has on paper:
-// who played in 2023, the 2024 final table (points, wins, podiums, trophies),
-// and the 2025 points and trophies. Nothing here is computed from rounds,
-// because there are no rounds to compute from; see [[f5-no-prior-season-data]].
+// the 2023 and 2024 final tables with every round's score, and the 2025 points
+// and trophies. Nothing here is computed from rounds in the database, because
+// there are none; see [[f5-no-prior-season-data]].
+//
+// Podiums are worked out here from the round scores, not read off the sheets:
+// the sheets' own "Podiums" column sometimes counted a top ten (Andrew,
+// 2026-10-02), and a podium is first, second or third and nothing else. A
+// week's places are shared on a tie, so two people level on 45 are both P1.
+// 2025 has no round scores, so its podiums are read off the trophy string,
+// which only ever held cups and medals for the first three.
 //
 // Names are as they were on the sheet that year. ALIAS maps a spelling that
 // changed to the name the 2026 roster uses.
@@ -11,90 +18,43 @@
 // The 2024 sheet holds one shared seat, "Stacy M / Heather I". It is credited
 // to Stacy Michaelsen and Heather Ishak both, marked `shared`, so neither of
 // them reads as a rookie for a year they played.
+import { ROUNDS } from "./historyRounds.js";
 
 const ALIAS = { "Theodore Ishak": "Theo Ishak" };
 export const canonPlayer = n => ALIAS[n] || n;
 
-// 2023 final table, from Andrew's sheet 2026-10-02. Order is the sheet's order.
-// [name, points, wins, podiums]. Podiums include wins, as the sheet counted
-// them. Ryan and Paul Kohli joined at round 15 and have nine rounds in theirs.
+const WIN = "\u{1F3C6}", P2 = "\u{1F948}", P3 = "\u{1F949}";
+export const MARK = { 1: WIN, 2: P2, 3: P3 };
+
+// Final tables: [name, points, trophies?, shared?]. Order is the sheet's order
+// and places come off it, ties sharing a place. Round scores live in
+// historyRounds.js under the same names.
 const T23 = [
-  ["Minatte Matta Garcia", 508, 3, 7],
-  ["George Fahmy", 489, 1, 3],
-  ["Anthony Carnesecca", 480, 1, 3],
-  ["Heather Brackett", 471, 1, 5],
-  ["Joe Hanna", 451, 1, 7],
-  ["Theo Ishak", 442, 0, 6],
-  ["Sam Bottoms", 433, 0, 7],
-  ["Rafik Zarifa", 433, 1, 6],
-  ["Andrew Ishak", 427, 1, 5],
-  ["Zack Girgis", 419, 1, 4],
-  ["Stacy Michaelsen", 410, 0, 5],
-  ["Maggie Mudge", 407, 1, 4],
-  ["Evie Ishak", 397, 2, 8],
-  ["Kerolos Nakhla", 381, 1, 5],
-  ["Heather Ishak", 376, 1, 4],
-  ["Anthony Zamary", 376, 0, 3],
-  ["Harold Gutmann", 374, 0, 2],
-  ["Scott Schertler", 372, 1, 2],
-  ["Lucia Thompson", 371, 0, 3],
-  ["Kevin Coolidge", 366, 0, 1],
-  ["Kristin Eskind", 355, 2, 5],
-  ["Grant Wong", 352, 0, 3],
-  ["Ramy Stephanos", 350, 2, 5],
-  ["Joe McGlynn", 348, 0, 0],
-  ["Jacob Ford", 320, 0, 1],
-  ["Chris Fondacaro", 265, 0, 4],
-  ["Ryan Kohli", 236, 0, 3],
-  ["Dan Patry", 232, 0, 2],
-  ["Jeremiah Yassa", 199, 1, 2],
-  ["Brian Dong", 190, 0, 0],
-  ["Paul Kohli", 190, 0, 1],
-  ["Josh Masdary", 158, 1, 2],
+  ["Minatte Matta Garcia", 508], ["George Fahmy", 489], ["Anthony Carnesecca", 480],
+  ["Heather Brackett", 471], ["Joe Hanna", 451], ["Theo Ishak", 442], ["Sam Bottoms", 433],
+  ["Rafik Zarifa", 433], ["Andrew Ishak", 427], ["Zack Girgis", 419], ["Stacy Michaelsen", 410],
+  ["Maggie Mudge", 407], ["Evie Ishak", 397], ["Kerolos Nakhla", 381], ["Heather Ishak", 376],
+  ["Anthony Zamary", 376], ["Harold Gutmann", 374], ["Scott Schertler", 372],
+  ["Lucia Thompson", 371], ["Kevin Coolidge", 366], ["Kristin Eskind", 355], ["Grant Wong", 352],
+  ["Ramy Stephanos", 350], ["Joe McGlynn", 348], ["Jacob Ford", 320], ["Chris Fondacaro", 265],
+  ["Ryan Kohli", 236], ["Dan Patry", 232], ["Jeremiah Yassa", 199], ["Brian Dong", 190],
+  ["Paul Kohli", 190], ["Josh Masdary", 158],
 ];
 export const PLAYED_2023 = new Set(T23.map(r => r[0]));
 
-// 2024 final table, from Andrew's sheet 2026-10-02. Order is the sheet's order.
-// [name, points, wins, podiums, trophies]. Podiums include wins, as the sheet
-// counted them.
+// Kevin's 2024 cup and loo are the sheet's; the loo is a trophy of its own.
 const T24 = [
-  ["Kevin Coolidge", 473, 1, 5, "\u{1F3C6}\u{1F6BE}"],
-  ["Ronnie Nobar", 457, 1, 2, "\u{1F3C6}"],
-  ["Kerolos Nakhla", 453, 0, 4, ""],
-  ["Mena Yousef", 442, 1, 3, "\u{1F3C6}"],
-  ["Martin Nobar", 440, 2, 4, "\u{1F3C6}\u{1F3C6}"],
-  ["Paul Kohli", 429, 0, 2, ""],
-  ["Zack Girgis", 423, 0, 1, ""],
-  ["Nick Brody", 423, 0, 5, ""],
-  ["Andrew Ishak", 420, 2, 5, "\u{1F3C6}\u{1F3C6}"],
-  ["Ryan Kohli", 417, 1, 2, "\u{1F3C6}"],
-  ["Sam Bottoms", 416, 0, 2, ""],
-  ["Jacob Ford", 416, 0, 0, ""],
-  ["Rafik Zarifa", 415, 0, 3, ""],
-  ["Maggie Mudge", 412, 3, 4, "\u{1F3C6}\u{1F3C6}\u{1F3C6}"],
-  ["Scott Schertler", 408, 1, 2, "\u{1F3C6}"],
-  ["Joe Hanna", 401, 1, 3, "\u{1F3C6}"],
-  ["Harold Gutmann", 401, 0, 0, ""],
-  ["Joe McGlynn", 371, 1, 1, "\u{1F3C6}"],
-  ["Chris Fondacaro", 367, 0, 3, ""],
-  ["Theo Ishak", 364, 4, 5, "\u{1F3C6}\u{1F3C6}\u{1F3C6}\u{1F3C6}"],
-  ["Minatte Matta Garcia", 362, 0, 2, ""],
-  ["Dan Patry", 360, 1, 1, "\u{1F3C6}"],
-  ["George Fahmy", 352, 1, 1, "\u{1F3C6}"],
-  ["Anthony Carnesecca", 342, 0, 0, ""],
-  ["Aditya Satish", 335, 0, 0, ""],
-  ["Stacy Michaelsen", 330, 1, 1, "\u{1F3C6}", true],
-  ["Heather Ishak", 330, 1, 1, "\u{1F3C6}", true],
-  ["Heather Brackett", 326, 0, 0, ""],
-  ["Anthony Zamary", 323, 1, 2, "\u{1F3C6}"],
-  ["Andy Thompson", 323, 0, 1, ""],
-  ["Chris Malek", 313, 1, 2, "\u{1F3C6}"],
-  ["Evie Ishak", 296, 0, 2, ""],
-  ["Kristin Eskind", 284, 1, 1, "\u{1F3C6}"],
-  ["Grant Wong", 268, 0, 1, ""],
-  ["Ramy Stephanos", 252, 0, 1, ""],
-  ["Lucia Thompson", 224, 0, 1, ""],
-  ["Brian Dong", 160, 0, 0, ""],
+  ["Kevin Coolidge", 473, "\u{1F6BE}"], ["Ronnie Nobar", 457], ["Kerolos Nakhla", 453],
+  ["Mena Yousef", 442], ["Martin Nobar", 440], ["Paul Kohli", 429], ["Zack Girgis", 423],
+  ["Nick Brody", 423], ["Andrew Ishak", 420], ["Ryan Kohli", 417], ["Sam Bottoms", 416],
+  ["Jacob Ford", 416], ["Rafik Zarifa", 415], ["Maggie Mudge", 412], ["Scott Schertler", 408],
+  ["Joe Hanna", 401], ["Harold Gutmann", 401], ["Joe McGlynn", 371], ["Chris Fondacaro", 367],
+  ["Theo Ishak", 364], ["Minatte Matta Garcia", 362], ["Dan Patry", 360], ["George Fahmy", 352],
+  ["Anthony Carnesecca", 342], ["Aditya Satish", 335],
+  ["Stacy Michaelsen", 330, "", "Stacy M / Heather I"], ["Heather Ishak", 330, "", "Stacy M / Heather I"],
+  ["Heather Brackett", 326], ["Anthony Zamary", 323], ["Andy Thompson", 323], ["Chris Malek", 313],
+  ["Evie Ishak", 296], ["Kristin Eskind", 284], ["Grant Wong", 268], ["Ramy Stephanos", 252],
+  ["Lucia Thompson", 224], ["Brian Dong", 160],
 ];
 
 // 2025 points and trophies. These were in PlayerStandings.jsx, TeamStandings.jsx
@@ -133,36 +93,90 @@ export const TROPHIES_2025 = {
   "Kristin Eskind": "🥈🥉"
 };
 
-const count = (s, ch) => [...(s || "")].filter(c => c === ch).length;
-const WIN = "\u{1F3C6}", P2 = "\u{1F948}", P3 = "\u{1F949}";
+// Every podium a season's round scores hold, keyed on the sheet's name.
+// Competition ranking: level scores share the place and the next one skips.
+function podiumsFromRounds(year) {
+  const { labels, scores } = ROUNDS[year];
+  const out = {};
+  Object.keys(scores).forEach(n => { out[n] = []; });
+  labels.forEach((where, i) => {
+    const week = Object.entries(scores)
+      .filter(([, r]) => r[i] != null)
+      .map(([n, r]) => ({ n, s: r[i] }))
+      .sort((a, b) => b.s - a.s);
+    week.forEach((w, k) => {
+      const place = k > 0 && week[k - 1].s === w.s ? week[k - 1].place : k + 1;
+      w.place = place;
+      if (place <= 3) out[w.n].push({ round: i + 1, place, where, score: w.s });
+    });
+  });
+  return out;
+}
 
-// Places come off the sheet's order; ties share a place. A sheet with no
-// trophy column gets a cup a win.
+const PODIUMS = { 2023: podiumsFromRounds(2023), 2024: podiumsFromRounds(2024) };
+
 const season = (year, rows) => {
   const out = {};
-  rows.forEach(([name, pts, wins, podiums, trophies, shared], i) => {
+  rows.forEach(([name, pts, extras = "", sheetName], i) => {
     const prev = rows[i - 1];
     const place = prev && prev[1] === pts ? out[prev[0]].place : i + 1;
-    out[name] = { year, pts, place, wins, podiums,
-      trophies: trophies != null ? trophies : WIN.repeat(wins), shared: Boolean(shared) };
+    const finishes = PODIUMS[year][sheetName || name] || [];
+    const races = (ROUNDS[year].scores[sheetName || name] || []).filter(v => v != null).length;
+    out[name] = {
+      year, pts, place, races, ppr: races ? Math.round((pts / races) * 10) / 10 : 0,
+      wins: finishes.filter(f => f.place === 1).length,
+      podiums: finishes.length,
+      finishes,
+      // Trophies that are not a podium: the loo, the wheel, the flag.
+      extras: [...extras],
+      shared: Boolean(sheetName),
+    };
   });
   return out;
 };
 const SEASON_2023 = season(2023, T23);
 const SEASON_2024 = season(2024, T24);
 
+// 2025 ran 24 rounds and the sheet has no round column, so everybody is
+// taken to have played all 24.
+const RACES_2025 = 24;
 const SEASON_2025 = {};
 Object.entries(PTS_2025).sort((a, b) => b[1] - a[1]).forEach(([name, pts], i, arr) => {
   const place = i > 0 && arr[i - 1][1] === pts ? SEASON_2025[arr[i - 1][0]].place : i + 1;
-  const t = TROPHIES_2025[name] || "";
+  const marks = [...(TROPHIES_2025[name] || "")];
+  const placeOf = { [WIN]: 1, [P2]: 2, [P3]: 3 };
+  const finishes = marks.filter(m => placeOf[m]).map(m => ({ round: null, place: placeOf[m], where: null }));
   SEASON_2025[name] = {
-    year: 2025, pts, place,
-    wins: count(t, WIN), podiums: count(t, WIN) + count(t, P2) + count(t, P3),
-    trophies: t, shared: false,
+    year: 2025, pts, place, races: RACES_2025, ppr: Math.round((pts / RACES_2025) * 10) / 10,
+    wins: finishes.filter(f => f.place === 1).length,
+    podiums: finishes.length,
+    finishes,
+    extras: marks.filter(m => !placeOf[m]),
+    shared: false,
   };
 });
 
-export const FIELD = { 2023: T23.length, 2024: T24.length, 2025: Object.keys(PTS_2025).length };
+export const FIELD = { 2023: T23.length, 2024: T24.length - 1, 2025: Object.keys(PTS_2025).length };
+
+// How the league scored each year: every point scored over every player-race,
+// so a year with bigger numbers on the sheet (2023's Baku weekend paid 64)
+// reads as a higher level, not as better players. The card scales a prior
+// year's points a race by this year's level over that year's, so a 2023 season
+// and a 2026 one sit on one footing. Set by Andrew 2026-10-02.
+const level = seasons => {
+  const rows = Object.values(seasons).filter(s => !s.shared || s.year !== 2024 || s.pts);
+  // The shared 2024 seat is one entrant on the sheet, counted once.
+  const seen = new Set();
+  let pts = 0, races = 0;
+  rows.forEach(s => {
+    const key = s.shared ? "shared" : s;
+    if (seen.has(key)) return;
+    seen.add(key);
+    pts += s.pts; races += s.races;
+  });
+  return races ? pts / races : 0;
+};
+export const LEAGUE_PPR = { 2023: level(SEASON_2023), 2024: level(SEASON_2024), 2025: level(SEASON_2025) };
 
 /**
  * Every prior season a player was in, oldest first. The current season is not
