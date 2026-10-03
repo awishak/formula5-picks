@@ -46,7 +46,8 @@ for (const p of db.players) {
   types[data.style.type] = (types[data.style.type] || 0) + 1;
   const html = renderToStaticMarkup(<PlayerCardBody data={data} onClose={() => {}} />);
   for (const part of [p.name, "Driving style", "Podiums", "Career", "PPR", ">2026<", data.style.type, ...(data.career.podiums.length ? ["Grand Prix"] : [])]) {
-    if (!html.includes(part)) fail(`${p.name}: card missing "${part}"`);
+    // react-dom/server writes an apostrophe as an entity.
+    if (!html.includes(part.replace(/'/g, "&#x27;"))) fail(`${p.name}: card missing "${part}"`);
   }
   if (seen.has(html)) fail(`${p.name}: identical to another player's card`);
   seen.add(html);

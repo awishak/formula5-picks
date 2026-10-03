@@ -24,19 +24,19 @@ export const BANDS = [
   { id: "bottom", label: "Bottom 20", test: () => true },
 ];
 
-// [band][selfless][daring]. Andrew's to rename.
+// [band][selfless][daring]. Andrew's names, 2026-10-02, verbatim.
 export const STYLE_NAMES = {
   top: {
-    selfless: { daring: "All-Out Ace", safe: "Team Captain" },
-    selfish:  { daring: "Lone Wolf", safe: "The Metronome" },
+    selfless: { daring: "Legendary", safe: "Team Captain" },
+    selfish:  { daring: "Lone Wolf", safe: "Metronome" },
   },
   mid: {
-    selfless: { daring: "Midfield Maverick", safe: "The Wingman" },
-    selfish:  { daring: "The Gambler", safe: "Points Collector" },
+    selfless: { daring: "Midfield Maverick", safe: "Wingman" },
+    selfish:  { daring: "The Gambler", safe: "In The Points" },
   },
   bottom: {
-    selfless: { daring: "Crash or Glory", safe: "Water Carrier" },
-    selfish:  { daring: "Banzai Runner", safe: "Sunday Driver" },
+    selfless: { daring: "At Least You're Trying", safe: "Happy to Be Second Driver" },
+    selfish:  { daring: "Wildcard", safe: "Special" },
   },
 };
 
