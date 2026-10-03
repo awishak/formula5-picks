@@ -276,10 +276,11 @@ export function PlayerCardBody({ data, onClose, openPodiums = false }) {
           <div style={{ display: "flex", justifyContent: "center", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
             <Trait text={style.bandLabel} on color={V.blue} hint={HINTS.good} />
             {/* Each axis names the side the player is on (Andrew, 2026-10-03):
-                not selfless is independent, not daring is conservative. */}
-            <Trait text={style.selfless ? "Selfless" : "Independent"} on color={V.green}
+                not selfless is independent, not daring is conservative. Those
+                two are blue, so green keeps meaning good. */}
+            <Trait text={style.selfless ? "Selfless" : "Independent"} on color={style.selfless ? V.green : V.blue}
               hint={style.selfless ? HINTS.selfless : HINTS.independent} />
-            <Trait text={style.daring ? "Daring" : "Conservative"} on color={V.amber}
+            <Trait text={style.daring ? "Daring" : "Conservative"} on color={style.daring ? V.amber : V.blue}
               hint={style.daring ? HINTS.daring : HINTS.conservative} />
           </div>
         </div>
