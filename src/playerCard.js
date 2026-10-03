@@ -48,6 +48,8 @@ export function buildPlayerCard(db, name) {
   const now = {
     year: 2026, pts: row.pts, place, wins: row.p1, podiums: finishes.length,
     races: row.races, ppr: row.avg, pprAdj: row.avg, adjusted: false,
+    // Nobody is champion of a season still running.
+    champion: false,
     finishes, extras: [], topTens: row.top10, live: true, shared: false,
   };
   const seasons = [...prior, now];
@@ -71,6 +73,8 @@ export function buildPlayerCard(db, name) {
       total: seasons.reduce((a, s) => a + s.podiums, 0),
       wins: seasons.reduce((a, s) => a + s.wins, 0),
       level: { now: levelNow, ...LEAGUE_PPR },
+      // The years they were World Champion, under the team name on the card.
+      titles: seasons.filter(s => s.champion).map(s => s.year),
     },
   };
 }

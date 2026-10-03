@@ -51,6 +51,11 @@ for (const p of db.players) {
   if (seen.has(html)) fail(`${p.name}: identical to another player's card`);
   seen.add(html);
 }
+// The titles: one a prior season, and the loo is never a chip.
+const champions = db.players.map(p => buildPlayerCard(db, p.name)).filter(d => d.career.titles.length);
+if (!champions.some(d => d.name === "Andrew Ishak" && d.career.titles.includes(2025))) fail("Andrew Ishak is not the 2025 World Champion");
+if (!champions.some(d => d.name === "Kevin Coolidge" && d.career.titles.includes(2024))) fail("Kevin Coolidge is not the 2024 World Champion");
+db.players.forEach(p => { const d = buildPlayerCard(db, p.name); if (d.career.extras.some(x => x.mark === "\u{1F6BE}")) fail(`${p.name}: the loo is drawn as a trophy`); });
 console.log(`${seen.size} cards, ${Object.keys(types).length} of 12 types in use`);
 Object.entries(types).sort((a, b) => b[1] - a[1]).forEach(([t, n]) => console.log(`  ${String(n).padStart(2)}  ${t}`));
 console.log(`league medians: pit deviation ${styles.league.pitDev?.toFixed(2)}s, popularity ${styles.league.popularity?.toFixed(2)}`);

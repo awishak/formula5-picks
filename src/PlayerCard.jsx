@@ -200,6 +200,20 @@ export function PlayerCardBody({ data, onClose }) {
           textOverflow: "ellipsis" }}>{team ? team.name : "No team"}</div>
       </div>
 
+      {/* The title, under the team name, in gold. The sheets' loo mark means
+          World Champion (Andrew, 2026-10-02). */}
+      {career.titles.length > 0 && (
+        <div style={{ textAlign: "center", marginTop: 7 }}>
+          <span style={{
+            ...label({ fontSize: 14, letterSpacing: "0.12em" }), ...textGlow(V.gold, 0.7),
+            padding: "5px 12px", borderRadius: 999, border: `1px solid ${V.gold}88`,
+            background: `${V.gold}14`, display: "inline-block",
+          }}>
+            {career.titles.join(", ")} World Champion
+          </span>
+        </div>
+      )}
+
       {/* Driving style: the type, then the three axes it came from. */}
       {style && (
         <div style={{ textAlign: "center", marginTop: 12 }}>

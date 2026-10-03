@@ -24,6 +24,8 @@ const ALIAS = { "Theodore Ishak": "Theo Ishak" };
 export const canonPlayer = n => ALIAS[n] || n;
 
 const WIN = "\u{1F3C6}", P2 = "\u{1F948}", P3 = "\u{1F949}";
+// The loo. On Andrew's sheets it is the World Champion's mark.
+const WC = "\u{1F6BE}";
 export const MARK = { 1: WIN, 2: P2, 3: P3 };
 
 // Final tables: [name, points, trophies?, shared?]. Order is the sheet's order
@@ -127,8 +129,12 @@ const season = (year, rows) => {
       wins: finishes.filter(f => f.place === 1).length,
       podiums: finishes.length,
       finishes,
-      // Trophies that are not a podium: the loo, the wheel, the flag.
-      extras: [...extras],
+      // First in the season's table is the World Champion. The sheets mark it
+      // with the loo (Andrew, 2026-10-02: WC is world champion), and 2023's
+      // sheet did not mark it at all, so the place decides.
+      champion: place === 1,
+      // Trophies that are not a podium and not the title: the wheel, the flag.
+      extras: [...extras].filter(m => m !== WC),
       shared: Boolean(sheetName),
     };
   });
@@ -151,7 +157,8 @@ Object.entries(PTS_2025).sort((a, b) => b[1] - a[1]).forEach(([name, pts], i, ar
     wins: finishes.filter(f => f.place === 1).length,
     podiums: finishes.length,
     finishes,
-    extras: marks.filter(m => !placeOf[m]),
+    champion: place === 1,
+    extras: marks.filter(m => !placeOf[m] && m !== WC),
     shared: false,
   };
 });
