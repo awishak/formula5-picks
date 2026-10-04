@@ -299,6 +299,10 @@ const TRACKS = {
 // What a round is called on its deck when Andrew calls it something else.
 // Round 16, the Bahrain Grand Prix at Sepang, is the Bahlaysian Grand Prix.
 const RACE_NAME = { 16: "Bahlaysia Grand Prix" };
+// The song a round's deck offers in place of Tubey's theme. Andrew, 2026-10-04:
+// round 16's cards play the Bahlaysian Grand Prix song instead. Card 1's offer,
+// the pill on later cards and card 4's advert all follow it.
+const ROUND_SONG = { 16: "bahlaysia" };
 // Round 15's deck is its own thing, set 2026-09-27: a drama card, the five
 // recap cards, the result, and a send-off that starts the song and leaves it
 // playing on the picker. Every other round runs the standard deck.
@@ -369,7 +373,8 @@ const PauseIcon = ({ color, size }) => (
 // already scaling on a 375x667 phone and a stacked sleeve would push it under
 // the floor. The old song is a quiet line rather than a third pill for the
 // same reason.
-function ThemeOffer({ won, onWith, onOld, onWithout, cover = TUBEY_COVER }) {
+function ThemeOffer({ won, onWith, onOld, onWithout, cover = TUBEY_COVER, song = "tubey" }) {
+  const bah = song === "bahlaysia";
   return (
     <div style={{ ...vcard({ padding: 16, width: "100%" }), ...edgeGlow(V.blue, 0.7),
       display: "grid", gap: 12, justifyItems: "center", textAlign: "center",
@@ -383,18 +388,26 @@ function ThemeOffer({ won, onWith, onOld, onWithout, cover = TUBEY_COVER }) {
         <TubeyCover variant={cover} size={116}
           style={{ boxShadow: `0 0 18px ${V.blue}55`, border: `1px solid ${V.border2}` }} />
         <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
-          <div style={{ ...label({ fontSize: 13, color: V.text3 }) }}>THE NEW F5 THEME SONG</div>
+          <div style={{ ...label({ fontSize: 13, color: V.text3 }) }}>{bah ? "THE BAHLAYSIAN GP SONG" : "THE NEW F5 THEME SONG"}</div>
           <div style={{ ...body("bodySm", { fontSize: 13, color: V.text2, lineHeight: 1.2 }) }}>
             featuring
           </div>
           <div style={{ ...display("h2", { fontSize: 25, lineHeight: 1.05 }), ...textGlow(V.blue, 0.8) }}>
             TUBEY THE WORM
           </div>
+          {bah && (
+            <div style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color: V.text, lineHeight: 1.2 }) }}>
+              &ldquo;{TRACKS.bahlaysia.name}&rdquo;
+            </div>
+          )}
         </div>
       </div>
       <div style={{ ...body("bodySm", { fontSize: 14, color: V.text2, lineHeight: 1.4 }),
         maxWidth: 320 }}>
-        {won
+        {bah
+          ? (won ? "Congrats! Celebrate with the Bahlaysian Grand Prix song."
+            : "Cheer up with the Bahlaysian Grand Prix song.")
+          : won
           ? "Congrats! Celebrate with the new F5 theme song."
           : "Cheer up with the new F5 theme song."}
       </div>
@@ -403,7 +416,7 @@ function ThemeOffer({ won, onWith, onOld, onWithout, cover = TUBEY_COVER }) {
           ...display("h3", { fontSize: 17, color: V.bg }), background: V.blue,
           border: "none", borderRadius: 999, padding: "13px 20px", cursor: "pointer",
           boxShadow: `0 0 18px ${V.blue}77`,
-        }}>PLAY THE NEW SONG</button>
+        }}>{bah ? "PLAY THE SONG" : "PLAY THE NEW SONG"}</button>
         <button onClick={onWithout} style={{
           ...display("h3", { fontSize: 17, color: V.blue }), background: V.bg,
           border: `1.5px solid ${V.blue}`, borderRadius: 999, padding: "13px 20px",
@@ -2797,7 +2810,7 @@ function CardResult({ d, theme }) {
       )}
 
       {theme && (
-        <ThemeOffer won={won} onWith={theme.onWith} onOld={theme.onOld} onWithout={theme.onWithout} cover={theme.cover} />
+        <ThemeOffer won={won} onWith={theme.onWith} onOld={theme.onOld} onWithout={theme.onWithout} cover={theme.cover} song={theme.song} />
       )}
 
       <Ask>{theme ? "And how did you do yourself?" : "One more thing before your picks."}</Ask>
@@ -3386,6 +3399,7 @@ function CardStandings({ d }) {
 
 function CardNext({ d, onPicks, onExit }) {
   const c = d.card8;
+  const bah = ROUND_SONG[d.round] === "bahlaysia";
   const r = c.race;
   // The flag. This is the only card in the deck that asks the reader for
   // something, and the podium on card 2 is where a flag shows up, so this is
@@ -3459,7 +3473,7 @@ function CardNext({ d, onPicks, onExit }) {
             style={{ border: `1px solid ${V.border2}` }} />
           <span style={{ display: "grid", gap: 4 }}>
             <span style={{ ...display("h2", { fontSize: 24, lineHeight: 1.05 }), ...textGlow(V.blue, 0.8) }}>
-              GET VELVET THUNDER NOW
+              {bah ? "GET WELCOME TO BAHLAYSIA NOW" : "GET VELVET THUNDER NOW"}
             </span>
             <span style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color: V.text }) }}>
               featuring Tubey the Worm
@@ -3479,7 +3493,8 @@ function CardNext({ d, onPicks, onExit }) {
             -Fantasy Games Weekly
           </span>
         </div>
-        <a href={TRACKS.tubey.src} download="velvet-thunder-featuring-tubey-the-worm.mp3" style={{
+        <a href={bah ? TRACKS.bahlaysia.src : TRACKS.tubey.src}
+          download={bah ? "welcome-to-bahlaysia-featuring-tubey-the-worm.mp3" : "velvet-thunder-featuring-tubey-the-worm.mp3"} style={{
           ...display("h3", { fontSize: 15, color: V.bg }), background: V.blue,
           borderRadius: 999, padding: "11px 26px", textDecoration: "none",
           boxShadow: `0 0 18px ${V.blue}77`,
@@ -3598,7 +3613,8 @@ export function WeeklyDeck({ data: given, onExit, onPicks, initialCard = 0, init
   //
   // Which song is chosen there. The src is swapped on the element inside the
   // tap, before play(), because play() has to run inside the gesture.
-  const [track, setTrack] = useState("tubey");
+  const roundSong = (data && ROUND_SONG[data.round]) || "tubey";
+  const [track, setTrack] = useState(roundSong);
   const playTheme = (which = "tubey") => {
     setTrack(which);
     setPlaying(true);
@@ -3781,7 +3797,8 @@ export function WeeklyDeck({ data: given, onExit, onPicks, initialCard = 0, init
           onNext={kind === "drama" ? advance : undefined}
           video={kind === "video" ? { clip, ref: videoRef, soundOn, toggleSound, pauseTheme } : undefined}
           theme={offer ? {
-            onWith: () => { playTheme("tubey"); advance(); },
+            onWith: () => { playTheme(roundSong); advance(); },
+            song: roundSong,
             onOld: () => { playTheme("velvet"); advance(); },
             cover,
             onWithout: advance,

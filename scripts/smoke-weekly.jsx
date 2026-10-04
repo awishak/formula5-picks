@@ -217,6 +217,14 @@ for (const s of ["held", "solo", "pair", "notEnough", "locked"]) {
     const html = renderToString(<WeeklyDeck data={{ ...base, round: 16 }} initialCard={0} />);
     if (!/BAHLAYSIA GRAND PRIX/.test(html)) throw new Error("round 16 not renamed");
   });
+  check("round 16 offers the Bahlaysian song in place of Tubey's theme", () => {
+    const one = renderToString(<WeeklyDeck data={{ ...base, round: 16 }} initialCard={0} />);
+    if (!/THE BAHLAYSIAN GP SONG/.test(one)) throw new Error("card 1 still offers the theme");
+    const four = renderToString(<WeeklyDeck data={{ ...base, round: 16 }} initialCard={3} />);
+    if (!/GET WELCOME TO BAHLAYSIA NOW/.test(four) || !/bahlaysian-gp\.mp3/.test(four)) throw new Error("card 4 advert is still the theme");
+    const other = renderToString(<WeeklyDeck data={{ ...base, round: 17 }} initialCard={0} />);
+    if (/BAHLAYSIAN GP SONG/.test(other)) throw new Error("round 17 should be back on the theme");
+  });
 }
 
 console.log(`\n${failed ? "FAILED" : "OK"}  ${total - failed}/${total} renders`);
