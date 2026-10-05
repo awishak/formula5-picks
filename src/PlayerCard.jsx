@@ -82,16 +82,24 @@ export function PlayerCardProvider({ children }) {
 const initialsOf = n => (n || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 const hueOf = n => { let h = 0; for (let i = 0; i < (n || "").length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0; return h % 360; };
 
-function Face({ name, photo, size }) {
-  const ring = { border: `3px solid ${V.blue}`, boxShadow: `0 0 18px ${V.blue}77, 0 0 46px ${V.blue}33` };
+// The face, full width of the card and fading into it from the bottom, not in
+// a circle (Andrew, 2026-10-04): the helmets are the picture. Bled to the
+// card's edges by its own padding; the card's overflow clips the top corners.
+// The mask fades into whatever the card is drawn on, so no colour is repeated
+// here. Cropped from the top, so what goes is the suit, which is fading anyway.
+const HERO_BLEED = "-10px -16px 0";
+const heroFade = "linear-gradient(to bottom, #000 0%, #000 52%, transparent 100%)";
+
+function Hero({ name, photo }) {
+  const box = { display: "block", width: "calc(100% + 32px)", margin: HERO_BLEED, aspectRatio: "1 / 0.92",
+    WebkitMaskImage: heroFade, maskImage: heroFade };
   if (photo) {
-    return <img src={photo} alt="" style={{ width: size, height: size, borderRadius: "50%",
-      objectFit: "cover", display: "block", background: V.bg3, ...ring }} />;
+    return <img src={photo} alt="" style={{ ...box, objectFit: "cover", objectPosition: "center top" }} />;
   }
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", display: "flex",
-      alignItems: "center", justifyContent: "center", background: `hsl(${hueOf(name)} 62% 46%)`,
-      fontFamily: FD, fontWeight: 700, fontSize: size * 0.36, color: "#fff", ...ring }}>
+    <div style={{ ...box, display: "flex", alignItems: "center", justifyContent: "center",
+      background: `hsl(${hueOf(name)} 62% 46%)`,
+      fontFamily: FD, fontWeight: 700, fontSize: 96, color: "#fff" }}>
       {initialsOf(name)}
     </div>
   );
@@ -227,21 +235,20 @@ export function PlayerCardBody({ data, onClose, openPodiums = false }) {
   const dash = "–";
   return (
     <div>
-      {/* Close, top right. A card you cannot see how to leave is a trap. */}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: -6 }}>
+      <div style={{ position: "relative" }}>
+        <Hero name={name} photo={photo} />
+        {/* Close, top right, over the picture. A card you cannot see how to
+            leave is a trap, so it sits on a dark chip the photo cannot swallow. */}
         <button onClick={onClose} aria-label="Close" style={{
-          ...label({ fontSize: 13, color: V.text2 }), background: "transparent",
-          border: "none", cursor: "pointer", padding: "8px 6px",
+          ...label({ fontSize: 13, color: V.text }), position: "absolute", top: 0, right: -6,
+          background: "rgba(4,4,9,0.72)", border: `1px solid ${V.border2}`, borderRadius: 999,
+          cursor: "pointer", padding: "7px 12px",
         }}>CLOSE</button>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
-        <Face name={name} photo={photo} size={110} />
-      </div>
-
       {/* Flagged is a flex row sized to its content, so centring is the
-          wrapper's job. */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
+          wrapper's job. The name rides up onto the fade. */}
+      <div style={{ display: "flex", justifyContent: "center", marginTop: -34, position: "relative" }}>
         <Flagged name={name} nation={nation} size={24} style={display("h2", {
           fontSize: "clamp(24px, 7.6vw, 32px)", lineHeight: 1.1, color: V.text,
         })} />
