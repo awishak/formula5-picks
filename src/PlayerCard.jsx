@@ -89,10 +89,10 @@ const hueOf = n => { let h = 0; for (let i = 0; i < (n || "").length; i++) h = (
 // repeated here, and it starts low so the shoulders are there before they go.
 // The sides fade too: the photos are shot on black, and a black square on the
 // card's navy reads as a box.
-const heroFade = "linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%), linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%)";
+const heroFade = "linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%)";
 
 function Hero({ name, photo }) {
-  const box = { display: "block", width: "74%", margin: "4px auto 0", aspectRatio: "1 / 1",
+  const box = { display: "block", width: "64%", margin: "4px auto 0", aspectRatio: "1 / 1",
     WebkitMaskImage: heroFade, maskImage: heroFade,
     WebkitMaskComposite: "source-in", maskComposite: "intersect" };
   if (photo) {
