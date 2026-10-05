@@ -112,6 +112,24 @@ const shoulder = (accent, strong = false) => ({
   border: `1px solid ${accent}${strong ? "88" : "44"}`,
 });
 
+// The player card's photo treatment (PlayerCard.jsx, Andrew 2026-10-04): the
+// whole square photo, out of the circle, fading into the tile at the bottom so
+// the shoulders are there before they go, and at the sides so a photo shot on
+// black does not read as a box. Same mask, so the two agree.
+const heroFade = "linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%)";
+function HeroFace({ src, name, width = "72%", accent = V.border2 }) {
+  const box = { display: "block", width, margin: "0 auto", aspectRatio: "1 / 1",
+    WebkitMaskImage: heroFade, maskImage: heroFade,
+    WebkitMaskComposite: "source-in", maskComposite: "intersect" };
+  if (src) return <img src={src} alt="" style={{ ...box, objectFit: "cover", objectPosition: "center top" }} />;
+  return (
+    <div style={{ ...box, display: "flex", alignItems: "center", justifyContent: "center",
+      background: V.bg3, ...display("h3", { color: accent }) }}>
+      {String(name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+    </div>
+  );
+}
+
 const Big = ({ label: text, color = V.text, size = 30, glow = null, delay = 0 }) => (
   <div style={{ ...numeric("stat", { fontSize: size, color }), ...(glow ? textGlow(glow, 0.7) : {}) }}>
     {typeof text === "number" ? <Count to={text} delay={delay} dur={700} /> : text}
@@ -120,14 +138,13 @@ const Big = ({ label: text, color = V.text, size = 30, glow = null, delay = 0 })
 
 function Peak({ r, rank, accent, me, tall = false, delay = 0 }) {
   if (!r) return <div style={{ flex: 1 }} />;
-  const face = tall ? av(84) : av(62);
   return (
     <div className="v-pop" style={{ flex: 1, minWidth: 0, ...shoulder(me ? V.amber : accent, tall),
-      padding: tall ? "16px 6px 12px" : "12px 6px 10px", marginTop: tall ? 0 : 34,
-      display: "grid", gap: 4, justifyItems: "center", animationDelay: `${delay}ms` }}>
+      padding: tall ? "10px 4px 10px" : "8px 4px 8px", marginTop: tall ? 0 : 30,
+      display: "grid", gap: 4, justifyItems: "center", animationDelay: `${delay}ms`, overflow: "hidden" }}>
       <div style={{ ...numeric("chip", { fontSize: tall ? 20 : 17, color: accent }),
         ...textGlow(accent, 0.5) }}>P{rank}</div>
-      <Face src={r.photo} size={face} ring={me ? V.amber : accent} width={3} />
+      <HeroFace src={r.photo} name={r.name} width={tall ? "78%" : "68%"} accent={accent} />
       <Flagged name={shortName(r.name)} nation={r.nation} wrap gap={5}
         style={{ ...display("h3", { fontSize: tall ? 17 : 15, lineHeight: 1.2,
           color: me ? V.amber : V.text }), textAlign: "center" }} />
@@ -150,7 +167,7 @@ function Small({ r, delay = 0 }) {
       <div style={{ ...numeric("chip", { fontSize: 15, color: me ? V.amber : V.text2 }) }}>
         P{r.place}
       </div>
-      <Face src={r.photo} size={av(44)} ring={accent} width={2} />
+      <HeroFace src={r.photo} name={r.name} width="66%" accent={accent} />
       <div style={{ ...display("chip", { fontSize: 13, color: me ? V.amber : V.text }),
         lineHeight: 1.15, textAlign: "center", overflowWrap: "anywhere", letterSpacing: "0.02em" }}>
         {shortName(r.name)}
