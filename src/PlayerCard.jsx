@@ -82,17 +82,19 @@ export function PlayerCardProvider({ children }) {
 const initialsOf = n => (n || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 const hueOf = n => { let h = 0; for (let i = 0; i < (n || "").length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0; return h % 360; };
 
-// The face, full width of the card and fading into it from the bottom, not in
-// a circle (Andrew, 2026-10-04): the helmets are the picture. Bled to the
-// card's edges by its own padding; the card's overflow clips the top corners.
-// The mask fades into whatever the card is drawn on, so no colour is repeated
-// here. Cropped from the top, so what goes is the suit, which is fading anyway.
-const HERO_BLEED = "-10px -16px 0";
-const heroFade = "linear-gradient(to bottom, #000 0%, #000 52%, transparent 100%)";
+// The face, out of the circle and fading into the card from the bottom
+// (Andrew, 2026-10-04). The whole square photo, uncropped, so the shoulders
+// show: it first shipped full bleed and cropped to the helmet, and that was
+// too big. The mask fades into whatever the card is drawn on, so no colour is
+// repeated here, and it starts low so the shoulders are there before they go.
+// The sides fade too: the photos are shot on black, and a black square on the
+// card's navy reads as a box.
+const heroFade = "linear-gradient(to bottom, #000 0%, #000 70%, transparent 100%), linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%)";
 
 function Hero({ name, photo }) {
-  const box = { display: "block", width: "calc(100% + 32px)", margin: HERO_BLEED, aspectRatio: "1 / 0.92",
-    WebkitMaskImage: heroFade, maskImage: heroFade };
+  const box = { display: "block", width: "74%", margin: "4px auto 0", aspectRatio: "1 / 1",
+    WebkitMaskImage: heroFade, maskImage: heroFade,
+    WebkitMaskComposite: "source-in", maskComposite: "intersect" };
   if (photo) {
     return <img src={photo} alt="" style={{ ...box, objectFit: "cover", objectPosition: "center top" }} />;
   }
@@ -248,7 +250,7 @@ export function PlayerCardBody({ data, onClose, openPodiums = false }) {
 
       {/* Flagged is a flex row sized to its content, so centring is the
           wrapper's job. The name rides up onto the fade. */}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: -34, position: "relative" }}>
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 2, position: "relative" }}>
         <Flagged name={name} nation={nation} size={24} style={display("h2", {
           fontSize: "clamp(24px, 7.6vw, 32px)", lineHeight: 1.1, color: V.text,
         })} />
