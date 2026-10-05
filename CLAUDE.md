@@ -61,7 +61,7 @@ All components live in src/. Recaps are static HTML in public/recaps/, surfaced 
 
 ## The weekly deck
 
-**Live as the gate since 2026-08-26.** The first time you open the app after a
+**Live as the gate from 2026-08-26 to 2026-10-05**, when the second deck (below) took over; this one is at `/week?v=1`. The first time you open the app after a
 race is scored you get your own deck, once, and closing it is remembered under
 `f5_week_seen_r{round}_{name}` in localStorage. It replaced the first-half recap
 deck in that slot.
@@ -836,7 +836,7 @@ Where the taps are: every row on /players, the two opponent tiles and the two na
 The card scrolls inside itself on a 375x667 phone: the 2026 row of the career table sits just under the fold. The lever is card height; the face is 110px and every gap is already cut.
 ## The second weekly deck, /week?v=2
 
-Built 2026-10-05 at Andrew's ask: "more white space and have each card have a clear action or takeaway." Six cards, one press each, mounted at `/week?v=2` with the same `?player=`, `?card=` and `?round=` overrides. **Not the gate yet**; the first deck still gates until Andrew says to swap.
+Built 2026-10-05 at Andrew's ask: "more white space and have each card have a clear action or takeaway." Six cards, one press each. **The gate and `/week` since the evening of 2026-10-05** ("push it so it's the main cards now"), with the same `?player=`, `?card=` and `?round=` overrides; the first deck is still at `/week?v=1` and `check:weekly` walks it there. Round 16's seen flag was reset (`WEEK_SEEN_V[16] = "v2"`) so everyone who had closed the first deck sees this one once.
 
 | card | what |
 |---|---|

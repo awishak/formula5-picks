@@ -27,7 +27,8 @@ let failed = 0;
 for (const { round, stages: STAGES } of RUNS) {
 for (let card = 0; card < STAGES.length; card++) {
   for (let st = 1; st <= STAGES[card]; st++) {
-    const url = `${BASE}/week?round=${round}&card=${card + 1}&stage=${st}&player=${encodeURIComponent(PLAYER)}`;
+    // ?v=1: this walks the first deck's stages; the second deck has none.
+    const url = `${BASE}/week?v=1&round=${round}&card=${card + 1}&stage=${st}&player=${encodeURIComponent(PLAYER)}`;
     let out = "";
     try {
       const r = await run(CHROME, ["--headless=new", "--disable-gpu", "--virtual-time-budget=6000",

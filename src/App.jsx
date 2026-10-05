@@ -32,7 +32,8 @@ import NowPlaying from "./NowPlaying.jsx";
 // A round whose deck was rebuilt after people had closed it gets a new seen
 // key, so the gate opens once more for everyone. Round 15's deck became the
 // Bahlaysian deck on 2026-09-27, a day after it was scored.
-const WEEK_SEEN_V = { 15: "v2" };
+// 16 reset 2026-10-05 when the second deck became the gate, so everyone sees it once.
+const WEEK_SEEN_V = { 15: "v2", 16: "v2" };
 import Paddock from "./Paddock.jsx";
 import { NEWS } from "./news";
 
@@ -1071,9 +1072,9 @@ export default function App() {
     // ?stage= opens a card that plays out in presses on one of those presses,
     // so every stage can be photographed without clicking through.
     const stageParam = parseInt(q.get("stage") || "", 10);
-    // The second deck, at /week?v=2 while it is being looked at. Same
-    // overrides. It becomes the gate only when Andrew says so.
-    if (who && q.get("v") === "2") return (
+    // The second deck is the deck since 2026-10-05. ?v=1 opens the first one,
+    // kept for the stage overrides and the old screenshots.
+    if (who && q.get("v") !== "1") return (
       <WeeklyV2
         playerName={who}
         round={Number.isFinite(roundParam) ? roundParam : null}
@@ -1166,7 +1167,7 @@ export default function App() {
   // so the matchup card could not be scrolled. This is how /week renders too,
   // so it behaves identically.
   if (showWeekGate) return (
-    <Weekly
+    <WeeklyV2
       playerName={currentUser}
       initialCard={0}
       onPicks={() => {
