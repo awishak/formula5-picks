@@ -58,8 +58,10 @@ const signed = n => (n > 0 ? `+${n}` : String(n));
 // A car. The side and top views live in public/cars by team code, Hedra
 // renders Andrew made on 2026-10-05, shrunk to 800 wide. A team with no car
 // yet gets its logo on a plate so nothing is ever blank.
-function CarImg({ code, view = "side", logo, style = {} }) {
-  const [bad, setBad] = useState(false);
+function CarImg({ code, view = "side", logo, style = {}, cutout = false }) {
+  // 0 tries the cutout PNG, 1 the studio JPEG, 2 gives up and shows the logo.
+  const [stage, setStage] = useState(cutout ? 0 : 1);
+  const bad = stage > 1;
   if (!code || bad) {
     return (
       <div style={{ ...style, display: "flex", alignItems: "center", justifyContent: "center",
@@ -69,7 +71,7 @@ function CarImg({ code, view = "side", logo, style = {} }) {
     );
   }
   return (
-    <img src={`/cars/${code}-${view}.jpg`} alt="" onError={() => setBad(true)}
+    <img src={`/cars/${code}-${view}.${stage === 0 ? "png" : "jpg"}`} alt="" onError={() => setStage(stage + 1)}
       style={{ display: "block", objectFit: "cover", ...style }} />
   );
 }
@@ -100,6 +102,42 @@ function CarRace({ myTeam, oppTeam, outcome }) {
     <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 10.4" }}>
       {plate(behind, behindC, { right: 0, top: 0, zIndex: 1, filter: "brightness(0.78)" })}
       {plate(ahead, aheadC, { left: 0, bottom: 0, zIndex: 2 })}
+    </div>
+  );
+}
+
+function FinishLine({ myTeam, oppTeam, outcome }) {
+  const won = outcome === "won", lost = outcome === "lost";
+  const ahead = lost ? oppTeam : myTeam, behind = lost ? myTeam : oppTeam;
+  const aheadC = lost ? THEIRS_C : won ? MINE_C : V.blue;
+  const behindC = lost ? MINE_C : won ? THEIRS_C : V.pink;
+  const car = (t, c, pos, z, dim) => (
+    <div style={{ position: "absolute", width: "66%", zIndex: z, ...pos,
+      filter: `drop-shadow(0 8px 14px #000c) drop-shadow(0 0 10px ${c}55)${dim ? " brightness(0.8)" : ""}` }}>
+      <CarImg code={t.code} view="top" logo={t.logo} cutout style={{ width: "100%", height: "auto" }} />
+      <div style={{ position: "absolute", left: "50%", bottom: -6, transform: "translateX(-50%)",
+        display: "flex", alignItems: "center", gap: 6, padding: "3px 9px 3px 5px", borderRadius: 999,
+        background: "#000d", border: `1px solid ${c}88`, whiteSpace: "nowrap" }}>
+        <Logo src={t.logo} size={16} />
+        <span style={{ ...display("chip", { fontSize: 13, color: c }) }}>{shortOf(t.name)}</span>
+      </div>
+    </div>
+  );
+  return (
+    <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 11", overflow: "hidden",
+      borderRadius: 16, background: `linear-gradient(90deg, ${V.bg3} 0%, ${V.bg2} 100%)`,
+      border: `1px solid ${V.border}` }}>
+      {/* The finish line, a checkered band down the left. */}
+      <div style={{ position: "absolute", left: "9%", top: 0, bottom: 0, width: 22,
+        backgroundImage: "repeating-conic-gradient(#f2f2f7 0% 25%, #111 0% 50%)",
+        backgroundSize: "11px 11px", opacity: 0.9 }} />
+      {/* Lane marks. */}
+      {[33, 66].map(p => (
+        <div key={p} style={{ position: "absolute", left: 0, right: 0, top: `${p}%`, height: 2,
+          backgroundImage: `repeating-linear-gradient(90deg, ${V.border2} 0 18px, transparent 18px 34px)` }} />
+      ))}
+      {car(behind, behindC, { left: "30%", top: "6%" }, 1, true)}
+      {car(ahead, aheadC, { left: "-4%", top: "50%" }, 2, false)}
     </div>
   );
 }
@@ -136,21 +174,45 @@ const Big = ({ label: text, color = V.text, size = 30, glow = null, delay = 0 })
   </div>
 );
 
-function Peak({ r, rank, accent, me, tall = false, delay = 0 }) {
-  if (!r) return <div style={{ flex: 1 }} />;
+// The top three as one picture: P1 in the middle and biggest, P2 and P3 either
+// side, lower and behind, overlapping into it. Not three tiles (Andrew,
+// 2026-10-05: "overlap, not be in their own cards"). The side fades on the
+// photos are what let the overlap blend. Under the picture, three columns of
+// place, name, team and score, bigger than anything else on the card.
+function Podium({ top3, delay = 0 }) {
+  const [p1, p2, p3] = top3;
+  const medal = [V.gold, V.silver, V.bronze];
+  const photo = (r, pos, z, w, d) => r ? (
+    <div className="v-pop" style={{ position: "absolute", bottom: 0, width: w, zIndex: z,
+      ...pos, animationDelay: `${d}ms`, animationDuration: "900ms" }}>
+      <HeroFace src={r.photo} name={r.name} width="100%" accent={V.border2} />
+    </div>
+  ) : null;
+  const col = (r, rank, accent, d) => r ? (
+    <div className="v-pop" style={{ display: "grid", gap: 2, justifyItems: "center", minWidth: 0,
+      animationDelay: `${d}ms`, animationDuration: "900ms" }}>
+      <div style={{ ...numeric("chip", { fontSize: rank === 1 ? 26 : 22, color: accent }),
+        ...textGlow(accent, 0.6) }}>P{rank}</div>
+      <Flagged name={shortName(r.name)} nation={r.nation} wrap gap={6}
+        style={{ ...display("h3", { fontSize: rank === 1 ? 21 : 18, lineHeight: 1.15,
+          color: r.me ? V.amber : V.text }), textAlign: "center" }} />
+      <div style={{ ...display("chip", { fontSize: 15, color: V.text2 }), lineHeight: 1.2,
+        textAlign: "center", overflowWrap: "anywhere" }}>{r.team ? shortOf(r.team) : ""}</div>
+      <Big label={r.pts} size={rank === 1 ? 34 : 29} color={V.text} glow={V.blue} delay={d + 500} />
+    </div>
+  ) : <div />;
   return (
-    <div className="v-pop" style={{ flex: 1, minWidth: 0, ...shoulder(me ? V.amber : accent, tall),
-      padding: tall ? "10px 4px 10px" : "8px 4px 8px", marginTop: tall ? 0 : 30,
-      display: "grid", gap: 4, justifyItems: "center", animationDelay: `${delay}ms`, overflow: "hidden" }}>
-      <div style={{ ...numeric("chip", { fontSize: tall ? 20 : 17, color: accent }),
-        ...textGlow(accent, 0.5) }}>P{rank}</div>
-      <HeroFace src={r.photo} name={r.name} width={tall ? "78%" : "68%"} accent={accent} />
-      <Flagged name={shortName(r.name)} nation={r.nation} wrap gap={5}
-        style={{ ...display("h3", { fontSize: tall ? 17 : 15, lineHeight: 1.2,
-          color: me ? V.amber : V.text }), textAlign: "center" }} />
-      <div style={{ ...display("chip", { fontSize: 13, color: V.text2 }), lineHeight: 1.2,
-        overflowWrap: "anywhere" }}>{r.team ? shortOf(r.team) : ""}</div>
-      <Big label={r.pts} size={tall ? 34 : 27} color={V.text} glow={V.blue} delay={700 + delay} />
+    <div style={{ width: "100%", display: "grid", gap: 2 }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "10 / 4.1" }}>
+        {photo(p2, { left: "4%" }, 1, "34%", delay + 700)}
+        {photo(p3, { right: "4%" }, 1, "34%", delay + 1300)}
+        {photo(p1, { left: "30%" }, 2, "40%", delay)}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", gap: 6, alignItems: "start" }}>
+        {col(p2, 2, medal[1], delay + 700)}
+        {col(p1, 1, medal[0], delay)}
+        {col(p3, 3, medal[2], delay + 1300)}
+      </div>
     </div>
   );
 }
@@ -162,26 +224,26 @@ function Small({ r, delay = 0 }) {
   const tag = me ? "YOU" : kind === "mate" ? "TEAMMATE" : null;
   return (
     <div className="v-pop" style={{ flex: 1, minWidth: 0, ...shoulder(me ? V.amber : kind === "mate" ? V.blue : V.text3),
-      padding: "9px 4px 8px", display: "grid", gap: 3, justifyItems: "center",
+      padding: "7px 3px 7px", display: "grid", gap: 2, justifyItems: "center",
       animationDelay: `${delay}ms` }}>
-      <div style={{ ...numeric("chip", { fontSize: 15, color: me ? V.amber : V.text2 }) }}>
+      <div style={{ ...numeric("chip", { fontSize: 18, color: me ? V.amber : V.text2 }) }}>
         P{r.place}
       </div>
-      <HeroFace src={r.photo} name={r.name} width="66%" accent={accent} />
-      <div style={{ ...display("chip", { fontSize: 13, color: me ? V.amber : V.text }),
+      <HeroFace src={r.photo} name={r.name} width="44%" accent={accent} />
+      <div style={{ ...display("chip", { fontSize: 15, color: me ? V.amber : V.text }),
         lineHeight: 1.15, textAlign: "center", overflowWrap: "anywhere", letterSpacing: "0.02em" }}>
         {shortName(r.name)}
       </div>
       <div style={{ ...body("bodySm", { fontSize: 13, color: V.text3 }), lineHeight: 1.15,
         textAlign: "center", overflowWrap: "anywhere" }}>{r.team ? shortOf(r.team) : ""}</div>
-      <Big label={r.pts} size={22} color={V.text} glow={V.blue} delay={900 + delay} />
+      <Big label={r.pts} size={21} color={V.text} glow={V.blue} delay={900 + delay} />
       {tag && <div style={{ ...label({ fontSize: 11, color: accent }) }}>{tag}</div>}
     </div>
   );
 }
 
 // A driver's face, ringed in his team's colour, with the points he was worth.
-function DriverTile({ name, pts, tag = null, dim = false, copies = 1, size = av(50) }) {
+function DriverTile({ name, pts, tag = null, dim = false, copies = 1, size = av(50), color = V.blue }) {
   const c = dColor(name);
   const url = DRIVER_HEADSHOTS[name];
   return (
@@ -198,10 +260,10 @@ function DriverTile({ name, pts, tag = null, dim = false, copies = 1, size = av(
             background: V.text, borderRadius: 999, padding: "0 6px" }}>x{copies}</span>
         )}
       </div>
-      <div style={{ ...display("chip", { fontSize: 13, color: V.text }), lineHeight: 1.1 }}>
+      <div style={{ ...display("chip", { fontSize: 14, color: V.text }), lineHeight: 1.1 }}>
         {lastName(name)}
       </div>
-      <div style={{ ...numeric("chip", { fontSize: 18, color: dim ? V.text3 : V.blue }) }}>{pts}</div>
+      <div style={{ ...numeric("chip", { fontSize: 20, color: dim ? V.text3 : color }) }}>{pts}</div>
       {tag && <div style={{ ...label({ fontSize: 11, color: V.amber }) }}>{tag}</div>}
     </div>
   );
@@ -270,7 +332,7 @@ function CardResult({ v, onMusic, onNoMusic, onSkip }) {
       <Head color={c} glow={won} size="h1">
         {won ? "Your team won!" : lost ? "Your team lost." : "Your team drew."}
       </Head>
-      <CarRace myTeam={r.myTeam} oppTeam={r.oppTeam} outcome={r.outcome} />
+      <FinishLine myTeam={r.myTeam} oppTeam={r.oppTeam} outcome={r.outcome} />
       <div style={{ display: "flex", width: "100%", gap: 10, marginTop: 4 }}>
         {[[r.myTeam, r.myTotal, mineC, won], [r.oppTeam, r.oppTotal, theirsC, lost]].map(([t, n, col, lit]) => (
           <div key={t.code} style={{ flex: 1, minWidth: 0, display: "grid", gap: 2, justifyItems: "center" }}>
@@ -298,17 +360,13 @@ function CardPodium({ v }) {
   return (
     <>
       <Kicker>ROUND {v.round} · {String(v.raceName).toUpperCase()}</Kicker>
-      <Head size="h2">This week&rsquo;s podium</Head>
-      <div style={{ display: "flex", gap: 7, width: "100%", alignItems: "flex-start" }}>
-        <Peak r={p2} rank={2} accent={medal[1]} me={p2 && p2.me} delay={220} />
-        <Peak r={p1} rank={1} accent={medal[0]} me={p1 && p1.me} tall delay={0} />
-        <Peak r={p3} rank={3} accent={medal[2]} me={p3 && p3.me} delay={440} />
+      <Head size="h3">The podium</Head>
+      <Podium top3={p.top3} delay={300} />
+      <div style={{ display: "flex", gap: 6, width: "100%" }}>
+        {p.row2.map((r, i) => <Small key={r.id} r={r} delay={2600 + i * 120} />)}
       </div>
       <div style={{ display: "flex", gap: 6, width: "100%" }}>
-        {p.row2.map((r, i) => <Small key={r.id} r={r} delay={700 + i * 90} />)}
-      </div>
-      <div style={{ display: "flex", gap: 6, width: "100%" }}>
-        {p.row3.map((r, i) => <Small key={r.id} r={r} delay={1100 + i * 90} />)}
+        {p.row3.map((r, i) => <Small key={r.id} r={r} delay={3100 + i * 120} />)}
       </div>
     </>
   );
@@ -360,97 +418,105 @@ function CardBoxScore({ v }) {
 
 function reasonLine(m) {
   const r = m.reason, won = m.outcome === "won", drew = m.outcome === "drew";
-  const mineW = r.side === "mine";
-  if (r.kind === "boxbox") return mineW ? "The line won it for you." : "The line is what beat you.";
-  if (r.kind === "driver") return `${lastName(r.driver)} was the difference, ${r.pts} points ${mineW ? "your way" : "theirs"}.`;
-  if (r.kind === "order") return `The finishing order bonus ${mineW ? "won it" : "beat you"}.`;
-  if (r.kind === "best") return `The best finish bonus ${mineW ? "won it" : "beat you"}.`;
-  return drew ? "Level, all the way down." : won ? "A little of everything went your way." : "A little of everything went theirs.";
+  const ours = r.side === "mine";
+  const them = ours ? "you" : "they", other = ours ? "they" : "you";
+  if (r.kind === "boxbox") return ours ? "The line went your way." : "The line went their way.";
+  if (r.kind === "driver") {
+    const d = lastName(r.driver);
+    return ours ? `You had ${d} and they didn't. ${r.pts} points.` : `They had ${d} and you didn't. ${r.pts} points.`;
+  }
+  if (r.kind === "order") return ours ? "Your finishing order bonus made the difference." : "Their finishing order bonus made the difference.";
+  if (r.kind === "best") return ours ? "Your best finish bonus made the difference." : "Their best finish bonus made the difference.";
+  return drew ? "Level, all the way down." : won ? "Close, and it went your way." : "Close, and it went their way.";
 }
+
+const SectionTitle = ({ children, color = V.text }) => (
+  <div style={{ ...display("h3", { fontSize: 19, color }), marginBottom: 10, textAlign: "center" }}>
+    {children}
+  </div>
+);
 
 function CardMatchup({ v }) {
   const m = v.matchup;
   const won = m.outcome === "won", lost = m.outcome === "lost";
-  const mineC = won ? MINE_C : V.text2, theirsC = lost ? THEIRS_C : V.text2;
   const ours = m.diffs.filter(x => x.side === "mine"), theirs = m.diffs.filter(x => x.side === "theirs");
   const bb = m.bb;
-  const bbLit = bb.decided;
   const bbC = bb.won === "mine" ? MINE_C : bb.won === "theirs" ? THEIRS_C : V.blue;
   const rows = Math.max(ours.length, theirs.length);
   const Side = ({ x, color }) => x ? (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-      <DriverTile name={x.driver} pts={signed(x.total)} copies={x.copies} size={av(40)} />
-    </div>
+    <DriverTile name={x.driver} pts={signed(x.total)} copies={x.copies} size={av(44)} color={color} />
   ) : <div />;
+  const Half = ({ children }) => (
+    <div style={{ display: "flex", justifyContent: "center", minWidth: 0 }}>{children}</div>
+  );
   return (
     <>
       <Kicker>YOUR MATCHUP</Kicker>
-      <Head size="h2" color={won ? MINE_C : lost ? THEIRS_C : V.text} glow={won}>
+      <Head size="h1" color={won ? MINE_C : lost ? THEIRS_C : V.text} glow={won || lost}>
         {won ? `Won ${m.myTotal} to ${m.oppTotal}` : lost ? `Lost ${m.oppTotal} to ${m.myTotal}` : `Drew ${m.myTotal} all`}
       </Head>
       <Line color={V.text}>{reasonLine(m)}</Line>
 
-      <Panel pad={12}>
-        <div style={{ ...label({ fontSize: 12, color: V.text3 }), marginBottom: 8 }}>WHAT SEPARATED YOU</div>
+      <Panel pad={14}>
+        <SectionTitle>What separated you</SectionTitle>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, alignItems: "center",
-          paddingBottom: 6, borderBottom: `1px solid ${V.border}` }}>
-          {[[m.myTeam, mineC], [m.oppTeam, theirsC]].map(([t, col]) => (
-            <div key={t.code} style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-              <Logo src={t.logo} size={22} />
-              <span style={{ ...display("chip", { fontSize: 13, color: col }) }}>{shortOf(t.name)}</span>
+          paddingBottom: 8, borderBottom: `1px solid ${V.border}` }}>
+          {[[m.myTeam, MINE_C], [m.oppTeam, THEIRS_C]].map(([t, col]) => (
+            <div key={t.code} style={{ display: "flex", alignItems: "center", gap: 7, justifyContent: "center" }}>
+              <Logo src={t.logo} size={26} />
+              <span style={{ ...display("h3", { fontSize: 16, color: col }), ...textGlow(col, 0.4) }}>{shortOf(t.name)}</span>
             </div>
           ))}
         </div>
         {rows === 0 && (
-          <div style={{ ...body("bodySm", { fontSize: 14, color: V.text2 }), padding: "10px 0" }}>
+          <div style={{ ...body("bodyMd", { fontSize: 15, color: V.text2 }), padding: "12px 0" }}>
             Same drivers on both sides.
           </div>
         )}
         {Array.from({ length: rows }, (_, i) => (
           <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
-            padding: "8px 0", borderBottom: `1px solid ${V.border}` }}>
-            <div style={{ display: "flex", justifyContent: "center" }}><Side x={ours[i]} color={MINE_C} /></div>
-            <div style={{ display: "flex", justifyContent: "center" }}><Side x={theirs[i]} color={THEIRS_C} /></div>
+            padding: "10px 0", borderBottom: `1px solid ${V.border}` }}>
+            <Half><Side x={ours[i]} color={MINE_C} /></Half>
+            <Half><Side x={theirs[i]} color={THEIRS_C} /></Half>
           </div>
         ))}
         {m.bonuses.map(b => (
           <div key={b.key} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
-            padding: "8px 0", borderBottom: `1px solid ${V.border}`, alignItems: "center",
-            background: b.decided ? `${V.amber}12` : "transparent" }}>
-            <div style={{ gridColumn: "1 / -1", ...body("bodySm", { fontSize: 13, color: b.decided ? V.amber : V.text2 }) }}>
-              {b.label}{b.decided ? " decided it" : ""}
+            padding: "10px 0", borderBottom: `1px solid ${V.border}`, alignItems: "center" }}>
+            <div style={{ gridColumn: "1 / -1", ...display("chip", { fontSize: 15, color: b.decided ? V.amber : V.text2 }) }}>
+              {b.label}{b.decided ? " · decided it" : ""}
             </div>
-            <div style={{ ...numeric("chip", { fontSize: 20, color: b.mine > b.theirs ? MINE_C : V.text3 }) }}>{b.mine}</div>
-            <div style={{ ...numeric("chip", { fontSize: 20, color: b.theirs > b.mine ? THEIRS_C : V.text3 }) }}>{b.theirs}</div>
+            <div style={{ ...numeric("chip", { fontSize: 24, color: b.mine > b.theirs ? MINE_C : V.text3 }) }}>{b.mine}</div>
+            <div style={{ ...numeric("chip", { fontSize: 24, color: b.theirs > b.mine ? THEIRS_C : V.text3 }) }}>{b.theirs}</div>
           </div>
         ))}
-        <div style={{ display: "grid", gap: 4, padding: "10px 6px 4px", borderRadius: 10, marginTop: 4,
-          ...(bbLit ? { border: `1.5px solid ${bbC}`, boxShadow: `0 0 14px ${bbC}55`, background: `${bbC}10` } : {}) }}>
-          <div style={{ ...label({ fontSize: 12, color: bbLit ? bbC : V.text3 }) }}>
-            BOX BOX{bbLit ? " · THIS DECIDED IT" : ""}
+        <div style={{ display: "grid", gap: 6, padding: "12px 8px 8px", borderRadius: 12, marginTop: 8,
+          ...(bb.decided ? { border: `1.5px solid ${bbC}`, boxShadow: `0 0 14px ${bbC}55`, background: `${bbC}10` } : {}) }}>
+          <div style={{ ...display("h3", { fontSize: 17, color: bb.decided ? bbC : V.text }) }}>
+            BOX BOX{bb.decided ? " decided it" : ""}
           </div>
-          <div style={{ ...body("bodySm", { fontSize: 14, color: V.text }) }}>
+          <div style={{ ...body("bodyMd", { fontSize: 15, color: V.text }) }}>
             {bb.pit == null
               ? "No pit stop this week, so the line paid nobody."
               : <>Your Matchup&rsquo;s Line <b style={{ color: V.blue }}>{two(bb.line)}</b>, the stop was <b style={{ color: bbC }}>{two(bb.pit)}</b>.</>}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <div style={{ ...numeric("chip", { fontSize: 20, color: bb.mine > 0 ? MINE_C : V.text3 }) }}>{signed(bb.mine)}</div>
-            <div style={{ ...numeric("chip", { fontSize: 20, color: bb.theirs > 0 ? THEIRS_C : V.text3 }) }}>{signed(bb.theirs)}</div>
+            <div style={{ ...numeric("chip", { fontSize: 26, color: bb.mine > 0 ? MINE_C : V.text3 }) }}>{signed(bb.mine)}</div>
+            <div style={{ ...numeric("chip", { fontSize: 26, color: bb.theirs > 0 ? THEIRS_C : V.text3 }) }}>{signed(bb.theirs)}</div>
           </div>
         </div>
       </Panel>
 
       {(m.shared.length > 0 || m.sharedBonus.length > 0) && (
-        <Panel pad={12} style={{ opacity: 0.72 }}>
-          <div style={{ ...label({ fontSize: 12, color: V.text3 }), marginBottom: 8 }}>BOTH TEAMS HAD</div>
+        <Panel pad={14} style={{ opacity: 0.7 }}>
+          <SectionTitle color={V.text2}>Both teams had</SectionTitle>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
             {m.shared.map(x => (
-              <DriverTile key={x.driver} name={x.driver} pts={x.pts} copies={x.copies} dim size={av(38)} />
+              <DriverTile key={x.driver} name={x.driver} pts={x.pts} copies={x.copies} dim size={av(40)} />
             ))}
           </div>
           {m.sharedBonus.map(b => (
-            <div key={b.key} style={{ ...body("bodySm", { fontSize: 13, color: V.text3 }), marginTop: 8 }}>
+            <div key={b.key} style={{ ...body("bodyMd", { fontSize: 15, color: V.text3 }), marginTop: 10 }}>
               {b.label}, {b.pts} each
             </div>
           ))}
@@ -556,7 +622,7 @@ export function WeeklyDeckV2({ data: given, onExit, onPicks, initialCard = 0 }) 
         .f5card > *:nth-child(4) { animation-delay: 210ms; }
         .f5card > *:nth-child(n+5) { animation-delay: 280ms; }
         @keyframes v-pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-        .v-pop { animation: v-pop 420ms cubic-bezier(.2,.85,.3,1) both; }
+        .v-pop { animation: v-pop 480ms cubic-bezier(.2,.85,.3,1) both; }
         @media (prefers-reduced-motion: reduce) {
           .f5card > *, .v-pop { animation: none !important; }
         }
