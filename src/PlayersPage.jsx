@@ -5,7 +5,6 @@ import { V, FM, FD, FB, display, numeric, label, body, card, textGlow, edgeGlow,
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { ordinal } from "./teamTable";
 import FernoloSeal from "./FernoloSeal";
-import { av } from "./theme";
 import { usePlayerCard } from "./PlayerCard.jsx";
 
 // The individual standings. Built to the same pattern as TeamsPage on purpose:
@@ -55,8 +54,32 @@ function Face({ name, photo, size }) {
     <div style={{
       ...s, background: colorOf(name), display: "flex",
       alignItems: "center", justifyContent: "center",
-      fontFamily: FD, fontWeight: 700, fontSize: size * 0.36, color: "#fff",
+      fontFamily: FD, fontWeight: 700, color: "#fff",
+      fontSize: typeof size === "number" ? size * 0.36 : `calc(${size} * 0.36)`,
     }}>{initialsOf(name)}</div>
+  );
+}
+
+// The helmet on a row, twice the size it was so the helmets can be seen
+// (Andrew, 2026-10-04). 101px on a 393 phone, giving way to 80 at 360, where
+// the full size left a surname 30px to wrap into and broke it mid-word.
+const HELMET = "clamp(80px, calc(63.6vw - 149px), 101px)";
+
+// The flag and Fernolo's seal ride on the helmet as badges rather than taking
+// width beside the name: inline, the two of them cost a 360 phone 85px, and
+// Andy Thompson's row collapsed to one letter a line.
+function Helmet({ row, sealed }) {
+  return (
+    <div style={{ position: "relative", flexShrink: 0, width: HELMET, height: HELMET }}>
+      <Face name={row.name} photo={row.photo} size={HELMET} />
+      {sealed && <FernoloSeal size={40} style={{ position: "absolute", top: -4, right: -8 }} />}
+      {row.nation !== "" && (
+        <span style={{ position: "absolute", bottom: 2, right: -6, lineHeight: 0,
+          borderRadius: 3, boxShadow: "0 0 0 2px #000" }}>
+          <Flag nation={row.nation} size={28} />
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -207,7 +230,7 @@ function Row({ row, place, mine, move, mode, sealed = false }) {
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCard(row.name); } }}
       style={{
       display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
-      padding: "8px 10px", borderRadius: 14, marginBottom: 6,
+      padding: "14px 10px", borderRadius: 14, marginBottom: 6,
       background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
       border: `1px solid ${mine ? V.blue : V.border}`,
     }}>
@@ -215,19 +238,21 @@ function Row({ row, place, mine, move, mode, sealed = false }) {
         <div style={numeric("stat", { fontSize: 21, color: V.text2 })}>P{place}</div>
         <Move n={move} />
       </div>
-      <Face name={row.name} photo={row.photo} size={av(42)} />
+      <Helmet row={row} sealed={sealed && mode.id !== "trophies"} />
 
       {/* Who they are. */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <Flagged name={row.name} nation={row.nation}
+        {/* The face is twice the size it was, so the row has the height for a
+            second line and a long name or team takes one rather than being cut. */}
+        <Flagged name={row.name} nation="" wrap
           style={display("h3", {
-            fontSize: NAME_SIZE, lineHeight: 1.35, color: mine ? V.blue : V.text,
+            fontSize: NAME_SIZE, lineHeight: 1.2, color: mine ? V.blue : V.text,
             letterSpacing: "0.01em",
           })} />
         <div style={{
           fontFamily: FD, fontWeight: 600, fontSize: TEAM_SIZE, letterSpacing: "0.01em",
-          textTransform: "uppercase", color: V.text2, marginTop: 1, minWidth: 0,
-          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          textTransform: "uppercase", color: V.text2, marginTop: 3, minWidth: 0,
+          lineHeight: 1.2, overflowWrap: "anywhere",
         }}>{row.teamName || "No team"}</div>
       </div>
 
@@ -238,9 +263,6 @@ function Row({ row, place, mine, move, mode, sealed = false }) {
       <div style={{ flexShrink: 0, textAlign: "right",
         minWidth: mode.id === "trophies" ? 92 : 40 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
-          {/* Fernolo's seal beside the score, the size of the face on the row,
-              on any mode that shows the last race. */}
-          {sealed && mode.id !== "trophies" && <FernoloSeal size={42} />}
           <div>
             {mode.id === "trophies"
               ? <TrophyRow row={row} />
