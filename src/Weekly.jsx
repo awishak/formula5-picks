@@ -3914,3 +3914,8 @@ export default function Weekly({ playerName, round = null, onExit, onPicks, init
 
   return <WeeklyDeck data={data} onExit={onExit} onPicks={onPicks} initialCard={initialCard} initialStage={initialStage} />;
 }
+
+// Shared with the second deck in WeeklyV2.jsx, so both decks draw the same
+// shell, faces, tables and last card from one copy.
+export { Card, Head, Kicker, Line, Panel, Face, Logo, Count, StandingsTable, MoveMark,
+         CardNext, TRACKS, RACE_NAME, PauseIcon, SpeakerIcon };

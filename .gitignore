@@ -20,3 +20,7 @@ npm-debug.log*
 .claude/
 .env*.local
 .env*
+
+# source renders, 54MB; the web copies live in public/cars
+hedra_assets_2026-10-05/
+backups/

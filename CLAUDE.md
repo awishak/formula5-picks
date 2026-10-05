@@ -834,3 +834,23 @@ scripts/smoke-card.jsx: renders all 48 cards through react-dom/server, checks ev
 Where the taps are: every row on /players, the two opponent tiles and the two names under each team on the Home matchup card, the four seats on the Home board's pick list, the faces and plates at the head of the four-hand board (Home and the deck's matchup press), and every name on /schedule's matchups.
 
 The card scrolls inside itself on a 375x667 phone: the 2026 row of the career table sits just under the fold. The lever is card height; the face is 110px and every gap is already cut.
+## The second weekly deck, /week?v=2
+
+Built 2026-10-05 at Andrew's ask: "more white space and have each card have a clear action or takeaway." Six cards, one press each, mounted at `/week?v=2` with the same `?player=`, `?card=` and `?round=` overrides. **Not the gate yet**; the first deck still gates until Andrew says to swap.
+
+| card | what |
+|---|---|
+| 1 | Round n Recap. "Your team won!", the two cars with the winner's nose ahead and in front, the two totals, then CONTINUE WITH MUSIC, CONTINUE WITHOUT MUSIC, Skip the recap (home). No bottom bar. |
+| 2 | The podium: P2 left, P1 raised and bigger in the middle, P3 right, scores counting in under them. Then P4 to P7 in a row of four, then P8 to P10 plus one more tile: you if you are not in the ten, else your teammate, else P11. |
+| 3 | Your box score: the five drivers as faces with what each was worth, then every line of the individual score (top pick, midfield, order bonus, best finish guess, pit stop, weekly top 10) and the total. |
+| 4 | The matchup taken apart. What separated you: drivers only one side held, copy for copy, the bonuses where they differed, and BOX BOX with the line and the stop, lit when it decided the result. Under it a greyed "both teams had" box of the pairs that cancelled. |
+| 5 | Where you stand: your place and the team's as two tiles, then both tables. |
+| 6 | The same last card as the first deck (CardNext). |
+
+Files. `src/WeeklyV2.jsx` is the cards and the shell. `src/weeklyV2.js` is pure: `buildWeeklyV2(buildWeekly(...))` regroups what buildWeekly already holds, no new scoring rule. `scripts/smoke-weekly2.jsx` (`npm run smoke:weekly2`) renders all six cards for all 48 and asserts the matchup arithmetic closes (named differences plus the line equals the margin) and the box score lines sum to the score. The shell, Head, Face, Logo, Count, StandingsTable and CardNext come from `Weekly.jsx` through the export at its end, so the two decks share one copy.
+
+**The cars.** `public/cars/<CODE>-side.jpg` and `<CODE>-top.jpg`, 24 teams, 800 wide JPEG, from Hedra renders Andrew made 2026-10-05. Named by eye from contact sheets, the SPC Network pattern; the source PNGs sit in `hedra_assets_2026-10-05/`, ignored by git. Side views all face left. The backgrounds are the grey studio, not cut out, so the deck shows them as photo plates with rounded corners. Only card 1 uses them so far; Andrew floated the team standings or the schedule for the top views.
+
+**Music.** `PLAYLIST` in WeeklyV2.jsx, newest song first (Bahlaysia, then Tubey, then Velvet Thunder). CONTINUE WITH MUSIC starts the first; the pill beside NEXT carries play or pause, the title, and a next arrow that walks the list and loops. Leaving the deck stops the song.
+
+**Open.** The "shoulder gradient" Andrew asked for on the podium tiles is a radial glow in the accent colour at the top of the tile, falling to the card colour; the player card he was pointing at could not be found in the code, so this is a reading and he may correct it. Cut-out cars on black would need an image tool this Mac does not have.

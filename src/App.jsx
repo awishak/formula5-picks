@@ -27,6 +27,7 @@ import HandsIdeas from "./HandsIdeas.jsx";
 import VegasNav from "./VegasNav.jsx";
 import Recap from "./Recap.jsx";
 import Weekly from "./Weekly.jsx";
+import WeeklyV2 from "./WeeklyV2.jsx";
 import NowPlaying from "./NowPlaying.jsx";
 // A round whose deck was rebuilt after people had closed it gets a new seen
 // key, so the gate opens once more for everyone. Round 15's deck became the
@@ -1070,6 +1071,17 @@ export default function App() {
     // ?stage= opens a card that plays out in presses on one of those presses,
     // so every stage can be photographed without clicking through.
     const stageParam = parseInt(q.get("stage") || "", 10);
+    // The second deck, at /week?v=2 while it is being looked at. Same
+    // overrides. It becomes the gate only when Andrew says so.
+    if (who && q.get("v") === "2") return (
+      <WeeklyV2
+        playerName={who}
+        round={Number.isFinite(roundParam) ? roundParam : null}
+        initialCard={card}
+        onPicks={() => { window.history.replaceState(null, "", "/"); navigateTo("vegas"); }}
+        onExit={() => { window.history.replaceState(null, "", "/"); navigateTo("home"); }}
+      />
+    );
     if (who) return (
       <Weekly
         playerName={who}

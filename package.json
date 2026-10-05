@@ -15,6 +15,7 @@
     "smoke:all": "npm run smoke && npm run smoke:recap && npm run smoke:drivers && npm run smoke:weekly && npm run smoke:flags && npm run smoke:paddock && npm run smoke:power && npm run smoke:card",
     "peek": "esbuild scripts/peek.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/peek.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error && node node_modules/.cache/peek.cjs",
     "smoke:weekly": "esbuild scripts/smoke-weekly.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke-weekly.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error --define:import.meta.env='{\"VITE_SUPABASE_URL\":\"http://localhost:54321\",\"VITE_SUPABASE_ANON_KEY\":\"smoke-test-key\"}' && node node_modules/.cache/smoke-weekly.cjs",
+    "smoke:weekly2": "esbuild scripts/smoke-weekly2.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke-weekly2.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error --define:import.meta.env='{\"VITE_SUPABASE_URL\":\"http://localhost:54321\",\"VITE_SUPABASE_ANON_KEY\":\"smoke-test-key\"}' && node node_modules/.cache/smoke-weekly2.cjs",
     "check:weekly": "node scripts/check-weekly.mjs",
     "smoke:flags": "esbuild scripts/smoke-flags.jsx --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke-flags.cjs --loader:.jsx=jsx --loader:.json=json --jsx=automatic --log-level=error && node node_modules/.cache/smoke-flags.cjs",
     "check:nav": "node scripts/check-nav.mjs",
