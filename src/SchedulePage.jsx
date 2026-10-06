@@ -100,8 +100,7 @@ export default function SchedulePage({ currentUser }) {
   }
 
   // v3 is the card: name over the score, logo out in the outer corner, both
-  // teams reading in to the midline, and a championship-points board at the
-  // head of each division. ?v=1 is the old centred block and ?v=2 the mirrored
+  // teams reading in to the midline. ?v=1 is the old centred block and ?v=2 the mirrored
   // one, both kept so a layout question can still be answered side by side.
   const qp = typeof window === "undefined" ? new URLSearchParams()
     : new URLSearchParams(window.location.search);
@@ -204,25 +203,11 @@ export default function SchedulePage({ currentUser }) {
   fixtures.forEach(f => { if (!seen.includes(f.division)) seen.push(f.division); });
   const groups = seen.map(d => {
     const rows = fixtures.filter(f => f.division === d);
-    // Every team in the division on one card, ranked on what the round paid.
-    // Both sides of every fixture, so it is twelve rows off six matchups.
-    const board = rows
-      .flatMap(f => [f.left, f.right])
-      .filter(x => x.t && x.wk)
-      .map(x => ({
-        id: x.t.id, short: short(x.t.name), mine: x.t.id === s.myTeamId,
-        won: x.wk.won, score: x.wk.score, oppScore: x.wk.oppScore,
-        pts: x.wk.teamPts,
-      }))
-      // Level on points, the better week goes above. Name last so the order is
-      // decided by a rule rather than by whatever came back from the database.
-      .sort((a, b) => b.pts - a.pts || b.score - a.score ||
-                      a.short.localeCompare(b.short));
     return {
       division: d,
       label: DIV_LABEL[d] || (d ? String(d) : "Division"),
       accent: d === "championship" ? V.gold : V.silver,
-      rows, board,
+      rows,
     };
   });
 
@@ -301,14 +286,11 @@ export default function SchedulePage({ currentUser }) {
                          onOpen={boxOpen && viewerOf(f)
                            ? () => openMatchup({ round, viewer: viewerOf(f) }) : null} />
               );
-              // Your own game goes above the board. It is the one of the six
-              // you came for, and a table of twelve is what you read after it.
-              const mine = variant === 3 ? g.rows.filter(f => f.mine) : [];
+              // Your own game first. The champ points board moved to
+              // /league on 2026-10-06.
+              const mine = g.rows.filter(f => f.mine);
               const rest = g.rows.filter(f => !mine.includes(f));
-              const board = variant === 3 && isScored && g.board.length > 0 && (
-                <DivisionScorecard key="board" rows={g.board} live={demoLive} />
-              );
-              return <>{mine.map(fx)}{board}{rest.map(fx)}</>;
+              return <>{mine.map(fx)}{rest.map(fx)}</>;
             })()}
           </div>
         ))}
@@ -371,54 +353,6 @@ function fitTo(text, room, max, min, tracking) {
   return Math.max(min, Math.floor((max * room / w) * 10) / 10);
 }
 const fitName = (text) => fitTo(text, NAME_ROOM, NAME_MAX, NAME_MIN, 0.08);
-
-// One column, so a scorecard row is the full width of the card: about 309px,
-// of which the result, scoreline and points take 83. Every name in the league
-// clears that at full size, HomeworkTubes included, so nothing here wraps and
-// nothing here shrinks. The fit stays as a backstop for a longer name later.
-const ROW_NAME_ROOM = 220;
-const fitRowName = (text) => fitTo(text, ROW_NAME_ROOM, 13, 11, 0.01);
-
-// What the round paid, every team in the division on one card.
-//
-// Two columns of six. The first column is the six that scored best, so the
-// card reads top to bottom then over, the way a results sheet does. It sits at
-// the head of its division, under your own matchup, because your own week is
-// the thing you came to look at and a table of twelve is what you look at next.
-function DivisionScorecard({ rows, live }) {
-  const Row = ({ r }) => (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "2.5px 0" }}>
-      <span style={{ ...display("chip"), fontSize: fitRowName(r.short),
-                     letterSpacing: "0.01em", flex: "1 1 0", minWidth: 0,
-                     whiteSpace: "nowrap",
-                     color: r.mine ? OTHER : V.text }}><TeamTap id={r.id}>{r.short}</TeamTap></span>
-      <span style={{ ...display("chip"), fontSize: 13, letterSpacing: 0, flexShrink: 0,
-                     width: 12, textAlign: "center",
-                     color: r.won === true ? MINE : r.won === false ? V.text3 : V.amber }}>
-        {r.won === true ? "W" : r.won === false ? "L" : "D"}
-      </span>
-      {/* Fixed width so the scorelines stack into a column instead of ragging
-          off the back of names that are all different lengths. */}
-      <span style={{ ...numeric("chip"), fontSize: 13, color: V.text2, flexShrink: 0,
-                     width: 52, textAlign: "right" }}>
-        {r.score}&ndash;{r.oppScore}
-      </span>
-      <span style={{ ...numeric("chip"), fontSize: 15, flexShrink: 0, width: 30,
-                     textAlign: "right",
-                     color: r.pts > 0 ? OTHER : V.text3 }}>+{r.pts}</span>
-    </div>
-  );
-
-  return (
-    <div style={{ ...card({ padding: "9px 12px 11px", marginBottom: 12 }) }}>
-      <p style={{ ...label({ fontSize: 13, color: V.text3 }), margin: "0 0 4px",
-                  letterSpacing: "0.08em" }}>
-        {live ? "Champ points as it stands" : "Champ points this round"}
-      </p>
-      {rows.map(r => <Row key={r.id} r={r} />)}
-    </div>
-  );
-}
 
 // One matchup, itemised.
 //

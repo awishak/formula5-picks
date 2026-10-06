@@ -250,6 +250,7 @@ export function useLeague(currentUser, { round = null } = {}) {
             .forEach(id => { sideOfPlayer[id] = sideOf(fx, t.id); });
         });
         const nameOf = Object.fromEntries(players.map(p => [p.id, p.name]));
+        const photoOf = Object.fromEntries(players.map(p => [p.id, p.photo_url || null]));
         const myPickRow = me ? pickOf[me.id] : null;
         const midPool = new Set(race.mid_drivers || []);
         const bestOrder = (k) => Number(String(k).replace(/\D/g, "")) || 99;
@@ -272,14 +273,14 @@ export function useLeague(currentUser, { round = null } = {}) {
           } : null,
           // Everyone's guess, lowest first, with the side they are guessing for.
           stops: allPicks.map(p => ({
-            name: nameOf[p.player_id] || "?",
+            name: nameOf[p.player_id] || "?", photo: photoOf[p.player_id],
             guess: Number(p.pit_guess),
             side: sideOfPlayer[p.player_id] || null,
             mine: !!(me && p.player_id === me.id),
           })).filter(x => !Number.isNaN(x.guess)).sort((a, b) => a.guess - b.guess),
           // What the week paid everyone, once it has been scored.
           earned: scores.filter(x => x.race_id === race.id).map(x => ({
-            name: nameOf[x.player_id] || "?",
+            name: nameOf[x.player_id] || "?", photo: photoOf[x.player_id],
             total: (x.top_pick_pts || 0) + (x.midfield_pts || 0) + (x.order_bonus || 0) +
               (x.best_finish_bonus || 0) + (x.pit_individual_pts || 0) + (x.weekly_bonus_pts || 0),
             mine: !!(me && x.player_id === me.id),
@@ -495,6 +496,9 @@ export function useLeague(currentUser, { round = null } = {}) {
           driverAvg,
           projection,
           field,
+          // The league's own tables, so /league can lay out every matchup of
+          // the round off the same read instead of a second one.
+          db: { players, teams, races, scores, schedule },
           // Whether Admin has run this race yet. Everything that used to ask
           // "is there a score on this seat" now asks this once.
           scored: scores.some(x => x.race_id === race.id),

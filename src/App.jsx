@@ -18,6 +18,7 @@ import PickIntel from "./PickIntel.jsx";
 import Recaps from "./Recaps.jsx";
 import VegasHome from "./VegasHome.jsx";
 import SchedulePage from "./SchedulePage.jsx";
+import LeaguePage from "./LeaguePage.jsx";
 import ViewingAs from "./ViewingAs.jsx";
 import MorePage from "./MorePage.jsx";
 import PowerPage from "./PowerPage.jsx";
@@ -831,7 +832,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
   "dashboard", "power", "hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
-  "f1-calendar", "season-preview", "recaps", "admin", "recap", "paddock", "paddock-vegas",
+  "f1-calendar", "season-preview", "recaps", "admin", "recap", "paddock", "paddock-vegas", "league",
 ]);
 
 // ── Routing ──────────────────────────────────────────────
@@ -862,6 +863,9 @@ const ROUTES = [
   { path: "/teams", page: "team-standings" },
   { path: "/players", page: "player-standings" },
   { path: "/schedule", page: "schedule" },
+  // Around the league: every result of a round, its champ points and the
+  // field. Reached from the scored home page.
+  { path: "/league", page: "league" },
   { path: "/results", page: "results" },
   { path: "/rules", page: "rules" },
   { path: "/calendar", page: "f1-calendar" },
@@ -882,7 +886,7 @@ const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 // Pages rebuilt on the Vegas look. They set their own ground and their own
 // header, so the light shell's logo bar and background have to get out of the
 // way or a dark page opens under a white block.
-const VEGAS_PAGES = new Set(["hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home", "vegas", "dashboard", "power", "schedule", "team-standings", "player-standings", "admin"]);
+const VEGAS_PAGES = new Set(["hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home", "vegas", "dashboard", "power", "schedule", "team-standings", "player-standings", "admin", "league"]);
 
 // A path in, a page and any parameter out.
 function readPath(pathname) {
@@ -1248,6 +1252,7 @@ export default function App() {
         {activePage === "power" && <PowerPage currentUser={currentUser} />}
 
         {activePage === "schedule" && <SchedulePage currentUser={currentUser} />}
+        {activePage === "league" && <LeaguePage currentUser={currentUser} />}
         {/* The first-half schedule page, unrouted. */}
         {activePage === "schedule-v1" && <Schedule currentUser={currentUser} onNavigate={navigateTo} initialView={scheduleInitialView} />}
         {activePage === "rules" && <Rules />}

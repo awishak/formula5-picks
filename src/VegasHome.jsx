@@ -1863,34 +1863,128 @@ function NextPicks({ next, onOpen }) {
   const [hot, setHot] = useState(false);
   if (!next) return null;
   const c = next.picked ? V.green : V.pink;
+  const name = shortRace((RACE_SIGN[next.round] || {}).name || next.name);
   return (
     <button
       onClick={onOpen}
       onMouseEnter={() => setHot(true)} onMouseLeave={() => setHot(false)}
-      className={next.picked ? undefined : "v-flicker"}
       style={{
-        width: "100%", cursor: "pointer", textAlign: "center",
-        background: hot ? `${c}1f` : `${c}12`,
-        borderRadius: 14, padding: "16px 20px 15px", marginBottom: 18,
+        width: "100%", cursor: "pointer", textAlign: "center", display: "block",
+        background: `radial-gradient(120% 100% at 50% 0%, ${c}24 0%, ${V.bg2} 65%)`,
+        borderRadius: 18, padding: "18px 18px 20px", marginBottom: 16,
         ...edgeGlow(c, hot ? 1.5 : 1),
-        transition: "background 160ms, box-shadow 160ms",
+        transition: "box-shadow 160ms",
       }}
     >
-      <p style={{ ...display("chip"), fontSize: 13, color: c, margin: 0,
-                  textTransform: "uppercase", letterSpacing: "0.1em" }}>
-        {next.picked ? "Picks in" : "Picks open"}
+      <p className={next.picked ? undefined : "v-flicker"}
+         style={{ ...display("h2"), fontSize: 26, color: c, ...textGlow(c), margin: 0,
+                  textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        {next.picked ? "Picks in" : "Make your picks"}
       </p>
-      <p style={{ ...display("h2"), ...textGlow(c), margin: "4px 0 0", textTransform: "uppercase" }}>
-        {(RACE_SIGN[next.round] || {}).name || next.name}
-      </p>
-      <p style={{ ...body("bodySm"), color: V.text2, margin: "6px 0 0" }}>
+      <p style={{ ...marquee(name), fontSize: Math.min(marquee(name).fontSize, 40),
+                  lineHeight: 1.05, ...textGlow(V.blue), margin: "12px 0 0",
+                  textTransform: "uppercase" }}>{name}</p>
+      <p style={{ ...body("body"), color: V.text2, margin: "10px 0 0" }}>
         {next.picked ? "Change them until" : "Close"} {whenPT(next.deadline, { date: false })}
       </p>
-      <p style={{ ...display("h3"), fontSize: 15, color: c, margin: "10px 0 0",
-                  textTransform: "uppercase", letterSpacing: "0.08em" }}>
+      <span style={{ display: "inline-block", marginTop: 14, padding: "10px 22px",
+                     borderRadius: 100, background: c, color: V.bg,
+                     ...display("h3"), fontSize: 16, textTransform: "uppercase",
+                     letterSpacing: "0.08em", boxShadow: `0 0 18px ${c}88` }}>
         {next.picked ? "See your picks" : "Make your picks"}
-      </p>
+      </span>
     </button>
+  );
+}
+
+// The race that was, as a sign: both teams, both totals, the four faces, and
+// the whole of it opens the recap for that round. What the matchup was made of
+// lives in the deck now, not on the home page (Andrew, 2026-10-06).
+function ResultBillboard({ race, myTeam, opp, seats, mineTotal, theirTotal, under, onOpen }) {
+  const [hot, setHot] = useState(false);
+  const mineWon = mineTotal > theirTotal, theirsWon = theirTotal > mineTotal;
+  const name = shortRace((RACE_SIGN[race.round] || {}).name || race.name);
+  const Side = ({ t, total, c, won, ours }) => (
+    <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
+      {t && t.logo
+        ? <img src={t.logo} alt="" style={{ width: 54, height: 54, objectFit: "contain" }} />
+        : <div style={{ width: 54, height: 54, borderRadius: 12, margin: "0 auto",
+                        background: V.bg3, border: `2px solid ${c}` }} />}
+      <div style={{ ...display("h3"), fontSize: 15, color: V.text, marginTop: 4,
+                    lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden",
+                    textOverflow: "ellipsis" }}>
+        {!t ? "\u2014" : t.name.length > 16 && t.short ? t.short : t.name}
+      </div>
+      <div style={{ ...numeric("hero"), fontSize: 52, lineHeight: 1.05, marginTop: 4,
+                    color: won ? c : V.text2, ...(won ? textGlow(c, 0.9) : {}) }}>
+        {total}
+      </div>
+      <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 8 }}>
+        {seats.filter(x => x.ours === ours).map(x => (
+          <div key={x.id} style={{ width: 62, minWidth: 0 }}>
+            <PlayerBadge name={x.name} photo={x.photo} picked={false} dim={false}
+                         ring={c} size={44} />
+            <div style={{ ...body("bodySm"), fontSize: 12, color: x.mine ? c : V.text2,
+                          marginTop: 4, whiteSpace: "nowrap", overflow: "hidden",
+                          textOverflow: "ellipsis" }}>{x.name.split(" ")[0]}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  const left = under === "mine"
+    ? { t: myTeam, total: mineTotal, c: MINE, won: mineWon, ours: true }
+    : { t: opp, total: theirTotal, c: THEIRS, won: theirsWon, ours: false };
+  const right = under === "mine"
+    ? { t: opp, total: theirTotal, c: THEIRS, won: theirsWon, ours: false }
+    : { t: myTeam, total: mineTotal, c: MINE, won: mineWon, ours: true };
+  return (
+    <button
+      onClick={onOpen}
+      onMouseEnter={() => setHot(true)} onMouseLeave={() => setHot(false)}
+      style={{
+        width: "100%", cursor: "pointer", display: "block", textAlign: "center",
+        ...card({ padding: "16px 14px 18px", marginBottom: 14 }),
+        background: `radial-gradient(120% 100% at 50% 0%, ${V.blue}14 0%, ${V.bg2} 60%)`,
+        borderColor: `${V.blue}55`, ...(hot ? edgeGlow(V.blue, 0.8) : {}),
+      }}
+    >
+      <p style={{ ...marquee(name), fontSize: Math.min(marquee(name).fontSize, 34),
+                  lineHeight: 1.05, ...textGlow(V.pink), margin: 0,
+                  textTransform: "uppercase" }}>{name}</p>
+      <p style={{ ...display("chip"), fontSize: 13, color: V.gold, margin: "6px 0 14px",
+                  textTransform: "uppercase", letterSpacing: "0.1em" }}>
+        Round {race.round} &middot; Final
+      </p>
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+        <Side {...left} />
+        <div style={{ width: 1, alignSelf: "stretch", background: `${V.blue}44` }} />
+        <Side {...right} />
+      </div>
+      <span style={{ display: "inline-block", marginTop: 16, padding: "9px 20px",
+                     borderRadius: 100, border: `1.5px solid ${V.blue}`, color: V.blue,
+                     ...display("h3"), fontSize: 15, textTransform: "uppercase",
+                     letterSpacing: "0.08em", boxShadow: `0 0 12px ${V.blue}55` }}>
+        See the recap
+      </span>
+    </button>
+  );
+}
+
+// Your picks this round were made for you. Fernolo's seal, as big as the
+// screen allows, because a seal at 56px beside a face was not the point.
+function FernoloBillboard() {
+  return (
+    <div style={{ ...card({ padding: "18px 16px 20px", marginBottom: 14 }),
+                  textAlign: "center", ...edgeGlow(V.pink, 1.2),
+                  background: `radial-gradient(90% 80% at 50% 40%, ${V.pink}22 0%, ${V.bg2} 70%)` }}>
+      <FernoloSeal size={220} style={{ margin: "0 auto",
+        boxShadow: `0 0 0 2px #000, 0 0 40px ${V.pink}aa, 0 0 90px ${V.pink}55` }} />
+      <p style={{ ...display("h2"), fontSize: 26, color: V.pink, ...textGlow(V.pink),
+                  margin: "16px 0 0", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+        Picked by Fernolo Bort
+      </p>
+    </div>
   );
 }
 
@@ -2867,7 +2961,7 @@ function HandsBoard({ seats }) {
 //   you did not pick        nothing of yours to show, and nothing to be done
 //   someone else is missing the line is an average, so the number can still move
 //   all four are in         the line is final and the week is set
-function HomeLocked({ scored: scoredWeek = true, onAhead }) {
+function HomeLocked({ scored: scoredWeek = true, onAhead, onNav = () => {} }) {
   const week = useWeek();
   const { race, seats = [], boxBox, myTeam, opp } = week;
   const mine = seats.filter(s => s.ours);
@@ -2923,6 +3017,36 @@ function HomeLocked({ scored: scoredWeek = true, onAhead }) {
       )}
     </div>
   );
+
+  // Scored, the home page is two billboards and a door: the next picks, the
+  // race that was, and the rest of the league. Everything that took the
+  // matchup apart lives in the recap now (Andrew, 2026-10-06).
+  if (scoredWeek) {
+    const bb = week.teamBoxBox || { mine: 0, theirs: 0 };
+    const tot = (ours) => seats.filter(x => x.ours === ours)
+      .reduce((a, x) => a + (x.score ? x.score.total : 0), 0)
+      + (ours ? bb.mine : bb.theirs);
+    const recap = () => {
+      window.history.pushState(null, "", `/week?round=${race.round}`);
+      onNav("weekly");
+    };
+    return (
+      <>
+        <NextPicks next={week.next} onOpen={() => onAhead && onAhead(week.next.round)} />
+        {you && you.auto && <FernoloBillboard />}
+        <ResultBillboard race={race} myTeam={myTeam} opp={opp} seats={seats}
+                         mineTotal={tot(true)} theirTotal={tot(false)}
+                         under={boxBox.side === "UNDER" ? "mine" : "theirs"}
+                         onOpen={recap} />
+        <NeonBtn color={V.purple} onClick={() => {
+          window.history.pushState(null, "", `/league?round=${race.round}`);
+          onNav("league");
+        }}>
+          Around the league
+        </NeonBtn>
+      </>
+    );
+  }
 
   return (
     <>
@@ -3471,7 +3595,7 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
           state === "waiting" ? <HomeWaiting onNav={nav} />
             : state === "open" || state === "submitted"
               ? <HomeOpen onNav={nav} submitted={state === "submitted"} />
-              : <HomeLocked scored={state === "final"} onAhead={setAhead} />
+              : <HomeLocked scored={state === "final"} onAhead={setAhead} onNav={nav} />
         )}
       </div>
     </div>
