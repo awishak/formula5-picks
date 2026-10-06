@@ -6,6 +6,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { PlayerCardBody } from "../src/PlayerCard.jsx";
 import { buildPlayerCard } from "../src/playerCard.js";
+import { buildTeamCard } from "../src/teamCard.js";
+import { TeamCardBody } from "../src/TeamCard.jsx";
 import { buildDrivingStyles, STYLE_NAMES } from "../src/drivingStyle.js";
 import { SLOGAN_BANK, SLOGAN_OF } from "../src/slogans.js";
 import db from "./weekly-fixture.json";
@@ -64,6 +66,28 @@ const champions = db.players.map(p => buildPlayerCard(db, p.name)).filter(d => d
 if (!champions.some(d => d.name === "Andrew Ishak" && d.career.titles.includes(2025))) fail("Andrew Ishak is not the 2025 World Champion");
 if (!champions.some(d => d.name === "Kevin Coolidge" && d.career.titles.includes(2024))) fail("Kevin Coolidge is not the 2024 World Champion");
 db.players.forEach(p => { const d = buildPlayerCard(db, p.name); if (d.career.extras.some(x => x.mark === "\u{1F6BE}")) fail(`${p.name}: the loo is drawn as a trophy`); });
+// The team card, all 24: both seats with shares that make a whole, every
+// round in the schedule, a history, and no two alike.
+const teamSeen = new Set();
+for (const t of db.teams) {
+  const data = buildTeamCard(db, t.id);
+  if (!data) { fail(`${t.name}: no team card`); continue; }
+  if (data.seats.length !== 2) fail(`${t.name}: ${data.seats.length} seats`);
+  const shares = data.seats.map(s => s.share);
+  if (data.season.played && shares.reduce((a, b) => a + b, 0) !== 100) fail(`${t.name}: shares ${shares.join("+")} are not 100`);
+  const fixtures = db.schedule.filter(m => m.home_team_id === t.id || m.away_team_id === t.id).length;
+  if (data.games.length !== fixtures) fail(`${t.name}: ${data.games.length} games for ${fixtures} fixtures`);
+  const bb = data.season.bb;
+  if (bb.won + bb.lost + bb.push !== data.season.played) fail(`${t.name}: BOX BOX ${bb.won}-${bb.lost}-${bb.push} over ${data.season.played} played`);
+  if (!data.history.lore) fail(`${t.name}: no history`);
+  const html = renderToStaticMarkup(<TeamCardBody data={data} onClose={() => {}} />);
+  for (const part of [data.name.replace(/&/g, "&amp;"), "Results and schedule", "History", "BOX BOX", ...data.seats.map(s => s.name)]) {
+    if (!html.includes(part.replace(/'/g, "&#x27;"))) fail(`${t.name}: team card missing "${part}"`);
+  }
+  if (teamSeen.has(html)) fail(`${t.name}: identical to another team's card`);
+  teamSeen.add(html);
+}
+console.log(`${teamSeen.size} team cards`);
 console.log(`${seen.size} cards, ${Object.keys(types).length} of 12 types in use`);
 Object.entries(types).sort((a, b) => b[1] - a[1]).forEach(([t, n]) => console.log(`  ${String(n).padStart(2)}  ${t}`));
 console.log(`league medians: pit deviation ${styles.league.pitDev?.toFixed(2)}s, popularity ${styles.league.popularity?.toFixed(2)}`);

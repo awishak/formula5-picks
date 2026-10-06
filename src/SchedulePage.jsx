@@ -5,7 +5,7 @@ import { buildTeamTable, FIRST_H2_ROUND, ordinal } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { shortOf } from "./teams";
 import { raceTimePT, scheduleRace } from "./raceTimes";
-import { PlayerTap } from "./PlayerCard.jsx";
+import { PlayerTap, TeamTap, useMatchup } from "./PlayerCard.jsx";
 
 // The round, every matchup in it.
 //
@@ -28,6 +28,9 @@ const short = (n) => shortOf(n) || n;
 export default function SchedulePage({ currentUser }) {
   const [s, setS] = useState({ loading: true });
   const [round, setRound] = useState(null);
+  // A matchup opens its box score. Up here with the other hooks: this page
+  // returns early while it loads, and a hook below a return is React #300.
+  const openMatchup = useMatchup();
 
   useEffect(() => {
     let alive = true;
@@ -223,6 +226,18 @@ export default function SchedulePage({ currentUser }) {
     };
   });
 
+  // A box score shows all four hands, so it opens only once the deadline has
+  // gone; before that nobody's picks are anybody else's business.
+  const boxOpen = isScored || Boolean(race && race.pick_deadline
+    && race.pick_deadline <= new Date().toISOString());
+  // Seen from a seat in the matchup: yours if you are in it, so your side is
+  // green the way it is on your home page, and the UNDER side's otherwise.
+  const viewerOf = (f) => {
+    if (f.mine) return currentUser;
+    const t = f.left.t || f.right.t;
+    return t ? s.playersById[t.player1_id] : null;
+  };
+
   const idx = s.drawn.findIndex(r => r.round === round);
   const go = (d) => {
     const next = s.drawn[idx + d];
@@ -282,7 +297,9 @@ export default function SchedulePage({ currentUser }) {
             {(() => {
               const fx = (f) => (
                 <Fixture key={f.id} f={f} scored={isScored} variant={variant}
-                         live={demoLive && isScored} />
+                         live={demoLive && isScored}
+                         onOpen={boxOpen && viewerOf(f)
+                           ? () => openMatchup({ round, viewer: viewerOf(f) }) : null} />
               );
               // Your own game goes above the board. It is the one of the six
               // you came for, and a table of twelve is what you read after it.
@@ -408,7 +425,7 @@ function DivisionScorecard({ rows, live }) {
 // The card mirrors around the divider: the two totals meet in the middle and
 // everything else runs outward from them, so the comparison is between two
 // numbers side by side rather than two numbers a card apart.
-function Fixture({ f, scored, variant = 1, live = false }) {
+function Fixture({ f, scored, variant = 1, live = false, onOpen = null }) {
   const lw = f.left.wk, rw = f.right.wk;
   // Three states, and the middle one is the reason this is a phase and not a
   // boolean. Nothing is decided while a race is running, so live shows the
@@ -470,14 +487,18 @@ function Fixture({ f, scored, variant = 1, live = false }) {
       <div style={{ position: "relative",
                     paddingLeft: mirror ? MIDLINE_GAP : LOGO + 6,
                     paddingRight: mirror ? LOGO + 6 : MIDLINE_GAP }}>
+        {/* The logo and the name open the team's card; the rest of the card
+            opens the box score. */}
         <div style={{ position: "absolute", top: -1, [mirror ? "right" : "left"]: 0 }}>
-          <Logo t={s.t} size={LOGO} />
+          <TeamTap id={s.t && s.t.id} style={{ display: "block" }}>
+            <Logo t={s.t} size={LOGO} />
+          </TeamTap>
         </div>
         {/* Fitted, never cut. A long name grows outward from the midline and
             steps the type down a little rather than losing its own end. */}
         <p style={{ ...display("chip"), fontSize: fitName(nm), color: V.text, margin: 0,
                     lineHeight: "22px", textAlign: inward, whiteSpace: "nowrap" }}>
-          {nm}
+          <TeamTap id={s.t && s.t.id}>{nm}</TeamTap>
         </p>
         <p style={{ ...numeric("hero"), fontSize: 32, color: shown ? c : V.text3,
                     textAlign: inward, margin: "2px 0 0",
@@ -591,9 +612,10 @@ function Fixture({ f, scored, variant = 1, live = false }) {
     : f.division === "championship" ? V.gold : V.silver;
 
   return (
-    <div style={{
+    <div onClick={onOpen || undefined} role={onOpen ? "button" : undefined}
+      title={onOpen ? "Box score" : undefined} style={{
       ...card({ padding: "10px 12px 14px", marginBottom: 12 }),
-      position: "relative",
+      position: "relative", cursor: onOpen ? "pointer" : "default",
       border: `1px solid ${outline}${f.boxBoxDecided && scored ? "cc" : "55"}`,
       // Yours gets its own ground, not just a line around it.
       ...(f.mine ? { background: `${MINE}12` } : {}),

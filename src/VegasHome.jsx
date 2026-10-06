@@ -3476,3 +3476,56 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
     </Week.Provider>
   );
 }
+
+// One matchup's box score, for any round and any team: the scoreboard, the
+// BOX BOX strip and the four-hand board, the same three pieces the home page
+// draws over a result. Opened from a matchup on /schedule and from a played
+// round on a team card. `viewer` is a player in the matchup, whose side sits
+// in green the way it does on their own home page.
+//
+// The home page shows your own team's picks before the deadline. Nobody
+// else's are anybody's business until it has gone, so before then this
+// draws nothing but a line saying so.
+export function MatchupBoxScore({ viewer, round }) {
+  const week = useLeague(viewer, { round });
+  if (week.loading || week.error) {
+    return (
+      <p style={{ ...body("body"), color: V.text2, padding: "30px 0", textAlign: "center" }}>
+        {week.error ? "This matchup did not load." : "Loading"}
+      </p>
+    );
+  }
+  if (!week.locked || !week.opp) {
+    return (
+      <p style={{ ...body("body"), color: V.text2, padding: "30px 0", textAlign: "center" }}>
+        Picks show here once the deadline has gone.
+      </p>
+    );
+  }
+  // "You" is the person holding the phone, not the seat the box score is
+  // seen from. Read the way App.jsx reads it: ?player= first, then the name
+  // picked on this device.
+  const me = (() => {
+    try {
+      return new URLSearchParams(window.location.search).get("player") || localStorage.getItem("f1_user");
+    } catch (e) { return null; }
+  })();
+  const { boxBox, myTeam, opp, race } = week;
+  const seats = (week.seats || []).map(x => ({ ...x, mine: x.name === me }));
+  const scored = Boolean(week.scored);
+  const bb = week.teamBoxBox || { mine: 0, theirs: 0 };
+  const tot = (ours) => seats.filter(s => s.ours === ours)
+    .reduce((a, s) => a + (s.score ? s.score.total : 0), 0) + (ours ? bb.mine : bb.theirs);
+  const under = boxBox.side === "UNDER" ? "mine" : "theirs";
+  return (
+    <Week.Provider value={week}>
+      <Marquee race={race} status={{ text: scored ? "Final" : (raceTimePT(race.round) || "Picks are locked"),
+                                     color: V.gold }} />
+      <Scoreboard myTeam={myTeam} opp={opp} under={under} scored={scored}
+                  mineTotal={tot(true)} theirTotal={tot(false)} />
+      <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under} race={race}
+                   boxBox={boxBox} seats={seats} scored={scored} />
+      <HandsColumns seats={seats} under={under} scored={scored} driverPts={week.driverPts || {}} />
+    </Week.Provider>
+  );
+}

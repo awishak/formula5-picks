@@ -858,3 +858,13 @@ Files. `src/WeeklyV2.jsx` is the cards and the shell. `src/weeklyV2.js` is pure:
 **Music.** `PLAYLIST` in WeeklyV2.jsx, newest song first (Bahlaysia, then Tubey, then Velvet Thunder). CONTINUE WITH MUSIC starts the first; the pill beside NEXT carries play or pause, the title, and a next arrow that walks the list and loops. Leaving the deck stops the song.
 
 **Open.** The "shoulder gradient" Andrew asked for on the podium tiles is a radial glow in the accent colour at the top of the tile, falling to the card colour; the player card he was pointing at could not be found in the code, so this is a reading and he may correct it. Cut-out cars on black would need an image tool this Mac does not have.
+
+## The team card and the box score
+
+**Built 2026-10-04.** On /schedule, the logo or name of a team opens its card, and the rest of a matchup card opens that matchup's box score. Both live in the same provider as the player card (PlayerCard.jsx), so a face on a team card opens the player card on top, and a played round on a team card opens its box score.
+
+teamCard.js: the team card computed. Pure. buildTeamCard(db, teamId). Off teamTable.js like /teams: season record and average (rank of 24), second-half record, champ points and place, BOX BOX won-lost-push, each player's share of the team's points with BOX BOX left out (rounded to make 100), every fixture played or to come, and the history: the first half as played, promoted or relegated, and the lore.
+teamLore.js: each team's origin story, copied from docs/F5_Team_Lore.md without the Players lines. Edit the doc and copy it across.
+TeamCard.jsx: TeamCardBody, presentational. Takes `onPlayer` and `onMatchup` rather than importing PlayerCard.jsx, so the two do not import each other.
+MatchupBoxScore in VegasHome.jsx: the home page's Marquee, Scoreboard, BoxBoxScore and HandsColumns for any round, seen from `viewer`, a player in the matchup (yours if you are in it, the UNDER side's player 1 otherwise). PlayerCard.jsx reaches it by a dynamic import because VegasHome imports PlayerTap. **It draws nothing before the deadline**, because useLeague shows the viewer's own team's picks early and the viewer is somebody else's team. "You" is the reader (?player= or f1_user), not the viewer.
+`?team_card=EBR` and `?matchup=16:Zack%20Girgis` open one on load. scripts/smoke-card.jsx renders all 24 team cards.

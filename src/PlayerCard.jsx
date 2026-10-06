@@ -14,12 +14,21 @@
 //
 // ?player_card=Andrew%20Ishak opens one on load, so every card can be
 // photographed.
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { Flagged } from "./Flag.jsx";
 import { V, FD, display, numeric, label, body, card, textGlow, edgeGlow, VEGAS_CSS } from "./theme.vegas";
 import { buildPlayerCard } from "./playerCard.js";
+import { buildTeamCard } from "./teamCard.js";
+import { TeamCardBody } from "./TeamCard.jsx";
 import { MARK } from "./history.js";
+import { codeOf as teamCodeOf } from "./teams.js";
+
+// The box score is the home page's own three pieces, so it lives in
+// VegasHome.jsx. That file imports PlayerTap from this one, so this one reaches
+// it by a dynamic import rather than a static one: two files importing each
+// other is the module-order trap CLAUDE.md records esbuild springing.
+const MatchupBoxScore = lazy(() => import("./VegasHome.jsx").then(m => ({ default: m.MatchupBoxScore })));
 
 const Ctx = createContext(null);
 
@@ -27,6 +36,32 @@ const Ctx = createContext(null);
 export function usePlayerCard() {
   const c = useContext(Ctx);
   return c ? c.open : () => {};
+}
+
+/** Opens a team's card, by team id. */
+export function useTeamCard() {
+  const c = useContext(Ctx);
+  return c ? c.openTeam : () => {};
+}
+
+/** Opens a matchup's box score: { round, viewer }, viewer a player in it. */
+export function useMatchup() {
+  const c = useContext(Ctx);
+  return c ? c.openMatchup : () => {};
+}
+
+/** Wrap anything that should open a team's card when tapped. */
+export function TeamTap({ id, children, style, title }) {
+  const open = useTeamCard();
+  if (!id) return children;
+  return (
+    <span role="button" tabIndex={0} title={title || "Team card"}
+      onClick={e => { e.stopPropagation(); open(id); }}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); open(id); } }}
+      style={{ cursor: "pointer", ...style }}>
+      {children}
+    </span>
+  );
 }
 
 /** Wrap anything that should open a player's card when tapped. */
@@ -45,35 +80,54 @@ export function PlayerTap({ name, children, style, title, block = false }) {
 }
 
 async function loadLeague() {
-  const [players, teams, races, scores, picks] = await Promise.all([
+  const [players, teams, races, scores, picks, schedule] = await Promise.all([
     supabase.from("players").select("id,name,photo_url,nation"),
     supabase.from("teams").select("*"),
     supabase.from("races").select("*"),
     supabase.from("scores").select("*"),
     supabase.from("picks").select("*"),
+    supabase.from("schedule").select("*"),
   ]).then(rs => rs.map(r => r.data || []));
-  return { players, teams, races, scores, picks };
+  return { players, teams, races, scores, picks, schedule };
 }
 
 export function PlayerCardProvider({ children }) {
-  const [name, setName] = useState(() => {
-    try { return new URLSearchParams(window.location.search).get("player_card") || null; } catch (e) { return null; }
+  const q = (() => { try { return new URLSearchParams(window.location.search); } catch (e) { return new URLSearchParams(); } })();
+  const [name, setName] = useState(() => q.get("player_card") || null);
+  // A team card by three-letter code (?team_card=EBR), so each can be
+  // photographed; resolved to the id once the league has loaded.
+  const [team, setTeam] = useState(() => q.get("team_card") || null);
+  // ?matchup=16:Zack%20Girgis opens that round's box score from that seat.
+  const [matchup, setMatchup] = useState(() => {
+    const m = q.get("matchup");
+    if (!m) return null;
+    const [r, ...v] = m.split(":");
+    return Number(r) && v.length ? { round: Number(r), viewer: v.join(":") } : null;
   });
   const [db, setDb] = useState(null);
   const [failed, setFailed] = useState(false);
   const open = useCallback(n => setName(n), []);
   const close = useCallback(() => setName(null), []);
+  const openTeam = useCallback(id => setTeam(id), []);
+  const closeTeam = useCallback(() => setTeam(null), []);
+  const openMatchup = useCallback(m => setMatchup(m), []);
+  const closeMatchup = useCallback(() => setMatchup(null), []);
 
   useEffect(() => {
-    if (!name || db || failed) return;
+    if (!(name || team) || db || failed) return;
     let alive = true;
     loadLeague().then(d => { if (alive) setDb(d); }).catch(e => { console.error(e); if (alive) setFailed(true); });
     return () => { alive = false; };
-  }, [name, db, failed]);
+  }, [name, team, db, failed]);
 
+  // Stacked in the order they open from: a box score opens from a team card,
+  // and a player's card from either, so each one paints above the last.
   return (
-    <Ctx.Provider value={{ open }}>
+    <Ctx.Provider value={{ open, openTeam, openMatchup }}>
       {children}
+      {team && <TeamCardModal team={team} db={db} failed={failed} onClose={closeTeam}
+        onPlayer={open} onMatchup={openMatchup} />}
+      {matchup && <MatchupModal matchup={matchup} onClose={closeMatchup} />}
       {name && <PlayerCardModal name={name} db={db} failed={failed} onClose={close} />}
     </Ctx.Provider>
   );
@@ -410,3 +464,72 @@ function PlayerCardModal({ name, db, failed, onClose }) {
 }
 
 export default PlayerCardModal;
+
+// The shell every sheet here shares: dim the page, hold it still, close on a
+// tap outside or Escape. `wide` is the box score, which is the home page's
+// own width rather than a card's.
+function Sheet({ onClose, wide = false, children }) {
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [onClose]);
+  return (
+    <div onClick={onClose} style={{
+      position: "fixed", inset: 0, zIndex: 300, background: "rgba(4,4,9,0.88)",
+      display: "flex", alignItems: "center", justifyContent: "center", padding: wide ? 8 : 12,
+      animation: "v-fade 160ms ease-out",
+    }}>
+      <style>{FONTS}{VEGAS_CSS}</style>
+      <div onClick={e => e.stopPropagation()} className="v-scroll" style={{
+        ...card({ width: "100%", maxWidth: wide ? 480 : 380, maxHeight: "94dvh",
+          padding: wide ? "10px 12px 18px" : "10px 16px 18px", background: wide ? V.bg : V.bg2 }),
+        ...edgeGlow(V.blue, 0.7), overflowY: "auto", color: V.text,
+        animation: "v-rise 220ms ease-out",
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function TeamCardModal({ team, db, failed, onClose, onPlayer, onMatchup }) {
+  // An id from a tap, or a three-letter code from the URL.
+  const row = db ? (db.teams.find(t => t.id === team)
+    || db.teams.find(t => (teamCodeOf(t.name) || "").toLowerCase() === String(team).toLowerCase())) : null;
+  const data = row ? buildTeamCard(db, row.id) : null;
+  // A played round on the card opens its box score, seen from this team.
+  const viewer = data && data.seats[0] ? data.seats[0].name : null;
+  return (
+    <Sheet onClose={onClose}>
+      {data
+        ? <TeamCardBody data={data} onClose={onClose} onPlayer={onPlayer}
+            onMatchup={viewer ? (round => onMatchup({ round, viewer })) : null} />
+        : (
+          <div style={{ padding: "40px 0", textAlign: "center" }}>
+            <div style={body("body", { color: V.text2 })}>
+              {failed ? "The card did not load." : db ? "No card for this team." : "Loading"}
+            </div>
+          </div>
+        )}
+    </Sheet>
+  );
+}
+
+function MatchupModal({ matchup, onClose }) {
+  return (
+    <Sheet onClose={onClose} wide>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 6 }}>
+        <button onClick={onClose} aria-label="Close" style={{
+          ...label({ fontSize: 13, color: V.text }), background: "rgba(4,4,9,0.72)",
+          border: `1px solid ${V.border2}`, borderRadius: 999, cursor: "pointer", padding: "7px 12px",
+        }}>CLOSE</button>
+      </div>
+      <Suspense fallback={<p style={{ ...body("body"), color: V.text2, textAlign: "center" }}>Loading</p>}>
+        <MatchupBoxScore viewer={matchup.viewer} round={matchup.round} />
+      </Suspense>
+    </Sheet>
+  );
+}
