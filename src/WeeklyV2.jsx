@@ -142,7 +142,7 @@ function FinishLine({ myTeam, oppTeam, outcome }) {
           backgroundImage: `repeating-linear-gradient(90deg, ${V.border2} 0 18px, transparent 18px 34px)` }} />
       ))}
       {car(behind, behindC, { left: "30%", top: "6%" }, 1, true)}
-      {car(ahead, aheadC, { left: "-4%", top: "50%" }, 2, false)}
+      {car(ahead, aheadC, { left: "1%", top: "50%" }, 2, false)}
     </div>
   );
 }
