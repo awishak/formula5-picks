@@ -391,7 +391,7 @@ function DivisionScorecard({ rows, live }) {
       <span style={{ ...display("chip"), fontSize: fitRowName(r.short),
                      letterSpacing: "0.01em", flex: "1 1 0", minWidth: 0,
                      whiteSpace: "nowrap",
-                     color: r.mine ? OTHER : V.text }}>{r.short}</span>
+                     color: r.mine ? OTHER : V.text }}><TeamTap id={r.id}>{r.short}</TeamTap></span>
       <span style={{ ...display("chip"), fontSize: 13, letterSpacing: 0, flexShrink: 0,
                      width: 12, textAlign: "center",
                      color: r.won === true ? MINE : r.won === false ? V.text3 : V.amber }}>

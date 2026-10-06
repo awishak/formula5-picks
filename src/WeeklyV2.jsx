@@ -25,6 +25,7 @@ import { shortName } from "./names.js";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers.js";
 import { Flagged } from "./Flag.jsx";
 import { shortOf } from "./teams.js";
+import { TeamTap } from "./PlayerCard.jsx";
 import { playSong, pauseSong, toggleSong, songPlaying, onSong } from "./themeSong.js";
 import { F1_TEAM_COLORS, av } from "./theme";
 import {
@@ -87,6 +88,7 @@ function CarRace({ myTeam, oppTeam, outcome }) {
     <div style={{ position: "absolute", width: "76%", ...pos, borderRadius: 14,
       overflow: "hidden", border: `1.5px solid ${c}`,
       boxShadow: `0 10px 30px #000a, 0 0 18px ${c}44` }}>
+      <TeamTap id={t.id || t.name} style={{ display: "block" }}>
       <CarImg code={t.code} logo={t.logo} style={{ width: "100%", aspectRatio: "16 / 9" }} />
       <div style={{ position: "absolute", left: 8, bottom: 6, display: "flex",
         alignItems: "center", gap: 6, padding: "3px 8px 3px 4px", borderRadius: 999,
@@ -96,6 +98,7 @@ function CarRace({ myTeam, oppTeam, outcome }) {
           {shortOf(t.name)}
         </span>
       </div>
+      </TeamTap>
     </div>
   );
   return (
@@ -114,6 +117,7 @@ function FinishLine({ myTeam, oppTeam, outcome }) {
   const car = (t, c, pos, z, dim) => (
     <div style={{ position: "absolute", width: "66%", zIndex: z, ...pos,
       filter: `drop-shadow(0 8px 14px #000c) drop-shadow(0 0 10px ${c}55)${dim ? " brightness(0.8)" : ""}` }}>
+      <TeamTap id={t.id || t.name} style={{ display: "block" }}>
       <CarImg code={t.code} view="top" logo={t.logo} cutout style={{ width: "100%", height: "auto" }} />
       <div style={{ position: "absolute", left: "50%", bottom: -6, transform: "translateX(-50%)",
         display: "flex", alignItems: "center", gap: 6, padding: "3px 9px 3px 5px", borderRadius: 999,
@@ -121,6 +125,7 @@ function FinishLine({ myTeam, oppTeam, outcome }) {
         <Logo src={t.logo} size={16} />
         <span style={{ ...display("chip", { fontSize: 13, color: c }) }}>{shortOf(t.name)}</span>
       </div>
+      </TeamTap>
     </div>
   );
   return (
@@ -462,10 +467,10 @@ function CardMatchup({ v }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, alignItems: "center",
           paddingBottom: 8, borderBottom: `1px solid ${V.border}` }}>
           {[[m.myTeam, MINE_C], [m.oppTeam, THEIRS_C]].map(([t, col]) => (
-            <div key={t.code} style={{ display: "flex", alignItems: "center", gap: 7, justifyContent: "center" }}>
+            <TeamTap key={t.code} id={t.id || t.name} style={{ display: "flex", alignItems: "center", gap: 7, justifyContent: "center" }}>
               <Logo src={t.logo} size={26} />
               <span style={{ ...display("h3", { fontSize: 16, color: col }), ...textGlow(col, 0.4) }}>{shortOf(t.name)}</span>
-            </div>
+            </TeamTap>
           ))}
         </div>
         {rows === 0 && (

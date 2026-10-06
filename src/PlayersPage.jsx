@@ -5,7 +5,7 @@ import { V, FM, FD, FB, display, numeric, label, body, card, textGlow, edgeGlow,
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { ordinal } from "./teamTable";
 import FernoloSeal from "./FernoloSeal";
-import { usePlayerCard } from "./PlayerCard.jsx";
+import { usePlayerCard, TeamTap } from "./PlayerCard.jsx";
 
 // The individual standings. Built to the same pattern as TeamsPage on purpose:
 // same header, same row shape, same rules about what scales and what does not.
@@ -253,7 +253,7 @@ function Row({ row, place, mine, move, mode, sealed = false }) {
           fontFamily: FD, fontWeight: 600, fontSize: TEAM_SIZE, letterSpacing: "0.01em",
           textTransform: "uppercase", color: V.text2, marginTop: 3, minWidth: 0,
           lineHeight: 1.2, overflowWrap: "anywhere",
-        }}>{row.teamName || "No team"}</div>
+        }}>{row.teamName ? <TeamTap id={row.teamId || row.teamName}>{row.teamName}</TeamTap> : "No team"}</div>
       </div>
 
       {/* How they are scoring, in whichever way the table is being read.

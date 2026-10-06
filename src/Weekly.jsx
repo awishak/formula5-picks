@@ -26,6 +26,7 @@ import Flag, { Flagged } from "./Flag.jsx";
 import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
 // The same board the home page draws, from the same file.
 import HandsColumns from "./HandsColumns.jsx";
+import { TeamTap, usePlayerCard, useTeamCard } from "./PlayerCard.jsx";
 import TubeyCover, { COVERS } from "./TubeyCover.jsx";
 import { shortOf } from "./teams.js";
 import { boxBoxLine, boxBoxSide } from "./pitStop.js";
@@ -1624,6 +1625,7 @@ function Scoreboard({ M }) {
       flex: 1, minWidth: 0, textAlign: "center", padding: "10px 8px", borderRadius: 13,
       background: V.bg3, border: `2px solid ${c}`, ...(won ? edgeGlow(c, 0.9) : {}),
     }}>
+      <TeamTap id={t.id || t.name} style={{ display: "block" }}>
       {t.logo
         ? <img src={t.logo} alt="" style={{ width: 36, height: 36, objectFit: "contain" }} />
         : <div style={{ width: 36, height: 36, borderRadius: 10, margin: "0 auto",
@@ -1632,6 +1634,7 @@ function Scoreboard({ M }) {
         lineHeight: 1.25, whiteSpace: "nowrap" }) }}>
         {t.name.length > 16 && t.short ? t.short : t.name}
       </div>
+      </TeamTap>
       <div style={{ ...label({ fontSize: 13, color: c, marginTop: 2 }) }}>{side}</div>
       <div style={{ ...numeric("hero", { fontSize: 44, color: c, marginTop: 3 }),
         ...(won ? textGlow(c, 0.9) : {}) }}>{total}</div>
@@ -3252,6 +3255,10 @@ const MoveMark = ({ m }) => {
 
 function StandingsTable({ rows, kind, value = r => r.pts, unit = "PTS" }) {
   const box = useRef(null);
+  // A row opens that team's card, or that player's, the way the standings
+  // pages do.
+  const openTeam = useTeamCard(), openPlayer = usePlayerCard();
+  const openRow = r => (kind === "team" ? openTeam(r.id || r.name) : openPlayer(r.name));
   // Open on the reader's row rather than at the top of 48.
   useEffect(() => {
     const el = box.current;
@@ -3283,8 +3290,8 @@ function StandingsTable({ rows, kind, value = r => r.pts, unit = "PTS" }) {
         marginTop: 4 }}>
         <div style={{ display: "grid", gap: 3 }}>
           {rows.map(r => (
-            <div key={r.id} data-me={r.me ? "1" : "0"} style={{
-              display: "grid", gridTemplateColumns: cols, gap: 6, alignItems: "center",
+            <div key={r.id} data-me={r.me ? "1" : "0"} onClick={() => openRow(r)} role="button" style={{
+              display: "grid", gridTemplateColumns: cols, gap: 6, alignItems: "center", cursor: "pointer",
               padding: "5px 8px", borderRadius: 8,
               background: r.me ? V.bg4 : "transparent",
               border: `1px solid ${r.me ? V.amber : "transparent"}`,

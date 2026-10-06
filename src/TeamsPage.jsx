@@ -5,6 +5,7 @@ import { Flagged } from "./Flag.jsx";
 import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { av } from "./theme";
+import { useTeamCard } from "./PlayerCard.jsx";
 
 // The team standings, second half. Deliberately thin: position, who you are,
 // your record, who you play next, and the number the title is won on.
@@ -97,9 +98,11 @@ function Form({ weeks }) {
 // The one personalised thing on the page: where your team stands, how it has
 // been scoring, how the last ten weeks went, and who you are doing it with.
 function YourTeam({ row, season, place, avgRank, drivers }) {
+  const openTeam = useTeamCard();
   if (!row) return null;
   return (
-    <div style={{ ...card({ padding: 16, marginBottom: 20 }), ...edgeGlow(V.blue, 0.8) }}>
+    <div onClick={() => openTeam(row.id)} role="button" style={{ ...card({ padding: 16, marginBottom: 20 }),
+      ...edgeGlow(V.blue, 0.8), cursor: "pointer" }}>
       <div style={label({ color: V.blue, fontSize: 15, marginBottom: 12 })}>Your team&rsquo;s season so far</div>
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -157,9 +160,12 @@ function Row({ row, pos, mine, record, rank, nextOpp, nextOppRank, soon }) {
   const lastLetter = !last ? "" : last.won === true ? "W" : last.won === false ? "L" : "D";
   const lastColor = !last ? V.text2
     : last.won === true ? V.green : last.won === false ? V.pink : V.silver;
+  // The whole row opens the team's card, the way a row on /players opens a
+  // player's.
+  const openTeam = useTeamCard();
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 8,
+    <div onClick={() => openTeam(row.id)} role="button" style={{
+      display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
       padding: "8px 10px", borderRadius: 14, marginBottom: 6,
       background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
       border: `1px solid ${mine ? V.blue : V.border}`,

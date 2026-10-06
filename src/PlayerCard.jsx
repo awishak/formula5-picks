@@ -22,7 +22,7 @@ import { buildPlayerCard } from "./playerCard.js";
 import { buildTeamCard } from "./teamCard.js";
 import { TeamCardBody } from "./TeamCard.jsx";
 import { MARK } from "./history.js";
-import { codeOf as teamCodeOf } from "./teams.js";
+import { codeOf as teamCodeOf, displayOf as teamDisplayOf, shortOf as teamShortOf } from "./teams.js";
 
 // The box score is the home page's own three pieces, so it lives in
 // VegasHome.jsx. That file imports PlayerTap from this one, so this one reaches
@@ -50,7 +50,8 @@ export function useMatchup() {
   return c ? c.openMatchup : () => {};
 }
 
-/** Wrap anything that should open a team's card when tapped. */
+/** Wrap anything that should open a team's card when tapped. `id` takes a
+ *  team id, a three-letter code or any of its names. */
 export function TeamTap({ id, children, style, title }) {
   const open = useTeamCard();
   if (!id) return children;
@@ -108,7 +109,9 @@ export function PlayerCardProvider({ children }) {
   const [failed, setFailed] = useState(false);
   const open = useCallback(n => setName(n), []);
   const close = useCallback(() => setName(null), []);
-  const openTeam = useCallback(id => setTeam(id), []);
+  // A team opened from inside a player card or a box score has to come up on
+  // top, and the team sheet paints beneath both, so opening one closes them.
+  const openTeam = useCallback(id => { setName(null); setMatchup(null); setTeam(id); }, []);
   const closeTeam = useCallback(() => setTeam(null), []);
   const openMatchup = useCallback(m => setMatchup(m), []);
   const closeMatchup = useCallback(() => setMatchup(null), []);
@@ -310,12 +313,12 @@ export function PlayerCardBody({ data, onClose, openPodiums = false }) {
         })} />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9, marginTop: 8 }}>
+      <TeamTap id={team && team.code} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9, marginTop: 8 }}>
         <TeamMark team={team} size={30} />
         <div style={{ fontFamily: FD, fontWeight: 600, fontSize: 15, letterSpacing: "0.02em",
           textTransform: "uppercase", color: V.text2, whiteSpace: "nowrap", overflow: "hidden",
           textOverflow: "ellipsis" }}>{team ? team.name : "No team"}</div>
-      </div>
+      </TeamTap>
 
       {/* The title, under the team name, in gold. The sheets' loo mark means
           World Champion (Andrew, 2026-10-02). */}
@@ -496,9 +499,13 @@ function Sheet({ onClose, wide = false, children }) {
 }
 
 function TeamCardModal({ team, db, failed, onClose, onPlayer, onMatchup }) {
-  // An id from a tap, or a three-letter code from the URL.
+  // An id, a three-letter code, or any of a team's names: every page opens
+  // it with whatever it already holds, the deck with a name and a standings
+  // row with an id.
+  const key = String(team).toLowerCase();
   const row = db ? (db.teams.find(t => t.id === team)
-    || db.teams.find(t => (teamCodeOf(t.name) || "").toLowerCase() === String(team).toLowerCase())) : null;
+    || db.teams.find(t => [teamCodeOf(t.name), t.name, teamDisplayOf(t.name), teamShortOf(t.name)]
+      .some(n => n && String(n).toLowerCase() === key))) : null;
   const data = row ? buildTeamCard(db, row.id) : null;
   // A played round on the card opens its box score, seen from this team.
   const viewer = data && data.seats[0] ? data.seats[0].name : null;

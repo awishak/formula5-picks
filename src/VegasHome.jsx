@@ -21,7 +21,7 @@ import HandsColumns from "./HandsColumns.jsx";
 import { boxBoxSide } from "./pitStop.js";
 import { useFirstStop, stopLabel } from "./firstStop.js";
 import FernoloSeal from "./FernoloSeal";
-import { PlayerTap } from "./PlayerCard.jsx";
+import { PlayerTap, TeamTap } from "./PlayerCard.jsx";
 
 // ── Real league snapshot, round 11 ───────────────────────
 const PLAYER_PHOTOS = {
@@ -1455,7 +1455,7 @@ function OpponentCard() {
     <div style={{ ...card({ padding: 16, marginBottom: 22 }), borderColor: `${V.pink}2a` }}>
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <TeamTap id={opp.id || opp.name} style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             {opp.logo
               ? <img src={opp.logo} alt="" style={{ width: 42, height: 42, objectFit: "contain", flexShrink: 0 }} />
               : <TeamBadge name={opp.name} size={42} ring={V.pink} />}
@@ -1464,7 +1464,7 @@ function OpponentCard() {
               color: V.text, margin: 0,
               whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
             }}>{opp.name}</p>
-          </div>
+          </TeamTap>
           <p style={{ ...body("bodySm"), fontSize: 15, color: V.text2, lineHeight: 1.55, margin: "8px 0 0", whiteSpace: "nowrap" }}>
             Overall: <strong style={{ color: V.text }}>P{opp.place}</strong> in {DIV[opp.division] || "the league"}
           </p>
@@ -1542,7 +1542,7 @@ function MatchupCard({ compact = false }) {
   const { myTeam, opp, me, teammate } = useWeek();
   const Side = ({ name, rank, pts, record, p1, p2, mine }) => (
     <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
-      <p style={{ ...display("h3"), color: mine ? V.text : V.text2, margin: 0 }}>{name}</p>
+      <p style={{ ...display("h3"), color: mine ? V.text : V.text2, margin: 0 }}><TeamTap id={name}>{name}</TeamTap></p>
       <p style={{ ...display("stat"), ...(mine ? textGlow(V.blue, 0.7) : { color: V.text3 }), margin: "8px 0 4px" }}>{pts}</p>
       <Label color={V.text3}>{rank}th · {record}</Label>
       {!compact && (
@@ -1776,7 +1776,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
         const GW = 190, GAP = 8;
         const gl = Math.min(Math.max(x(line) - GW / 2, PAD), Math.max(PAD, w - PAD - GW));
         const Side = ({ t, mine, word }) => (
-          <div style={{ textAlign: "center", width: 46 }}>
+          <TeamTap id={t && (t.id || t.name)} style={{ display: "block", textAlign: "center", width: 46 }}>
             {t && t.logo
               ? <img src={t.logo} alt="" style={{ width: 32, height: 32, objectFit: "contain" }} />
               : <div style={{ width: 32, height: 32, borderRadius: 7, margin: "0 auto",
@@ -1784,7 +1784,7 @@ function BoxBoxLine({ seats, boxBox, myTeam, opp }) {
             <div style={{ ...display("chip"), fontSize: 11, color: mine ? MINE : THEIRS, marginTop: 2 }}>
               {word}
             </div>
-          </div>
+          </TeamTap>
         );
         const arrows = [
           { dir: "left", c: ours === "left" ? MINE : THEIRS, from: gl - GAP, to: PAD },
@@ -2110,6 +2110,7 @@ function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under, scored = true }
       borderRadius: 14, background: V.bg3, border: `2px solid ${c}`,
       ...(won ? edgeGlow(c, 0.9) : {}),
     }}>
+      <TeamTap id={t && (t.id || t.name)} style={{ display: "block" }}>
       {t && t.logo
         ? <img src={t.logo} alt="" style={{ width: 46, height: 46, objectFit: "contain" }} />
         : <div style={{ width: 46, height: 46, borderRadius: 10, margin: "0 auto",
@@ -2122,6 +2123,7 @@ function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under, scored = true }
         ...display("h3"), fontSize: 16, color: V.text, marginTop: 6,
         lineHeight: 1.25, whiteSpace: "nowrap",
       }}>{!t ? "\u2014" : t.name.length > 16 && t.short ? t.short : t.name}</div>
+      </TeamTap>
       <div style={{ ...display("chip"), fontSize: 11, color: c, marginTop: 2 }}>{side}</div>
       <div style={{ ...numeric("hero"), fontSize: 44, color: scored ? c : V.text3,
                     marginTop: 6, ...(won ? textGlow(c, 0.9) : {}) }}>

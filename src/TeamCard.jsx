@@ -136,11 +136,29 @@ export function TeamCardBody({ data, onClose, onPlayer, onMatchup }) {
         </div>
         <div style={{ ...display("h2", { fontSize: "clamp(24px, 7.6vw, 30px)", lineHeight: 1.1, color: V.text }),
           marginTop: 10 }}>{name}</div>
-        {division && (
-          <div style={{ ...label({ fontSize: 13, letterSpacing: "0.12em", color: accent }), marginTop: 6 }}>
-            {DIV_NAME[division] || division}
+        {/* Where they stand, the headline: the place in their division and
+            the championship points that put them there (Andrew, 2026-10-05:
+            prominent). Second half only, the way /teams counts them. */}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "stretch", gap: 10, marginTop: 12 }}>
+          <div style={{ flex: "1 1 0", maxWidth: 160, padding: "8px 6px 9px", borderRadius: 14,
+            border: `1.5px solid ${accent}aa`, background: `${accent}14`, boxShadow: `0 0 16px ${accent}33` }}>
+            <div style={{ ...numeric("hero", { fontSize: 40, lineHeight: 1, color: accent }), ...textGlow(accent, 0.8) }}>
+              {half && half.place ? `P${half.place}` : "\u2013"}
+            </div>
+            <div style={{ ...label({ fontSize: 13, letterSpacing: "0.08em", color: V.text }), marginTop: 5 }}>
+              {DIV_NAME[division] || "Division"}
+            </div>
           </div>
-        )}
+          <div style={{ flex: "1 1 0", maxWidth: 160, padding: "8px 6px 9px", borderRadius: 14,
+            border: `1.5px solid ${V.blue}aa`, background: `${V.blue}14`, boxShadow: `0 0 16px ${V.blue}33` }}>
+            <div style={{ ...numeric("hero", { fontSize: 40, lineHeight: 1, color: V.blue }), ...textGlow(V.blue, 0.8) }}>
+              {half ? half.pts : 0}
+            </div>
+            <div style={{ ...label({ fontSize: 13, letterSpacing: "0.08em", color: V.text }), marginTop: 5 }}>
+              Champ points
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* The two of them, out of the circle, and who carried what. */}
@@ -153,11 +171,11 @@ export function TeamCardBody({ data, onClose, onPlayer, onMatchup }) {
 
       {/* The season in four numbers. */}
       <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
-        <Stat k="Record" v={season.record} sub={half ? `${half.record} 2nd half` : null} />
+        <Stat k="Record" v={season.record} sub="season" />
         <Stat k="Avg" v={season.avg.toFixed(1)} sub={season.avgRank ? `${ord(season.avgRank)} of ${season.teams}` : null} />
         <Stat k="BOX BOX" v={`${season.bb.won}-${season.bb.lost}`}
           sub={season.bb.push ? `${season.bb.push} ${season.bb.push === 1 ? "push" : "pushes"}` : "won-lost"} />
-        <Stat k="Champ pts" v={half ? half.pts : 0} sub={half && half.place ? `P${half.place}` : null} />
+        <Stat k="2nd half" v={half ? half.record : "0-0"} sub="record" />
       </div>
 
       {section("Results and schedule")}

@@ -4,6 +4,7 @@ import { Flagged } from "./Flag.jsx";
 import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildTeamPower, ordinal } from "./teamTable";
 import { buildPowerNotes } from "./powerNotes";
+import { useTeamCard } from "./PlayerCard.jsx";
 
 // The team Power Rankings, at /power, on the Vegas look. The same skeleton as
 // /teams: one row a team, then the write-ups underneath, one short paragraph
@@ -98,9 +99,10 @@ function Form({ form }) {
 function Row({ row, mine, nameOf }) {
   const div = DIV[row.division] || DIV.second;
   const who = [row.p1Id, row.p2Id].map(id => nameOf[id]).filter(Boolean).map(shortName).join(" \u00b7 ");
+  const openTeam = useTeamCard();
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 8,
+    <div onClick={() => openTeam(row.id)} role="button" style={{
+      display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
       padding: "8px 10px", borderRadius: 14, marginBottom: 6,
       background: mine ? "rgba(0,217,255,0.07)" : V.bg2,
       border: `1px solid ${mine ? V.blue : V.border}`,
@@ -201,8 +203,10 @@ function Facts({ row, byId }) {
 function Note({ row, text, mine, nameOf, byId }) {
   const div = DIV[row.division] || DIV.second;
   const who = [row.p1Id, row.p2Id].map(id => nameOf[id]).filter(Boolean).map(shortName).join(" \u00b7 ");
+  const openTeam = useTeamCard();
   return (
-    <div style={{ ...card({ padding: "14px 16px 16px", marginBottom: 10 }), ...(mine ? edgeGlow(V.blue, 0.6) : {}) }}>
+    <div onClick={() => openTeam(row.id)} role="button" style={{ ...card({ padding: "14px 16px 16px", marginBottom: 10 }),
+      ...(mine ? edgeGlow(V.blue, 0.6) : {}), cursor: "pointer" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
         <div style={numeric("stat", { fontSize: 22, color: V.text2, flexShrink: 0, minWidth: 28 })}>{row.place}</div>
         {row.logo && <img src={row.logo} alt="" style={{ width: 34, height: 34, objectFit: "contain", flexShrink: 0 }} />}
