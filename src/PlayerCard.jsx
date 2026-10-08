@@ -23,6 +23,7 @@ import { buildTeamCard } from "./teamCard.js";
 import { TeamCardBody } from "./TeamCard.jsx";
 import { MARK } from "./history.js";
 import { codeOf as teamCodeOf, displayOf as teamDisplayOf, shortOf as teamShortOf } from "./teams.js";
+import { HelmetRequestBox } from "./HelmetRequest.jsx";
 
 // The box score is the home page's own three pieces, so it lives in
 // VegasHome.jsx. That file imports PlayerTap from this one, so this one reaches
@@ -282,8 +283,10 @@ const HINTS = {
   conservative: "Picks the field picks more often.",
 };
 
-/** The card's content. Pure render of buildPlayerCard's output. */
-export function PlayerCardBody({ data, onClose, openPodiums = false }) {
+/** The card's content. Pure render of buildPlayerCard's output. `self` is
+ *  true on the reader's own card, which is the only one that offers a
+ *  different helmet; the smoke script never sets it. */
+export function PlayerCardBody({ data, onClose, openPodiums = false, self = false }) {
   const { name, photo, nation, team, style, slogan, stats, career } = data;
   // Table numbers are white, 15px and in the numbers face. The gray is for
   // the headers, which are words.
@@ -357,6 +360,14 @@ export function PlayerCardBody({ data, onClose, openPodiums = false }) {
         {"“"}{slogan}{"”"}
       </div>
 
+      {/* Your own card only: the offer of a different helmet, under the
+          picture it is about. */}
+      {self && (
+        <div style={{ marginTop: 13 }}>
+          <HelmetRequestBox playerId={data.id} playerName={name} tight />
+        </div>
+      )}
+
       {/* This season. The same four numbers /players ranks and shows. */}
       <div style={{ display: "flex", gap: 6, marginTop: 13 }}>
         <Stat k="Points" v={stats.pts} />
@@ -423,6 +434,12 @@ export function PlayerCardBody({ data, onClose, openPodiums = false }) {
   );
 }
 
+function viewerName() {
+  try {
+    return new URLSearchParams(window.location.search).get("player") || localStorage.getItem("f1_user") || null;
+  } catch (e) { return null; }
+}
+
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap');`;
 
 function PlayerCardModal({ name, db, failed, onClose }) {
@@ -436,6 +453,10 @@ function PlayerCardModal({ name, db, failed, onClose }) {
   }, [onClose]);
 
   const data = db ? buildPlayerCard(db, name) : null;
+  // Whose card this is, against who is reading: ?player= first, the way App
+  // does, then the signed-in name. Read at open time, since Viewing as can
+  // change it without a reload.
+  const self = name === viewerName();
 
   return (
     <div onClick={onClose} style={{
@@ -450,7 +471,7 @@ function PlayerCardModal({ name, db, failed, onClose }) {
         animation: "v-rise 220ms ease-out",
       }}>
         {data
-          ? <PlayerCardBody data={data} onClose={onClose} />
+          ? <PlayerCardBody data={data} onClose={onClose} self={self} />
           : (
             <div style={{ padding: "40px 0", textAlign: "center" }}>
               <div style={display("h3", { color: V.text })}>{name}</div>

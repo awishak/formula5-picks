@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { V, FM, FD, FB, label, body, card, textGlow, titleFit, titleBox } from "./theme.vegas";
 import { supabase } from "./supabaseClient";
 import FlagPicker, { FlagRow } from "./FlagPicker.jsx";
+import { HelmetRequestBox } from "./HelmetRequest.jsx";
 
 // The fifth tab. Everything that does not have a page of its own yet ends up
 // here, so for now it is your flag and the one link that has to work.
@@ -26,7 +27,7 @@ export default function MorePage({ onNavigate, currentUser }) {
     (async () => {
       try {
         const { data: p, error } = await supabase.from("players")
-          .select("id,name,nation").eq("name", currentUser).maybeSingle();
+          .select("id,name,nation,photo_url").eq("name", currentUser).maybeSingle();
         if (error) throw error;
         if (!alive) return;
         setMe(p || null);
@@ -108,6 +109,31 @@ export default function MorePage({ onNavigate, currentUser }) {
             </p>
           )}
         </div>
+
+        {/* Your helmet, and the box to ask for a different one. The row goes
+            to Andrew and comes up on a card for him the next time he opens
+            the app. */}
+        {me && (
+          <div style={{ ...card({ padding: 16, marginBottom: 14 }) }}>
+            <div style={{ ...label({ color: V.text3, fontSize: 11, marginBottom: 10 }) }}>
+              YOUR HELMET
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              {me.photo_url ? (
+                <img src={me.photo_url} alt="" style={{ width: 64, height: 64, borderRadius: 14,
+                  objectFit: "cover", objectPosition: "center top", flexShrink: 0,
+                  border: `1px solid ${V.border2}` }} />
+              ) : (
+                <div style={{ width: 64, height: 64, borderRadius: 14, flexShrink: 0, background: V.bg3,
+                  border: `1px solid ${V.border2}` }} />
+              )}
+              <div style={{ fontFamily: FD, fontWeight: 700, fontSize: 18, letterSpacing: "0.02em", color: V.text }}>
+                {currentUser}
+              </div>
+            </div>
+            <HelmetRequestBox playerId={me.id} playerName={currentUser} />
+          </div>
+        )}
 
         <button onClick={() => onNavigate("power")} style={{
           ...card({ padding: "16px 18px", marginBottom: 14 }),
