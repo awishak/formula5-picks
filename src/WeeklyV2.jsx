@@ -54,8 +54,43 @@ const lastName = s => String(s || "").split(/\s+/).slice(-1)[0];
 const dColor = name => F1_TEAM_COLORS[TEAM_BY_NAME[name]] || V.text3;
 const two = n => (n == null ? "-" : Number(n).toFixed(2));
 const signed = n => (n > 0 ? `+${n}` : String(n));
+const firstName = s => String(s || "").split(/\s+/)[0];
 
 /* --------------------------------------------------------------- pieces */
+
+// A card's title as a neon sign: the words in pink, lit, inside a pink tube.
+// Andrew, 2026-10-11: "the podium" should be in a neon pink sign, and the
+// same for Your Week and Your Matchup. Inline-block so the tube hugs the
+// words rather than running the width of the card.
+const Sign = ({ children, color = V.pink }) => (
+  <div style={{ textAlign: "center" }}>
+    <div style={{
+      display: "inline-block", padding: "5px 20px 6px", borderRadius: 14,
+      ...edgeGlow(color, 1.1), background: `${color}0d`,
+      ...display("h1", { fontSize: 31 }), ...textGlow(color, 1),
+      textTransform: "uppercase", letterSpacing: "0.04em", whiteSpace: "nowrap",
+    }}>
+      {children}
+    </div>
+  </div>
+);
+
+// The winner's week in a sentence, under the three on the podium. Andrew's
+// shape, 2026-10-11: first win of the season, nth of the career, the move in
+// the standings, congratulations. They/them for a player, the deck's rule.
+function winnerLine(w) {
+  if (!w) return null;
+  const first = firstName(w.name);
+  const n = w.seasonWins, c = w.careerWins;
+  const ofSeason = n === 1 ? "first win of the season" : `${ordinal(n)} win of the season`;
+  const ofCareer = c === 1 ? "the first of their career" : `the ${ordinal(c)} of their career`;
+  const move = w.placeBefore && w.placeNow
+    ? (w.placeNow < w.placeBefore ? ` The win moves them from P${w.placeBefore} to P${w.placeNow}.`
+      : w.placeNow === w.placeBefore ? ` They hold P${w.placeNow} in the standings.`
+      : ` They sit P${w.placeNow} in the standings.`)
+    : "";
+  return `This is ${first}'s ${ofSeason} and ${ofCareer}.${move} Congrats, ${first}!`;
+}
 
 // A car. The side and top views live in public/cars by team code, Hedra
 // renders Andrew made on 2026-10-05, shrunk to 800 wide. A team with no car
@@ -209,7 +244,7 @@ function Podium({ top3, delay = 0 }) {
   ) : <div />;
   return (
     <div style={{ width: "100%", display: "grid", gap: 2 }}>
-      <div style={{ position: "relative", width: "100%", aspectRatio: "10 / 4.1" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "10 / 3.6" }}>
         {photo(p2, { left: "4%" }, 1, "34%", delay + 700)}
         {photo(p3, { right: "4%" }, 1, "34%", delay + 1300)}
         {photo(p1, { left: "30%" }, 2, "40%", delay)}
@@ -230,12 +265,12 @@ function Small({ r, delay = 0 }) {
   const tag = me ? "YOU" : kind === "mate" ? "TEAMMATE" : null;
   return (
     <div className="v-pop" style={{ flex: 1, minWidth: 0, ...shoulder(me ? V.amber : kind === "mate" ? V.blue : V.text3),
-      padding: "7px 3px 7px", display: "grid", gap: 2, justifyItems: "center",
+      padding: "3px 3px 3px", display: "grid", gap: 2, justifyItems: "center",
       animationDelay: `${delay}ms` }}>
-      <div style={{ ...numeric("chip", { fontSize: 18, color: me ? V.amber : V.text2 }) }}>
+      <div style={{ ...numeric("chip", { fontSize: 16, color: me ? V.amber : V.text2 }) }}>
         P{r.place}
       </div>
-      <HeroFace src={r.photo} name={r.name} width="44%" accent={accent} />
+      <HeroFace src={r.photo} name={r.name} width="38%" accent={accent} />
       <div style={{ ...display("chip", { fontSize: 15, color: me ? V.amber : V.text }),
         lineHeight: 1.15, textAlign: "center", overflowWrap: "anywhere", letterSpacing: "0.02em" }}>
         {shortName(r.name)}
@@ -386,15 +421,23 @@ function CardPodium({ v }) {
   const medal = [V.gold, V.silver, V.bronze];
   return (
     <>
-      <Kicker>ROUND {v.round} · {String(v.raceName).toUpperCase()}</Kicker>
-      <Head size="h3">The podium</Head>
+      <Sign>The Podium</Sign>
       <Podium top3={p.top3} delay={300} />
+      {/* The winner's week, under the three. The round moved to the foot of
+          the card, under all the faces: Andrew, 2026-10-11. */}
+      {p.winner && (
+        <div style={{ ...body("bodyMd", { fontSize: 14, color: V.text }), textAlign: "center",
+          textWrap: "pretty", padding: "0 6px", lineHeight: 1.3 }}>
+          {winnerLine(p.winner)}
+        </div>
+      )}
       <div style={{ display: "flex", gap: 6, width: "100%" }}>
         {p.row2.map((r, i) => <Small key={r.id} r={r} delay={2600 + i * 120} />)}
       </div>
       <div style={{ display: "flex", gap: 6, width: "100%" }}>
         {p.row3.map((r, i) => <Small key={r.id} r={r} delay={3100 + i * 120} />)}
       </div>
+      <Kicker>ROUND {v.round} · {String(v.raceName).toUpperCase()}</Kicker>
     </>
   );
 }
@@ -403,7 +446,7 @@ function CardBoxScore({ v }) {
   const b = v.boxScore;
   return (
     <>
-      <Kicker>YOUR WEEK</Kicker>
+      <Sign>Your Week</Sign>
       <Head size="h1" color={V.blue} glow>
         <Count to={b.ind} dur={700} /> points
       </Head>
@@ -478,7 +521,7 @@ function CardMatchup({ v }) {
   );
   return (
     <>
-      <Kicker>YOUR MATCHUP</Kicker>
+      <Sign>Your Matchup</Sign>
       <Head size="h1" color={won ? MINE_C : lost ? THEIRS_C : V.text} glow={won || lost}>
         {won ? `Won ${m.myTotal} to ${m.oppTotal}` : lost ? `Lost ${m.oppTotal} to ${m.myTotal}` : `Drew ${m.myTotal} all`}
       </Head>
@@ -563,7 +606,7 @@ function CardStandings({ v }) {
   const moveWord = m => (m == null || m === 0 ? "" : m > 0 ? `, up ${m}` : `, down ${-m}`);
   return (
     <>
-      <Kicker>WHERE YOU STAND</Kicker>
+      <Sign>Where You Stand</Sign>
       <div style={{ display: "flex", width: "100%", gap: 10 }}>
         {ind && (
           <div style={{ flex: 1, ...shoulder(V.blue), padding: "12px 8px", display: "grid", gap: 2 }}>

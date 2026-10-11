@@ -28,6 +28,7 @@ import { canonicalName } from "./drivers.js";
 // so a player who has picked one wins over anything hardcoded.
 import { nationOf as staticNationOf, teamNationOf as staticTeamNationOf } from "./nations.js";
 import { buildPlayerTable, placesBy } from "./playerTable.js";
+import { careerOf } from "./history.js";
 
 // The pit guess input runs 1.5 to 4.5. Card 5 asks what the best legal guess
 // would have done, so the ends of that range are part of the scoring model and
@@ -1196,6 +1197,25 @@ export function buildWeekly(db, playerName, round = null) {
   const indPlace = indPlaces[me.id];
   const myPlayerRow = sortedPlayers.find(r => r.id === me.id) || null;
 
+  // The week's winner, for the line under the podium. Andrew, 2026-10-11:
+  // "this is Maggie's first win of the season and 4th in her career. This win
+  // moves her from Px to Py." Season wins come off the same table the
+  // standings use, cut to this round, so this week's win is in the count;
+  // career wins add the seasons on paper in history.js. The places are the
+  // season's individual standings, on points a race, before and after.
+  const winner = (() => {
+    const top = ladder[0];
+    if (!top) return null;
+    const row = sortedPlayers.find(r => r.id === top.id);
+    const seasonWins = row ? row.p1 : 1;
+    const prior = careerOf(top.name).seasons.reduce((a, s) => a + s.wins, 0);
+    return {
+      id: top.id, name: top.name, pts: top.pts,
+      seasonWins, careerWins: prior + seasonWins,
+      placeBefore: placesBefore[top.id] || null, placeNow: indPlaces[top.id] || null,
+    };
+  })();
+
   // Where the team sat in its division before this round, so the standings card
   // can show the move rather than only the destination.
   const teamPlaceBefore = (() => {
@@ -1284,7 +1304,7 @@ export function buildWeekly(db, playerName, round = null) {
     // chosen, which is what the card needs to know to ask.
     player: { id: me.id, name: me.name, photo: me.photo_url || null,
               nation: me.nation === undefined ? null : me.nation },
-    context,
+    context, winner,
     cards: [card1, card2, card3, card4, card5, card6, card7, card8],
     card1, card2, card3, card4, card5, card6, card7, card8,
   };

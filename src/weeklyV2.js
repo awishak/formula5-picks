@@ -40,6 +40,7 @@ export function buildWeeklyV2(d) {
     row2: ladder.slice(3, 7),
     row3: [...ladder.slice(7, 10), ...(extra ? [extra] : [])],
     myPlace: c1.place, field: c1.field,
+    winner: d.winner || null,
   };
 
   /* ------------------------------------------------------------ box score */
