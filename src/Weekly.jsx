@@ -298,7 +298,9 @@ const TRACKS = {
   bahlaysia: { src: "/bahlaysian-gp.mp3", name: "Welcome to Bahlaysia!" },
   // Tubey's song for the United States Grand Prix, round 18. Andrew's file,
   // 2026-10-11, 134 seconds; named by him. Leads the second deck's playlist.
-  texas: { src: "/tubey-texas-time.mp3", name: "Tubey Texas Time" },
+  // The cover is Andrew's artwork, Tubey with a guitar on South Congress,
+  // 2026-10-11, shrunk to a 480px JPEG from the 1024px PNG he sent.
+  texas: { src: "/tubey-texas-time.mp3", name: "Tubey Texas Time", cover: "/tubey-texas-time.jpg" },
 };
 // What a round is called on its deck when Andrew calls it something else.
 // Round 16, the Bahrain Grand Prix at Sepang, is the Bahlaysian Grand Prix.

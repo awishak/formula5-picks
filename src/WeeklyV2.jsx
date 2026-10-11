@@ -354,12 +354,23 @@ function CardResult({ v, onMusic, onNoMusic, onSkip }) {
         {/* The new song, named over the button that plays it. Andrew,
             2026-10-11: highlight that we have a new song. It follows the head
             of the playlist, so the next song replaces it here too. */}
-        <div style={{ display: "grid", gap: 2, justifyItems: "center", textAlign: "center" }}>
-          <span style={{ ...display("chip", { fontSize: 13, color: V.pink }), letterSpacing: "0.12em",
-            ...textGlow(V.pink, 0.6) }}>NEW SONG</span>
-          <span style={{ ...display("h3", { color: V.gold }), ...textGlow(V.gold, 0.7) }}>
-            {TRACKS[PLAYLIST[0]].name}
-          </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center" }}>
+          {/* The album cover beside the title, in a row rather than above it:
+              stacked, it would push the buttons under the fold on a 375x667
+              phone, the same reason the first deck's sleeve sits in a row. */}
+          {TRACKS[PLAYLIST[0]].cover && (
+            <img src={TRACKS[PLAYLIST[0]].cover} alt={`${TRACKS[PLAYLIST[0]].name} album cover`}
+              width={92} height={92}
+              style={{ display: "block", width: 92, height: 92, borderRadius: 8, objectFit: "cover",
+                flexShrink: 0, boxShadow: `0 0 14px ${V.gold}55, 0 4px 12px #0008` }} />
+          )}
+          <div style={{ display: "grid", gap: 2, justifyItems: "start", textAlign: "left" }}>
+            <span style={{ ...display("chip", { fontSize: 13, color: V.pink }), letterSpacing: "0.12em",
+              ...textGlow(V.pink, 0.6) }}>NEW SONG</span>
+            <span style={{ ...display("h3", { color: V.gold }), ...textGlow(V.gold, 0.7) }}>
+              {TRACKS[PLAYLIST[0]].name}
+            </span>
+          </div>
         </div>
         <Button onClick={onMusic}>CONTINUE WITH MUSIC</Button>
         <Button onClick={onNoMusic} kind="line">CONTINUE WITHOUT MUSIC</Button>
