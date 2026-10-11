@@ -27,6 +27,7 @@ import { Flagged } from "./Flag.jsx";
 import { shortOf } from "./teams.js";
 import { TeamTap } from "./PlayerCard.jsx";
 import { playSong, toggleSong, songPlaying, onSong } from "./themeSong.js";
+import { pronounsOf } from "./pronouns.js";
 import { F1_TEAM_COLORS, av } from "./theme";
 import {
   V, FD, FB, display, numeric, body, label, edgeGlow, textGlow,
@@ -77,17 +78,22 @@ const Sign = ({ children, color = V.pink }) => (
 
 // The winner's week in a sentence, under the three on the podium. Andrew's
 // shape, 2026-10-11: first win of the season, nth of the career, the move in
-// the standings, congratulations. They/them for a player, the deck's rule.
+// the standings, congratulations. His or her, off pronouns.js, Andrew's call
+// the same day; the Bot is it.
 function winnerLine(w) {
   if (!w) return null;
   const first = firstName(w.name);
+  const pr = pronounsOf(w.name);
+  const cap = s => s[0].toUpperCase() + s.slice(1);
   const n = w.seasonWins, c = w.careerWins;
   const ofSeason = n === 1 ? "first win of the season" : `${ordinal(n)} win of the season`;
-  const ofCareer = c === 1 ? "the first of their career" : `the ${ordinal(c)} of their career`;
+  const ofCareer = c === 1 ? `the first of ${pr.possessive} career` : `the ${ordinal(c)} of ${pr.possessive} career`;
+  const holds = pr === pronounsOf("Formula5 Bot") || pr.subject !== "they" ? "holds" : "hold";
+  const sits = holds === "holds" ? "sits" : "sit";
   const move = w.placeBefore && w.placeNow
-    ? (w.placeNow < w.placeBefore ? ` The win moves them from P${w.placeBefore} to P${w.placeNow}.`
-      : w.placeNow === w.placeBefore ? ` They hold P${w.placeNow} in the standings.`
-      : ` They sit P${w.placeNow} in the standings.`)
+    ? (w.placeNow < w.placeBefore ? ` The win moves ${pr.object} from P${w.placeBefore} to P${w.placeNow}.`
+      : w.placeNow === w.placeBefore ? ` ${cap(pr.subject)} ${holds} P${w.placeNow} in the standings.`
+      : ` ${cap(pr.subject)} ${sits} P${w.placeNow} in the standings.`)
     : "";
   return `This is ${first}'s ${ofSeason} and ${ofCareer}.${move} Congrats, ${first}!`;
 }

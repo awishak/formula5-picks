@@ -3411,7 +3411,9 @@ function CardStandings({ d }) {
 
 function CardNext({ d, onPicks, onExit }) {
   const c = d.card8;
-  const bah = ROUND_SONG[d.round] === "bahlaysia";
+  // The advert sells the newest song. Andrew, 2026-10-11: GET TUBEY TEXAS
+  // TIME NOW, with the album cover and the Mascot Songs Monthly line.
+  const ad = TRACKS.texas;
   const r = c.race;
   // The flag. This is the only card in the deck that asks the reader for
   // something, and the podium on card 2 is where a flag shows up, so this is
@@ -3481,14 +3483,15 @@ function CardNext({ d, onPicks, onExit }) {
         <button onClick={c.poolReady ? onPicks : onExit} style={{
           background: "none", border: "none", padding: 0, cursor: "pointer",
           display: "flex", gap: 12, alignItems: "center", textAlign: "left" }}>
-          <TubeyCover variant={TUBEY_COVER} size={72}
-            style={{ border: `1px solid ${V.border2}` }} />
+          <img src={ad.cover} alt={`${ad.name} album cover`} width={80} height={80}
+            style={{ display: "block", width: 80, height: 80, borderRadius: 6, objectFit: "cover",
+              flexShrink: 0, border: `1px solid ${V.border2}`, boxShadow: `0 0 14px ${V.gold}44` }} />
           <span style={{ display: "grid", gap: 4 }}>
             <span style={{ ...display("h2", { fontSize: 24, lineHeight: 1.05 }), ...textGlow(V.blue, 0.8) }}>
-              {bah ? "GET WELCOME TO BAHLAYSIA NOW" : "GET VELVET THUNDER NOW"}
+              {`GET ${ad.name.toUpperCase()} NOW`}
             </span>
             <span style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color: V.text }) }}>
-              featuring Tubey the Worm
+              Live from South Congress, Austin, Texas
             </span>
             <span style={{ ...body("bodySm", { fontSize: 14, color: V.text2 }) }}>
               Available on Winamp, MiniDisc and Zune
@@ -3499,14 +3502,13 @@ function CardNext({ d, onPicks, onExit }) {
         <div style={{ display: "grid", gap: 3, justifyItems: "center", maxWidth: 330 }}>
           <span style={{ ...body("bodySm", { fontSize: 14, color: V.text, lineHeight: 1.4 }),
             fontStyle: "italic" }}>
-            &ldquo;this song probably doesn&rsquo;t need lyrics--especially these lyrics&rdquo;
+            &ldquo;this actually would make the country charts&rdquo;
           </span>
           <span style={{ ...label({ fontSize: 11, color: V.text3 }) }}>
-            -Fantasy Games Weekly
+            -Mascot Songs Monthly
           </span>
         </div>
-        <a href={bah ? TRACKS.bahlaysia.src : TRACKS.tubey.src}
-          download={bah ? "welcome-to-bahlaysia-featuring-tubey-the-worm.mp3" : "velvet-thunder-featuring-tubey-the-worm.mp3"} style={{
+        <a href={ad.src} download="tubey-texas-time.mp3" style={{
           ...display("h3", { fontSize: 15, color: V.bg }), background: V.blue,
           borderRadius: 999, padding: "11px 26px", textDecoration: "none",
           boxShadow: `0 0 18px ${V.blue}77`,

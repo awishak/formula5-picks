@@ -107,9 +107,11 @@ for (const name of names) {
   }
   total++;
   const html = last(base);
-  if (!/GET VELVET THUNDER NOW/.test(html) || !/featuring Tubey the Worm/.test(html)) {
-    failed++; console.log("  FAIL  the advert does not name Velvet Thunder featuring Tubey the Worm");
-  } else console.log("  ok    the advert names Velvet Thunder featuring Tubey the Worm");
+  // The advert sells the newest song, Tubey Texas Time since 2026-10-11, with
+  // its cover and the Mascot Songs Monthly line.
+  if (!/GET TUBEY TEXAS TIME NOW/.test(html) || !/tubey-texas-time\.jpg/.test(html) || !/Mascot Songs Monthly/.test(html)) {
+    failed++; console.log("  FAIL  the advert does not sell Tubey Texas Time with its cover");
+  } else console.log("  ok    the advert sells Tubey Texas Time with its cover");
 }
 
 // A player with no score for the round must come back null rather than throw,
@@ -220,8 +222,8 @@ for (const s of ["held", "solo", "pair", "notEnough", "locked"]) {
   check("round 16 offers the Bahlaysian song in place of Tubey's theme", () => {
     const one = renderToString(<WeeklyDeck data={{ ...base, round: 16 }} initialCard={0} />);
     if (!/THE BAHLAYSIAN GP SONG/.test(one)) throw new Error("card 1 still offers the theme");
-    const four = renderToString(<WeeklyDeck data={{ ...base, round: 16 }} initialCard={3} />);
-    if (!/GET WELCOME TO BAHLAYSIA NOW/.test(four) || !/bahlaysian-gp\.mp3/.test(four)) throw new Error("card 4 advert is still the theme");
+    // The advert no longer follows the round: it sells the newest song on
+    // every deck, so card 4 is not checked here any more.
     const other = renderToString(<WeeklyDeck data={{ ...base, round: 17 }} initialCard={0} />);
     if (/BAHLAYSIAN GP SONG/.test(other)) throw new Error("round 17 should be back on the theme");
   });
