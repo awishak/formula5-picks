@@ -296,6 +296,9 @@ const TRACKS = {
   // card and left playing over the picker. The file is Andrew's; see CLAUDE.md.
   // Named by Andrew 2026-09-28; the name prints under the buttons that play it.
   bahlaysia: { src: "/bahlaysian-gp.mp3", name: "Welcome to Bahlaysia!" },
+  // Tubey's song for the United States Grand Prix, round 18. Andrew's file,
+  // 2026-10-11, 134 seconds; named by him. Leads the second deck's playlist.
+  texas: { src: "/tubey-texas-time.mp3", name: "Tubey Texas Time" },
 };
 // What a round is called on its deck when Andrew calls it something else.
 // Round 16, the Bahrain Grand Prix at Sepang, is the Bahlaysian Grand Prix.

@@ -26,7 +26,7 @@ import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers.js";
 import { Flagged } from "./Flag.jsx";
 import { shortOf } from "./teams.js";
 import { TeamTap } from "./PlayerCard.jsx";
-import { playSong, pauseSong, toggleSong, songPlaying, onSong } from "./themeSong.js";
+import { playSong, toggleSong, songPlaying, onSong } from "./themeSong.js";
 import { F1_TEAM_COLORS, av } from "./theme";
 import {
   V, FD, FB, display, numeric, body, label, edgeGlow, textGlow,
@@ -40,8 +40,9 @@ import {
 // The songs, newest first. Card 1's CONTINUE WITH MUSIC starts the first and
 // the pill's next arrow walks down the list and round again. Andrew,
 // 2026-10-05: "a music player that defaults to the newest song, and then has a
-// next button and it plays the songs in order."
-const PLAYLIST = ["bahlaysia", "tubey", "velvet"];
+// next button and it plays the songs in order." Tubey Texas Time went to the
+// front on 2026-10-11, ahead of the United States Grand Prix.
+const PLAYLIST = ["texas", "bahlaysia", "tubey", "velvet"];
 
 const MINE_C = V.green, THEIRS_C = V.pink;
 const ordinal = n => {
@@ -350,6 +351,16 @@ function CardResult({ v, onMusic, onNoMusic, onSkip }) {
         ))}
       </div>
       <div style={{ display: "grid", gap: 10, width: "100%", justifyItems: "center", marginTop: 6 }}>
+        {/* The new song, named over the button that plays it. Andrew,
+            2026-10-11: highlight that we have a new song. It follows the head
+            of the playlist, so the next song replaces it here too. */}
+        <div style={{ display: "grid", gap: 2, justifyItems: "center", textAlign: "center" }}>
+          <span style={{ ...display("chip", { fontSize: 13, color: V.pink }), letterSpacing: "0.12em",
+            ...textGlow(V.pink, 0.6) }}>NEW SONG</span>
+          <span style={{ ...display("h3", { color: V.gold }), ...textGlow(V.gold, 0.7) }}>
+            {TRACKS[PLAYLIST[0]].name}
+          </span>
+        </div>
         <Button onClick={onMusic}>CONTINUE WITH MUSIC</Button>
         <Button onClick={onNoMusic} kind="line">CONTINUE WITHOUT MUSIC</Button>
         <Button onClick={onSkip} kind="ghost">Skip the recap</Button>
@@ -591,12 +602,13 @@ export function WeeklyDeckV2({ data: given, onExit, onPicks, initialCard = 0 }) 
   ];
   const [i, setI] = useState(Math.min(cards.length - 1, Math.max(0, initialCard)));
 
-  // The music. themeSong.js holds the one Audio object outside React; leaving
-  // the deck stops it, the way the first deck does on every ordinary round.
+  // The music. themeSong.js holds the one Audio object outside React, and
+  // leaving the deck does NOT stop it: Andrew, 2026-10-11, "even when people
+  // close the cards, the song should still play." The song runs on over the
+  // app, and NowPlaying's STOP THE SONG beside Viewing as is what ends it.
   const [track, setTrack] = useState(0);
   const [playing, setPlaying] = useState(() => songPlaying());
   useEffect(() => onSong(setPlaying), []);
-  useEffect(() => () => pauseSong(), []);
   const play = idx => { setTrack(idx); setPlaying(true); playSong(TRACKS[PLAYLIST[idx]].src); };
   const toggle = () => { setPlaying(!playing); toggleSong(TRACKS[PLAYLIST[track]].src); };
   const next = () => play((track + 1) % PLAYLIST.length);
