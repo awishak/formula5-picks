@@ -44,8 +44,12 @@ export async function upsert(path, rows, onConflict) {
 
 // Vercel signs its cron calls with this header. CRON_SECRET, when set, lets the
 // same endpoint be triggered by hand without opening it to the world.
+// Vercel sends `Authorization: Bearer CRON_SECRET` on every scheduled call once
+// that env var is set, so the secret is the whole check. The `x-vercel-cron`
+// header used to be accepted on its own, and on 2026-10-21 a plain curl with
+// that header spoofed ran the standings job from a laptop. Vercel does not
+// strip it, so it proves nothing.
 export function authorized(req) {
-  if (req.headers["x-vercel-cron"]) return true;
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
   return req.headers.authorization === `Bearer ${secret}`;
