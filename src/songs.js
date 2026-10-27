@@ -24,10 +24,12 @@ export const SONGS = [
     src: "/kimi-el-hijo.mp3",
     name: "Kimi El Hijo",
     date: "2026-10-27",
-    // No line and no review yet: those are Andrew's to write, never ours
-    // (2026-10-27). The row and the advert leave the space empty until he does.
-    line: "",
+    // The line is Andrew's, 2026-10-27. No review yet: his to write, never ours.
+    line: "The Official F5 Song for Mexico City",
     file: "kimi-el-hijo.mp3",
+    // Andrew's artwork, 2026-10-27: Kimi and Toto under confetti at the Angel
+    // of Independence, a 480px JPEG off his 1024px PNG.
+    cover: "/kimi-el-hijo.jpg",
     lyrics: [
       ["Verse 1", [
         "We’re going to Mexico, my love,",
