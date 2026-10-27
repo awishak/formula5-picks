@@ -11,6 +11,7 @@ import { renderToString } from "react-dom/server";
 import { WeeklyDeck } from "../src/Weekly.jsx";
 import { buildWeekly } from "../src/weekly.js";
 import { buildWire } from "../src/wire.js";
+import { SONGS } from "../src/songs.js";
 import DB from "./weekly-fixture.json";
 
 const CARDS = 4;
@@ -107,11 +108,20 @@ for (const name of names) {
   }
   total++;
   const html = last(base);
-  // The advert sells the newest song, Tubey Texas Time since 2026-10-11, with
-  // its cover and the Mascot Songs Monthly line.
-  if (!/GET TUBEY TEXAS TIME NOW/.test(html) || !/tubey-texas-time\.jpg/.test(html) || !/Mascot Songs Monthly/.test(html)) {
-    failed++; console.log("  FAIL  the advert does not sell Tubey Texas Time with its cover");
-  } else console.log("  ok    the advert sells Tubey Texas Time with its cover");
+  // The advert sells the newest song, the head of songs.js, with its cover or
+  // a drawn sleeve, its line, its review and a download of its file.
+  const art = SONGS[0].cover ? SONGS[0].cover.replace(/[.\\]/g, "\\$&") : `${SONGS[0].name} record`;
+  if (!html.includes(`GET ${SONGS[0].name.toUpperCase()} NOW`) || !new RegExp(art).test(html)
+      || (SONGS[0].line && !html.includes(SONGS[0].line)) || !html.includes(`download="${SONGS[0].file}"`)) {
+    failed++; console.log(`  FAIL  the advert does not sell ${SONGS[0].name} with its art, line and file`);
+  } else console.log(`  ok    the advert sells ${SONGS[0].name} with its art, line and file`);
+  // The jukebox list is newest first and every song has a file and a line.
+  total++;
+  const dated = SONGS.every((s, i) => !i || s.date <= SONGS[i - 1].date);
+  // line may be "" until Andrew writes one; it is never written for him.
+  const whole = SONGS.every(s => s.src && s.name && s.line != null && s.file && s.date);
+  if (!dated || !whole) { failed++; console.log("  FAIL  songs.js is not newest first, or a song is missing a field"); }
+  else console.log(`  ok    songs.js holds ${SONGS.length} songs, newest first`);
 }
 
 // A player with no score for the round must come back null rather than throw,

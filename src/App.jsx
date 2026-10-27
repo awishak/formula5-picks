@@ -29,7 +29,7 @@ import VegasNav from "./VegasNav.jsx";
 import Recap from "./Recap.jsx";
 import Weekly from "./Weekly.jsx";
 import WeeklyV2 from "./WeeklyV2.jsx";
-import NowPlaying from "./NowPlaying.jsx";
+import Jukebox from "./Jukebox.jsx";
 import { HelmetInbox } from "./HelmetRequest.jsx";
 // A round whose deck was rebuilt after people had closed it gets a new seen
 // key, so the gate opens once more for everyone. Round 15's deck became the
@@ -1209,11 +1209,12 @@ export default function App() {
             something you could only do by going home first. */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          gap: 12, padding: "12px 16px 8px",
+          gap: 10, padding: "12px 16px 8px",
         }}>
-          <img src={LOGO_B64} alt="Formula 5" style={{ height: 40, maxWidth: "36%", objectFit: "contain", objectPosition: "left", flexShrink: 1, minWidth: 0 }} />
-          {/* The theme song, when a deck left it playing. Tap to stop. */}
-          <NowPlaying />
+          <img src={LOGO_B64} alt="Formula 5" style={{ height: 40, maxWidth: "24%", objectFit: "contain", objectPosition: "left", flexShrink: 1, minWidth: 0 }} />
+          {/* The jukebox: every song, newest first, from anywhere. It glows
+              while a song a deck left playing is on, and stops it from inside. */}
+          <Jukebox />
           <ViewingAs currentUser={currentUser} onSelect={handleSelectName} />
         </div>
         {/* Helmet requests nobody has read yet come up on a card for Andrew.

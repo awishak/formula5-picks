@@ -58,8 +58,8 @@ export default function ViewingAs({ currentUser, onSelect }) {
   return (
     <>
       <button onClick={() => { setOpen(!open); setQ(""); }} style={{
-        display: "flex", alignItems: "center", gap: 9, cursor: "pointer",
-        padding: "7px 12px 7px 7px", borderRadius: 100,
+        display: "flex", alignItems: "center", gap: 7, cursor: "pointer",
+        padding: "7px 9px 7px 7px", borderRadius: 100,
         background: V.bg3, border: `1px solid ${open ? V.blue : V.border2}`,
         // Shrinkable, or it pushes past the edge next to the logo on a 320px
         // phone. The name inside already ellipsises.

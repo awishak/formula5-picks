@@ -32,6 +32,8 @@ import { shortOf } from "./teams.js";
 import { boxBoxLine, boxBoxSide } from "./pitStop.js";
 import { useFirstStop, stopLabel, teamOfQuestion } from "./firstStop.js";
 import { playSong, pauseSong, toggleSong, songPlaying, onSong } from "./themeSong.js";
+import { SONGS, TRACKS } from "./songs.js";
+import { Sleeve } from "./Jukebox.jsx";
 import { F1_TEAM_COLORS, av } from "./theme";
 import {
   V, FM, FD, FN, FB, TYPE, display, numeric, body, label,
@@ -281,27 +283,14 @@ const ChartHead = ({ n, title, action, onAction }) => (
 // workaround, so some of the league will tap and hear nothing. The control
 // glows while the track is playing, which is the only thing separating "my
 // phone is muted" from "this button is broken" on that phone.
-const THEME_SRC = "/velvet-thunder.mp3";
 const THEME_CREDIT = "Written by Andrea Buttacavoli, majority owner of Prestissimo Veloce";
 
 // Two songs since 2026-09-13. The new one, "F5 Theme Song featuring Tubey the
 // Worm", leads the offer on card 1 with its cover; Velvet Thunder stays as the
-// old one you can still pick. Andrew: this holds every round until he changes
-// it. One <audio> plays whichever was chosen, so the pill on later cards names
-// and stops that one.
-const TRACKS = {
-  tubey: { src: "/tubey-the-worm.mp3", name: "Velvet Thunder (feat. Tubey)" },
-  velvet: { src: THEME_SRC, name: "Velvet Thunder" },
-  // Tubey's song for the Bahlaysian Grand Prix, offered on round 15's last
-  // card and left playing over the picker. The file is Andrew's; see CLAUDE.md.
-  // Named by Andrew 2026-09-28; the name prints under the buttons that play it.
-  bahlaysia: { src: "/bahlaysian-gp.mp3", name: "Welcome to Bahlaysia!" },
-  // Tubey's song for the United States Grand Prix, round 18. Andrew's file,
-  // 2026-10-11, 134 seconds; named by him. Leads the second deck's playlist.
-  // The cover is Andrew's artwork, Tubey with a guitar on South Congress,
-  // 2026-10-11, shrunk to a 480px JPEG from the 1024px PNG he sent.
-  texas: { src: "/tubey-texas-time.mp3", name: "Tubey Texas Time", cover: "/tubey-texas-time.jpg" },
-};
+// old one you can still pick. One <audio> plays whichever was chosen, so the
+// pill on later cards names and stops that one. The rows themselves live in
+// songs.js since 2026-10-27, the one list the jukebox, both decks and the
+// advert read; TRACKS is that list keyed by name.
 // What a round is called on its deck when Andrew calls it something else.
 // Round 16, the Bahrain Grand Prix at Sepang, is the Bahlaysian Grand Prix.
 const RACE_NAME = { 16: "Bahlaysia Grand Prix" };
@@ -3411,9 +3400,11 @@ function CardStandings({ d }) {
 
 function CardNext({ d, onPicks, onExit }) {
   const c = d.card8;
-  // The advert sells the newest song. Andrew, 2026-10-11: GET TUBEY TEXAS
-  // TIME NOW, with the album cover and the Mascot Songs Monthly line.
-  const ad = TRACKS.texas;
+  // The advert sells the newest song, the head of songs.js. Andrew, 2026-10-11:
+  // GET TUBEY TEXAS TIME NOW, with the album cover and the Mascot Songs
+  // Monthly line; since 2026-10-27 it follows the list, so a new song replaces
+  // it here on its own. A song without a cover gets the drawn Tubey sleeve.
+  const ad = SONGS[0];
   const r = c.race;
   // The flag. This is the only card in the deck that asks the reader for
   // something, and the podium on card 2 is where a flag shows up, so this is
@@ -3483,32 +3474,38 @@ function CardNext({ d, onPicks, onExit }) {
         <button onClick={c.poolReady ? onPicks : onExit} style={{
           background: "none", border: "none", padding: 0, cursor: "pointer",
           display: "flex", gap: 12, alignItems: "center", textAlign: "left" }}>
-          <img src={ad.cover} alt={`${ad.name} album cover`} width={80} height={80}
-            style={{ display: "block", width: 80, height: 80, borderRadius: 6, objectFit: "cover",
-              flexShrink: 0, border: `1px solid ${V.border2}`, boxShadow: `0 0 14px ${V.gold}44` }} />
+          {ad.cover
+            ? <img src={ad.cover} alt={`${ad.name} album cover`} width={80} height={80}
+                style={{ display: "block", width: 80, height: 80, borderRadius: 6, objectFit: "cover",
+                  flexShrink: 0, border: `1px solid ${V.border2}`, boxShadow: `0 0 14px ${V.gold}44` }} />
+            : <Sleeve song={ad} size={80} style={{ flexShrink: 0, boxShadow: `0 0 14px ${V.gold}44` }} />}
           <span style={{ display: "grid", gap: 4 }}>
             <span style={{ ...display("h2", { fontSize: 24, lineHeight: 1.05 }), ...textGlow(V.blue, 0.8) }}>
               {`GET ${ad.name.toUpperCase()} NOW`}
             </span>
-            <span style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color: V.text }) }}>
-              Live from South Congress, Austin, Texas
-            </span>
+            {ad.line && (
+              <span style={{ ...body("bodySm", { fontSize: 14, fontWeight: 600, color: V.text }) }}>
+                {ad.line}
+              </span>
+            )}
             <span style={{ ...body("bodySm", { fontSize: 14, color: V.text2 }) }}>
               Available on Winamp, MiniDisc and Zune
             </span>
           </span>
         </button>
         {/* The review. Andrew's copy, punctuation and all. */}
-        <div style={{ display: "grid", gap: 3, justifyItems: "center", maxWidth: 330 }}>
-          <span style={{ ...body("bodySm", { fontSize: 14, color: V.text, lineHeight: 1.4 }),
-            fontStyle: "italic" }}>
-            &ldquo;this actually would make the country charts&rdquo;
-          </span>
-          <span style={{ ...label({ fontSize: 11, color: V.text3 }) }}>
-            -Mascot Songs Monthly
-          </span>
-        </div>
-        <a href={ad.src} download="tubey-texas-time.mp3" style={{
+        {ad.review && (
+          <div style={{ display: "grid", gap: 3, justifyItems: "center", maxWidth: 330 }}>
+            <span style={{ ...body("bodySm", { fontSize: 14, color: V.text, lineHeight: 1.4 }),
+              fontStyle: "italic" }}>
+              &ldquo;{ad.review.quote}&rdquo;
+            </span>
+            <span style={{ ...label({ fontSize: 11, color: V.text3 }) }}>
+              -{ad.review.by}
+            </span>
+          </div>
+        )}
+        <a href={ad.src} download={ad.file} style={{
           ...display("h3", { fontSize: 15, color: V.bg }), background: V.blue,
           borderRadius: 999, padding: "11px 26px", textDecoration: "none",
           boxShadow: `0 0 18px ${V.blue}77`,

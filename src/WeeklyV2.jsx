@@ -26,7 +26,7 @@ import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers.js";
 import { Flagged } from "./Flag.jsx";
 import { shortOf } from "./teams.js";
 import { TeamTap } from "./PlayerCard.jsx";
-import { playSong, toggleSong, songPlaying, onSong } from "./themeSong.js";
+import { playSong, toggleSong, songPlaying, songSrc, onSong } from "./themeSong.js";
 import { pronounsOf } from "./pronouns.js";
 import { F1_TEAM_COLORS, av } from "./theme";
 import {
@@ -41,9 +41,9 @@ import {
 // The songs, newest first. Card 1's CONTINUE WITH MUSIC starts the first and
 // the pill's next arrow walks down the list and round again. Andrew,
 // 2026-10-05: "a music player that defaults to the newest song, and then has a
-// next button and it plays the songs in order." Tubey Texas Time went to the
-// front on 2026-10-11, ahead of the United States Grand Prix.
-const PLAYLIST = ["texas", "bahlaysia", "tubey", "velvet"];
+// next button and it plays the songs in order." The list is songs.js since
+// 2026-10-27, so a new song at the top of that file leads here too.
+import { PLAYLIST, songBySrc } from "./songs.js";
 
 const MINE_C = V.green, THEIRS_C = V.pink;
 const ordinal = n => {
@@ -665,8 +665,10 @@ export function WeeklyDeckV2({ data: given, onExit, onPicks, initialCard = 0 }) 
   // The music. themeSong.js holds the one Audio object outside React, and
   // leaving the deck does NOT stop it: Andrew, 2026-10-11, "even when people
   // close the cards, the song should still play." The song runs on over the
-  // app, and NowPlaying's STOP THE SONG beside Viewing as is what ends it.
-  const [track, setTrack] = useState(0);
+  // app, and the jukebox beside Viewing as is what pauses or changes it.
+  // Opens on whatever is already playing, so a song chosen in the jukebox is
+  // the one the pill names and pauses; otherwise the newest.
+  const [track, setTrack] = useState(() => Math.max(0, PLAYLIST.indexOf((songBySrc(songSrc()) || {}).key)));
   const [playing, setPlaying] = useState(() => songPlaying());
   useEffect(() => onSong(setPlaying), []);
   const play = idx => { setTrack(idx); setPlaying(true); playSong(TRACKS[PLAYLIST[idx]].src); };
