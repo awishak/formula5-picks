@@ -19,7 +19,7 @@
   // screen is worse than no harness. ?gate=1 to measure the gate itself.
   if (!q.get("gate")) {
     try {
-      localStorage.setItem("f1_user", player);
+      localStorage.setItem("f1_user", player); localStorage.setItem("f5_notes_off", "1");
       for (let r = 1; r < 30; r++) { localStorage.setItem(`f5_week_seen_r${r}_${player}`, "1"); localStorage.setItem(`f5_week_seen_r${r}v2_${player}`, "1"); }
     } catch (e) {}
   }

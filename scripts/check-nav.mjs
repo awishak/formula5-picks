@@ -51,7 +51,7 @@ const WALKS = [
 const page = walk => `<meta charset="utf-8"><body style="margin:0">
 <iframe id="f" style="width:393px;height:820px;border:0"></iframe>
 <script>
-try{localStorage.setItem("f1_user",${JSON.stringify(PLAYER)});
+try{localStorage.setItem("f5_notes_off","1");localStorage.setItem("f1_user",${JSON.stringify(PLAYER)});
 for(let r=1;r<40;r++){for(const k of ["f5_week_seen_r"+r+"_"+${JSON.stringify(PLAYER)},"f5_week_seen_r"+r+"v2_"+${JSON.stringify(PLAYER)}]){
 ${walk.gate ? "localStorage.removeItem(k)" : 'localStorage.setItem(k,"1")'};}}}catch(e){}
 const steps=${JSON.stringify(walk.taps)};

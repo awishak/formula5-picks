@@ -31,6 +31,7 @@ import Weekly from "./Weekly.jsx";
 import WeeklyV2 from "./WeeklyV2.jsx";
 import Jukebox from "./Jukebox.jsx";
 import { HelmetInbox } from "./HelmetRequest.jsx";
+import { LeagueNote } from "./LeagueNote.jsx";
 // A round whose deck was rebuilt after people had closed it gets a new seen
 // key, so the gate opens once more for everyone. Round 15's deck became the
 // Bahlaysian deck on 2026-09-27, a day after it was scored.
@@ -1220,6 +1221,7 @@ export default function App() {
         {/* Helmet requests nobody has read yet come up on a card for Andrew.
             Renders nothing for anyone else. */}
         <HelmetInbox currentUser={currentUser} />
+        <LeagueNote currentUser={currentUser} />
         {/* The Home tab. It used to render outside .app-wrap as a standalone
             mockup; now it is a tab, so it sits in the shell with the nav under
             it like every other page. */}
