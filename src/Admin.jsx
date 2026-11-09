@@ -635,6 +635,7 @@ export default function Admin() {
           totalPts,
           noPick: false,
           pitGuess: pick.pit_guess,
+          submittedAt: pick.submitted_at || "",
           bestFinishGuess: pick.best_finish,
           bestActualPos,
           predictedOrder: allPicks,
@@ -643,9 +644,20 @@ export default function Admin() {
       });
 
       // Rank players and assign weekly top-10 bonus
+      // A tie for a bonus place is settled by the rules page, in order: the
+      // score without the needle, the order bonus, then whoever submitted
+      // first. Until 2026-11-09 this sorted on the total alone, so a tie fell
+      // to the order the players table came back in: round 20 had sixteen
+      // level on 69 and ten bonuses went out by row position. A player with
+      // no submission time goes behind one who has it.
       const ranked = [...playerScores]
         .filter(s => !s.noPick)
-        .sort((a, b) => b.totalPts - a.totalPts);
+        .sort((a, b) =>
+          (b.totalPts - a.totalPts) ||
+          ((b.totalPts - b.pitIndividualPts) - (a.totalPts - a.pitIndividualPts)) ||
+          (b.orderBonus - a.orderBonus) ||
+          ((a.submittedAt || "9") < (b.submittedAt || "9") ? -1
+            : (a.submittedAt || "9") > (b.submittedAt || "9") ? 1 : 0));
 
       ranked.forEach((s, i) => {
         if (i < WEEKLY_BONUS.length) {
