@@ -1897,11 +1897,10 @@ function NextPicks({ next, onOpen }) {
   );
 }
 
-// The race that was, as a sign: both teams, both totals, the four faces, and
-// the whole of it opens the recap for that round. What the matchup was made of
-// lives in the deck now, not on the home page (Andrew, 2026-10-06).
-function ResultBillboard({ race, myTeam, opp, seats, mineTotal, theirTotal, under, onOpen }) {
-  const [hot, setHot] = useState(false);
+// The race that was, as a sign: both teams, both totals, the four faces. It
+// was a button to the recap until 2026-11-09; the matchup sits under it on the
+// home page again and the recap has a button of its own below that.
+function ResultBillboard({ race, myTeam, opp, seats, mineTotal, theirTotal, under }) {
   const mineWon = mineTotal > theirTotal, theirsWon = theirTotal > mineTotal;
   const name = shortRace((RACE_SIGN[race.round] || {}).name || race.name);
   const Side = ({ t, total, c, won, ours }) => (
@@ -1939,14 +1938,12 @@ function ResultBillboard({ race, myTeam, opp, seats, mineTotal, theirTotal, unde
     ? { t: opp, total: theirTotal, c: THEIRS, won: theirsWon, ours: false }
     : { t: myTeam, total: mineTotal, c: MINE, won: mineWon, ours: true };
   return (
-    <button
-      onClick={onOpen}
-      onMouseEnter={() => setHot(true)} onMouseLeave={() => setHot(false)}
+    <div
       style={{
-        width: "100%", cursor: "pointer", display: "block", textAlign: "center",
+        textAlign: "center",
         ...card({ padding: "16px 14px 18px", marginBottom: 14 }),
         background: `radial-gradient(120% 100% at 50% 0%, ${V.blue}14 0%, ${V.bg2} 60%)`,
-        borderColor: `${V.blue}55`, ...(hot ? edgeGlow(V.blue, 0.8) : {}),
+        borderColor: `${V.blue}55`,
       }}
     >
       <p style={{ ...marquee(name), fontSize: Math.min(marquee(name).fontSize, 34),
@@ -1961,13 +1958,7 @@ function ResultBillboard({ race, myTeam, opp, seats, mineTotal, theirTotal, unde
         <div style={{ width: 1, alignSelf: "stretch", background: `${V.blue}44` }} />
         <Side {...right} />
       </div>
-      <span style={{ display: "inline-block", marginTop: 16, padding: "9px 20px",
-                     borderRadius: 100, border: `1.5px solid ${V.blue}`, color: V.blue,
-                     ...display("h3"), fontSize: 15, textTransform: "uppercase",
-                     letterSpacing: "0.08em", boxShadow: `0 0 12px ${V.blue}55` }}>
-        See the recap
-      </span>
-    </button>
+    </div>
   );
 }
 
@@ -3018,14 +3009,17 @@ function HomeLocked({ scored: scoredWeek = true, onAhead, onNav = () => {} }) {
     </div>
   );
 
-  // Scored, the home page is two billboards and a door: the next picks, the
-  // race that was, and the rest of the league. Everything that took the
-  // matchup apart lives in the recap now (Andrew, 2026-10-06).
+  // Scored, the home page is the next picks, the race that was, the matchup
+  // under it (the BOX BOX strip and the four-hand board, back on 2026-11-09:
+  // people open the app after a race to see how their matchup went, and it
+  // was four cards into the recap), then the recap and the rest of the league.
+  // The rooting card, Your week and The field stay off (Andrew, 2026-10-06).
   if (scoredWeek) {
     const bb = week.teamBoxBox || { mine: 0, theirs: 0 };
     const tot = (ours) => seats.filter(x => x.ours === ours)
       .reduce((a, x) => a + (x.score ? x.score.total : 0), 0)
       + (ours ? bb.mine : bb.theirs);
+    const under = boxBox.side === "UNDER" ? "mine" : "theirs";
     const recap = () => {
       window.history.pushState(null, "", `/week?round=${race.round}`);
       onNav("weekly");
@@ -3036,8 +3030,14 @@ function HomeLocked({ scored: scoredWeek = true, onAhead, onNav = () => {} }) {
         {you && you.auto && <FernoloBillboard />}
         <ResultBillboard race={race} myTeam={myTeam} opp={opp} seats={seats}
                          mineTotal={tot(true)} theirTotal={tot(false)}
-                         under={boxBox.side === "UNDER" ? "mine" : "theirs"}
-                         onOpen={recap} />
+                         under={under} />
+        <BoxBoxScore myTeam={myTeam} opp={opp} bb={bb} under={under} race={race}
+                     boxBox={boxBox} seats={seats} scored />
+        <HandsColumns seats={seats} under={under} scored
+                      driverPts={week.driverPts || {}} />
+        <div style={{ height: 14 }} />
+        <NeonBtn color={V.blue} onClick={recap}>See the recap</NeonBtn>
+        <div style={{ height: 12 }} />
         <NeonBtn color={V.purple} onClick={() => {
           window.history.pushState(null, "", `/league?round=${race.round}`);
           onNav("league");
