@@ -39,6 +39,43 @@ export function FinishLink() {
   );
 }
 
+const initials = n => String(n || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+function Face({ src, name, size = 22, ring = V.border2, glow = false }) {
+  const box = { width: size, height: size, borderRadius: "50%", flexShrink: 0, boxSizing: "border-box",
+    border: `${size > 40 ? 2.5 : 1.5}px solid ${ring}`, boxShadow: glow ? `0 0 14px ${ring}` : "none" };
+  if (src) return <img src={src} alt="" style={{ ...box, objectFit: "cover", objectPosition: "center top", background: V.bg3 }} />;
+  return <span style={{ ...box, display: "inline-flex", alignItems: "center", justifyContent: "center", background: V.bg4,
+    ...display("chip", { fontSize: Math.max(10, size * 0.36), color: V.text2 }) }}>{initials(name)}</span>;
+}
+function Logo({ src, name, size = 22, glow = null }) {
+  if (!src) return <Face name={name} size={size} />;
+  return <img src={src} alt="" style={{ width: size, height: size, objectFit: "contain", flexShrink: 0,
+    filter: glow ? `drop-shadow(0 0 8px ${glow})` : "none" }} />;
+}
+
+// Who is ahead of you and who is behind: the three in a row, you in the
+// middle and biggest. Each item is { key, wrap, pic, place, name, line, tone }.
+function Ladder({ items }) {
+  return (
+    <div style={{ ...card({ padding: "14px 8px 12px" }), display: "flex", alignItems: "flex-end", gap: 4 }}>
+      {items.map(it => (
+        <div key={it.key} style={{ flex: it.me ? 1.25 : 1, minWidth: 0 }}>
+          {it.wrap(
+            <div style={{ display: "grid", justifyItems: "center", gap: 3, textAlign: "center" }}>
+              <div style={{ ...numeric("chip", { fontSize: it.me ? 22 : 16, color: it.tone }), ...(it.me ? textGlow(it.tone, 0.8) : {}) }}>P{it.place}</div>
+              {it.pic}
+              <div style={{ ...display("chip", { fontSize: it.me ? 16 : 14, color: V.text }), maxWidth: "100%", whiteSpace: "nowrap",
+                overflow: "hidden", textOverflow: "ellipsis", marginTop: 2 }}>{it.name}</div>
+              <div style={{ ...numeric("chip", { fontSize: it.me ? 17 : 15, color: it.tone }) }}>{it.line}</div>
+              <div style={{ ...label({ fontSize: 11, color: V.text2 }) }}>{it.sub}</div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Head({ children, color = V.pink }) {
   return (
     <div style={{ margin: "26px 0 10px" }}>
@@ -56,7 +93,7 @@ const Note = ({ children }) => <p style={{ ...body("bodySm", { fontSize: 14, col
 function RangeChart({ divKey, rows, range, forecast, mineId }) {
   const zone = ZONES[divKey];
   const tone = p => (zone.up && zone.up.includes(p) ? V.green : zone.down && zone.down.includes(p) ? V.pink : zone.playoff === p ? V.gold : null);
-  const cols = "22px 52px repeat(12, minmax(0, 1fr))";
+  const cols = "20px 38px repeat(12, minmax(0, 1fr))";
   return (
     <div style={{ ...card({ padding: "12px 10px 10px" }) }}>
       <div style={{ display: "grid", gridTemplateColumns: cols, alignItems: "end", marginBottom: 6 }}>
@@ -74,10 +111,7 @@ function RangeChart({ divKey, rows, range, forecast, mineId }) {
           <TeamTap key={r.id} id={r.id} style={{ display: "grid", gridTemplateColumns: cols, alignItems: "center",
             padding: "3px 0", borderTop: `1px solid ${V.border}`, background: mine ? `${V.blue}12` : "transparent" }}>
             <span style={{ ...numeric("chip", { fontSize: 14, color: V.text2 }) }}>{i + 1}</span>
-            <span style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
-              {r.logo && <img src={r.logo} alt="" style={{ width: 18, height: 18, objectFit: "contain", flexShrink: 0 }} />}
-              <span style={{ ...display("chip", { fontSize: 13, color: mine ? V.blue : V.text }) }}>{r.code}</span>
-            </span>
+            <span style={{ ...display("chip", { fontSize: 13, color: mine ? V.blue : V.text }) }}>{r.code}</span>
             {Array.from({ length: 12 }, (_, p) => {
               const place = p + 1;
               const can = rg ? place >= rg.best && place <= rg.worst : f.dist[p] > 0;
@@ -86,7 +120,7 @@ function RangeChart({ divKey, rows, range, forecast, mineId }) {
               const share = f.dist[p];
               return (
                 <span key={p} title={`P${place}: ${pct(share)}`} style={{
-                  height: 24, position: "relative", boxSizing: "border-box",
+                  height: 30, position: "relative", boxSizing: "border-box",
                   borderTop: can && rg ? `1.5px solid ${V.text2}` : "1.5px solid transparent",
                   borderBottom: can && rg ? `1.5px solid ${V.text2}` : "1.5px solid transparent",
                   borderLeft: first ? `1.5px solid ${V.text2}` : "none",
@@ -95,8 +129,11 @@ function RangeChart({ divKey, rows, range, forecast, mineId }) {
                 }}>
                   {share > 0 && <span style={{ position: "absolute", inset: 2, borderRadius: 4, background: c,
                     opacity: 0.12 + 0.88 * (share / peak), boxShadow: share === peak ? `0 0 8px ${c}` : "none" }} />}
-                  {place === i + 1 && <span style={{ position: "absolute", left: "50%", top: "50%", width: 10, height: 10,
-                    margin: -5, boxSizing: "border-box", borderRadius: "50%", border: `2px solid ${V.text}`, background: V.bg }} />}
+                  {place === i + 1 && (r.logo
+                    ? <img src={r.logo} alt="" style={{ position: "absolute", left: "50%", top: "50%", width: 24, height: 24,
+                        margin: -12, objectFit: "contain", filter: "drop-shadow(0 0 3px #000) drop-shadow(0 0 2px #000)" }} />
+                    : <span style={{ position: "absolute", left: "50%", top: "50%", width: 10, height: 10, margin: -5,
+                        boxSizing: "border-box", borderRadius: "50%", border: `2px solid ${V.text}`, background: V.bg }} />)}
                 </span>
               );
             })}
@@ -114,7 +151,8 @@ function Bars({ items, color }) {
   return (
     <div style={{ ...card({ padding: "10px 12px" }), display: "grid", gap: 7 }}>
       {shown.map(x => (
-        <div key={x.id} style={{ display: "grid", gridTemplateColumns: "104px minmax(0, 1fr) 46px", alignItems: "center", gap: 8 }}>
+        <div key={x.id} style={{ display: "grid", gridTemplateColumns: "26px 92px minmax(0, 1fr) 46px", alignItems: "center", gap: 7 }}>
+          {x.pic}
           <span style={{ ...display("chip", { fontSize: 14, color: x.mine ? V.blue : V.text }), whiteSpace: "nowrap",
             overflow: "hidden", textOverflow: "ellipsis" }}>{x.name}</span>
           <span style={{ height: 14, borderRadius: 7, background: V.bg3, overflow: "hidden" }}>
@@ -165,14 +203,15 @@ function RangeTable({ rows, range, forecast, divKey, mineId }) {
 function GapChart({ rows, me }) {
   const top = rows[0].pts, low = rows[rows.length - 1].pts, span = Math.max(1, top - low);
   return (
-    <div style={{ ...card({ padding: "10px 12px" }), display: "grid", gap: 4 }}>
+    <div style={{ ...card({ padding: "10px 12px" }), display: "grid", gap: 6 }}>
       {rows.map((r, i) => {
         const mine = me && r.id === me.id;
         const c = i === 0 ? V.gold : mine ? V.green : V.blue;
         return (
           <PlayerTap key={r.id} name={r.name} block style={{ display: "grid",
-            gridTemplateColumns: "24px 104px minmax(0, 1fr) 44px", alignItems: "center", gap: 6 }}>
+            gridTemplateColumns: "22px 26px 92px minmax(0, 1fr) 44px", alignItems: "center", gap: 6 }}>
             <span style={{ ...numeric("chip", { fontSize: 13, color: V.text2 }) }}>{i + 1}</span>
+            <Face src={r.photo} name={r.name} size={26} ring={c} glow={mine || i === 0} />
             <span style={{ ...display("chip", { fontSize: 13, color: mine ? V.green : V.text }), whiteSpace: "nowrap",
               overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</span>
             <span style={{ height: 10, borderRadius: 5, background: V.bg3, overflow: "hidden" }}>
@@ -260,7 +299,31 @@ export default function FinishPage({ currentUser }) {
   const mineId = meP ? meP.teamId : null;
   const c8 = divisions.championship[7], s5 = divisions.second[4];
   const k = meP ? playerRows.indexOf(meP) : -1;
-  const named = (rows, key, f) => rows.map(r => ({ id: r.id, name: r.short || r.name, v: f(r), mine: r.id === mineId || (meP && r.id === meP.id) }));
+  const named = (rows, key, f) => rows.map(r => ({ id: r.id, name: r.short || r.name, v: f(r), mine: r.id === mineId,
+    pic: <Logo src={r.logo} name={r.name} size={24} /> }));
+
+  // The three around you: one place up, you, one place down.
+  const around = (rows, i) => [i - 1, i, i + 1].filter(j => j >= 0 && j < rows.length);
+  const myDiv = Object.keys(divisions).find(d => divisions[d].some(r => r.id === mineId));
+  const ti = myDiv ? divisions[myDiv].findIndex(r => r.id === mineId) : -1;
+  const teamLadder = ti < 0 ? null : around(divisions[myDiv], ti).map(j => {
+    const r = divisions[myDiv][j], me = j === ti, gap = r.pts - divisions[myDiv][ti].pts;
+    return { key: r.id, me, place: j + 1, name: r.short, tone: me ? V.green : j < ti ? V.pink : V.blue,
+      wrap: kids => <TeamTap id={r.id} style={{ display: "block" }}>{kids}</TeamTap>,
+      pic: <Logo src={r.logo} name={r.name} size={me ? 84 : 56} glow={me ? V.green : null} />,
+      line: me ? `${r.pts} pts` : gap === 0 ? "level" : `${Math.abs(gap)} pts`,
+      sub: me ? "your team" : gap === 0 ? "with you" : j < ti ? "ahead of you" : "behind you" };
+  });
+  const playerLadder = k < 0 ? null : around(playerRows, k).map(j => {
+    const r = playerRows[j], me = j === k, gap = r.pts - meP.pts;
+    return { key: r.id, me, place: j + 1, name: r.name, tone: me ? V.green : j < k ? V.pink : V.blue,
+      wrap: kids => <PlayerTap name={r.name} block>{kids}</PlayerTap>,
+      pic: <Face src={r.photo} name={r.name} size={me ? 88 : 60} ring={me ? V.green : j < k ? V.pink : V.blue} glow={me} />,
+      line: me ? `${r.pts} pts` : gap === 0 ? "level" : `${Math.abs(gap)} pts`,
+      sub: me ? "you" : gap === 0 ? "with you" : j < k ? "ahead of you" : "behind you" };
+  });
+  const myRange = myDiv && range[myDiv] ? range[myDiv][mineId] : null;
+  const leader = playerRows[0];
 
   const section = (divKey, name, color) => {
     const rows = divisions[divKey];
@@ -271,8 +334,8 @@ export default function FinishPage({ currentUser }) {
         <Head color={color}>{name}</Head>
         <Note>
           {range[divKey]
-            ? "The bracket is every place a team can still finish. The fill is how likely each place is, and the ring is where the team is now."
-            : "The fill is how likely each place is, and the ring is where the team is now."}
+            ? "The bracket is every place a team can still finish. The fill is how likely each place is, and the logo is where the team is now."
+            : "The fill is how likely each place is, and the logo is where the team is now."}
           {champ ? " Pink places go down. 8th, in gold, is compared with 5th in the Second Division."
                  : " Green places go up. 5th, in gold, is compared with 8th in the Championship."}
         </Note>
@@ -297,6 +360,22 @@ export default function FinishPage({ currentUser }) {
           ? `Through round ${scored}, with ${left === 1 ? "one round" : `${left} rounds`} left. The top four of the Second Division go up and the bottom four of the Championship go down.`
           : `Final, through round ${scored}.`}
       </Note>
+
+      {teamLadder && (
+        <>
+          <Head color={V.green}>Your team</Head>
+          <Ladder items={teamLadder} />
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+            {[myRange && [`Can finish P${myRange.best}${myRange.best === myRange.worst ? "" : ` to P${myRange.worst}`}`, V.text],
+              left > 0 && [`${myDiv === "championship" ? "Title" : "First"} ${pct(forecast.teams[mineId].title)}`, V.gold],
+              left > 0 && [`${myDiv === "championship" ? "Stays up" : "Goes up"} ${pct(forecast.teams[mineId].up)}`, V.green],
+            ].filter(Boolean).map(([t, c]) => (
+              <span key={t} style={{ ...display("chip", { fontSize: 14, color: c }), padding: "6px 11px", borderRadius: 999,
+                background: V.bg3, border: `1px solid ${c}66` }}>{t}</span>
+            ))}
+          </div>
+        </>
+      )}
 
       {section("championship", "Championship", V.gold)}
       {section("second", "Second Division", V.silver)}
@@ -324,22 +403,27 @@ export default function FinishPage({ currentUser }) {
       )}
 
       <Head color={V.blue}>Player championship</Head>
-      {meP && k >= 0 && (
-        <div style={{ ...card({ padding: "12px 14px", marginBottom: 10 }), ...edgeGlow(V.green, 0.7) }}>
-          <div style={{ ...display("h3", { fontSize: 20, color: V.text }) }}>
-            You are <span style={textGlow(V.green, 0.8)}>P{k + 1}</span> on {meP.pts} points
-          </div>
-          <div style={{ ...body("body", { fontSize: 16, color: V.text2 }), marginTop: 4, lineHeight: 1.5 }}>
-            {k > 0 && <div>{playerRows[k - 1].pts - meP.pts} behind {playerRows[k - 1].name} in P{k}</div>}
-            {k < playerRows.length - 1 && <div>{meP.pts - playerRows[k + 1].pts} ahead of {playerRows[k + 1].name} in P{k + 2}</div>}
-            {k > 0 && <div>{playerRows[0].pts - meP.pts} behind the leader, {playerRows[0].name}</div>}
-          </div>
-        </div>
+      {playerLadder && (
+        <>
+          <Ladder items={playerLadder} />
+          {k > 0 && (
+            <PlayerTap name={leader.name} block style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0 12px",
+              padding: "8px 12px", borderRadius: 14, background: V.bg3, border: `1px solid ${V.gold}66` }}>
+              <Face src={leader.photo} name={leader.name} size={40} ring={V.gold} glow />
+              <span style={{ flex: 1, minWidth: 0, ...display("chip", { fontSize: 15, color: V.text }) }}>{leader.name}</span>
+              <span style={{ textAlign: "right" }}>
+                <span style={{ display: "block", ...numeric("chip", { fontSize: 17, color: V.gold }) }}>{leader.pts - meP.pts} pts</span>
+                <span style={{ display: "block", ...label({ fontSize: 11, color: V.text2 }) }}>the leader, ahead of you</span>
+              </span>
+            </PlayerTap>
+          )}
+        </>
       )}
       {left > 0 && (
         <>
           <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "4px 0 6px" }}>Chance of the title</div>
-          <Bars items={playerRows.map(r => ({ id: r.id, name: r.name, v: playerForecast[r.id].title, mine: meP && r.id === meP.id }))} color={V.gold} />
+          <Bars items={playerRows.map(r => ({ id: r.id, name: r.name, v: playerForecast[r.id].title, mine: meP && r.id === meP.id,
+            pic: <Face src={r.photo} name={r.name} size={26} ring={V.gold} /> }))} color={V.gold} />
           <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "14px 0 6px" }}>Points behind the leader</div>
         </>
       )}
