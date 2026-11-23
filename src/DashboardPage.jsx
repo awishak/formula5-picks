@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 import { V, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow } from "./theme.vegas";
 import { buildTeamTable, rankByAverage, nextFixtures, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
@@ -556,7 +556,7 @@ export default function DashboardPage({ currentUser, onNavigate }) {
           supabase.from("players").select("id,name,photo_url"),
           supabase.from("teams").select("*"),
           supabase.from("races").select("*").order("round"),
-          supabase.from("scores").select("*"),
+          selectAll("scores", "*"),
           supabase.from("schedule").select("*"),
         ]).then(r => r.map(x => x.data || []));
 
@@ -711,8 +711,7 @@ export default function DashboardPage({ currentUser, onNavigate }) {
         const settled = new Set(races
           .filter(r => r.pick_deadline && new Date(r.pick_deadline) <= new Date())
           .map(r => r.id));
-        const guessRows = (await supabase.from("picks")
-          .select("player_id,race_id,pit_guess")).data || [];
+        const guessRows = (await selectAll("picks", "player_id,race_id,pit_guess")).data || [];
         const guessesByTeam = {};
         guessRows.forEach(g => {
           const v = g.pit_guess == null ? null : Number(g.pit_guess);

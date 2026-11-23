@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, PURPLE, SILVER, FD, FB } from "./theme";
@@ -80,7 +80,7 @@ export default function PickIntel({ currentUser }) {
       const [{ data: racesData }, { data: playersData }, { data: picksData }, { data: teamsData }, { data: scheduleData }] = await Promise.all([
         supabase.from("races").select("*").order("round"),
         supabase.from("players").select("id, name"),
-        supabase.from("picks").select("*"),
+        selectAll("picks", "*"),
         supabase.from("teams").select("*"),
         supabase.from("schedule").select("*"),
       ]);

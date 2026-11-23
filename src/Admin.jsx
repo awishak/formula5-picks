@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 import NewsAdmin from "./NewsAdmin.jsx";
 
 
@@ -208,9 +208,7 @@ export default function Admin() {
       setRaces(racesData || []);
 
       // Check which rounds already have scores
-      const { data: scoresData } = await supabase
-        .from("scores")
-        .select("race_id");
+      const { data: scoresData } = await selectAll("scores", "race_id");
       const scored = {};
       (scoresData || []).forEach(s => { scored[s.race_id] = true; });
       setExistingScores(scored);
@@ -229,7 +227,7 @@ export default function Admin() {
       setAllPlayers(playersData || []);
 
       // Load all picks for missing picks tracker
-      const { data: picksData } = await supabase.from("picks").select("player_id, race_id");
+      const { data: picksData } = await selectAll("picks", "player_id, race_id");
       setAllPicks(picksData || []);
 
       // Default missing picks round to first unscored or next upcoming
@@ -1727,8 +1725,8 @@ export default function Admin() {
             supabase.from("players").select("*"),
             supabase.from("teams").select("*"),
             supabase.from("races").select("*").eq("season", 2026).order("round"),
-            supabase.from("scores").select("*"),
-            supabase.from("picks").select("*"),
+            selectAll("scores", "*"),
+            selectAll("picks", "*"),
             supabase.from("schedule").select("*"),
             supabase.from("results").select("*"),
           ]);

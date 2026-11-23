@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, Component } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 
 
 class MyPicksErrorBoundary extends Component {
@@ -675,10 +675,10 @@ function LastRaceResults({ currentUser }) {
       const [{ data: players }, { data: teams }, { data: scores }, { data: races }, { data: schedule }, { data: picks }] = await Promise.all([
         supabase.from("players").select("id, name"),
         supabase.from("teams").select("*"),
-        supabase.from("scores").select("*"),
+        selectAll("scores", "*"),
         supabase.from("races").select("id, race_name, round").order("round", { ascending: true }),
         supabase.from("schedule").select("*"),
-        supabase.from("picks").select("*")
+        selectAll("picks", "*")
       ]);
 
       const playerMap = {};
@@ -780,8 +780,8 @@ function PickHistory({ currentUser, driverMap: externalDriverMap }) {
     async function load() {
       const [{ data: players }, { data: picks }, { data: scores }, { data: races }, { data: teams }, { data: schedule }, { data: results }] = await Promise.all([
         supabase.from("players").select("id, name"),
-        supabase.from("picks").select("*"),
-        supabase.from("scores").select("*"),
+        selectAll("picks", "*"),
+        selectAll("scores", "*"),
         supabase.from("races").select("id, race_name, round, season, top_drivers, mid_drivers").order("round", { ascending: true }),
         supabase.from("teams").select("*"),
         supabase.from("schedule").select("*"),

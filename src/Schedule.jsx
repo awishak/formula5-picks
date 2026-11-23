@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB } from "./theme";
@@ -49,8 +49,8 @@ export default function Schedule({ currentUser, onNavigate, initialView }) {
         supabase.from("schedule").select("id, race_id, home_team:home_team_id ( id, name, player1_id, player2_id, logo_url, division ), away_team:away_team_id ( id, name, player1_id, player2_id, logo_url, division )"),
         supabase.from("teams").select("*"),
         supabase.from("players").select("id, name"),
-        supabase.from("scores").select("*"),
-        supabase.from("picks").select("player_id, race_id, pit_guess, finishing_order, top_pick"),
+        selectAll("scores", "*"),
+        selectAll("picks", "player_id, race_id, pit_guess, finishing_order, top_pick"),
         supabase.from("results").select("race_id, pit_stop_time")
       ]);
       setRaces(racesData || []);

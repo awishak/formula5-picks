@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB, avatarColor, av } from "./theme";
@@ -204,9 +204,9 @@ export default function PlayerStandings({ currentUser }) {
         const [{ data: players }, { data: teamData }, { data: scores }, { data: raceData }, { data: picksData }, { data: scheduleData }] = await Promise.all([
           supabase.from("players").select("*"),
           supabase.from("teams").select("*"),
-          supabase.from("scores").select("*"),
+          selectAll("scores", "*"),
           supabase.from("races").select("id, race_name, round, pick_deadline").order("round", { ascending: true }),
-          supabase.from("picks").select("*"),
+          selectAll("picks", "*"),
           supabase.from("schedule").select("*")
         ]);
         if (teamData) setTeams(teamData);

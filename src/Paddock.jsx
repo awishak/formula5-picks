@@ -17,7 +17,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 import { buildWeekly } from "./weekly.js";
 import { buildWire } from "./wire.js";
 import { shortOf } from "./teams.js";
@@ -700,8 +700,8 @@ export default function Paddock({ playerName, round = null, onExit, onPicks,
           supabase.from("players").select("*"),
           supabase.from("teams").select("*"),
           supabase.from("races").select("*").eq("season", 2026),
-          supabase.from("scores").select("*"),
-          supabase.from("picks").select("*"),
+          selectAll("scores", "*"),
+          selectAll("picks", "*"),
           supabase.from("results").select("*"),
           supabase.from("schedule").select("*"),
         ]);

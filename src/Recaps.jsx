@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 
 
 import { DARK, BLUE, BLUEDARK, TEXT, TEXT2, BORDER, FD, FB } from "./theme";
@@ -15,7 +15,7 @@ export default function Recaps() {
       try {
         const [{ data: races }, { data: scores }] = await Promise.all([
           supabase.from("races").select("id, round, race_name").eq("season", 2026).order("round", { ascending: true }),
-          supabase.from("scores").select("race_id").limit(2000),
+          selectAll("scores", "race_id"),
         ]);
         const scoredIds = new Set((scores || []).map(s => s.race_id));
         // Scored is not the same as written up. Rounds 8 and 10 were scored and

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 import { buildTeamTable, rankByAverage, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { displayOf, shortOf, codeOf } from "./teams";
@@ -31,7 +31,7 @@ export function useLeague(currentUser, { round = null } = {}) {
           supabase.from("players").select("id,name,photo_url"),
           supabase.from("teams").select("*"),
           supabase.from("races").select("*").order("round"),
-          supabase.from("scores").select("*"),
+          selectAll("scores", "*"),
           supabase.from("schedule").select("*"),
         ]).then(rs => rs.map(r => r.data || []));
 

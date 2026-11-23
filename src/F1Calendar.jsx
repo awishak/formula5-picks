@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, FD, FB } from "./theme";
@@ -46,7 +46,7 @@ export default function F1Calendar() {
     async function load() {
       const [{ data: racesData }, { data: scoresData }, { data: playersData }] = await Promise.all([
         supabase.from("races").select("*").eq("season", 2026).order("round"),
-        supabase.from("scores").select("*"),
+        selectAll("scores", "*"),
         supabase.from("players").select("id, name")
       ]);
 

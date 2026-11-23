@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 
 
 import { DARK, BLUE, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, GOLD, SILVER, FD, FB } from "./theme";
@@ -31,7 +31,7 @@ export default function RaceResults({ currentUser, initialRound = null }) {
         .from("races").select("id, race_name, round").order("round", { ascending: true });
       
       // Find which races have scores
-      const { data: scoresData } = await supabase.from("scores").select("race_id");
+      const { data: scoresData } = await selectAll("scores", "race_id");
       const scoredRaceIds = new Set((scoresData || []).map(s => s.race_id));
       
       const scored = (racesData || []).filter(r => scoredRaceIds.has(r.id));

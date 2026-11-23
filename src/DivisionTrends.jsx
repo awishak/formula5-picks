@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 import { computeDivisionTrends } from "./divisionTrends";
 import { DARK, BLUEDARK, GREEN, RED, ORANGE, TEXT, TEXT2, BORDER, FD, FB } from "./theme";
 
@@ -333,7 +333,7 @@ export default function DivisionTrends({ currentUser, onNavigate }) {
         const [{ data: teams }, { data: players }, { data: scores }, { data: schedule }, { data: races }] = await Promise.all([
           supabase.from("teams").select("*"),
           supabase.from("players").select("id, name"),
-          supabase.from("scores").select("*"),
+          selectAll("scores", "*"),
           supabase.from("schedule").select("*"),
           supabase.from("races").select("id, race_name, round, race_date").order("round", { ascending: true }),
         ]);

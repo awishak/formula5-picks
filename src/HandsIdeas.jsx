@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 import { V, FD, display, numeric, body, label as labelType, card, textGlow } from "./theme.vegas";
 import { DRIVER_HEADSHOTS } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
@@ -357,9 +357,9 @@ export default function HandsIdeas({ idea = 1 }) {
           supabase.from("players").select("id,name,photo_url"),
           supabase.from("teams").select("*"),
           supabase.from("races").select("*"),
-          supabase.from("scores").select("*"),
+          selectAll("scores", "*"),
           supabase.from("schedule").select("*"),
-          supabase.from("picks").select("*"),
+          selectAll("picks", "*"),
         ]).then(r => r.map(x => x.data || []));
 
         const race = races.find(r => r.round === 11);
