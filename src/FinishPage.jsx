@@ -398,7 +398,7 @@ const Tile = ({ k, v, sub, color = V.text }) => (
 
 // How the last two weeks work, at the top and in white. The words are
 // Andrew's, from his message of 2026-11-23, typos fixed.
-function Explainer({ left, scored, raceName, opp, oppPlace }) {
+function Explainer({ left, scored, raceName, opp, oppPlace, myPlace }) {
   // The reader's own matchup, named, with the opponent's logo and place.
   const mine = opp ? (
     <TeamTap id={opp.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -423,7 +423,12 @@ function Explainer({ left, scored, raceName, opp, oppPlace }) {
   );
   return (
     <div style={{ display: "grid", gap: 8, marginTop: 4 }}>
-      {left === 2 && box(V.blue, `This week${raceName ? `: ${raceName}` : ""}`, <>{mine}It was structured this way from the start of the half: this week's matchup is against a team close to you.</>, 0.05)}
+      {left === 2 && box(V.blue, `This week${raceName ? `: ${raceName}` : ""}`, <>At the start of the second half, I chose for you to play a team this week that I hoped would be close to you in the standings.
+        {opp && <TeamTap id={opp.id} style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0" }}>
+          <Logo src={opp.logo} name={opp.name} size={44} glow={V.pink} />
+          <span>And you're playing <strong>{opp.short}</strong>, who is in <strong>{ordinal(oppPlace)}</strong> (you are in <strong>{ordinal(myPlace)}</strong>).</span>
+        </TeamTap>}
+        {opp && (Math.abs(oppPlace - myPlace) <= 2 ? "So it worked out!" : "Oh well, close enough.")}</>, 0.05)}
       {box(V.pink, left === 2 ? "Next week" : "This week",
         <>{left === 1 ? mine : null}{left === 2 ? "Your matchup is determined by where you finish after this week. " : ""}#1 vs #12, #2 vs #11 in each division, giving the advantage to top teams. We're still live, and the points count as any other.{seeds}</>, 0.15)}
       {box(V.gold, "Promotion and relegation", <>The same as the first half. Top 4 of the Second Division go up. Bottom 4 of the Championship go down. 8th in the Championship against 5th in the Second Division, on scoring average.</>, 0.25)}
@@ -713,7 +718,7 @@ export default function FinishPage({ currentUser }) {
     <>
       {left > 0 && left <= 2
         ? <Explainer left={left} scored={scored} raceName={nextRace ? nextRace.race_name || nextRace.name || "" : ""}
-            opp={next ? next.opp : null} oppPlace={next ? next.oppPlace : null} />
+            opp={next ? next.opp : null} oppPlace={next ? next.oppPlace : null} myPlace={ti + 1} />
         : <div style={{ ...numeric("hero", { fontSize: 26, color: V.text }) }}>{left > 0 ? `${left} WEEKS LEFT` : `FINAL \u00b7 ROUND ${scored}`}</div>}
 
       {teamLadder && (
