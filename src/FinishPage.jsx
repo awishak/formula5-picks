@@ -399,7 +399,7 @@ const Tile = ({ k, v, sub, color = V.text }) => (
 // How the last two weeks work, at the top, drawn. Two numbered weeks and the
 // promotion ladder. The sentences are Andrew's, from his messages of
 // 2026-11-23, typos fixed.
-function Explainer({ left, names, me, myPlace, opp, oppPlace, divKey, rows }) {
+function Explainer({ left, names, me, myPlace, opp, oppPlace, divKey, rows, all }) {
   const txt = { ...body("body", { fontSize: 16, color: V.text, lineHeight: 1.35 }) };
   const versus = (a, aPlace, b, bPlace, bName) => (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)", alignItems: "center", gap: 8, margin: "12px 0 10px" }}>
@@ -435,21 +435,31 @@ function Explainer({ left, names, me, myPlace, opp, oppPlace, divKey, rows }) {
   const seedOpp = me && rows ? rows[N - myPlace] : null;
   const pairs = Array.from({ length: N / 2 }, (_, i) => [i + 1, N - i]);
   const z = ZONES;
+  // One division as it stands: every team's logo in table order, outlined in
+  // the colour of what that place means, the place under it.
   const ladder = (key, name) => (
-    <div style={{ marginTop: 10 }}>
-      <div style={{ ...label({ fontSize: 12, color: V.text }), marginBottom: 4 }}>{name}</div>
+    <div style={{ marginTop: 12 }}>
+      <div style={{ ...label({ fontSize: 12, color: V.text }), marginBottom: 5 }}>{name}</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(12, minmax(0, 1fr))", gap: 3 }}>
-        {Array.from({ length: 12 }, (_, i) => {
-          const c = zoneTone(key, i + 1), mine = divKey === key && myPlace === i + 1;
-          return <span key={i} className="fr-fill" style={{ "--d": `${0.3 + i * 0.03}s`, height: 28, borderRadius: 6, display: "grid", placeItems: "center",
-            background: c || V.bg, border: `2px solid ${mine ? V.green : c || V.border2}`, boxShadow: mine ? `0 0 12px ${V.green}` : c ? `0 0 6px ${c}88` : "none",
-            ...numeric("chip", { fontSize: 13, color: c ? V.bg : mine ? V.green : V.text2 }) }}>{i + 1}</span>;
+        {(all[key] || []).map((t, i) => {
+          const c = zoneTone(key, i + 1), mine = me && t.id === me.id;
+          return (
+            <TeamTap key={t.id} id={t.id} style={{ display: "grid", justifyItems: "center", gap: 2 }}>
+              <span className="fr-pop" style={{ "--d": `${0.3 + i * 0.04}s`, width: "100%", aspectRatio: "1", boxSizing: "border-box", borderRadius: 7, overflow: "hidden",
+                display: "grid", placeItems: "center", background: V.bg, border: `2px solid ${c || V.border2}`,
+                boxShadow: mine ? `0 0 0 2px ${V.text}, 0 0 12px ${V.text}` : c ? `0 0 8px ${c}aa` : "none" }}>
+                {t.logo ? <img src={t.logo} alt={t.short} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  : <span style={{ ...display("chip", { fontSize: 9, color: V.text2 }) }}>{t.code}</span>}
+              </span>
+              <span style={{ ...numeric("chip", { fontSize: 12, color: c || (mine ? V.text : V.text3) }) }}>{i + 1}</span>
+            </TeamTap>
+          );
         })}
       </div>
     </div>
   );
   const key = (c, t) => <span style={{ display: "inline-flex", alignItems: "center", gap: 6, ...label({ fontSize: 12, color: V.text }) }}>
-    <span style={{ width: 14, height: 14, borderRadius: 4, background: c, boxShadow: `0 0 8px ${c}` }} />{t}</span>;
+    <span style={{ width: 14, height: 14, boxSizing: "border-box", borderRadius: 4, border: `2px solid ${c}`, boxShadow: `0 0 8px ${c}` }} />{t}</span>;
   return (
     <div style={{ display: "grid", gap: 10, marginTop: 4 }}>
       {left === 2 && week(1, V.blue, "This week", names[0] || "Week 1", <>
@@ -790,7 +800,7 @@ export default function FinishPage({ currentUser }) {
       {left > 0 && left <= 2
         ? <Explainer left={left} names={[1, 2].map(n => { const r = state.db.races.find(x => x.round === scored + n); return r ? r.race_name || r.name || "" : ""; })}
             me={ti >= 0 ? divisions[myDiv][ti] : null} myPlace={ti + 1} opp={next ? next.opp : null} oppPlace={next ? next.oppPlace : null}
-            divKey={myDiv} rows={myDiv ? divisions[myDiv] : null} />
+            divKey={myDiv} rows={myDiv ? divisions[myDiv] : null} all={divisions} />
         : <div style={{ ...numeric("hero", { fontSize: 26, color: V.text }) }}>{left > 0 ? `${left} WEEKS LEFT` : `FINAL \u00b7 ROUND ${scored}`}</div>}
 
       {teamLadder && (
