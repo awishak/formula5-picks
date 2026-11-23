@@ -306,8 +306,8 @@ function RangeChart({ divKey, rows, range, forecast, mineId }) {
 }
 
 // Horizontal bars, biggest first, a share to each, growing in.
-function Bars({ items, color }) {
-  const shown = items.filter(x => x.v >= 0.005).sort((a, b) => b.v - a.v);
+function Bars({ items, color, all }) {
+  const shown = items.filter(x => all || x.v >= 0.005).sort((a, b) => b.v - a.v);
   if (!shown.length) return null;
   return (
     <div style={{ ...card({ padding: "10px 12px" }), display: "grid", gap: 7 }}>
@@ -316,7 +316,7 @@ function Bars({ items, color }) {
           ...(x.mine ? { margin: "-3px -6px", padding: "3px 6px", borderRadius: 10, background: `${V.green}1c`,
             boxShadow: `0 0 0 1.5px ${V.green}, 0 0 10px ${V.green}66` } : {}) }}>
           {x.pic}
-          <span style={{ ...display("chip", { fontSize: 14, color: x.mine ? V.green : V.text }), lineHeight: 1.1 }}>{x.name}</span>
+          <span style={{ ...display("chip", { fontSize: 14, color: x.mine ? V.green : V.text }), lineHeight: 1.1, overflowWrap: "anywhere" }}>{x.name}</span>
           <span style={{ height: 14, borderRadius: 7, background: V.bg3, overflow: "hidden" }}>
             <span className="fr-grow" style={{ "--d": `${i * 0.06}s`, display: "block", height: "100%", width: `${Math.max(2, x.v * 100)}%`,
               borderRadius: 7, background: color, boxShadow: `0 0 10px ${color}` }} />
@@ -622,7 +622,7 @@ function ScoreBars({ items, color, mineId, fmt = v => v.toFixed(2) }) {
   );
 }
 
-export default function FinishPage({ currentUser }) {
+export default function FinishPage({ currentUser, view }) {
   const [state, setState] = useState({ loading: true });
 
   useEffect(() => {
@@ -680,7 +680,7 @@ export default function FinishPage({ currentUser }) {
         <div className="v-pull" style={titleBox({ padding: "14px 0 14px" })}>
           <div className="v-wet" style={{ fontFamily: FM, fontWeight: 400, fontSize: TITLE_SIZE, lineHeight: 1.15,
             letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
-            <span style={textGlow(V.pink)}>{built && built.left === 1 ? "ONE WEEK" : built && built.left <= 0 ? "FINAL" : "TWO WEEKS"}</span>{" "}<span style={textGlow(V.blue)}>{built && built.left <= 0 ? "TABLE" : "LEFT"}</span>
+            {view === "fights" ? <><span style={textGlow(V.pink)}>THE</span>{" "}<span style={textGlow(V.blue)}>FIGHTS</span></> : <><span style={textGlow(V.pink)}>{built && built.left === 1 ? "ONE WEEK" : built && built.left <= 0 ? "FINAL" : "TWO WEEKS"}</span>{" "}<span style={textGlow(V.blue)}>{built && built.left <= 0 ? "TABLE" : "LEFT"}</span></>}
           </div>
         </div>
         {inner}
@@ -751,20 +751,30 @@ export default function FinishPage({ currentUser }) {
 
   // What the reader's team is fighting for. Certain things come from the true
   // best and worst place; without those, from a forecast under 1% or over 99%.
-  const fights = [];
-  if (ti >= 0 && left > 0) {
-    const f = forecast.teams[mineId], champ = myDiv === "championship", rg = myRange;
-    if (champ) {
-      if (rg ? rg.best === 1 : f.title >= 0.01) fights.push([V.gold, "You're fighting for the overall championship.", pct(f.title)]);
-      if (rg ? rg.worst < 8 : f.up > 0.99) { if (!fights.length) fights.push([V.green, "You're staying up in the Championship Division.", null]); }
-      else if (rg ? rg.best >= 9 : f.up < 0.01) fights.push([V.pink, "You're going down to the Second Division.", null]);
-      else fights.push([V.pink, "You're fighting to stay up in the Championship Division.", pct(f.up)]);
-    } else {
-      if (rg ? rg.worst <= 4 : f.up > 0.99) fights.push([V.green, "You're going up to the Championship Division.", null]);
-      else if (rg ? rg.best >= 6 : f.up < 0.01) fights.push([V.text2, "You're staying in the Second Division.", null]);
-      else fights.push([V.green, "You're fighting to be promoted.", pct(f.up)]);
-    }
-  }
+  const teamKeys = (divKey, rg, f) => {
+    const out = [];
+    if (divKey === "championship") {
+      if (rg ? rg.best === 1 : f.title >= 0.01) out.push("title");
+      if (rg ? rg.worst < 8 : f.up > 0.99) { if (!out.length) out.push("safe"); }
+      else if (rg ? rg.best >= 9 : f.up < 0.01) out.push("down");
+      else out.push("stay");
+    } else if (rg ? rg.worst <= 4 : f.up > 0.99) out.push("up");
+    else if (rg ? rg.best >= 6 : f.up < 0.01) out.push("stuck");
+    else out.push("promo");
+    return out;
+  };
+  const TEAM_LINE = {
+    title: [V.gold, "You're fighting for the overall championship.", f => pct(f.title)],
+    safe: [V.green, "You're staying up in the Championship Division.", null],
+    down: [V.pink, "You're going down to the Second Division.", null],
+    stay: [V.pink, "You're fighting to stay up in the Championship Division.", f => pct(f.up)],
+    up: [V.green, "You're going up to the Championship Division.", null],
+    stuck: [V.text2, "You're staying in the Second Division.", null],
+    promo: [V.green, "You're fighting to be promoted.", f => pct(f.up)],
+  };
+  const fights = ti >= 0 && left > 0
+    ? teamKeys(myDiv, myRange, forecast.teams[mineId]).map(k => [TEAM_LINE[k][0], TEAM_LINE[k][1], TEAM_LINE[k][2] ? TEAM_LINE[k][2](forecast.teams[mineId]) : null])
+    : [];
 
   // The same for the reader as a player. There is no true range here, so a
   // fight is a forecast chance that is neither nothing nor certain.
@@ -823,6 +833,51 @@ export default function FinishPage({ currentUser }) {
       </>
     );
   };
+
+  if (view === "fights") {
+    const tItems = (key, val) => Object.keys(divisions).flatMap(d => divisions[d].map((r, i) => ({ r, d, i })))
+      .filter(x => teamKeys(x.d, range[x.d] ? range[x.d][x.r.id] : null, forecast.teams[x.r.id]).includes(key))
+      .map(x => ({ id: x.r.id, name: x.r.short, v: val ? val(forecast.teams[x.r.id]) : 1, mine: x.r.id === mineId, logo: x.r.logo, full: x.r.name,
+        pic: <Logo src={x.r.logo} name={x.r.name} size={24} /> }));
+    const settled = items => items.length > 0 && (
+      <div style={{ ...card({ padding: "12px 12px" }), display: "flex", flexWrap: "wrap", gap: 12 }}>
+        {items.map(x => (
+          <TeamTap key={x.id} id={x.id} style={{ display: "grid", justifyItems: "center", gap: 4, width: 76, textAlign: "center" }}>
+            <Logo src={x.logo} name={x.full} size={48} glow={x.mine ? V.green : null} />
+            <span style={{ ...display("chip", { fontSize: 13, color: x.mine ? V.green : V.text }), lineHeight: 1.1 }}>{x.name}</span>
+          </TeamTap>
+        ))}
+      </div>
+    );
+    const group = (title, color, node, what) => node ? <><Head color={color}>{title}</Head>{what && <div style={sub}>{what}</div>}{node}</> : null;
+    const bars = (items, color) => (items.length ? <Bars items={items} color={color} all /> : null);
+    const live = v => v >= 0.03 && v <= 0.97;
+    const pItems = (key, test, color) => playerRows.filter(r => test(playerForecast[r.id][key]))
+      .map(r => ({ id: r.id, name: r.name, v: playerForecast[r.id][key], mine: meP && r.id === meP.id,
+        pic: <Face src={r.photo} name={r.name} size={26} ring={color} /> }));
+    return shell(
+      <>
+        {left > 0 && (
+          <>
+            {group("Fighting for the Team Championship", V.gold, bars(tItems("title", f => f.title), V.gold), "Chance of winning the title")}
+            {group("Fighting to Stay Up", V.pink, bars(tItems("stay", f => f.up), V.pink), "Chance of staying up")}
+            {group("Fighting to Be Promoted", V.green, bars(tItems("promo", f => f.up), V.green), "Chance of going up")}
+            {group("Staying Up", V.blue, settled(tItems("safe")))}
+            {group("Going Up", V.green, settled(tItems("up")))}
+            {group("Going Down", V.pink, settled(tItems("down")))}
+            {group("Staying in the Second Division", V.silver, settled(tItems("stuck")))}
+            {group("Fighting for the Player Championship", V.gold, bars(pItems("title", v => v >= 0.01, V.gold), V.gold), "Chance of finishing 1st")}
+            {group("Fighting for a Top 3 Finish", V.green, bars(pItems("podium", live, V.green), V.green))}
+            {group("Fighting for a Top 12 Finish", V.pink, bars(pItems("top12", live, V.pink), V.pink))}
+          </>
+        )}
+        <Head color={V.blue}>Fighting to Beat a Teammate</Head>
+        <div style={{ display: "grid", gap: 8 }}>
+          {duels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} />)}
+        </div>
+      </>
+    );
+  }
 
   return shell(
     <>

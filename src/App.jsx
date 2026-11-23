@@ -835,7 +835,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
   "dashboard", "power", "hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
-  "f1-calendar", "season-preview", "recaps", "admin", "recap", "paddock", "paddock-vegas", "league", "finish",
+  "f1-calendar", "season-preview", "recaps", "admin", "recap", "paddock", "paddock-vegas", "league", "finish", "fights",
 ]);
 
 // ── Routing ──────────────────────────────────────────────
@@ -871,6 +871,7 @@ const ROUTES = [
   { path: "/league", page: "league" },
   // The close races: where everyone can still finish. Linked from /teams and /players.
   { path: "/finish", page: "finish" },
+  { path: "/fights", page: "fights" },
   { path: "/results", page: "results" },
   { path: "/rules", page: "rules" },
   { path: "/calendar", page: "f1-calendar" },
@@ -891,7 +892,7 @@ const PATH_FOR = Object.fromEntries(ROUTES.map(r => [r.page, r.path]));
 // Pages rebuilt on the Vegas look. They set their own ground and their own
 // header, so the light shell's logo bar and background have to get out of the
 // way or a dark page opens under a white block.
-const VEGAS_PAGES = new Set(["hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home", "vegas", "dashboard", "power", "schedule", "team-standings", "player-standings", "admin", "league", "finish"]);
+const VEGAS_PAGES = new Set(["hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home", "vegas", "dashboard", "power", "schedule", "team-standings", "player-standings", "admin", "league", "finish", "fights"]);
 
 // A path in, a page and any parameter out.
 function readPath(pathname) {
@@ -1264,6 +1265,7 @@ export default function App() {
         {activePage === "schedule" && <SchedulePage currentUser={currentUser} />}
         {activePage === "league" && <LeaguePage currentUser={currentUser} />}
         {activePage === "finish" && <FinishPage currentUser={currentUser} />}
+        {activePage === "fights" && <FinishPage currentUser={currentUser} view="fights" />}
         {/* The first-half schedule page, unrouted. */}
         {activePage === "schedule-v1" && <Schedule currentUser={currentUser} onNavigate={navigateTo} initialView={scheduleInitialView} />}
         {activePage === "rules" && <Rules />}
