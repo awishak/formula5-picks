@@ -59,7 +59,7 @@ function Ladder({ items }) {
   return (
     <div style={{ ...card({ padding: "14px 8px 12px" }), display: "flex", alignItems: "flex-end", gap: 4 }}>
       {items.map(it => (
-        <div key={it.key} style={{ flex: it.me ? 1.25 : 1, minWidth: 0 }}>
+        <div key={it.key} className={it.me ? "fr-pop" : "fr-rise"} style={{ "--d": it.me ? "0.1s" : "0.35s", flex: it.me ? 1.25 : 1, minWidth: 0 }}>
           {it.wrap(
             <div style={{ display: "grid", justifyItems: "center", gap: 3, textAlign: "center" }}>
               <div style={{ ...numeric("chip", { fontSize: it.me ? 22 : 16, color: it.tone }), ...(it.me ? textGlow(it.tone, 0.8) : {}) }}>P{it.place}</div>
@@ -87,77 +87,168 @@ function Head({ children, color = V.pink }) {
 }
 const Note = ({ children }) => <p style={{ ...body("bodySm", { fontSize: 14, color: V.text2, lineHeight: 1.45 }), margin: "0 0 12px" }}>{children}</p>;
 
-// One row a team, twelve places across. The bracket is every place still
-// possible, the fill is how likely the forecast makes each one, and the ring
-// is where the team is now.
-function RangeChart({ divKey, rows, range, forecast, mineId }) {
-  const zone = ZONES[divKey];
-  const tone = p => (zone.up && zone.up.includes(p) ? V.green : zone.down && zone.down.includes(p) ? V.pink : zone.playoff === p ? V.gold : null);
-  const cols = "20px 38px repeat(12, minmax(0, 1fr))";
+// The motion on this page. Rows land, each bracket opens out from where the
+// team is now, the fills come up left to right, the bars grow, and your own
+// team's row breathes. Reduced motion turns all of it off.
+const CSS = `
+@keyframes frOpen { from { transform: scaleX(0); opacity: 0; } }
+@keyframes frFill { from { opacity: 0; transform: scale(.4); } }
+@keyframes frPop { 0% { transform: scale(0); } 70% { transform: scale(1.35); } }
+@keyframes frGrow { from { transform: scaleX(0); } }
+@keyframes frUp { from { transform: scaleY(0); } }
+@keyframes frRise { from { transform: translateY(18px); opacity: 0; } }
+@keyframes frBreathe { 50% { box-shadow: inset 0 0 14px ${V.green}55, 0 0 16px ${V.green}aa; } }
+@keyframes frStem { from { transform: scaleY(0); opacity: 0; } }
+.fr-open { animation: frOpen .7s cubic-bezier(.3, 1.3, .5, 1) var(--d, 0s) backwards; }
+.fr-fill { animation: frFill .4s ease-out var(--d, 0s) backwards; }
+.fr-pop { animation: frPop .5s cubic-bezier(.3, 1.6, .5, 1) var(--d, 0s) backwards; }
+.fr-grow { transform-origin: left; animation: frGrow .9s cubic-bezier(.2, .9, .3, 1) var(--d, 0s) backwards; }
+.fr-up { transform-origin: bottom; animation: frUp .7s cubic-bezier(.3, 1.4, .5, 1) var(--d, 0s) backwards; }
+.fr-rise { animation: frRise .5s cubic-bezier(.2, .9, .3, 1.3) var(--d, 0s) backwards; }
+.fr-mine { animation: frBreathe 2.6s ease-in-out infinite; }
+.fr-stem { transform-origin: var(--o, top); animation: frStem .35s ease-out var(--d, 0s) backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .fr-open, .fr-fill, .fr-pop, .fr-grow, .fr-up, .fr-rise, .fr-mine, .fr-stem { animation: none !important; }
+}
+`;
+
+const zoneTone = (divKey, p) => {
+  const z = ZONES[divKey];
+  return z.up && z.up.includes(p) ? V.green : z.down && z.down.includes(p) ? V.pink : z.playoff === p ? V.gold : null;
+};
+
+// Twelve places across for one team: the fill is how likely each place is,
+// the bracket is every place still possible, the logo is where it is now.
+function Track({ divKey, row, now, rg, f, height = 30, delay = 0 }) {
+  const peak = Math.max(...f.dist);
+  const logo = Math.round(height * 0.8);
   return (
-    <div style={{ ...card({ padding: "12px 10px 10px" }) }}>
-      <div style={{ display: "grid", gridTemplateColumns: cols, alignItems: "end", marginBottom: 6 }}>
-        <span /><span />
-        {Array.from({ length: 12 }, (_, i) => (
-          <span key={i} style={{ ...numeric("chip", { fontSize: 13, color: tone(i + 1) || V.text3 }), textAlign: "center" }}>{i + 1}</span>
-        ))}
-      </div>
-      {rows.map((r, i) => {
-        const rg = range ? range[r.id] : null;
-        const f = forecast[r.id];
-        const peak = Math.max(...f.dist);
-        const mine = r.id === mineId;
+    <span style={{ position: "relative", display: "grid", gridTemplateColumns: "repeat(12, minmax(0, 1fr))", height }}>
+      {Array.from({ length: 12 }, (_, p) => {
+        const c = zoneTone(divKey, p + 1) || V.blue, share = f.dist[p];
         return (
-          <TeamTap key={r.id} id={r.id} style={{ display: "grid", gridTemplateColumns: cols, alignItems: "center",
-            padding: "3px 0", borderTop: `1px solid ${V.border}`, background: mine ? `${V.blue}12` : "transparent" }}>
-            <span style={{ ...numeric("chip", { fontSize: 14, color: V.text2 }) }}>{i + 1}</span>
-            <span style={{ ...display("chip", { fontSize: 13, color: mine ? V.blue : V.text }) }}>{r.code}</span>
-            {Array.from({ length: 12 }, (_, p) => {
-              const place = p + 1;
-              const can = rg ? place >= rg.best && place <= rg.worst : f.dist[p] > 0;
-              const first = rg && place === rg.best, last = rg && place === rg.worst;
-              const c = tone(place) || V.blue;
-              const share = f.dist[p];
-              return (
-                <span key={p} title={`P${place}: ${pct(share)}`} style={{
-                  height: 30, position: "relative", boxSizing: "border-box",
-                  borderTop: can && rg ? `1.5px solid ${V.text2}` : "1.5px solid transparent",
-                  borderBottom: can && rg ? `1.5px solid ${V.text2}` : "1.5px solid transparent",
-                  borderLeft: first ? `1.5px solid ${V.text2}` : "none",
-                  borderRight: last ? `1.5px solid ${V.text2}` : "none",
-                  borderRadius: `${first ? 7 : 0}px ${last ? 7 : 0}px ${last ? 7 : 0}px ${first ? 7 : 0}px`,
-                }}>
-                  {share > 0 && <span style={{ position: "absolute", inset: 2, borderRadius: 4, background: c,
-                    opacity: 0.12 + 0.88 * (share / peak), boxShadow: share === peak ? `0 0 8px ${c}` : "none" }} />}
-                  {place === i + 1 && (r.logo
-                    ? <img src={r.logo} alt="" style={{ position: "absolute", left: "50%", top: "50%", width: 24, height: 24,
-                        margin: -12, objectFit: "contain", filter: "drop-shadow(0 0 3px #000) drop-shadow(0 0 2px #000)" }} />
-                    : <span style={{ position: "absolute", left: "50%", top: "50%", width: 10, height: 10, margin: -5,
-                        boxSizing: "border-box", borderRadius: "50%", border: `2px solid ${V.text}`, background: V.bg }} />)}
-                </span>
-              );
-            })}
-          </TeamTap>
+          <span key={p} title={`P${p + 1}: ${pct(share)}`} style={{ position: "relative" }}>
+            {share > 0 && <span className="fr-fill" style={{ "--d": `${delay + 0.25 + p * 0.03}s`, position: "absolute", inset: 3,
+              borderRadius: 4, background: c, opacity: 0.12 + 0.88 * (share / peak),
+              boxShadow: share === peak ? `0 0 8px ${c}` : "none" }} />}
+          </span>
         );
       })}
+      {rg && <span className="fr-open" style={{ "--d": `${delay + 0.1}s`, position: "absolute", top: 0, bottom: 0,
+        left: `${((rg.best - 1) / 12) * 100}%`, width: `${((rg.worst - rg.best + 1) / 12) * 100}%`,
+        transformOrigin: `${rg.worst === rg.best ? 50 : ((now - rg.best + 0.5) / (rg.worst - rg.best + 1)) * 100}% 50%`,
+        boxSizing: "border-box", border: `1.5px solid ${V.text2}`, borderRadius: 8, pointerEvents: "none" }} />}
+      <span className="fr-pop" style={{ "--d": `${delay + 0.5}s`, position: "absolute", top: "50%",
+        left: `${((now - 0.5) / 12) * 100}%`, width: logo, height: logo, margin: `${-logo / 2}px 0 0 ${-logo / 2}px` }}>
+        {row.logo
+          ? <img src={row.logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain",
+              filter: "drop-shadow(0 0 3px #000) drop-shadow(0 0 2px #000)" }} />
+          : <span style={{ display: "block", width: 10, height: 10, margin: (logo - 10) / 2, boxSizing: "border-box",
+              borderRadius: "50%", border: `2px solid ${V.text}`, background: V.bg }} />}
+      </span>
+    </span>
+  );
+}
+
+// The legend is a real row, the reader's own team where they have one, drawn
+// big, with each part of it pointed at and named.
+function Legend({ divKey, row, now, rg, f }) {
+  const likely = f.dist.indexOf(Math.max(...f.dist)) + 1;
+  const at = p => `${((p - 0.5) / 12) * 100}%`;
+  const tag = (p, text, color, side, lane, d) => (
+    <span key={text} className="fr-rise" style={{ "--d": `${d}s`, position: "absolute", left: at(p),
+      [side === "top" ? "bottom" : "top"]: "100%", display: "grid", justifyItems: "center",
+      transform: `translateX(${p <= 2 ? "-12px" : p >= 11 ? "calc(-100% + 12px)" : "-50%"})` }}>
+      {side === "bottom" && <span className="fr-stem" style={{ "--d": `${d}s`, "--o": "top", width: 2, height: 8 + lane * 22, background: color,
+        justifySelf: p <= 2 ? "start" : p >= 11 ? "end" : "center", marginLeft: p <= 2 ? 11 : 0, marginRight: p >= 11 ? 11 : 0 }} />}
+      <span style={{ ...label({ fontSize: 12, color }), whiteSpace: "nowrap", padding: "1px 0" }}>{text}</span>
+      {side === "top" && <span className="fr-stem" style={{ "--d": `${d}s`, "--o": "bottom", width: 2, height: 8 + lane * 22, background: color,
+        justifySelf: p <= 2 ? "start" : p >= 11 ? "end" : "center", marginLeft: p <= 2 ? 11 : 0, marginRight: p >= 11 ? 11 : 0 }} />}
+    </span>
+  );
+  const same = likely === now;
+  const tags = [
+    tag(now, same ? "Now, and most likely" : "Now", V.text, "top", 0, 0.9),
+    !same && tag(likely, "Most likely", V.blue, "top", Math.abs(likely - now) < 4 ? 1 : 0, 1.1),
+    rg && rg.best === rg.worst && tag(rg.best, `Locked in at P${rg.best}`, V.text2, "bottom", 0, 1.3),
+    rg && rg.best !== rg.worst && tag(rg.best, `Best P${rg.best}`, V.text2, "bottom", 0, 1.3),
+    rg && rg.best !== rg.worst && tag(rg.worst, `Worst P${rg.worst}`, V.text2, "bottom", rg.worst - rg.best < 5 ? 1 : 0, 1.5),
+  ].filter(Boolean);
+  const keys = [
+    divKey === "second" && [V.green, "Goes up"],
+    divKey === "championship" && [V.pink, "Goes down"],
+    [V.gold, divKey === "championship" ? "8th, against 5th in Second" : "5th, against 8th in Champ"],
+  ].filter(Boolean);
+  return (
+    <div style={{ ...card({ padding: "12px 14px 12px" }), ...edgeGlow(V.green, 0.6), marginTop: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Logo src={row.logo} name={row.name} size={26} />
+        <span style={{ ...display("chip", { fontSize: 16, color: V.green }) }}>{row.short}</span>
+      </div>
+      <div style={{ position: "relative", margin: "58px 4px 58px" }}>
+        <Track divKey={divKey} row={row} now={now} rg={rg} f={f} height={44} delay={0.2} />
+        {tags}
+      </div>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        {keys.map(([c, t]) => (
+          <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 6, ...label({ fontSize: 12, color: V.text2 }) }}>
+            <span style={{ width: 14, height: 14, borderRadius: 4, background: c, boxShadow: `0 0 8px ${c}` }} />{t}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
 
-// Horizontal bars, biggest first, a share to each.
+function RangeChart({ divKey, rows, range, forecast, mineId }) {
+  const cols = "20px 38px minmax(0, 1fr)";
+  return (
+    <div style={{ ...card({ padding: "12px 10px 10px" }) }}>
+      <div style={{ display: "grid", gridTemplateColumns: cols, alignItems: "end", marginBottom: 6 }}>
+        <span /><span />
+        <span style={{ display: "grid", gridTemplateColumns: "repeat(12, minmax(0, 1fr))" }}>
+          {Array.from({ length: 12 }, (_, i) => (
+            <span key={i} style={{ ...numeric("chip", { fontSize: 13, color: zoneTone(divKey, i + 1) || V.text3 }), textAlign: "center" }}>{i + 1}</span>
+          ))}
+        </span>
+      </div>
+      <div className="v-land">
+        {rows.map((r, i) => {
+          const mine = r.id === mineId;
+          return (
+            <div key={r.id} className={mine ? "fr-mine" : undefined} style={{ borderRadius: 10, margin: "0 -4px 2px" }}>
+            <TeamTap id={r.id} style={{ display: "grid", gridTemplateColumns: cols, alignItems: "center",
+              padding: "3px 4px", borderRadius: 10,
+              ...(mine ? { background: `${V.green}1c`, border: `1.5px solid ${V.green}`, boxShadow: `0 0 10px ${V.green}66` }
+                       : { border: "1.5px solid transparent", borderTopColor: V.border }) }}>
+              <span style={{ ...numeric("chip", { fontSize: 14, color: mine ? V.green : V.text2 }) }}>{i + 1}</span>
+              <span style={{ ...display("chip", { fontSize: 13, color: mine ? V.green : V.text }) }}>{r.code}</span>
+              <Track divKey={divKey} row={r} now={i + 1} rg={range ? range[r.id] : null} f={forecast[r.id]} delay={i * 0.05} />
+            </TeamTap>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Horizontal bars, biggest first, a share to each, growing in.
 function Bars({ items, color }) {
   const shown = items.filter(x => x.v >= 0.005).sort((a, b) => b.v - a.v);
   if (!shown.length) return null;
   return (
     <div style={{ ...card({ padding: "10px 12px" }), display: "grid", gap: 7 }}>
-      {shown.map(x => (
-        <div key={x.id} style={{ display: "grid", gridTemplateColumns: "26px 92px minmax(0, 1fr) 46px", alignItems: "center", gap: 7 }}>
+      {shown.map((x, i) => (
+        <div key={x.id} style={{ display: "grid", gridTemplateColumns: "26px 92px minmax(0, 1fr) 46px", alignItems: "center", gap: 7,
+          ...(x.mine ? { margin: "-3px -6px", padding: "3px 6px", borderRadius: 10, background: `${V.green}1c`,
+            boxShadow: `0 0 0 1.5px ${V.green}, 0 0 10px ${V.green}66` } : {}) }}>
           {x.pic}
-          <span style={{ ...display("chip", { fontSize: 14, color: x.mine ? V.blue : V.text }), whiteSpace: "nowrap",
+          <span style={{ ...display("chip", { fontSize: 14, color: x.mine ? V.green : V.text }), whiteSpace: "nowrap",
             overflow: "hidden", textOverflow: "ellipsis" }}>{x.name}</span>
           <span style={{ height: 14, borderRadius: 7, background: V.bg3, overflow: "hidden" }}>
-            <span style={{ display: "block", height: "100%", width: `${Math.max(2, x.v * 100)}%`, borderRadius: 7,
-              background: color, boxShadow: `0 0 10px ${color}` }} />
+            <span className="fr-grow" style={{ "--d": `${i * 0.06}s`, display: "block", height: "100%", width: `${Math.max(2, x.v * 100)}%`,
+              borderRadius: 7, background: color, boxShadow: `0 0 10px ${color}` }} />
           </span>
           <span style={{ ...numeric("chip", { fontSize: 15, color: V.text }), textAlign: "right" }}>{pct(x.v)}</span>
         </div>
@@ -182,9 +273,10 @@ function RangeTable({ rows, range, forecast, divKey, mineId }) {
         </thead>
         <tbody>
           {rows.map(r => (
-            <tr key={r.id} style={{ borderTop: `1px solid ${V.border}` }}>
+            <tr key={r.id} style={{ borderTop: `1px solid ${V.border}`,
+              ...(r.id === mineId ? { background: `${V.green}1c`, boxShadow: `inset 0 0 0 1.5px ${V.green}` } : {}) }}>
               <td style={{ ...td, textAlign: "left", fontFamily: "inherit", ...display("chip", { fontSize: 14,
-                color: r.id === mineId ? V.blue : V.text }) }}>{r.short}</td>
+                color: r.id === mineId ? V.green : V.text }) }}>{r.short}</td>
               <td style={td}>{r.pts}</td>
               {range && <td style={td}>P{range[r.id].best}</td>}
               {range && <td style={td}>P{range[r.id].worst}</td>}
@@ -198,31 +290,105 @@ function RangeTable({ rows, range, forecast, divKey, mineId }) {
   );
 }
 
-// Every player against the leader. The bar is total points, drawn from the
-// lowest total on the page so the gaps are what the eye reads.
-function GapChart({ rows, me }) {
-  const top = rows[0].pts, low = rows[rows.length - 1].pts, span = Math.max(1, top - low);
+// Your own finish: one bar a place, as tall as the forecast makes it likely,
+// for every place with a real chance. Where you are now is lit.
+function PlaceBars({ dist, now }) {
+  const live = dist.map((v, i) => [i + 1, v]).filter(([, v]) => v >= 0.005);
+  if (!live.length) return null;
+  const first = live[0][0], last = live[live.length - 1][0], peak = Math.max(...dist);
+  const span = Array.from({ length: last - first + 1 }, (_, i) => first + i);
+  return (
+    <div style={{ ...card({ padding: "12px 10px 8px" }) }}>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${span.length}, minmax(0, 1fr))`, gap: 3, alignItems: "end", height: 132 }}>
+        {span.map((p, i) => {
+          const v = dist[p - 1], c = p === now ? V.green : V.blue;
+          return (
+            <div key={p} style={{ display: "grid", justifyItems: "center", alignContent: "end", height: "100%", gap: 3 }}>
+              {(v >= 0.04 || p === now) && <span style={{ ...numeric("chip", { fontSize: span.length > 14 ? 10 : 12, color: V.text }) }}>{Math.round(v * 100)}</span>}
+              <span className="fr-up" style={{ "--d": `${i * 0.04}s`, width: "100%", height: `${Math.max(2, (v / peak) * 96)}px`,
+                transformOrigin: "bottom", borderRadius: "5px 5px 0 0", background: c, opacity: p === now ? 1 : 0.75,
+                boxShadow: p === now ? `0 0 10px ${c}` : "none" }} />
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${span.length}, minmax(0, 1fr))`, gap: 3, marginTop: 4,
+        borderTop: `1px solid ${V.border2}`, paddingTop: 4 }}>
+        {span.map(p => (
+          <span key={p} style={{ ...numeric("chip", { fontSize: span.length > 14 ? 10 : 12, color: p === now ? V.green : V.text2 }), textAlign: "center" }}>
+            {span.length > 20 && p % 2 === 0 && p !== now ? "" : p}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Your season, round by round: every score as a bar, the best and the worst
+// lit, your average as a line, and the week's place under the two extremes.
+function SeasonBars({ weeks, avg }) {
+  if (!weeks.length) return null;
+  const hi = Math.max(...weeks.map(w => w.score)), lo = Math.min(...weeks.map(w => w.score));
+  const top = Math.max(hi, 1);
+  return (
+    <div style={{ ...card({ padding: "12px 10px 8px" }) }}>
+      <div style={{ position: "relative", display: "grid", gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`, gap: 3,
+        alignItems: "end", height: 110 }}>
+        {weeks.map((w, i) => {
+          const c = w.score === hi ? V.green : w.score === lo ? V.pink : V.blue;
+          return <span key={w.round} className="fr-up" title={`Round ${w.round}: ${w.score}`} style={{ "--d": `${i * 0.03}s`,
+            transformOrigin: "bottom", height: `${Math.max(2, (w.score / top) * 100)}%`, borderRadius: "4px 4px 0 0", background: c,
+            opacity: c === V.blue ? 0.7 : 1, boxShadow: c === V.blue ? "none" : `0 0 10px ${c}` }} />;
+        })}
+        <span style={{ position: "absolute", left: 0, right: 0, bottom: `${(avg / top) * 100}%`, borderTop: `1.5px dashed ${V.gold}` }} />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`, gap: 3, marginTop: 3 }}>
+        {weeks.map(w => <span key={w.round} style={{ ...numeric("chip", { fontSize: 9, color: V.text3 }), textAlign: "center" }}>{w.round}</span>)}
+      </div>
+    </div>
+  );
+}
+
+const Tile = ({ k, v, sub, color = V.text }) => (
+  <div className="fr-rise" style={{ flex: "1 1 0", minWidth: 0, textAlign: "center", padding: "9px 4px", borderRadius: 12,
+    background: V.bg3, border: `1px solid ${color === V.text ? V.border : `${color}66`}` }}>
+    <div style={{ ...numeric("stat", { fontSize: 24, color }), ...(color === V.text ? {} : textGlow(color, 0.6)) }}>{v}</div>
+    <div style={{ ...label({ fontSize: 11, color: V.text2 }), marginTop: 3 }}>{k}</div>
+    {sub && <div style={{ ...numeric("chip", { fontSize: 13, color: V.text }), marginTop: 1 }}>{sub}</div>}
+  </div>
+);
+
+// Every player: the gap to the leader, and on a track of all 48 places where
+// they are now (the dot) and where the forecast puts them (the band).
+function FieldChart({ rows, me, fc }) {
+  const N = rows.length, top = rows[0].pts;
   return (
     <div style={{ ...card({ padding: "10px 12px" }), display: "grid", gap: 6 }}>
       {rows.map((r, i) => {
         const mine = me && r.id === me.id;
         const c = i === 0 ? V.gold : mine ? V.green : V.blue;
+        const f = fc[r.id];
         return (
-          <PlayerTap key={r.id} name={r.name} block style={{ display: "grid",
-            gridTemplateColumns: "22px 26px 92px minmax(0, 1fr) 44px", alignItems: "center", gap: 6 }}>
+          <div key={r.id} className={mine ? "fr-mine" : undefined} style={{ borderRadius: 10,
+            ...(mine ? { margin: "-3px -6px", padding: "3px 6px", background: `${V.green}1c`, boxShadow: `0 0 0 1.5px ${V.green}` } : {}) }}>
+          <PlayerTap name={r.name} block style={{ display: "grid",
+            gridTemplateColumns: "22px 26px 84px minmax(0, 1fr) 40px", alignItems: "center", gap: 6 }}>
             <span style={{ ...numeric("chip", { fontSize: 13, color: V.text2 }) }}>{i + 1}</span>
             <Face src={r.photo} name={r.name} size={26} ring={c} glow={mine || i === 0} />
             <span style={{ ...display("chip", { fontSize: 13, color: mine ? V.green : V.text }), whiteSpace: "nowrap",
               overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</span>
-            <span style={{ height: 10, borderRadius: 5, background: V.bg3, overflow: "hidden" }}>
-              <span style={{ display: "block", height: "100%", borderRadius: 5, background: c,
-                width: `${6 + 94 * ((r.pts - low) / span)}%`, opacity: mine || i === 0 ? 1 : 0.7,
-                boxShadow: mine || i === 0 ? `0 0 8px ${c}` : "none" }} />
+            <span style={{ position: "relative", height: 12, borderRadius: 6, background: V.bg3 }}>
+              <span className="fr-open" style={{ "--d": `${Math.min(i, 20) * 0.03}s`, position: "absolute", top: 1, bottom: 1,
+                left: `${((f.lo - 1) / N) * 100}%`, width: `${Math.max(2, ((f.hi - f.lo + 1) / N) * 100)}%`, borderRadius: 5,
+                background: c, opacity: 0.55 }} />
+              <span style={{ position: "absolute", top: "50%", left: `${((i + 0.5) / N) * 100}%`, width: 8, height: 8, margin: "-4px 0 0 -4px",
+                borderRadius: "50%", background: V.text, boxShadow: `0 0 6px ${c}` }} />
             </span>
-            <span style={{ ...numeric("chip", { fontSize: 14, color: i === 0 ? V.gold : V.text }), textAlign: "right" }}>
+            <span style={{ ...numeric("chip", { fontSize: 13, color: i === 0 ? V.gold : V.text }), textAlign: "right" }}>
               {i === 0 ? r.pts : `−${top - r.pts}`}
             </span>
           </PlayerTap>
+          </div>
         );
       })}
     </div>
@@ -274,12 +440,12 @@ export default function FinishPage({ currentUser }) {
     const playerRows = buildPlayerTable(db);
     const left = Math.max(0, LAST_ROUND - scored);
     const playerForecast = projectPlayers(playerRows, { left });
-    return { scored, left, divisions, range, forecast, playerRows, playerForecast };
+    return { scored, left, divisions, range, forecast, playerRows, playerForecast, roundOf };
   }, [state.db]);
 
   const shell = inner => (
     <div style={{ background: V.bg, minHeight: "100vh" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&display=swap');`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&display=swap');${CSS}`}</style>
       <div style={WRAP}>
         <div className="v-pull" style={titleBox({ padding: "14px 0 14px" })}>
           <div className="v-wet" style={{ fontFamily: FM, fontWeight: 400, fontSize: TITLE_SIZE, lineHeight: 1.15,
@@ -294,7 +460,7 @@ export default function FinishPage({ currentUser }) {
   if (state.loading) return shell(<Loading rows={6} />);
   if (state.error || !built) return shell(<p style={body("body", { color: V.text2 })}>This page did not load.</p>);
 
-  const { scored, left, divisions, range, forecast, playerRows, playerForecast } = built;
+  const { scored, left, divisions, range, forecast, playerRows, playerForecast, roundOf } = built;
   const meP = playerRows.find(r => r.name === currentUser) || null;
   const mineId = meP ? meP.teamId : null;
   const c8 = divisions.championship[7], s5 = divisions.second[4];
@@ -324,6 +490,12 @@ export default function FinishPage({ currentUser }) {
   });
   const myRange = myDiv && range[myDiv] ? range[myDiv][mineId] : null;
   const leader = playerRows[0];
+  const myWeeks = meP ? Object.keys(meP.byRace).map(id => ({ round: roundOf[id], score: meP.byRace[id], place: meP.placeByRace[id] }))
+    .sort((a, b) => a.round - b.round) : [];
+  const myF = meP ? playerForecast[meP.id] : null;
+  const wk = (pick) => myWeeks.reduce((a, w) => (a == null || pick(w, a) ? w : a), null);
+  const bestW = wk((w, a) => w.score > a.score), worstW = wk((w, a) => w.score < a.score);
+  const places = myWeeks.map(w => w.place).filter(x => x != null);
 
   const section = (divKey, name, color) => {
     const rows = divisions[divKey];
@@ -332,13 +504,6 @@ export default function FinishPage({ currentUser }) {
     return (
       <>
         <Head color={color}>{name}</Head>
-        <Note>
-          {range[divKey]
-            ? "The bracket is every place a team can still finish. The fill is how likely each place is, and the logo is where the team is now."
-            : "The fill is how likely each place is, and the logo is where the team is now."}
-          {champ ? " Pink places go down. 8th, in gold, is compared with 5th in the Second Division."
-                 : " Green places go up. 5th, in gold, is compared with 8th in the Championship."}
-        </Note>
         <RangeChart divKey={divKey} rows={rows} range={range[divKey]} forecast={forecast.teams} mineId={mineId} />
         <RangeTable rows={rows} range={range[divKey]} forecast={forecast.teams} divKey={divKey} mineId={mineId} />
         <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "14px 0 6px" }}>{champ ? "Chance of the title" : "Chance of going up"}</div>
@@ -355,16 +520,15 @@ export default function FinishPage({ currentUser }) {
 
   return shell(
     <>
-      <Note>
-        {left > 0
-          ? `Through round ${scored}, with ${left === 1 ? "one round" : `${left} rounds`} left. The top four of the Second Division go up and the bottom four of the Championship go down.`
-          : `Final, through round ${scored}.`}
-      </Note>
+      <div style={{ ...label({ fontSize: 13, color: V.text2 }), marginBottom: 4 }}>
+        {left > 0 ? `Through round ${scored} \u00b7 ${left === 1 ? "1 round" : `${left} rounds`} left` : `Final \u00b7 round ${scored}`}
+      </div>
 
       {teamLadder && (
         <>
           <Head color={V.green}>Your team</Head>
           <Ladder items={teamLadder} />
+          <Legend divKey={myDiv} row={divisions[myDiv][ti]} now={ti + 1} rg={myRange} f={forecast.teams[mineId]} />
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
             {[myRange && [`Can finish P${myRange.best}${myRange.best === myRange.worst ? "" : ` to P${myRange.worst}`}`, V.text],
               left > 0 && [`${myDiv === "championship" ? "Title" : "First"} ${pct(forecast.teams[mineId].title)}`, V.gold],
@@ -383,7 +547,6 @@ export default function FinishPage({ currentUser }) {
       {c8 && s5 && (
         <>
           <Head color={V.gold}>8th against 5th</Head>
-          <Note>If 5th in the Second Division has the higher second-half scoring average, it takes the Championship place of 8th.</Note>
           <div style={{ display: "flex", gap: 10 }}>
             {[[c8, "8th, Championship", c8.avg >= s5.avg], [s5, "5th, Second Division", s5.avg > c8.avg]].map(([t, where, ahead]) => (
               <TeamTap key={t.id} id={t.id} style={{ flex: 1, minWidth: 0, display: "block", textAlign: "center", padding: "12px 8px",
@@ -398,7 +561,15 @@ export default function FinishPage({ currentUser }) {
               </TeamTap>
             ))}
           </div>
-          {left > 0 && <Note><span style={{ display: "block", marginTop: 10 }}>The forecast has whoever finishes 5th in the Second Division taking the place {pct(forecast.swap)} of the time.</span></Note>}
+          <div style={{ ...label({ fontSize: 12, color: V.text2 }), textAlign: "center", margin: "8px 0 0" }}>Second-half scoring average</div>
+          {left > 0 && (
+            <div style={{ display: "flex", height: 26, borderRadius: 13, overflow: "hidden", marginTop: 10, background: V.bg3 }}>
+              <span className="fr-grow" style={{ width: `${(1 - forecast.swap) * 100}%`, background: V.gold, display: "flex", alignItems: "center",
+                paddingLeft: 10, ...numeric("chip", { fontSize: 14, color: V.bg }), whiteSpace: "nowrap" }}>8th stays {pct(1 - forecast.swap)}</span>
+              <span style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 10,
+                ...numeric("chip", { fontSize: 14, color: V.text }), whiteSpace: "nowrap" }}>5th goes up {pct(forecast.swap)}</span>
+            </div>
+          )}
         </>
       )}
 
@@ -419,20 +590,56 @@ export default function FinishPage({ currentUser }) {
           )}
         </>
       )}
-      {left > 0 && (
+      {meP && myF && left > 0 && (
         <>
-          <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "4px 0 6px" }}>Chance of the title</div>
-          <Bars items={playerRows.map(r => ({ id: r.id, name: r.name, v: playerForecast[r.id].title, mine: meP && r.id === meP.id,
-            pic: <Face src={r.photo} name={r.name} size={26} ring={V.gold} /> }))} color={V.gold} />
-          <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "14px 0 6px" }}>Points behind the leader</div>
+          <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "4px 0 6px" }}>Your chance of each place, %</div>
+          <PlaceBars dist={myF.dist} now={k + 1} />
+          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+            <Tile k="Title" v={pct(myF.title)} color={V.gold} />
+            <Tile k="Top 3" v={pct(myF.podium)} color={V.green} />
+            <Tile k="Top 5" v={pct(myF.top5)} />
+            <Tile k="Top 10" v={pct(myF.top10)} />
+          </div>
+          <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+            <Tile k="Most likely" v={`P${myF.likely}`} color={V.blue} />
+            <Tile k="Likely range" v={myF.lo === myF.hi ? `P${myF.lo}` : `P${myF.lo}–${myF.hi}`} />
+          </div>
         </>
       )}
-      <GapChart rows={playerRows} me={meP} />
+      {meP && myWeeks.length > 0 && (
+        <>
+          <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "16px 0 6px" }}>Your season, round by round</div>
+          <SeasonBars weeks={myWeeks} avg={meP.avg} />
+          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+            <Tile k="Best week" v={bestW.score} sub={`R${bestW.round}${bestW.place ? `, P${bestW.place}` : ""}`} color={V.green} />
+            <Tile k="Worst week" v={worstW.score} sub={`R${worstW.round}${worstW.place ? `, P${worstW.place}` : ""}`} color={V.pink} />
+            <Tile k="Average" v={meP.avg.toFixed(1)} color={V.gold} />
+          </div>
+          <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+            {places.length > 0 && <Tile k="Weekly places" v={`P${Math.min(...places)}–${Math.max(...places)}`} />}
+            <Tile k={`Last ${meP.formRaces}`} v={meP.formAvg.toFixed(1)} sub={meP.formRank ? `P${meP.formRank}` : null} />
+            <Tile k="Top tens" v={meP.top10 + meP.p1 + meP.p2 + meP.p3} sub={`${meP.p1 + meP.p2 + meP.p3} ${meP.p1 + meP.p2 + meP.p3 === 1 ? "podium" : "podiums"}`} />
+          </div>
+        </>
+      )}
+      {left > 0 && (
+        <>
+          <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "16px 0 6px" }}>Chance of the title</div>
+          <Bars items={playerRows.map(r => ({ id: r.id, name: r.name, v: playerForecast[r.id].title, mine: meP && r.id === meP.id,
+            pic: <Face src={r.photo} name={r.name} size={26} ring={V.gold} /> }))} color={V.gold} />
+          <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "16px 0 6px" }}>Chance of the top 3</div>
+          <Bars items={playerRows.map(r => ({ id: r.id, name: r.name, v: playerForecast[r.id].podium, mine: meP && r.id === meP.id,
+            pic: <Face src={r.photo} name={r.name} size={26} ring={V.green} /> }))} color={V.green} />
+        </>
+      )}
+      <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "16px 0 6px" }}>Everyone: likely finish, and points behind the leader</div>
+      <FieldChart rows={playerRows} me={meP} fc={playerForecast} />
 
       {left > 0 && (
-        <p style={{ ...body("bodySm", { fontSize: 14, color: V.text2, lineHeight: 1.45 }), margin: "18px 0 0" }}>
-          Best and worst are every result that is still mathematically possible. The chances are a forecast: the {left === 1 ? "last round" : `last ${left} rounds`} played {forecast.sims.toLocaleString("en-US")} times on each team&rsquo;s and each player&rsquo;s scoring so far. Drawn matchups are left out of both.
-        </p>
+        <div style={{ ...label({ fontSize: 12, color: V.text3, lineHeight: 1.6 }), margin: "18px 0 0" }}>
+          Best and worst: every result still possible<br />
+          Chances: the last {left === 1 ? "round" : `${left} rounds`} played {forecast.sims.toLocaleString("en-US")} times
+        </div>
       )}
     </>
   );

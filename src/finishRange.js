@@ -165,29 +165,43 @@ export function project(divisions, { scored, pairsFor, sims = 20000 }) {
 
 const mean = r => (r.weeks.length ? r.weeks.reduce((a, x) => a + x.score, 0) / r.weeks.length : 0);
 
-// The individual title, forecast the same way: each player's remaining rounds
-// drawn around their own average. rows come from buildPlayerTable.
+// The individual game, forecast the same way: each player's remaining rounds
+// drawn around their own average, and the whole field ranked each time. rows
+// come from buildPlayerTable. For each player: dist[place - 1], the chance of
+// the title, the podium, the top five and the top ten, the most likely place,
+// and lo and hi, the places the middle 80% of the runs land between.
 export function projectPlayers(rows, { left, sims = 20000 }) {
-  if (left <= 0) return Object.fromEntries(rows.map((r, i) => [r.id, { title: i === 0 ? 1 : 0, podium: i < 3 ? 1 : 0 }]));
-  let ss = 0, n = 0;
-  rows.forEach(r => Object.values(r.byRace || {}).forEach(v => { ss += (v - r.avg) ** 2; n++; }));
-  const sd = Math.max(4, Math.sqrt(ss / Math.max(1, n - rows.length)));
-  const normal = rng(77 + rows.length + Math.round(rows[0] ? rows[0].pts : 0));
-  const title = new Array(rows.length).fill(0), podium = new Array(rows.length).fill(0);
-  const tot = new Array(rows.length);
-  for (let it = 0; it < sims; it++) {
-    for (let i = 0; i < rows.length; i++) {
-      let t = rows[i].pts;
-      for (let k = 0; k < left; k++) t += Math.max(0, rows[i].avg + sd * normal());
-      tot[i] = t / (rows[i].races + left);
+  const N = rows.length;
+  const out = rows.map(() => ({ dist: new Array(N).fill(0) }));
+  if (left <= 0) rows.forEach((r, i) => { out[i].dist[i] = 1; });
+  else {
+    let ss = 0, n = 0;
+    rows.forEach(r => Object.values(r.byRace || {}).forEach(v => { ss += (v - r.avg) ** 2; n++; }));
+    const sd = Math.max(4, Math.sqrt(ss / Math.max(1, n - N)));
+    const normal = rng(77 + N + Math.round(rows[0] ? rows[0].pts : 0));
+    const tot = new Float64Array(N), order = Array.from({ length: N }, (_, i) => i);
+    for (let it = 0; it < sims; it++) {
+      for (let i = 0; i < N; i++) {
+        let t = rows[i].pts;
+        for (let k = 0; k < left; k++) t += Math.max(0, rows[i].avg + sd * normal());
+        tot[i] = t / (rows[i].races + left);
+      }
+      order.sort((a, b) => tot[b] - tot[a]);
+      for (let p = 0; p < N; p++) out[order[p]].dist[p]++;
     }
-    let a = -1, b = -1, c = -1;
-    for (let i = 0; i < rows.length; i++) {
-      if (a < 0 || tot[i] > tot[a]) { c = b; b = a; a = i; }
-      else if (b < 0 || tot[i] > tot[b]) { c = b; b = i; }
-      else if (c < 0 || tot[i] > tot[c]) c = i;
-    }
-    title[a]++; podium[a]++; podium[b]++; podium[c]++;
+    out.forEach(o => { o.dist = o.dist.map(v => v / sims); });
   }
-  return Object.fromEntries(rows.map((r, i) => [r.id, { title: title[i] / sims, podium: podium[i] / sims }]));
+  const res = {};
+  rows.forEach((r, i) => {
+    const d = out[i].dist, upTo = k => d.slice(0, k).reduce((a, x) => a + x, 0);
+    let acc = 0, lo = 1, hi = N, seenLo = false;
+    for (let p = 0; p < N; p++) {
+      acc += d[p];
+      if (!seenLo && acc >= 0.1) { lo = p + 1; seenLo = true; }
+      if (acc >= 0.9) { hi = p + 1; break; }
+    }
+    res[r.id] = { dist: d, title: d[0], podium: upTo(3), top5: upTo(5), top10: upTo(10),
+      likely: d.indexOf(Math.max(...d)) + 1, lo, hi };
+  });
+  return res;
 }
