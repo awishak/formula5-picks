@@ -122,7 +122,7 @@ function YourTeam({ row, season, place, avgRank, drivers }) {
             Overall: <strong style={{ color: V.text }}>P{place}</strong> in {DIV_NAME[row.division] || "the league"}
           </div>
           <div style={body("bodySm", { fontSize: 15, color: V.text2, lineHeight: 1.55, whiteSpace: "nowrap" })}>
-            Scoring average: <strong style={{ color: V.text }}>{ordinal(avgRank)}</strong> ({season.avg.toFixed(1)})
+            Scoring average: <strong style={{ color: V.text }}>{ordinal(avgRank)}</strong> ({(season.avgRaw != null ? season.avgRaw : season.avg).toFixed(2)})
           </div>
           <div style={{ marginTop: 10 }}>
             <span style={{

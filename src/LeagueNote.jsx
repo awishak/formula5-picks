@@ -12,10 +12,9 @@
 import { useEffect, useState } from "react";
 import { V, FB, label, card, edgeGlow, VEGAS_CSS } from "./theme.vegas";
 
-export const NOTE = {
-  id: "r20-tiebreak",
-  text: "Hey folks, the machine scored our Brazil GP in a weird way. Specifically, it was not breaking ties correctly, which was especially important this week with a 16-way tie for first place, which means 16 people fighting for up to 10 bonus points for a top 10 finish. I made the fix, and now you'll see slightly different standings. Sorry about that! This does not affect the team game.",
-};
+// The round 20 tiebreak note (id "r20-tiebreak") was taken down 2026-11-23 at
+// Andrew's ask; its words are in git history.
+export const NOTE = null;
 
 export function LeagueNote({ currentUser }) {
   const [open, setOpen] = useState(false);

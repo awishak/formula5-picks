@@ -126,6 +126,9 @@ export function buildTeamTable(db, { fromRound = 1, toRound = 99, seed = null } 
       weeks, played, w, l, d,
       pts: 0,
       avg: played ? Math.round((weeks.reduce((a, x) => a + x.score, 0) / played) * 10) / 10 : 0,
+      // The same average, not rounded. Ranking on the rounded one put three
+      // teams on 79.0 in table order when their totals were 1660, 1659, 1658.
+      avgRaw: played ? weeks.reduce((a, x) => a + x.score, 0) / played : 0,
       // Q4, answered: the BOX BOX line is a record in the matchups that turned on it,
       // not a count of pit guesses that landed.
       bbW: bb.filter(x => x.won === true).length,
@@ -206,7 +209,8 @@ export function buildTeamTable(db, { fromRound = 1, toRound = 99, seed = null } 
 
 // Scoring-average rank is across all 24 teams, never within a division.
 export function rankByAverage(rows) {
-  return [...rows].sort((a, b) => b.avg - a.avg).map((r, i) => ({ ...r, avgRank: i + 1 }));
+  const raw = r => (r.avgRaw != null ? r.avgRaw : r.avg);
+  return [...rows].sort((a, b) => raw(b) - raw(a)).map((r, i) => ({ ...r, avgRank: i + 1 }));
 }
 
 // The next fixture for every team: the earliest round in the window that has a
