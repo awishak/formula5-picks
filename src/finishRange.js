@@ -124,10 +124,11 @@ export function project(divisions, { scored, pairsFor, sims = 20000 }) {
   const normal = rng(20261123 + scored);
 
   const out = {};
-  all.forEach(r => { out[r.id] = { dist: new Array(12).fill(0), up: 0, exp: 0 }; });
+  const side = () => ({ n: 0, dist: new Array(12).fill(0), up: 0 });
+  all.forEach(r => { out[r.id] = { dist: new Array(12).fill(0), up: 0, exp: 0, win: side(), lose: side() }; });
   let swaps = 0;
   const state = {};
-  keys.forEach(k => { state[k] = divisions[k].map(r => ({ id: r.id, pts: 0, w: 0, sum: 0, n: 0, m: mean(r), s: 0 })); });
+  keys.forEach(k => { state[k] = divisions[k].map(r => ({ id: r.id, pts: 0, w: 0, sum: 0, n: 0, m: mean(r), s: 0, won: false })); });
 
   for (let it = 0; it < sims; it++) {
     const final = {};
@@ -142,6 +143,8 @@ export function project(divisions, { scored, pairsFor, sims = 20000 }) {
           st[a].s = st[a].m + sd * normal(); st[b].s = st[b].m + sd * normal();
           if (st[a].s >= st[b].s) { winners.push(a); losers.push(b); } else { winners.push(b); losers.push(a); }
         });
+        // How the next round went for each team, so the page can split on it.
+        if (r === scored + 1) { winners.forEach(i => { st[i].won = true; }); losers.forEach(i => { st[i].won = false; }); }
         winners.sort((a, b) => st[b].s - st[a].s).forEach((i, p) => { st[i].pts += WIN[p]; st[i].w++; });
         losers.sort((a, b) => st[b].s - st[a].s).forEach((i, p) => { st[i].pts += LOSE[p]; });
         st.forEach(x => { x.sum += x.s; x.n++; });
@@ -149,17 +152,25 @@ export function project(divisions, { scored, pairsFor, sims = 20000 }) {
           st[b].pts - st[a].pts || st[b].w - st[a].w || st[b].sum / st[b].n - st[a].sum / st[a].n);
       }
       final[k] = order.map(i => st[i]);
-      final[k].forEach((x, p) => { out[x.id].dist[p]++; out[x.id].exp += p + 1; });
+      final[k].forEach((x, p) => { out[x.id].dist[p]++; out[x.id].exp += p + 1;
+        const b = x.won ? out[x.id].win : out[x.id].lose; b.n++; b.dist[p]++; });
     });
     const c = final.championship, s = final.second;
     if (c && s) {
       const swap = s[4].sum / s[4].n > c[7].sum / c[7].n;
       if (swap) swaps++;
-      c.forEach((x, p) => { if (p < 7 || (p === 7 && !swap)) out[x.id].up++; });
-      s.forEach((x, p) => { if (p < 4 || (p === 4 && swap)) out[x.id].up++; });
+      const goes = x => { out[x.id].up++; (x.won ? out[x.id].win : out[x.id].lose).up++; };
+      c.forEach((x, p) => { if (p < 7 || (p === 7 && !swap)) goes(x); });
+      s.forEach((x, p) => { if (p < 4 || (p === 4 && swap)) goes(x); });
     }
   }
-  Object.values(out).forEach(o => { o.dist = o.dist.map(v => v / sims); o.up /= sims; o.exp /= sims; o.title = o.dist[0]; });
+  Object.values(out).forEach(o => {
+    o.dist = o.dist.map(v => v / sims); o.up /= sims; o.exp /= sims; o.title = o.dist[0];
+    // win and lose: the same numbers given how the next round goes, and p,
+    // the chance of that result.
+    [o.win, o.lose].forEach(b => { const n = Math.max(1, b.n); b.p = b.n / sims; b.dist = b.dist.map(v => v / n);
+      b.up /= n; b.title = b.dist[0]; b.likely = b.dist.indexOf(Math.max(...b.dist)) + 1; });
+  });
   return { teams: out, swap: swaps / sims, sims, left };
 }
 
