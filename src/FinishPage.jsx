@@ -724,6 +724,23 @@ export default function FinishPage({ currentUser }) {
   const bestW = wk((w, a) => w.score > a.score), worstW = wk((w, a) => w.score < a.score);
   const places = myWeeks.map(w => w.place).filter(x => x != null);
 
+  // What the reader's team is fighting for. Certain things come from the true
+  // best and worst place; without those, from a forecast under 1% or over 99%.
+  const fights = [];
+  if (ti >= 0 && left > 0) {
+    const f = forecast.teams[mineId], champ = myDiv === "championship", rg = myRange;
+    if (champ) {
+      if (rg ? rg.best === 1 : f.title >= 0.01) fights.push([V.gold, "You're fighting for the overall championship.", pct(f.title)]);
+      if (rg ? rg.worst < 8 : f.up > 0.99) { if (!fights.length) fights.push([V.green, "You're staying up in the Championship Division.", null]); }
+      else if (rg ? rg.best >= 9 : f.up < 0.01) fights.push([V.pink, "You're going down to the Second Division.", null]);
+      else fights.push([V.pink, "You're fighting to stay up in the Championship Division.", pct(f.up)]);
+    } else {
+      if (rg ? rg.worst <= 4 : f.up > 0.99) fights.push([V.green, "You're going up to the Championship Division.", null]);
+      else if (rg ? rg.best >= 6 : f.up < 0.01) fights.push([V.text2, "You're staying in the Second Division.", null]);
+      else fights.push([V.green, "You're fighting to be promoted.", pct(f.up)]);
+    }
+  }
+
   // Every pair of teammates on season points, closest first.
   const teamById = Object.fromEntries(table.map(t => [t.id, t]));
   const duels = Object.values(playerRows.reduce((m, r) => { if (r.teamId) (m[r.teamId] = m[r.teamId] || []).push(r); return m; }, {}))
@@ -780,6 +797,15 @@ export default function FinishPage({ currentUser }) {
         <>
           <Head color={V.green}>Your team</Head>
           <Ladder items={teamLadder} />
+          <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
+            {fights.map(([c, t, v], i) => (
+              <div key={t} className="fr-rise" style={{ "--d": `${0.3 + i * 0.15}s`, display: "flex", alignItems: "center", gap: 12, padding: "14px 14px", borderRadius: 16,
+                background: V.bg3, border: `2px solid ${c}`, boxShadow: `0 0 16px ${c}66` }}>
+                <span style={{ flex: 1, ...display("h2", { fontSize: 22, color: c }), ...textGlow(c, 0.7), lineHeight: 1.15 }}>{t}</span>
+                {v && <span style={{ ...numeric("hero", { fontSize: 32, color: V.text }) }}>{v}</span>}
+              </div>
+            ))}
+          </div>
           <div style={{ ...sub, marginTop: 12 }}>{divisions[myDiv][ti].short}: chance of each place</div>
           <Legend divKey={myDiv} row={divisions[myDiv][ti]} now={ti + 1} rg={myRange} f={forecast.teams[mineId]} rows={divisions[myDiv]} />
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
