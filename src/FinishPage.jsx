@@ -223,7 +223,7 @@ function Fork({ divKey, me, opp, oppPlace, f, round, raceName, places }) {
       <div className="fr-rise" style={{ "--d": `${d}s`, flex: 1, minWidth: 0, padding: "10px 10px 10px", borderRadius: 14, background: V.bg3,
         border: `1.5px solid ${c}`, boxShadow: `0 0 12px ${c}55` }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
-          <span style={{ ...display("h3", { fontSize: 20, color: c }), ...textGlow(c, 0.7), textTransform: "uppercase" }}>{word}</span>
+          <span style={{ ...display("h3", { fontSize: 17, color: c }), ...textGlow(c, 0.7), textTransform: "uppercase", whiteSpace: "nowrap" }}>{word}</span>
           <span style={{ ...numeric("chip", { fontSize: 15, color: V.text2 }) }}>{pct(b.p)}</span>
         </div>
         <div style={{ ...numeric("hero", { fontSize: 44, color: V.text }), lineHeight: 1, marginTop: 8 }}>P{b.likely}</div>
@@ -272,8 +272,8 @@ function Fork({ divKey, me, opp, oppPlace, f, round, raceName, places }) {
         </TeamTap>
       </div>
       <div style={{ display: "flex", gap: 8 }}>
-        {side(f.win, "Win", V.green, 0.3)}
-        {side(f.lose, "Lose", V.pink, 0.45)}
+        {side(f.win, "If you win", V.green, 0.3)}
+        {side(f.lose, "If you lose", V.pink, 0.45)}
       </div>
     </div>
   );
