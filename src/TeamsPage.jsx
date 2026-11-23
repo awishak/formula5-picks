@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import Loading from "./Loading.jsx";
+import { Fragment } from "react";
+import { FinishLink } from "./FinishPage.jsx";
 import { supabase, selectAll } from "./supabaseClient";
 import { currentRace, raceStartMs } from "./raceTimes";
 import { Flagged } from "./Flag.jsx";
@@ -314,6 +316,7 @@ export default function TeamsPage({ currentUser }) {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&display=swap');`}</style>
       <div style={WRAP}>
         <Title />
+        <FinishLink />
 
         <YourTeam
           row={mine}
@@ -345,14 +348,32 @@ export default function TeamsPage({ currentUser }) {
                 const oppId = fixtures.opponentOf[r.id];
                 const opp = oppId ? byId[oppId] : null;
                 return (
+                  <Fragment key={r.id}>
                   <Row
-                    key={r.id} row={r} pos={posOf[r.id]} mine={r.id === myTeamId}
+                    row={r} pos={posOf[r.id]} mine={r.id === myTeamId}
                     record={rec(seasonOf[r.id])}
                     rank={avgRankOf[r.id]}
                     nextOpp={opp ? opp.code : null}
                     nextOppRank={opp ? avgRankOf[opp.id] : null}
                     soon={soon}
                   />
+                  {/* Promotion and relegation, the same as the first half: the
+                      top four of the Second Division go up, the bottom four of
+                      the Championship go down. */}
+                  {((g.key === "second" && i === 3) || (g.key === "championship" && i === 7)) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "2px 0 8px" }}>
+                      <span style={{ flex: 1, height: 2, borderRadius: 1,
+                        background: g.key === "second" ? V.green : V.pink,
+                        boxShadow: `0 0 8px ${g.key === "second" ? V.green : V.pink}` }} />
+                      <span style={{ ...label({ fontSize: 12, color: g.key === "second" ? V.green : V.pink }) }}>
+                        {g.key === "second" ? "\u2191 Promoted" : "\u2193 Relegated"}
+                      </span>
+                      <span style={{ flex: 1, height: 2, borderRadius: 1,
+                        background: g.key === "second" ? V.green : V.pink,
+                        boxShadow: `0 0 8px ${g.key === "second" ? V.green : V.pink}` }} />
+                    </div>
+                  )}
+                  </Fragment>
                 );
               })}</div>
             </div>

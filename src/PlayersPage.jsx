@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Loading from "./Loading.jsx";
+import { FinishLink } from "./FinishPage.jsx";
 import { flipRows } from "./motion.js";
 import { supabase, selectAll } from "./supabaseClient";
 import Flag, { Flagged } from "./Flag.jsx";
@@ -130,7 +131,7 @@ function Stat({ k, place, v }) {
   );
 }
 
-function YouAre({ row, place, total }) {
+function YouAre({ row, place, total, above, below }) {
   if (!row) return null;
   return (
     <div style={{ ...card({ padding: 16, marginBottom: 20 }), ...edgeGlow(V.blue, 0.8) }}>
@@ -153,6 +154,14 @@ function YouAre({ row, place, total }) {
           )}
           {row.formRaces > 0 && (
             <Stat k={`Last ${row.formRaces}`} place={row.formRank} v={`${row.formAvg.toFixed(1)} avg`} />
+          )}
+          {/* The gap, in points, to the place either side (Andrew, 2026-11-23). */}
+          {(above || below) && (
+            <div style={body("bodySm", { fontSize: 15, color: V.text2, lineHeight: 1.55, whiteSpace: "nowrap" })}>
+              {above && <><strong style={{ color: V.text }}>{above.pts - row.pts}</strong> behind</>}
+              {above && below && ", "}
+              {below && <><strong style={{ color: V.text }}>{row.pts - below.pts}</strong> ahead</>}
+            </div>
           )}
         </div>
 
@@ -392,7 +401,9 @@ export default function PlayersPage({ currentUser }) {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&display=swap');`}</style>
       <div style={WRAP}>
         <Title />
-        <YouAre row={me} place={me ? place[me.id] : 0} total={rows.length} />
+        <FinishLink />
+        <YouAre row={me} place={me ? place[me.id] : 0} total={rows.length}
+          above={me ? rows[rows.indexOf(me) - 1] : null} below={me ? rows[rows.indexOf(me) + 1] : null} />
 
         {/* How to read the table. Same pill as the toggles everywhere else, and
             it sits above P1 because it changes what P1 means. */}
