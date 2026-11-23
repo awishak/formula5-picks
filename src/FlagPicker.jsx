@@ -45,11 +45,11 @@ export default function FlagPicker({ value, onPick, onClose, title = "Choose a f
   const total = groups.reduce((a, g) => a + g.items.length, 0);
 
   return (
-    <div onClick={onClose} style={{
+    <div className="v-back" onClick={onClose} style={{
       position: "fixed", inset: 0, zIndex: 200, background: "rgba(4,4,9,0.86)",
       display: "flex", alignItems: "flex-end", justifyContent: "center",
     }}>
-      <div onClick={e => e.stopPropagation()} style={{
+      <div className="v-sheet" onClick={e => e.stopPropagation()} style={{
         ...card({ width: "100%", maxWidth: 480, maxHeight: "88vh",
           borderRadius: "18px 18px 0 0", padding: "14px 12px 0" }),
         ...edgeGlow(V.blue, 0.6),

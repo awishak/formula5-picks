@@ -2,6 +2,11 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import { PlayerCardProvider } from './PlayerCard.jsx'
+import { startMotion } from './motion.js'
+
+// Touch ripple, rows that press and the opt-in motion classes, once for the
+// whole app. See src/motion.js.
+startMotion()
 
 // The player card sits around the whole app, not inside the shell, because the
 // weekly deck returns before the shell renders and a tap on a face in the deck

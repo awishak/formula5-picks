@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import Loading from "./Loading.jsx";
+import { flipRows } from "./motion.js";
+import { supabase, selectAll } from "./supabaseClient";
 import Flag, { Flagged } from "./Flag.jsx";
 import { V, FM, FD, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildPlayerTable, placesBy } from "./playerTable";
@@ -26,8 +28,8 @@ const NAME_SIZE = "clamp(15px, calc(10.4vw - 22.0px), 19px)";
 
 function Title() {
   return (
-    <div style={titleBox({ padding: "14px 0 18px" })}>
-      <div style={{
+    <div className="v-pull" style={titleBox({ padding: "14px 0 18px" })}>
+      <div className="v-wet" style={{
         fontFamily: FM, fontWeight: 400, fontSize: TITLE_SIZE,
         lineHeight: 1.15, letterSpacing: "0.02em", whiteSpace: "nowrap",
       }}>
@@ -282,9 +284,46 @@ function Row({ row, place, mine, move, mode, sealed = false }) {
   );
 }
 
+// The sort pills. One lit pill slides to whichever is picked, with a little
+// overshoot, and the label over it turns dark. Its place is measured off the
+// button, so it follows the labels whatever their widths.
+function ModePills({ value, onChange }) {
+  const row = useRef(null);
+  const [box, setBox] = useState(null);
+  useLayoutEffect(() => {
+    const el = row.current && row.current.querySelector(`[data-mode="${value}"]`);
+    if (el) setBox({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [value]);
+  return (
+    <div ref={row} className="v-scroll" style={{ display: "flex", gap: 6, overflowX: "auto",
+      padding: "0 0 10px", position: "relative" }}>
+      {box && <span aria-hidden="true" style={{
+        position: "absolute", top: 0, left: 0, width: box.width, height: "calc(100% - 10px)",
+        transform: `translateX(${box.left}px)`, borderRadius: 999, background: V.blue,
+        boxShadow: `0 0 12px ${V.blue}`, pointerEvents: "none",
+        transition: "transform .45s cubic-bezier(.3, 1.6, .5, 1), width .3s",
+      }} />}
+      {MODES.map(m => (
+        <button key={m.id} data-mode={m.id} onClick={() => onChange(m.id)} style={{
+          flexShrink: 0, position: "relative", ...label({ fontSize: 11,
+            color: value === m.id ? V.bg : V.blue }),
+          background: "transparent", transition: "color .25s",
+          border: `1px solid ${V.blue}`, borderRadius: 999,
+          padding: "6px 13px", cursor: "pointer",
+        }}>{m.label}</button>
+      ))}
+    </div>
+  );
+}
+
 export default function PlayersPage({ currentUser }) {
   const [state, setState] = useState({ loading: true });
   const [modeId, setModeId] = useState("ppr");
+  // Rows slide to their new places when the sort changes. Both hooks sit
+  // above the early returns; the list is not there until the rows load.
+  const listRef = useRef(null);
+  const seen = useRef({});
+  useLayoutEffect(() => { flipRows(listRef.current, seen); }, [modeId, state.rows]);
 
   useEffect(() => {
     (async () => {
@@ -293,7 +332,7 @@ export default function PlayersPage({ currentUser }) {
           supabase.from("players").select("id,name,photo_url,nation"),
           supabase.from("teams").select("*"),
           supabase.from("races").select("*"),
-          supabase.from("scores").select("*"),
+          selectAll("scores", "*"),
         ]).then(rs => rs.map(r => r.data || []));
 
         const rows = buildPlayerTable({ players, teams, races, scores });
@@ -334,7 +373,7 @@ export default function PlayersPage({ currentUser }) {
 
   // No auto scroll. The page opens at the top and stays there.
 
-  if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
+  if (state.loading) return <div style={{ ...WRAP, paddingTop: 60 }}><Loading rows={6} /></div>;
   if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Standings did not load.</div>;
 
   const { rows, place, move, sealed } = state;
@@ -357,24 +396,17 @@ export default function PlayersPage({ currentUser }) {
 
         {/* How to read the table. Same pill as the toggles everywhere else, and
             it sits above P1 because it changes what P1 means. */}
-        <div className="v-scroll" style={{ display: "flex", gap: 6, overflowX: "auto",
-          padding: "0 0 10px" }}>
-          {MODES.map(m => (
-            <button key={m.id} onClick={() => setModeId(m.id)} style={{
-              flexShrink: 0, ...label({ fontSize: 11,
-                color: modeId === m.id ? V.bg : V.blue }),
-              background: modeId === m.id ? V.blue : "transparent",
-              border: `1px solid ${V.blue}`, borderRadius: 999,
-              padding: "6px 13px", cursor: "pointer",
-            }}>{m.label}</button>
+        <ModePills value={modeId} onChange={setModeId} />
+
+        <div ref={listRef} className="v-land">
+          {shown.map(r => (
+            <div key={r.id} data-flip={r.id}>
+              <Row row={r} place={shownPlace[r.id]} mine={me && r.id === me.id}
+                   sealed={Boolean(sealed[r.id])}
+                   move={mode.id === "ppr" ? move[r.id] : undefined} mode={mode} />
+            </div>
           ))}
         </div>
-
-        {shown.map(r => (
-          <Row key={r.id} row={r} place={shownPlace[r.id]} mine={me && r.id === me.id}
-               sealed={Boolean(sealed[r.id])}
-               move={mode.id === "ppr" ? move[r.id] : undefined} mode={mode} />
-        ))}
 
         <div style={body("bodySm", { color: V.text2, textAlign: "center", padding: "6px 0 0" })}>
           {mode.id === "trophies"

@@ -16,6 +16,7 @@
 // touches an <audio> element. Sleeve is exported so the deck's advert can draw
 // a song that has no album art.
 import { useState, useEffect } from "react";
+import { sfxOn, setSfx, tone } from "./motion.js";
 import { SONGS, songBySrc } from "./songs.js";
 import { songSrc, songPlaying, onSong, playSong, pauseSong } from "./themeSong.js";
 import { V, FD, display, body, label, textGlow, edgeGlow, card as vcard } from "./theme.vegas";
@@ -95,7 +96,7 @@ export default function Jukebox() {
   return (
     <>
       <style>{CSS}</style>
-      <button onClick={() => setOpen(true)}
+      <button onClick={() => setOpen(true)} className={playing ? "v-record" : undefined}
         aria-label={playing && song ? `Music: ${song.name} is playing` : "Music"}
         title={playing && song ? song.name : "Music"}
         style={{
@@ -125,9 +126,10 @@ export function JukeboxSheet({ onClose }) {
   }, [onClose]);
 
   const tap = s => { if (playing && song && song.key === s.key) pauseSong(); else playSong(s.src); };
+  const [sfx, setSfxState] = useState(sfxOn);
 
   return (
-    <div onClick={onClose} role="dialog" aria-modal="true" aria-label="The jukebox" style={{
+    <div className="v-back" onClick={onClose} role="dialog" aria-modal="true" aria-label="The jukebox" style={{
       position: "fixed", inset: 0, zIndex: 2000, background: "rgba(3,3,8,0.78)",
       display: "flex", alignItems: "flex-end", justifyContent: "center",
     }}>
@@ -200,6 +202,13 @@ export function JukeboxSheet({ onClose }) {
                     </div>
                   );
                 })}
+              </div>
+              {/* Sound on the big moments, off until someone turns it on. */}
+              <div style={{ padding: "12px 12px 0", display: "flex", justifyContent: "center" }}>
+                <button aria-pressed={sfx} onClick={() => { const on = !sfx; setSfx(on); setSfxState(on); if (on) tone("lock"); }} style={{
+                  ...display("chip", { color: sfx ? V.bg : V.blue }), background: sfx ? V.blue : "transparent", cursor: "pointer",
+                  border: `1px solid ${V.blue}`, borderRadius: 999, padding: "10px 18px", minHeight: 44,
+                }}>SOUND EFFECTS {sfx ? "ON" : "OFF"}</button>
               </div>
               <div style={{ padding: "12px 12px 0", display: "flex", gap: 10, justifyContent: "center" }}>
                 {playing && (

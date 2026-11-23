@@ -18,7 +18,8 @@
 // Weekly.jsx so the two decks cannot drift apart on those. Mounted at
 // /week?v=2 with the same ?player=, ?card= and ?round= overrides.
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "./supabaseClient";
+import { Confetti, Flap, flapSteps } from "./Motion.jsx";
+import { supabase, selectAll } from "./supabaseClient";
 import { buildWeekly } from "./weekly.js";
 import { buildWeeklyV2 } from "./weeklyV2.js";
 import { shortName } from "./names.js";
@@ -157,7 +158,7 @@ function FinishLine({ myTeam, oppTeam, outcome }) {
   const aheadC = lost ? THEIRS_C : won ? MINE_C : V.blue;
   const behindC = lost ? MINE_C : won ? THEIRS_C : V.pink;
   const car = (t, c, pos, z, dim) => (
-    <div style={{ position: "absolute", width: "66%", zIndex: z, ...pos,
+    <div className="v-drive" style={{ "--d": z === 1 ? "0.14s" : "0s", position: "absolute", width: "66%", zIndex: z, ...pos,
       filter: `drop-shadow(0 8px 14px #000c) drop-shadow(0 0 10px ${c}55)${dim ? " brightness(0.8)" : ""}` }}>
       <TeamTap id={t.id || t.name} style={{ display: "block" }}>
       <CarImg code={t.code} view="top" logo={t.logo} cutout style={{ width: "100%", height: "auto" }} />
@@ -185,6 +186,7 @@ function FinishLine({ myTeam, oppTeam, outcome }) {
       ))}
       {car(behind, behindC, { left: "30%", top: "6%" }, 1, true)}
       {car(ahead, aheadC, { left: "1%", top: "50%" }, 2, false)}
+      {won && <Confetti />}
     </div>
   );
 }
@@ -217,7 +219,7 @@ function HeroFace({ src, name, width = "72%", accent = V.border2 }) {
 
 const Big = ({ label: text, color = V.text, size = 30, glow = null, delay = 0 }) => (
   <div style={{ ...numeric("stat", { fontSize: size, color }), ...(glow ? textGlow(glow, 0.7) : {}) }}>
-    {typeof text === "number" ? <Count to={text} delay={delay} dur={700} /> : text}
+    {typeof text === "number" ? <Count to={text} delay={delay} dur={700} flash /> : text}
   </div>
 );
 
@@ -316,8 +318,8 @@ function DriverTile({ name, pts, tag = null, dim = false, copies = 1, size = av(
   );
 }
 
-const Button = ({ children, onClick, kind = "fill", color = V.blue }) => (
-  <button onClick={onClick} style={{
+const Button = ({ children, onClick, kind = "fill", color = V.blue, shine = false }) => (
+  <button onClick={onClick} className={shine ? "v-shine" : undefined} data-ring={color} style={{
     ...display("h3", { fontSize: 17, color: kind === "fill" ? V.bg : color }),
     background: kind === "fill" ? color : "transparent",
     border: kind === "ghost" ? "none" : `1.5px solid ${color}`,
@@ -413,7 +415,7 @@ function CardResult({ v, onMusic, onNoMusic, onSkip }) {
             </span>
           </div>
         </div>
-        <Button onClick={onMusic}>CONTINUE WITH MUSIC</Button>
+        <Button onClick={onMusic} shine>CONTINUE WITH MUSIC</Button>
         <Button onClick={onNoMusic} kind="line">CONTINUE WITHOUT MUSIC</Button>
         <Button onClick={onSkip} kind="ghost">Skip the recap</Button>
       </div>
@@ -616,13 +618,13 @@ function CardStandings({ v }) {
       <div style={{ display: "flex", width: "100%", gap: 10 }}>
         {ind && (
           <div style={{ flex: 1, ...shoulder(V.blue), padding: "12px 8px", display: "grid", gap: 2 }}>
-            <div style={{ ...numeric("stat", { fontSize: 38, color: V.blue }), ...textGlow(V.blue, 0.6) }}>P{ind.place}</div>
+            <div style={{ ...numeric("stat", { fontSize: 38, color: V.blue }), ...textGlow(V.blue, 0.6) }}><Flap steps={flapSteps(c.individualBefore ? c.individualBefore.place : null, ind.place)} format={p => `P${p}`} /></div>
             <div style={{ ...label({ fontSize: 12, color: V.text2 }) }}>YOU, OF {ind.of}{moveWord(iMove)}</div>
           </div>
         )}
         {t && (
           <div style={{ flex: 1, ...shoulder(V.pink), padding: "12px 8px", display: "grid", gap: 2 }}>
-            <div style={{ ...numeric("stat", { fontSize: 38, color: V.pink }), ...textGlow(V.pink, 0.6) }}>P{t.place}</div>
+            <div style={{ ...numeric("stat", { fontSize: 38, color: V.pink }), ...textGlow(V.pink, 0.6) }}><Flap steps={flapSteps(c.teamBefore ? c.teamBefore.place : null, t.place)} format={p => `P${p}`} /></div>
             <div style={{ ...label({ fontSize: 12, color: V.text2 }) }}>{shortOf(t.name)}, {divName}{moveWord(tMove)}</div>
           </div>
         )}
@@ -709,6 +711,9 @@ export function WeeklyDeckV2({ data: given, onExit, onPicks, initialCard = 0 }) 
         ${VEGAS_CSS}
       `}</style>
 
+      {/* Opening the recap: a checkered flag sweeps across, once. */}
+      <div className="v-wipe" aria-hidden="true" />
+
       {/* Progress. One light a card. */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 30,
         display: "flex", gap: 4, padding: "14px 16px 10px",
@@ -779,8 +784,8 @@ export default function WeeklyV2({ playerName, round = null, onExit, onPicks, in
           supabase.from("players").select("*"),
           supabase.from("teams").select("*"),
           supabase.from("races").select("*").eq("season", 2026),
-          supabase.from("scores").select("*"),
-          supabase.from("picks").select("*"),
+          selectAll("scores", "*"),
+          selectAll("picks", "*"),
           supabase.from("results").select("*"),
           supabase.from("schedule").select("*"),
         ]);

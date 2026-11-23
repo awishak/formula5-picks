@@ -18,7 +18,7 @@
 // they never encode the two halves of the same comparison. Wins and losses are
 // blue against pink, and amber marks you.
 import { useState, useEffect, useMemo, useRef, Fragment } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 import { buildWeekly, PIT_FLOOR, PIT_CEIL } from "./weekly.js";
 import { shortName } from "./names.js";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME, canonicalName } from "./drivers.js";
@@ -2205,8 +2205,9 @@ function CardGrid({ d }) {
 // The server render starts at the final value, so react-dom/server sees the
 // real number and the smoke run still tells 48 decks apart. Only a browser
 // starts at zero and climbs.
-function Count({ to, dur = 900, delay = 0, format = v => v }) {
+function Count({ to, dur = 900, delay = 0, format = v => v, flash = false }) {
   const [n, setN] = useState(() => (typeof window === "undefined" ? to : 0));
+  const [done, setDone] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
     let raf = 0, start = 0;
@@ -2221,11 +2222,14 @@ function Count({ to, dur = 900, delay = 0, format = v => v }) {
         // Ease out, so it arrives rather than stops.
         setN(to * (1 - Math.pow(1 - k, 3)));
         if (k < 1) raf = requestAnimationFrame(tick);
+        else setDone(true);
       };
       raf = requestAnimationFrame(tick);
     }, delay);
     return () => { clearTimeout(t); cancelAnimationFrame(raf); };
   }, [to, dur, delay]);
+  // flash: the number surges once as it lands on its final value.
+  if (flash) return <span className={done ? "v-flash" : undefined}>{format(Math.round(n))}</span>;
   return <>{format(Math.round(n))}</>;
 }
 
@@ -3877,8 +3881,8 @@ export default function Weekly({ playerName, round = null, onExit, onPicks, init
           supabase.from("players").select("*"),
           supabase.from("teams").select("*"),
           supabase.from("races").select("*").eq("season", 2026),
-          supabase.from("scores").select("*"),
-          supabase.from("picks").select("*"),
+          selectAll("scores", "*"),
+          selectAll("picks", "*"),
           supabase.from("results").select("*"),
           supabase.from("schedule").select("*"),
         ]);

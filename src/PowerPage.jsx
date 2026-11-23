@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+import Loading from "./Loading.jsx";
+import { supabase, selectAll } from "./supabaseClient";
 import { Flagged } from "./Flag.jsx";
 import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildTeamPower, ordinal } from "./teamTable";
@@ -27,8 +28,8 @@ const TITLE_SIZE = titleFit("POWER RANKINGS");
 
 function Title() {
   return (
-    <div style={titleBox({ padding: "14px 0 14px" })}>
-      <div style={{
+    <div className="v-pull" style={titleBox({ padding: "14px 0 14px" })}>
+      <div className="v-wet" style={{
         fontFamily: FM, fontWeight: 400, fontSize: TITLE_SIZE,
         lineHeight: 1.15, letterSpacing: "0.02em", whiteSpace: "nowrap",
       }}>
@@ -251,7 +252,7 @@ export function PowerBoard({ power, notes, myTeamId, nameOf = {} }) {
         <span style={label({ fontSize: 13, color: V.text3 })}>LAST 5</span>
         <span style={label({ fontSize: 13, color: V.blue })}>RATING</span>
       </div>
-      {rows.map(r => <Row key={r.id} row={r} mine={r.id === myTeamId} nameOf={nameOf} />)}
+      <div className="v-land">{rows.map(r => <Row key={r.id} row={r} mine={r.id === myTeamId} nameOf={nameOf} />)}</div>
 
       {/* The system, printed rather than hidden: a ranking nobody can check is a
           ranking nobody believes. */}
@@ -301,7 +302,7 @@ export default function PowerPage({ currentUser }) {
         const [teams, races, scores, schedule, players] = await Promise.all([
           supabase.from("teams").select("*"),
           supabase.from("races").select("*"),
-          supabase.from("scores").select("*"),
+          selectAll("scores", "*"),
           supabase.from("schedule").select("*"),
           supabase.from("players").select("id,name,photo_url,nation"),
         ]).then(rs => rs.map(r => r.data || []));
@@ -322,7 +323,7 @@ export default function PowerPage({ currentUser }) {
     })();
   }, [currentUser]);
 
-  if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
+  if (state.loading) return <div style={{ ...WRAP, paddingTop: 60 }}><Loading /></div>;
   if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Power rankings did not load.</div>;
 
   return (

@@ -14,8 +14,9 @@
 //
 // ?player_card=Andrew%20Ishak opens one on load, so every card can be
 // photographed.
-import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { rememberTap, arriveFrom } from "./motion.js";
+import { supabase, selectAll } from "./supabaseClient";
 import { Flagged } from "./Flag.jsx";
 import { V, FD, display, numeric, label, body, card, textGlow, edgeGlow, VEGAS_CSS } from "./theme.vegas";
 import { buildPlayerCard } from "./playerCard.js";
@@ -72,7 +73,7 @@ export function PlayerTap({ name, children, style, title, block = false }) {
   if (!name) return children;
   return (
     <span role="button" tabIndex={0} title={title || `${name}'s card`}
-      onClick={e => { e.stopPropagation(); open(name); }}
+      onClick={e => { e.stopPropagation(); rememberTap(e.currentTarget); open(name); }}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(name); } }}
       style={{ cursor: "pointer", display: block ? "block" : "inline-flex", alignItems: "center",
         minWidth: 0, ...style }}>
@@ -86,8 +87,8 @@ async function loadLeague() {
     supabase.from("players").select("id,name,photo_url,nation"),
     supabase.from("teams").select("*"),
     supabase.from("races").select("*"),
-    supabase.from("scores").select("*"),
-    supabase.from("picks").select("*"),
+    selectAll("scores", "*"),
+    selectAll("picks", "*"),
     supabase.from("schedule").select("*"),
   ]).then(rs => rs.map(r => r.data || []));
   return { players, teams, races, scores, picks, schedule };
@@ -153,11 +154,14 @@ function Hero({ name, photo }) {
   const box = { display: "block", width: "64%", margin: "4px auto 0", aspectRatio: "1 / 1",
     WebkitMaskImage: heroFade, maskImage: heroFade,
     WebkitMaskComposite: "source-in", maskComposite: "intersect" };
+  // The face arrives from the row that was tapped, and leans toward the finger.
+  const ref = useRef(null);
+  useLayoutEffect(() => { arriveFrom(ref.current); }, []);
   if (photo) {
-    return <img src={photo} alt="" style={{ ...box, objectFit: "cover", objectPosition: "center top" }} />;
+    return <img ref={ref} className="v-tilt" src={photo} alt="" style={{ ...box, objectFit: "cover", objectPosition: "center top" }} />;
   }
   return (
-    <div style={{ ...box, display: "flex", alignItems: "center", justifyContent: "center",
+    <div ref={ref} className="v-tilt" style={{ ...box, display: "flex", alignItems: "center", justifyContent: "center",
       background: `hsl(${hueOf(name)} 62% 46%)`,
       fontFamily: FD, fontWeight: 700, fontSize: 96, color: "#fff" }}>
       {initialsOf(name)}
@@ -295,6 +299,9 @@ export function PlayerCardBody({ data, onClose, openPodiums = false, self = fals
   const head = (extra = {}) => ({ ...label({ fontSize: 13, color: V.text2, letterSpacing: "0.05em" }),
     padding: "5px 4px", textAlign: "right", whiteSpace: "nowrap", ...extra });
   const dash = "–";
+  const [side, setSide] = useState(0);
+  const places = career.seasons.map(x => x.place).filter(x => x != null);
+  const bestPlace = places.length ? Math.min(...places) : null;
   return (
     <div>
       <div style={{ position: "relative" }}>
@@ -327,7 +334,7 @@ export function PlayerCardBody({ data, onClose, openPodiums = false, self = fals
           World Champion (Andrew, 2026-10-02). */}
       {career.titles.length > 0 && (
         <div style={{ textAlign: "center", marginTop: 7 }}>
-          <span style={{
+          <span className="v-foil" style={{
             ...label({ fontSize: 14, letterSpacing: "0.12em" }), ...textGlow(V.gold, 0.7),
             padding: "5px 12px", borderRadius: 999, border: `1px solid ${V.gold}88`,
             background: `${V.gold}14`, display: "inline-block",
@@ -369,11 +376,26 @@ export function PlayerCardBody({ data, onClose, openPodiums = false, self = fals
       )}
 
       {/* This season. The same four numbers /players ranks and shows. */}
-      <div style={{ display: "flex", gap: 6, marginTop: 13 }}>
-        <Stat k="Points" v={stats.pts} />
-        <Stat k="Rank" v={`P${stats.place}`} sub={`of ${stats.field}`} />
-        <Stat k="PPR" v={stats.avg.toFixed(1)} />
-        <Stat k="Podiums" v={stats.podiums} sub={`${stats.wins} ${stats.wins === 1 ? "win" : "wins"}`} />
+      {/* A tap turns the four numbers over to the career. Sums of the rows in
+          the career table below, nothing new computed. */}
+      <div className="v-flipbox" role="button" tabIndex={0} title="This season and the career"
+        onClick={() => setSide(x => 1 - x)}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSide(x => 1 - x); } }}
+        style={{ marginTop: 13 }}>
+        <div className="v-flip" data-s={side}>
+          <div style={{ display: "flex", gap: 6 }}>
+            <Stat k="Points" v={stats.pts} />
+            <Stat k="Rank" v={`P${stats.place}`} sub={`of ${stats.field}`} />
+            <Stat k="PPR" v={stats.avg.toFixed(1)} />
+            <Stat k="Podiums" v={stats.podiums} sub={`${stats.wins} ${stats.wins === 1 ? "win" : "wins"}`} />
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <Stat k="Seasons" v={career.seasons.length} sub="career" />
+            <Stat k="Best" v={bestPlace != null ? `P${bestPlace}` : dash} sub="career" />
+            <Stat k="Wins" v={career.seasons.reduce((a, x) => a + (x.wins || 0), 0)} sub="career" />
+            <Stat k="Podiums" v={career.seasons.reduce((a, x) => a + (x.podiums || 0), 0)} sub="career" />
+          </div>
+        </div>
       </div>
 
       {/* Every podium of their career, oldest first. First, second and third

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+import Loading from "./Loading.jsx";
+import { supabase, selectAll } from "./supabaseClient";
 import { currentRace, raceStartMs } from "./raceTimes";
 import { Flagged } from "./Flag.jsx";
 import { V, FM, FD, FN, FB, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
@@ -30,8 +31,8 @@ const TITLE_SIZE = titleFit("TEAM STANDINGS");
 
 function Title() {
   return (
-    <div style={titleBox({ padding: "14px 0 18px" })}>
-      <div style={{
+    <div className="v-pull" style={titleBox({ padding: "14px 0 18px" })}>
+      <div className="v-wet" style={{
         fontFamily: FM, fontWeight: 400, fontSize: TITLE_SIZE,
         lineHeight: 1.15, letterSpacing: "0.02em", whiteSpace: "nowrap",
       }}>
@@ -237,7 +238,7 @@ export default function TeamsPage({ currentUser }) {
         const [teams, races, scores, schedule, players] = await Promise.all([
           supabase.from("teams").select("*"),
           supabase.from("races").select("*"),
-          supabase.from("scores").select("*"),
+          selectAll("scores", "*"),
           supabase.from("schedule").select("*"),
           supabase.from("players").select("id,name,photo_url,nation"),
         ]).then(rs => rs.map(r => r.data || []));
@@ -281,7 +282,7 @@ export default function TeamsPage({ currentUser }) {
 
   // No auto scroll. The page opens at the top and stays there.
 
-  if (state.loading) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Loading</div>;
+  if (state.loading) return <div style={{ ...WRAP, paddingTop: 60 }}><Loading /></div>;
   if (state.error) return <div style={{ ...WRAP, paddingTop: 60, ...body("body", { color: V.text2 }) }}>Standings did not load.</div>;
 
   const { rows, seasonOf, avgRankOf, fixtures, me, teammate, myTeamId, nextStart } = state;
@@ -340,7 +341,7 @@ export default function TeamsPage({ currentUser }) {
                 padding: "0 10px 4px" }}>
                 <span style={{ ...label({ fontSize: 10, color: V.blue }) }}>CHAMP PTS</span>
               </div>
-              {list.map((r, i) => {
+              <div className="v-land">{list.map((r, i) => {
                 const oppId = fixtures.opponentOf[r.id];
                 const opp = oppId ? byId[oppId] : null;
                 return (
@@ -353,7 +354,7 @@ export default function TeamsPage({ currentUser }) {
                     soon={soon}
                   />
                 );
-              })}
+              })}</div>
             </div>
           );
         })}

@@ -23,10 +23,10 @@ const TABS = [
   { id: "schedule", label: "Schedule" },
 ];
 
-function Light({ color, lit, big, pulse }) {
+function Light({ color, lit, big, pulse, bloom }) {
   const size = big ? 26 : 20;
   return (
-    <div className={pulse ? "v-pulse" : undefined} style={{
+    <div className={pulse ? "v-pulse" : bloom ? "v-bloom" : undefined} style={{
       width: size, height: size, borderRadius: "50%", flexShrink: 0,
       background: lit
         ? `radial-gradient(circle at 38% 32%, #fff 0%, ${color} 45%, ${color}90 100%)`
@@ -61,7 +61,7 @@ export default function VegasNav({ active, onChange, hasSubmittedPicks }) {
               alignItems: "center", gap: 5, padding: "2px 0 0",
               background: "none", border: "none", cursor: "pointer",
             }}>
-              <Light color={color} lit={lit} big={t.middle}
+              <Light color={color} lit={lit} big={t.middle} bloom={on}
                      pulse={t.middle && !hasSubmittedPicks} />
               {/* No glow on the label. Neon bloom on 14px uppercase turns the
                   letterforms to mush, and the glow already has somewhere to

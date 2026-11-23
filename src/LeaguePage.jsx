@@ -6,6 +6,8 @@ import { shortOf } from "./teams";
 import { DRIVER_HEADSHOTS, TEAM_BY_NAME } from "./drivers";
 import { F1_TEAM_COLORS } from "./theme";
 import { PlayerTap, TeamTap } from "./PlayerCard.jsx";
+import Loading from "./Loading.jsx";
+import { Gauge } from "./Motion.jsx";
 
 // Around the league, at /league. The round from everybody else's side: every
 // matchup's result, the champ points the round paid, and what the field picked.
@@ -56,7 +58,7 @@ export default function LeaguePage({ currentUser }) {
   );
   if (!currentUser) return shell(<p style={{ ...body("body"), color: V.text2 }}>Pick who you are first.</p>);
   if (week.loading || week.error) return shell(
-    <p style={{ ...body("body"), color: V.text2 }}>{week.error ? "This round did not load." : "Loading"}</p>
+    week.error ? <p style={{ ...body("body"), color: V.text2 }}>This round did not load.</p> : <Loading />
   );
 
   const race = week.race;
@@ -287,6 +289,11 @@ function Field({ field, scored, stop }) {
       <p style={{ ...body("bodySm"), color: V.text3, margin: "-4px 0 14px" }}>
         {field.in} of {field.of} in
       </p>
+      {field.needle && stop != null && (
+        <div style={{ ...card({ padding: "14px 14px 8px", marginBottom: 12 }) }}>
+          <Gauge stop={stop} />
+        </div>
+      )}
       {field.needle && <NeedleStrip field={field} stop={stop} />}
       <div style={{ ...card({ padding: 14, marginBottom: 12 }) }}>
         <Sub>Top pick</Sub>

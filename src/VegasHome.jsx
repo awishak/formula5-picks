@@ -9,6 +9,9 @@
 
 import { useState, useRef, useEffect , createContext, useContext } from "react";
 import { shortName } from "./names.js";
+import Loading from "./Loading.jsx";
+import { flyTo, tone } from "./motion.js";
+import { Bokeh, Lit, LiveWire } from "./Motion.jsx";
 import { V, FD, display, numeric, body, label as labelType, marquee, textGlow, edgeGlow, card, VEGAS_CSS } from "./theme.vegas";
 import { supabase } from "./supabaseClient";
 import { useLeague } from "./useLeague";
@@ -239,18 +242,21 @@ function SectionHead({ children, accent = V.blue, sub }) {
 
 // Color carries meaning, so it defaults rather than being passed every time:
 // blue is normal, green is good to go, pink is needs attention or a problem.
-function NeonBtn({ children, color = V.blue, onClick, flicker = false, full = true, sub }) {
+// ignite stutters the tube on once; conic runs the three neons round the edge
+// and moves at rest, so one a screen. Both from src/motion.js.
+function NeonBtn({ children, color = V.blue, onClick, flicker = false, full = true, sub, ignite = false, conic = false }) {
   const [hot, setHot] = useState(false);
   return (
     <button
       onClick={onClick}
       onMouseEnter={() => setHot(true)} onMouseLeave={() => setHot(false)}
-      className={flicker ? "v-flicker" : undefined}
+      className={["v-follow", flicker && "v-flicker", ignite && "v-ignite", conic && "v-conic"].filter(Boolean).join(" ")}
+      data-ring={color}
       style={{
+        "--fc": color,
         width: full ? "100%" : undefined, cursor: "pointer",
-        background: hot ? `${color}1f` : `${color}12`,
         borderRadius: 14, padding: sub ? "16px 20px" : "18px 22px",
-        ...edgeGlow(color, hot ? 1.5 : 1),
+        ...(conic ? {} : { background: hot ? `${color}1f` : `${color}12`, ...edgeGlow(color, hot ? 1.5 : 1) }),
         display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
         transition: "background 160ms, box-shadow 160ms",
       }}
@@ -470,17 +476,18 @@ function Marquee({ race: given, status, time, flicker = false }) {
   const race = sign ? { ...given, name: sign.name } : given;
   return (
     <div style={{
-      ...card({ padding: "18px 20px 20px", marginBottom: 18, position: "relative", overflow: "hidden" }),
+      ...card({ padding: "18px 20px 20px", marginBottom: 18, position: "relative", overflow: "hidden", isolation: "isolate" }),
       background: `radial-gradient(120% 100% at 50% 0%, ${V.blue}14 0%, ${V.bg2} 60%)`,
       borderColor: `${V.blue}33`,
     }}>
+      <Bokeh />
 
 
       <div className={flicker ? "v-flicker" : undefined}>
       <p style={{
         ...marquee(shortRace(race.name)), lineHeight: 1.02, ...textGlow(V.pink),
         textAlign: "center", textTransform: "uppercase", margin: "6px 0 0",
-      }}>{shortRace(race.name)}</p>
+      }}><Lit text={shortRace(race.name)} /></p>
       {/* On the same face as the race name and two thirds its size, set tight
           under it, so the two lines read as one sign rather than a title and a
           caption with air between them. */}
@@ -823,6 +830,27 @@ function Wheel({ options, value, onChange, format = (v) => v, accent = V.purple,
     const r = on.getBoundingClientRect(), e = el.getBoundingClientRect();
     el.scrollBy({ left: (r.left + r.width / 2) - (e.left + e.width / 2), behavior: "smooth" });
   }, [value]);
+  // Weight: whatever is passing the centre swells while the wheel is moving.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let timer = 0;
+    const clear = () => el.querySelectorAll(".v-pass").forEach(b => b.classList.remove("v-pass"));
+    const onScroll = () => {
+      const mid = el.getBoundingClientRect().left + el.clientWidth / 2;
+      let best = null, gap = Infinity;
+      el.querySelectorAll("button").forEach(b => {
+        const r = b.getBoundingClientRect(), g = Math.abs(r.left + r.width / 2 - mid);
+        if (g < gap) { gap = g; best = b; }
+      });
+      clear();
+      if (best && best.dataset.on !== "1") best.classList.add("v-pass");
+      clearTimeout(timer);
+      timer = setTimeout(clear, 160);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => { el.removeEventListener("scroll", onScroll); clearTimeout(timer); };
+  }, []);
 
   const idx = options.indexOf(value);
 
@@ -1146,6 +1174,7 @@ function PickFlow() {
           ? "Changing picks is not enabled yet. Your original picks are still in."
           : "Your picks did not save. Try again.");
       }
+      tone("lock");
       setSent(true);
     } catch (e) {
       // The picks stay on screen, so a retry costs nothing.
@@ -1227,7 +1256,10 @@ function PickFlow() {
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {unplaced.map(d => (
-              <button key={d} onClick={() => place(d)} style={{
+              <button key={d} onClick={e => {
+                flyTo(e.currentTarget, document.querySelector(`[data-slot="${order.length}"]`));
+                place(d);
+              }} style={{
                 display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
                 padding: "8px 12px 8px 8px", borderRadius: 999,
                 background: V.bg3, border: `1px solid ${dColor(d)}55`,
@@ -1245,7 +1277,7 @@ function PickFlow() {
             {[0, 1, 2, 3, 4].map(i => {
               const name = order[i];
               return (
-                <div key={i} style={{
+                <div key={i} data-slot={i} style={{
                   display: "flex", alignItems: "center", gap: 12, minHeight: 58,
                   padding: "8px 12px", borderRadius: 12,
                   background: name ? `${V.blue}12` : V.bg3,
@@ -2190,11 +2222,14 @@ function Scoreboard({ myTeam, opp, mineTotal, theirTotal, under, scored = true }
   // Only the team in front glows. Green on its own is the resting state, so a
   // lit card means something happened rather than "this one is yours".
   const Card = ({ t, total, c, side, won }) => (
-    <div className={won ? "v-flicker" : undefined} style={{
+    <div style={{
+      position: "relative",
       flex: 1, minWidth: 0, textAlign: "center", padding: "14px 10px",
       borderRadius: 14, background: V.bg3, border: `2px solid ${c}`,
       ...(won ? edgeGlow(c, 0.9) : {}),
     }}>
+      {/* The winner carries a live wire where it used to flicker. */}
+      {won && <LiveWire color={c} radius={14} />}
       <TeamTap id={t && (t.id || t.name)} style={{ display: "block" }}>
       {t && t.logo
         ? <img src={t.logo} alt="" style={{ width: 46, height: 46, objectFit: "contain" }} />
@@ -3036,9 +3071,11 @@ function HomeLocked({ scored: scoredWeek = true, onAhead, onNav = () => {} }) {
         <HandsColumns seats={seats} under={under} scored
                       driverPts={week.driverPts || {}} />
         <div style={{ height: 14 }} />
-        <NeonBtn color={V.blue} onClick={recap}>See the recap</NeonBtn>
+        <NeonBtn color={V.blue} onClick={recap} ignite>See the recap</NeonBtn>
         <div style={{ height: 12 }} />
-        <NeonBtn color={V.purple} onClick={() => {
+        {/* One thing moves at rest: while the Picks open box above is flickering
+            for picks that are not in, this border holds still. */}
+        <NeonBtn color={V.purple} conic={!(week.next && !week.next.picked)} onClick={() => {
           window.history.pushState(null, "", `/league?round=${race.round}`);
           onNav("league");
         }}>
@@ -3576,7 +3613,7 @@ export default function VegasHome({ onNavigate, currentUser, week: given, initia
   if (week.loading || week.error) return (
     <div style={{ background: V.bg, minHeight: "100vh", padding: "40px 18px" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Encode+Sans+Semi+Condensed:wght@400;600;700&display=swap');`}</style>
-      <p style={{ ...body("body"), color: V.text2 }}>{week.error ? "This week did not load." : "Loading"}</p>
+      {week.error ? <p style={{ ...body("body"), color: V.text2 }}>This week did not load.</p> : <Loading />}
     </div>
   );
 

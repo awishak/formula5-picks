@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, selectAll } from "./supabaseClient";
 import { V, display, numeric, body, label, card, textGlow, VEGAS_CSS } from "./theme.vegas";
 import { buildTeamTable, FIRST_H2_ROUND, ordinal } from "./teamTable";
 import { buildPlayerTable, placesBy } from "./playerTable";
 import { shortOf } from "./teams";
 import { raceTimePT, scheduleRace } from "./raceTimes";
 import { PlayerTap, TeamTap, useMatchup } from "./PlayerCard.jsx";
+import Loading from "./Loading.jsx";
 
 // The round, every matchup in it.
 //
@@ -39,7 +40,7 @@ export default function SchedulePage({ currentUser }) {
         supabase.from("players").select("id,name"),
         supabase.from("teams").select("*"),
         supabase.from("races").select("*").order("round"),
-        supabase.from("scores").select("*"),
+        selectAll("scores", "*"),
         supabase.from("schedule").select("*"),
       ]).then(rs => rs.map(r => r.data || []));
       if (!alive) return;
@@ -49,8 +50,8 @@ export default function SchedulePage({ currentUser }) {
       // were made for them. Until scripts/picks_auto_column.sql has run the
       // column is not there, and a page with no lines is worse than one with
       // no marks, so the read falls back to the columns that always exist.
-      let picksQ = await supabase.from("picks").select("race_id,player_id,pit_guess,auto");
-      if (picksQ.error) picksQ = await supabase.from("picks").select("race_id,player_id,pit_guess");
+      let picksQ = await selectAll("picks", "race_id,player_id,pit_guess,auto");
+      if (picksQ.error) picksQ = await selectAll("picks", "race_id,player_id,pit_guess");
       const picks = picksQ.data || [];
       // The first pit stop each round, the time Andrew entered, so every box
       // score can show where it landed against its own line.
@@ -94,7 +95,7 @@ export default function SchedulePage({ currentUser }) {
   if (s.loading || round == null) {
     return (
       <div style={{ background: V.bg, minHeight: "100vh", ...wrap }}>
-        <p style={{ ...body("body"), color: V.text2 }}>Loading the schedule…</p>
+        <Loading />
       </div>
     );
   }
