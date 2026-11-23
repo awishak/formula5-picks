@@ -16,7 +16,7 @@ import { PlayerTap, TeamTap } from "./PlayerCard.jsx";
 import Loading from "./Loading.jsx";
 
 const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
-const TITLE_SIZE = titleFit("CLOSE RACES", { fill: 0.95, min: 15 });
+const TITLE_SIZE = titleFit("LAST TWO WEEKS", { fill: 0.95, min: 15 });
 const pct = p => (p <= 0 ? "0%" : p < 0.01 ? "<1%" : p > 0.99 && p < 1 ? ">99%" : `${Math.round(p * 100)}%`);
 
 // A link to this page, for the top of /teams and /players.
@@ -34,7 +34,7 @@ export function FinishLink() {
       ...edgeGlow(V.gold, 0.8),
     }}>
       <span style={{ ...display("h3", { fontSize: 17, letterSpacing: "0.06em" }), ...textGlow(V.gold, 0.8),
-        textTransform: "uppercase" }}>Where you can finish</span>
+        textTransform: "uppercase" }}>The last two weeks</span>
     </a>
   );
 }
@@ -81,7 +81,7 @@ function Head({ children, color = V.pink }) {
   return (
     <div style={{ margin: "26px 0 10px" }}>
       <span style={{ ...display("h2", { fontSize: 22, letterSpacing: "0.05em" }), ...textGlow(color, 0.8),
-        textTransform: "uppercase", display: "inline-block", padding: "8px 14px", borderRadius: 14,
+        textTransform: "uppercase", display: "inline-block", padding: "8px 14px", borderRadius: 14, lineHeight: 1.15, maxWidth: "100%", boxSizing: "border-box",
         ...edgeGlow(color, 0.7) }}>{children}</span>
     </div>
   );
@@ -328,39 +328,6 @@ function Bars({ items, color }) {
   );
 }
 
-function RangeTable({ rows, range, forecast, divKey, mineId }) {
-  const th = { ...label({ fontSize: 12, color: V.text2 }), padding: "4px 4px", textAlign: "right", whiteSpace: "nowrap" };
-  const td = { ...numeric("chip", { fontSize: 15, color: V.text }), padding: "5px 4px", textAlign: "right", whiteSpace: "nowrap" };
-  const champ = divKey === "championship";
-  return (
-    <div style={{ ...card({ padding: "8px 10px" }), marginTop: 10 }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th style={{ ...th, textAlign: "left" }}>Team</th><th style={th}>Pts</th>
-            {range && <th style={th}>Best</th>}{range && <th style={th}>Worst</th>}
-            <th style={th}>{champ ? "Title" : "First"}</th><th style={th}>{champ ? "Stays up" : "Goes up"}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(r => (
-            <tr key={r.id} style={{ borderTop: `1px solid ${V.border}`,
-              ...(r.id === mineId ? { background: `${V.green}1c`, boxShadow: `inset 0 0 0 1.5px ${V.green}` } : {}) }}>
-              <td style={{ ...td, textAlign: "left", fontFamily: "inherit", ...display("chip", { fontSize: 14,
-                color: r.id === mineId ? V.green : V.text }) }}>{r.short}</td>
-              <td style={td}>{r.pts}</td>
-              {range && <td style={td}>P{range[r.id].best}</td>}
-              {range && <td style={td}>P{range[r.id].worst}</td>}
-              <td style={td}>{pct(forecast[r.id].title)}</td>
-              <td style={td}>{pct(forecast[r.id].up)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 // Your own finish: one bar a place, as tall as the forecast makes it likely,
 // for every place with a real chance. Where you are now is lit.
 function PlaceBars({ dist, now }) {
@@ -456,8 +423,6 @@ function Explainer({ left, scored, raceName, opp, oppPlace }) {
   );
   return (
     <div style={{ display: "grid", gap: 8, marginTop: 4 }}>
-      <div style={{ ...numeric("hero", { fontSize: 30, color: V.text }), ...textGlow(V.gold, 0.5) }}>
-        {left === 1 ? "1 WEEK LEFT" : `${left} WEEKS LEFT`}</div>
       {left === 2 && box(V.blue, `This week${raceName ? `: ${raceName}` : ""}`, <>{mine}It was structured this way from the start of the half: this week's matchup is against a team close to you.</>, 0.05)}
       {box(V.pink, left === 2 ? "Next week" : "This week",
         <>{left === 1 ? mine : null}{left === 2 ? "Your matchup is determined by where you finish after this week. " : ""}#1 vs #12, #2 vs #11 in each division, giving the advantage to top teams. We're still live, and the points count as any other.{seeds}</>, 0.15)}
@@ -488,10 +453,10 @@ function Duel({ a, b, team, pA, rounds, mine, big }) {
         {who(a, ca, false)}
         <div style={{ textAlign: "center" }}>
           <div style={{ ...numeric("hero", { fontSize: big ? 34 : 24, color: V.text }), lineHeight: 1 }}>{a.pts - b.pts}</div>
-          <div style={{ ...label({ fontSize: 11, color: V.text2 }), marginTop: 2 }}>pts apart</div>
+          <div style={{ ...label({ fontSize: 11, color: V.text2 }), marginTop: 2 }}>points apart</div>
           <div style={{ ...numeric("chip", { fontSize: 14, color: V.text }), marginTop: 6 }}>
             <span style={{ color: ca }}>{aw}</span> · {lv} · <span style={{ color: cb }}>{bw}</span></div>
-          <div style={{ ...label({ fontSize: 11, color: V.text2 }) }}>weeks</div>
+          <div style={{ ...label({ fontSize: 11, color: V.text2 }) }}>weeks won</div>
         </div>
         {who(b, cb, true)}
       </div>
@@ -522,7 +487,7 @@ function OddsTable({ rows, fc, me }) {
   return (
     <div style={{ ...card({ padding: "10px 10px" }), display: "grid", gap: 5 }}>
       <div style={{ display: "grid", gridTemplateColumns: cols, gap: 5, alignItems: "end" }}>
-        <span /><span /><span />{th("Pts")}{th("1st")}{th("Top 3")}{th("Top 10")}
+        <span /><span /><span />{th("Pts")}{th("1st")}{th("Top 3")}{th("Top 12")}
       </div>
       {rows.map((r, i) => {
         const mine = me && r.id === me.id, f = fc[r.id];
@@ -534,7 +499,7 @@ function OddsTable({ rows, fc, me }) {
               <Face src={r.photo} name={r.name} size={26} ring={mine ? V.green : V.border2} glow={mine} />
               <span style={{ ...display("chip", { fontSize: 13, color: mine ? V.green : V.text }), lineHeight: 1.1 }}>{r.name}</span>
               <span style={{ ...numeric("chip", { fontSize: 14, color: V.text }), textAlign: "right" }}>{r.pts}</span>
-              {cell(f.title, V.gold)}{cell(f.podium, V.green)}{cell(f.top10, V.blue)}
+              {cell(f.title, V.gold)}{cell(f.podium, V.green)}{cell(f.top12, V.pink)}
             </PlayerTap>
           </div>
         );
@@ -631,7 +596,7 @@ export default function FinishPage({ currentUser }) {
         <div className="v-pull" style={titleBox({ padding: "14px 0 14px" })}>
           <div className="v-wet" style={{ fontFamily: FM, fontWeight: 400, fontSize: TITLE_SIZE, lineHeight: 1.15,
             letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
-            <span style={textGlow(V.pink)}>CLOSE</span>{" "}<span style={textGlow(V.blue)}>RACES</span>
+            <span style={textGlow(V.pink)}>{built && built.left === 1 ? "THE FINAL" : built && built.left <= 0 ? "FINAL" : "LAST TWO"}</span>{" "}<span style={textGlow(V.blue)}>{built && built.left === 1 ? "WEEK" : built && built.left <= 0 ? "TABLE" : "WEEKS"}</span>
           </div>
         </div>
         {inner}
@@ -721,20 +686,22 @@ export default function FinishPage({ currentUser }) {
     .sort((x, y) => y.v - x.v).filter((x, i, all) => i < 5 || x.v === all[4].v);
   const nextRace = state.db.races.find(r => r.round === scored + 1);
 
+  const sub = { ...label({ fontSize: 13, color: V.text }), margin: "0 0 6px" };
   const section = (divKey, name, color) => {
     const rows = divisions[divKey];
     if (!rows.length) return null;
     const champ = divKey === "championship";
     return (
       <>
-        <Head color={color}>{name}</Head>
+        <Head color={color}>{champ ? "Race for the Team Championship" : "Race for Promotion"}</Head>
+        <div style={sub}>{name}: where each team can finish</div>
         <RangeChart divKey={divKey} rows={rows} range={range[divKey]} forecast={forecast.teams} mineId={mineId} />
-        <RangeTable rows={rows} range={range[divKey]} forecast={forecast.teams} divKey={divKey} mineId={mineId} />
-        <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "14px 0 6px" }}>{champ ? "Chance of the title" : "Chance of going up"}</div>
+        <div style={{ ...sub, marginTop: 14 }}>{champ ? "Chance of winning the title" : "Chance of going up"}</div>
         <Bars items={named(rows, "t", r => (champ ? forecast.teams[r.id].title : forecast.teams[r.id].up))} color={champ ? V.gold : V.green} />
         {champ && (
           <>
-            <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "14px 0 6px" }}>Chance of going down</div>
+            <Head color={V.pink}>Race to Avoid Relegation</Head>
+            <div style={sub}>Chance of going down</div>
             <Bars items={named(rows, "d", r => 1 - forecast.teams[r.id].up)} color={V.pink} />
           </>
         )}
@@ -753,13 +720,15 @@ export default function FinishPage({ currentUser }) {
         <>
           <Head color={V.green}>Your team</Head>
           <Ladder items={teamLadder} />
+          <div style={{ ...sub, marginTop: 12 }}>{divisions[myDiv][ti].short}: chance of each place</div>
           <Legend divKey={myDiv} row={divisions[myDiv][ti]} now={ti + 1} rg={myRange} f={forecast.teams[mineId]} rows={divisions[myDiv]} />
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-            {left > 0 && <Tile k={myDiv === "championship" ? "Title" : "First"} v={pct(forecast.teams[mineId].title)} color={V.gold} />}
-            {left > 0 && <Tile k={myDiv === "championship" ? "Stays up" : "Goes up"} v={pct(forecast.teams[mineId].up)} color={V.green} />}
-            {myRange && <Tile k="Best" v={`P${myRange.best}`} />}
-            {myRange && <Tile k="Worst" v={`P${myRange.worst}`} />}
+            {left > 0 && <Tile k={myDiv === "championship" ? "Win the title" : "Finish first"} v={pct(forecast.teams[mineId].title)} color={V.gold} />}
+            {left > 0 && <Tile k={myDiv === "championship" ? "Stay up" : "Go up"} v={pct(forecast.teams[mineId].up)} color={V.green} />}
+            {myRange && <Tile k="Best finish" v={`P${myRange.best}`} />}
+            {myRange && <Tile k="Worst finish" v={`P${myRange.worst}`} />}
           </div>
+          {next && <div style={{ ...sub, marginTop: 14 }}>This week's matchup, and what it changes</div>}
           {next && <Fork divKey={myDiv} me={divisions[myDiv][ti]} f={forecast.teams[mineId]} {...next} />}
         </>
       )}
@@ -795,15 +764,15 @@ export default function FinishPage({ currentUser }) {
         </>
       )}
 
-      <Head color={V.pink}>Highest scoring</Head>
-      <div style={{ ...label({ fontSize: 13, color: V.text }), margin: "0 0 6px" }}>Highest scoring team, season</div>
+      <Head color={V.pink}>Highest Scoring Teams</Head>
+      <div style={{ ...label({ fontSize: 13, color: V.text }), margin: "0 0 6px" }}>Season average</div>
       <ScoreBars items={byAvg(season)} color={V.blue} mineId={mineId} />
-      <div style={{ ...label({ fontSize: 13, color: V.text }), margin: "14px 0 6px" }}>Highest scoring team, second half</div>
+      <div style={{ ...label({ fontSize: 13, color: V.text }), margin: "14px 0 6px" }}>Second-half average</div>
       <ScoreBars items={byAvg(table)} color={V.pink} mineId={mineId} />
-      <div style={{ ...label({ fontSize: 13, color: V.text }), margin: "14px 0 6px" }}>Highest scoring week</div>
+      <div style={{ ...label({ fontSize: 13, color: V.text }), margin: "14px 0 6px" }}>Best single week</div>
       <ScoreBars items={bigWeeks} color={V.gold} mineId={null} fmt={v => String(v)} />
 
-      <Head color={V.blue}>Player championship</Head>
+      <Head color={V.blue}>{meP ? "Your Chances of a Strong Finish" : "Player Championship"}</Head>
       {playerLadder && (
         <>
           <Ladder items={playerLadder} />
@@ -822,23 +791,22 @@ export default function FinishPage({ currentUser }) {
       )}
       {meP && myF && left > 0 && (
         <>
-          <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "4px 0 6px" }}>Your chance of each place, %</div>
+          <div style={{ ...sub, marginTop: 4 }}>Your chance of each place, %</div>
           <PlaceBars dist={myF.dist} now={k + 1} />
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-            <Tile k="1st" v={pct(myF.title)} color={V.gold} />
+            <Tile k="Finish 1st" v={pct(myF.title)} color={V.gold} />
             <Tile k="Top 3" v={pct(myF.podium)} color={V.green} />
-            <Tile k="Top 10" v={pct(myF.top10)} color={V.blue} />
             <Tile k="Top 12" v={pct(myF.top12)} color={V.pink} />
           </div>
           <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-            <Tile k="Most likely" v={`P${myF.likely}`} color={V.blue} />
+            <Tile k="Most likely finish" v={`P${myF.likely}`} color={V.blue} />
             <Tile k="Likely range" v={myF.lo === myF.hi ? `P${myF.lo}` : `P${myF.lo}–${myF.hi}`} />
           </div>
         </>
       )}
       {meP && myWeeks.length > 0 && (
         <>
-          <div style={{ ...label({ fontSize: 13, color: V.text2 }), margin: "16px 0 6px" }}>Your season, round by round</div>
+          <div style={{ ...sub, marginTop: 16 }}>Your score, week by week</div>
           <SeasonBars weeks={myWeeks} avg={meP.avg} />
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
             <Tile k="Best week" v={bestW.score} sub={`R${bestW.round}${bestW.place ? `, P${bestW.place}` : ""}`} color={V.green} />
@@ -846,32 +814,30 @@ export default function FinishPage({ currentUser }) {
             <Tile k="Average" v={meP.avg.toFixed(1)} color={V.gold} />
           </div>
           <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-            {places.length > 0 && <Tile k="Weekly places" v={`P${Math.min(...places)}–${Math.max(...places)}`} />}
-            <Tile k={`Last ${meP.formRaces}`} v={meP.formAvg.toFixed(1)} sub={meP.formRank ? `P${meP.formRank}` : null} />
-            <Tile k="Top tens" v={meP.top10 + meP.p1 + meP.p2 + meP.p3} sub={`${meP.p1 + meP.p2 + meP.p3} ${meP.p1 + meP.p2 + meP.p3 === 1 ? "podium" : "podiums"}`} />
+            {places.length > 0 && <Tile k="Weekly finishes" v={`P${Math.min(...places)}–${Math.max(...places)}`} />}
+            <Tile k={`Last ${meP.formRaces} average`} v={meP.formAvg.toFixed(1)} sub={meP.formRank ? `P${meP.formRank}` : null} />
+            <Tile k="Top-ten weeks" v={meP.top10 + meP.p1 + meP.p2 + meP.p3} sub={`${meP.p1 + meP.p2 + meP.p3} ${meP.p1 + meP.p2 + meP.p3 === 1 ? "podium" : "podiums"}`} />
           </div>
         </>
       )}
-      {(myDuel || otherDuels.length > 0) && <Head color={V.green}>Teammate battles</Head>}
-      {myDuel && <Duel {...myDuel} mine={currentUser} big />}
-      <div style={{ display: "grid", gap: 8, marginTop: myDuel ? 8 : 0 }}>
-        {otherDuels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} />)}
-      </div>
-
       {left > 0 && (
         <>
-          <Head color={V.gold}>The top 3</Head>
+          <Head color={V.gold}>Race for the Top 3</Head>
           <Bars items={fight("podium", V.green)} color={V.green} />
-          <Head color={V.blue}>The top 10</Head>
-          <Bars items={fight("top10", V.blue)} color={V.blue} />
-          <Head color={V.pink}>The top 12</Head>
+          <Head color={V.pink}>Race for the Top 12</Head>
           <div style={{ ...body("body", { fontSize: 16, color: V.text, lineHeight: 1.35 }), margin: "0 0 10px" }}>
             Those who finish in the top 12 get a special status, to be revealed going into the offseason.</div>
           <Bars items={fight("top12", V.pink)} color={V.pink} />
         </>
       )}
 
-      <Head color={V.silver}>Everyone's odds</Head>
+      {(myDuel || otherDuels.length > 0) && <Head color={V.green}>Best Teammate Battles</Head>}
+      {myDuel && <Duel {...myDuel} mine={currentUser} big />}
+      <div style={{ display: "grid", gap: 8, marginTop: myDuel ? 8 : 0 }}>
+        {otherDuels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} />)}
+      </div>
+
+      <Head color={V.silver}>Everyone's Chances</Head>
       <OddsTable rows={playerRows} fc={playerForecast} me={meP} />
 
       {left > 0 && (
