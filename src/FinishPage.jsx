@@ -396,6 +396,21 @@ const Tile = ({ k, v, sub, color = V.text }) => (
   </div>
 );
 
+// What the reader is fighting for, one lit line each, the chance beside it.
+function Fights({ items }) {
+  return (
+    <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
+      {items.map(([c, t, v], i) => (
+        <div key={t} className="fr-rise" style={{ "--d": `${0.3 + i * 0.15}s`, display: "flex", alignItems: "center", gap: 12, padding: "14px 14px", borderRadius: 16,
+          background: V.bg3, border: `2px solid ${c}`, boxShadow: `0 0 16px ${c}66` }}>
+          <span style={{ flex: 1, ...display("h2", { fontSize: 22, color: c }), ...textGlow(c, 0.7), lineHeight: 1.15 }}>{t}</span>
+          {v && <span style={{ ...numeric("hero", { fontSize: 32, color: V.text }) }}>{v}</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // How the last two weeks work, at the top, drawn. Two numbered weeks and the
 // promotion ladder. The sentences are Andrew's, from his messages of
 // 2026-11-23, typos fixed.
@@ -751,6 +766,20 @@ export default function FinishPage({ currentUser }) {
     }
   }
 
+  // The same for the reader as a player. There is no true range here, so a
+  // fight is a forecast chance that is neither nothing nor certain.
+  const myFights = [];
+  if (meP && myF && left > 0) {
+    const live = v => v >= 0.03 && v <= 0.97;
+    if (myF.title >= 0.01) myFights.push([V.gold, "You're fighting for the individual championship.", pct(myF.title)]);
+    if (live(myF.podium)) myFights.push([V.green, "You're fighting for a top 3 finish.", pct(myF.podium)]);
+    if (live(myF.top12)) myFights.push([V.pink, "You're fighting for a top 12 finish.", pct(myF.top12)]);
+    const mate = playerRows.find(r => r.teamId === meP.teamId && r.id !== meP.id);
+    const first = mate ? mate.name.split(" ")[0] : null;
+    if (mate && myF.aheadOfMate != null && (myF.aheadOfMate >= 0.15 && myF.aheadOfMate <= 0.85 || !myFights.length))
+      myFights.push([V.blue, `You're fighting to finish ahead of ${first}.`, pct(myF.aheadOfMate)]);
+  }
+
   // Every pair of teammates on season points, closest first.
   const teamById = Object.fromEntries(table.map(t => [t.id, t]));
   const duels = Object.values(playerRows.reduce((m, r) => { if (r.teamId) (m[r.teamId] = m[r.teamId] || []).push(r); return m; }, {}))
@@ -807,15 +836,7 @@ export default function FinishPage({ currentUser }) {
         <>
           <Head color={V.green}>Your team</Head>
           <Ladder items={teamLadder} />
-          <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-            {fights.map(([c, t, v], i) => (
-              <div key={t} className="fr-rise" style={{ "--d": `${0.3 + i * 0.15}s`, display: "flex", alignItems: "center", gap: 12, padding: "14px 14px", borderRadius: 16,
-                background: V.bg3, border: `2px solid ${c}`, boxShadow: `0 0 16px ${c}66` }}>
-                <span style={{ flex: 1, ...display("h2", { fontSize: 22, color: c }), ...textGlow(c, 0.7), lineHeight: 1.15 }}>{t}</span>
-                {v && <span style={{ ...numeric("hero", { fontSize: 32, color: V.text }) }}>{v}</span>}
-              </div>
-            ))}
-          </div>
+          <Fights items={fights} />
           <div style={{ ...sub, marginTop: 12 }}>{divisions[myDiv][ti].short}: chance of each place</div>
           <Legend divKey={myDiv} row={divisions[myDiv][ti]} now={ti + 1} rg={myRange} f={forecast.teams[mineId]} rows={divisions[myDiv]} />
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
@@ -872,6 +893,7 @@ export default function FinishPage({ currentUser }) {
       {playerLadder && (
         <>
           <Ladder items={playerLadder} />
+          <Fights items={myFights} />
           {k > 0 && (
             <PlayerTap name={leader.name} block style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0 12px",
               padding: "8px 12px", borderRadius: 14, background: V.bg3, border: `1px solid ${V.gold}66` }}>
