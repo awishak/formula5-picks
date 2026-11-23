@@ -771,7 +771,7 @@ export default function FinishPage({ currentUser }) {
   const myFights = [];
   if (meP && myF && left > 0) {
     const live = v => v >= 0.03 && v <= 0.97;
-    if (myF.title >= 0.01) myFights.push([V.gold, "You're fighting for the individual championship.", pct(myF.title)]);
+    if (myF.title >= 0.01) myFights.push([V.gold, "You're fighting for the player championship.", pct(myF.title)]);
     if (live(myF.podium)) myFights.push([V.green, "You're fighting for a top 3 finish.", pct(myF.podium)]);
     if (live(myF.top12)) myFights.push([V.pink, "You're fighting for a top 12 finish.", pct(myF.top12)]);
     const mate = playerRows.find(r => r.teamId === meP.teamId && r.id !== meP.id);
