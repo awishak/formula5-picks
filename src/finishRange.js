@@ -181,10 +181,14 @@ const mean = r => (r.weeks.length ? r.weeks.reduce((a, x) => a + x.score, 0) / r
 // come from buildPlayerTable. For each player: dist[place - 1], the chance of
 // the title, the podium, the top five and the top ten, the most likely place,
 // and lo and hi, the places the middle 80% of the runs land between.
-export function projectPlayers(rows, { left, sims = 20000 }) {
+export function projectPlayers(rows, { left, sims = 20000, mates = {} }) {
   const N = rows.length;
+  // mates is { playerId: teammateId }: how often each finishes ahead of the other.
+  const at = Object.fromEntries(rows.map((r, i) => [r.id, i]));
+  const mate = rows.map(r => (mates[r.id] != null && at[mates[r.id]] != null ? at[mates[r.id]] : -1));
+  const ahead = new Array(N).fill(0);
   const out = rows.map(() => ({ dist: new Array(N).fill(0) }));
-  if (left <= 0) rows.forEach((r, i) => { out[i].dist[i] = 1; });
+  if (left <= 0) rows.forEach((r, i) => { out[i].dist[i] = 1; if (mate[i] >= 0 && i < mate[i]) ahead[i] = 1; });
   else {
     let ss = 0, n = 0;
     rows.forEach(r => Object.values(r.byRace || {}).forEach(v => { ss += (v - r.avg) ** 2; n++; }));
@@ -199,8 +203,10 @@ export function projectPlayers(rows, { left, sims = 20000 }) {
       }
       order.sort((a, b) => tot[b] - tot[a]);
       for (let p = 0; p < N; p++) out[order[p]].dist[p]++;
+      for (let i = 0; i < N; i++) if (mate[i] >= 0 && tot[i] > tot[mate[i]]) ahead[i]++;
     }
     out.forEach(o => { o.dist = o.dist.map(v => v / sims); });
+    for (let i = 0; i < N; i++) ahead[i] /= sims;
   }
   const res = {};
   rows.forEach((r, i) => {
@@ -211,7 +217,8 @@ export function projectPlayers(rows, { left, sims = 20000 }) {
       if (!seenLo && acc >= 0.1) { lo = p + 1; seenLo = true; }
       if (acc >= 0.9) { hi = p + 1; break; }
     }
-    res[r.id] = { dist: d, title: d[0], podium: upTo(3), top5: upTo(5), top10: upTo(10),
+    res[r.id] = { dist: d, title: d[0], podium: upTo(3), top5: upTo(5), top10: upTo(10), top12: upTo(12),
+      aheadOfMate: mate[i] >= 0 ? ahead[i] : null,
       likely: d.indexOf(Math.max(...d)) + 1, lo, hi };
   });
   return res;
