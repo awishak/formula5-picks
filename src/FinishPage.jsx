@@ -400,15 +400,60 @@ const Tile = ({ k, v, sub, color = V.text }) => (
 function Fights({ items }) {
   return (
     <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-      {items.map(([c, t, v], i) => (
+      {items.map(([c, t, v, pic], i) => (
         <div key={t} className="fr-rise" style={{ "--d": `${0.3 + i * 0.15}s`, display: "flex", alignItems: "center", gap: 12, padding: "14px 14px", borderRadius: 16,
           background: V.bg3, border: `2px solid ${c}`, boxShadow: `0 0 16px ${c}66` }}>
+          {pic}
           <span style={{ flex: 1, ...display("h2", { fontSize: 22, color: c }), ...textGlow(c, 0.7), lineHeight: 1.15 }}>{t}</span>
           {v && <span style={{ ...numeric("hero", { fontSize: 32, color: V.text }) }}>{v}</span>}
         </div>
       ))}
     </div>
   );
+}
+
+// One fight on /fights: everyone in it in table order, each with a picture,
+// where they stand, and the chance. The dashed line is the cut the fight is
+// about, drawn between the last place in and the first place out.
+function FightRows({ items, color, cut, cutLabel }) {
+  if (!items.length) return null;
+  const at = cut == null ? -1 : (() => { const i = items.findIndex(x => x.place > cut); return i < 0 ? items.length : i; })();
+  const line = (
+    <div key="cut" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <span style={{ flex: 1, borderTop: `2px dashed ${color}` }} />
+      <span style={{ ...label({ fontSize: 12, color }), ...textGlow(color, 0.6) }}>{cutLabel}</span>
+      <span style={{ flex: 1, borderTop: `2px dashed ${color}` }} />
+    </div>
+  );
+  const out = [];
+  items.forEach((x, i) => {
+    if (i === at) out.push(line);
+    out.push(
+      <div key={x.id} className={x.mine ? "fr-mine" : "fr-rise"} style={{ "--d": `${i * 0.05}s`, borderRadius: 12,
+        ...(x.mine ? { margin: "-4px -6px", padding: "4px 6px", background: `${V.green}1c`, boxShadow: `0 0 0 1.5px ${V.green}, 0 0 10px ${V.green}66` } : {}) }}>
+        {x.wrap(
+          <span style={{ display: "grid", gridTemplateColumns: x.v == null ? "40px minmax(0, 1fr)" : "40px minmax(0, 1fr) 58px", alignItems: "center", gap: 10 }}>
+            {x.pic}
+            <span style={{ display: "grid", gap: 5, minWidth: 0 }}>
+              <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+                <span style={{ ...display("chip", { fontSize: 16, color: x.mine ? V.green : V.text }), lineHeight: 1.1 }}>{x.name}</span>
+                <span style={{ ...numeric("chip", { fontSize: 13, color: V.text2 }), whiteSpace: "nowrap" }}>{ordinal(x.place)} · {x.pts} pts</span>
+              </span>
+              {x.v != null && (
+                <span style={{ height: 12, borderRadius: 6, background: V.bg3, overflow: "hidden" }}>
+                  <span className="fr-grow" style={{ "--d": `${0.15 + i * 0.05}s`, display: "block", height: "100%", width: `${Math.max(2, x.v * 100)}%`,
+                    borderRadius: 6, background: color, boxShadow: `0 0 10px ${color}` }} />
+                </span>
+              )}
+            </span>
+            {x.v != null && <span style={{ ...numeric("stat", { fontSize: 22, color: V.text }), textAlign: "right" }}>{pct(x.v)}</span>}
+          </span>
+        )}
+      </div>
+    );
+  });
+  if (at === items.length) out.push(line);
+  return <div style={{ ...card({ padding: "12px 12px" }), display: "grid", gap: 10 }}>{out}</div>;
 }
 
 // How the last two weeks work, at the top, drawn. Two numbered weeks and the
@@ -516,10 +561,43 @@ function Explainer({ left, names, me, myPlace, opp, oppPlace, divKey, rows, all 
 }
 
 // Two teammates, season points. a leads. The strip is every round: who took it.
-function Duel({ a, b, team, pA, rounds, mine, big }) {
+function Duel({ a, b, team, pA, rounds, mine, big, compact }) {
   const ca = mine === a.name ? V.green : V.blue, cb = mine === b.name ? V.green : V.pink;
   const aw = rounds.filter(r => r.a > r.b).length, bw = rounds.filter(r => r.b > r.a).length, lv = rounds.length - aw - bw;
   const fs = big ? 64 : 40;
+  // The short form, for a battle that is all but over: the two faces, the
+  // gap, and the split.
+  if (compact) {
+    const side = (r, c, right) => (
+      <PlayerTap name={r.name} block style={{ display: "flex", flexDirection: right ? "row-reverse" : "row", alignItems: "center", gap: 7, minWidth: 0, textAlign: right ? "right" : "left" }}>
+        <Face src={r.photo} name={r.name} size={32} ring={c} glow={mine === r.name} />
+        <span style={{ minWidth: 0 }}>
+          <span style={{ display: "block", ...display("chip", { fontSize: 13, color: mine === r.name ? V.green : V.text }), lineHeight: 1.1 }}>{r.name}</span>
+          <span style={{ display: "block", ...numeric("chip", { fontSize: 14, color: c }) }}>{r.pts}</span>
+        </span>
+      </PlayerTap>
+    );
+    return (
+      <div className="fr-rise" style={{ padding: "8px 0", borderTop: `1px solid ${V.border}` }}>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 44px minmax(0, 1fr)", alignItems: "center", gap: 6 }}>
+          {side(a, ca, false)}
+          <TeamTap id={team.id} style={{ display: "grid", justifyItems: "center", gap: 1 }}>
+            <Logo src={team.logo} name={team.name} size={24} />
+            <span style={{ ...numeric("chip", { fontSize: 14, color: V.text }) }}>{a.pts - b.pts}</span>
+          </TeamTap>
+          {side(b, cb, true)}
+        </div>
+        {pA != null && (
+          <div style={{ display: "flex", height: 16, borderRadius: 8, overflow: "hidden", marginTop: 6, background: cb }}>
+            <span style={{ width: `${Math.min(88, Math.max(12, pA * 100))}%`, background: ca, display: "flex", alignItems: "center", paddingLeft: 7,
+              ...numeric("chip", { fontSize: 12, color: V.bg }), whiteSpace: "nowrap" }}>{pct(pA)}</span>
+            <span style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 7,
+              ...numeric("chip", { fontSize: 12, color: V.bg }), whiteSpace: "nowrap" }}>{pct(1 - pA)}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
   const who = (r, c, right) => (
     <PlayerTap name={r.name} block style={{ display: "grid", justifyItems: right ? "end" : "start", gap: 3, textAlign: right ? "right" : "left", minWidth: 0 }}>
       <Face src={r.photo} name={r.name} size={fs} ring={c} glow={mine === r.name} />
@@ -835,46 +913,69 @@ export default function FinishPage({ currentUser, view }) {
   };
 
   if (view === "fights") {
+    // Everyone in a fight, in table order, so the cut line falls where it is.
     const tItems = (key, val) => Object.keys(divisions).flatMap(d => divisions[d].map((r, i) => ({ r, d, i })))
       .filter(x => teamKeys(x.d, range[x.d] ? range[x.d][x.r.id] : null, forecast.teams[x.r.id]).includes(key))
-      .map(x => ({ id: x.r.id, name: x.r.short, v: val ? val(forecast.teams[x.r.id]) : 1, mine: x.r.id === mineId, logo: x.r.logo, full: x.r.name,
-        pic: <Logo src={x.r.logo} name={x.r.name} size={24} /> }));
-    const settled = items => items.length > 0 && (
-      <div style={{ ...card({ padding: "12px 12px" }), display: "flex", flexWrap: "wrap", gap: 12 }}>
-        {items.map(x => (
-          <TeamTap key={x.id} id={x.id} style={{ display: "grid", justifyItems: "center", gap: 4, width: 76, textAlign: "center" }}>
-            <Logo src={x.logo} name={x.full} size={48} glow={x.mine ? V.green : null} />
-            <span style={{ ...display("chip", { fontSize: 13, color: x.mine ? V.green : V.text }), lineHeight: 1.1 }}>{x.name}</span>
-          </TeamTap>
-        ))}
-      </div>
-    );
-    const group = (title, color, node, what) => node ? <><Head color={color}>{title}</Head>{what && <div style={sub}>{what}</div>}{node}</> : null;
-    const bars = (items, color) => (items.length ? <Bars items={items} color={color} all /> : null);
+      .map(x => ({ id: x.r.id, name: x.r.short, place: x.i + 1, pts: x.r.pts, v: val ? val(forecast.teams[x.r.id]) : null, mine: x.r.id === mineId,
+        wrap: kids => <TeamTap id={x.r.id} style={{ display: "block" }}>{kids}</TeamTap>,
+        pic: <Logo src={x.r.logo} name={x.r.name} size={40} glow={x.r.id === mineId ? V.green : null} /> }));
     const live = v => v >= 0.03 && v <= 0.97;
-    const pItems = (key, test, color) => playerRows.filter(r => test(playerForecast[r.id][key]))
-      .map(r => ({ id: r.id, name: r.name, v: playerForecast[r.id][key], mine: meP && r.id === meP.id,
-        pic: <Face src={r.photo} name={r.name} size={26} ring={color} /> }));
+    const pItems = (key, test, color) => playerRows.map((r, i) => ({ r, i })).filter(x => test(playerForecast[x.r.id][key]))
+      .map(({ r, i }) => ({ id: r.id, name: r.name, place: i + 1, pts: r.pts, v: playerForecast[r.id][key], mine: !!meP && r.id === meP.id,
+        wrap: kids => <PlayerTap name={r.name} block>{kids}</PlayerTap>,
+        pic: <Face src={r.photo} name={r.name} size={40} ring={meP && r.id === meP.id ? V.green : color} glow={!!meP && r.id === meP.id} /> }));
+    const group = (title, color, items, what, cut, cutLabel) => items.length
+      ? <><Head color={color}>{title}</Head>{what && <div style={sub}>{what}</div>}<FightRows items={items} color={color} cut={cut} cutLabel={cutLabel} /></> : null;
+    const myTeam = ti >= 0 ? divisions[myDiv][ti] : null;
+    const mine = [
+      ...fights.map(f => [...f, myTeam && <Logo src={myTeam.logo} name={myTeam.name} size={40} />]),
+      ...myFights.map(f => [...f, meP && <Face src={meP.photo} name={meP.name} size={40} ring={f[0]} />]),
+    ];
+    const close = d => d.pA != null && d.pA >= 0.15 && d.pA <= 0.85;
+    const rest = duels.filter(d => d !== myDuel);
+    const closeDuels = rest.filter(close), doneDuels = rest.filter(d => !close(d));
     return shell(
       <>
+        {myTeam && mine.length > 0 && (
+          <div className="fr-mine" style={{ ...card({ padding: "16px 12px 12px" }), ...edgeGlow(V.green, 0.6), marginTop: 4 }}>
+            <TeamTap id={myTeam.id} style={{ display: "grid", justifyItems: "center", gap: 3, textAlign: "center" }}>
+              <Logo src={myTeam.logo} name={myTeam.name} size={88} glow={V.green} />
+              <span style={{ display: "flex", justifyContent: "center", marginTop: -16 }}>
+                {playerRows.filter(p => p.teamId === myTeam.id).map((p, n) => (
+                  <span key={p.id} style={{ marginLeft: n ? -8 : 0 }}>
+                    <Face src={p.photo} name={p.name} size={38} ring={V.green} glow={p.name === currentUser} /></span>
+                ))}
+              </span>
+              <span style={{ ...display("h2", { fontSize: 22, color: V.green }), ...textGlow(V.green, 0.7), lineHeight: 1.1, marginTop: 2 }}>{myTeam.short}</span>
+              <span style={{ ...numeric("chip", { fontSize: 14, color: V.text2 }) }}>{ordinal(ti + 1)} · {myTeam.pts} pts</span>
+            </TeamTap>
+            <Fights items={mine} />
+          </div>
+        )}
         {left > 0 && (
           <>
-            {group("Fighting for the Team Championship", V.gold, bars(tItems("title", f => f.title), V.gold), "Chance of winning the title")}
-            {group("Fighting to Stay Up", V.pink, bars(tItems("stay", f => f.up), V.pink), "Chance of staying up")}
-            {group("Fighting to Be Promoted", V.green, bars(tItems("promo", f => f.up), V.green), "Chance of going up")}
-            {group("Staying Up", V.blue, settled(tItems("safe")))}
-            {group("Going Up", V.green, settled(tItems("up")))}
-            {group("Going Down", V.pink, settled(tItems("down")))}
-            {group("Staying in the Second Division", V.silver, settled(tItems("stuck")))}
-            {group("Fighting for the Player Championship", V.gold, bars(pItems("title", v => v >= 0.01, V.gold), V.gold), "Chance of finishing 1st")}
-            {group("Fighting for a Top 3 Finish", V.green, bars(pItems("podium", live, V.green), V.green))}
-            {group("Fighting for a Top 12 Finish", V.pink, bars(pItems("top12", live, V.pink), V.pink))}
+            {group("Fighting for the Team Championship", V.gold, tItems("title", f => f.title), "Chance of winning the title")}
+            {group("Fighting to Stay Up", V.pink, tItems("stay", f => f.up), "Chance of staying up", 8, "\u2193 Relegated")}
+            {group("Fighting to Be Promoted", V.green, tItems("promo", f => f.up), "Chance of going up", 4, "\u2191 Promoted")}
+            {group("Staying Up", V.blue, tItems("safe"))}
+            {group("Going Up", V.green, tItems("up"))}
+            {group("Going Down", V.pink, tItems("down"))}
+            {group("Staying in the Second Division", V.silver, tItems("stuck"))}
+            {group("Fighting for the Player Championship", V.gold, pItems("title", v => v >= 0.01, V.gold), "Chance of finishing 1st")}
+            {group("Fighting for a Top 3 Finish", V.green, pItems("podium", live, V.green), "Chance of a top 3 finish", 3, "\u2191 Top 3")}
+            {group("Fighting for a Top 12 Finish", V.pink, pItems("top12", live, V.pink), "Chance of a top 12 finish", 12, "\u2191 Top 12")}
           </>
         )}
         <Head color={V.blue}>Fighting to Beat a Teammate</Head>
         <div style={{ display: "grid", gap: 8 }}>
-          {duels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} />)}
+          {myDuel && <Duel {...myDuel} mine={currentUser} big />}
+          {closeDuels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} />)}
         </div>
+        {doneDuels.length > 0 && (
+          <div style={{ ...card({ padding: "2px 12px 6px" }), marginTop: 8 }}>
+            {doneDuels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} compact />)}
+          </div>
+        )}
       </>
     );
   }
