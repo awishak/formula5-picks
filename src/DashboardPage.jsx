@@ -490,11 +490,85 @@ function EdgeTable({ rows, myTeamId, summary }) {
   );
 }
 
+// The same dial, one player at a time, with what each guess earned on its
+// own: the Needle. A player who plays the line hard is guessing away from
+// where they think the stop will land, so the Needle column is the price of
+// the spread beside it.
+function PlayerEdgeTable({ rows, meId, summary }) {
+  if (!rows || !rows.length) return null;
+  const COLS = "1fr 44px 44px 50px 54px";
+  const fmt1 = v => (Math.round(v * 10) / 10).toFixed(1);
+  return (
+    <div style={{ display: "grid", gap: 4 }}>
+      <div style={{ display: "grid", gridTemplateColumns: COLS, gap: 8,
+        ...label({ fontSize: 12, color: V.text3 }), paddingBottom: 2 }}>
+        <span>PLAYER</span>
+        <span style={{ textAlign: "right", color: V.blue }}>OVER</span>
+        <span style={{ textAlign: "right", color: V.amber }}>UNDER</span>
+        <span style={{ textAlign: "right" }}>SPREAD</span>
+        <span style={{ textAlign: "right" }}>NEEDLE</span>
+      </div>
+      {rows.map(r => {
+        const dir = r.spread == null ? V.text3 : r.spread > 0 ? V.blue : V.pink;
+        const mine = r.id === meId;
+        return (
+          <div key={r.id} style={{ display: "grid", gridTemplateColumns: COLS,
+            gap: 8, alignItems: "center", padding: "4px 0" }}>
+            <span style={{ minWidth: 0, display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
+              <span title={r.name} style={{ fontFamily: FD, fontWeight: 600, fontSize: 14,
+                color: mine ? V.blue : V.text, whiteSpace: "nowrap", overflow: "hidden",
+                textOverflow: "ellipsis" }}>
+                {r.name}
+              </span>
+              <span style={{ fontFamily: FD, fontSize: 13, color: V.text3, whiteSpace: "nowrap",
+                overflow: "hidden", textOverflow: "ellipsis" }}>
+                {r.team}
+              </span>
+            </span>
+            <span style={{ ...numeric("chip"), fontSize: 16, textAlign: "right",
+              color: r.over == null ? V.text3 : V.blue }}>
+              {r.over == null ? "\u2014" : r.over.toFixed(2)}
+            </span>
+            <span style={{ ...numeric("chip"), fontSize: 16, textAlign: "right",
+              color: r.under == null ? V.text3 : V.amber }}>
+              {r.under == null ? "\u2014" : r.under.toFixed(2)}
+            </span>
+            <span style={{ ...numeric("chip"), fontSize: 16, textAlign: "right", color: dir }}>
+              {r.spread == null ? "\u2014" : `${r.spread > 0 ? "+" : ""}${r.spread.toFixed(2)}`}
+            </span>
+            <span style={{ ...numeric("chip"), fontSize: 16, textAlign: "right",
+              color: r.rounds ? V.text : V.text3 }}>
+              {r.rounds ? r.needle : "\u2014"}
+            </span>
+          </div>
+        );
+      })}
+      <p style={{ ...body("bodySm"), fontSize: 13, color: V.text3, marginTop: 8 }}>
+        Each player&rsquo;s average guess in each seat and the spread between
+        them, the same as the team table above. NEEDLE is their pit stop
+        points for the season: 5 for a guess on the stop to the tenth, one
+        fewer each tenth off. A guess Fernolo made for someone is left out.
+        {summary && summary.hard != null && summary.soft != null && (
+          <>
+            {" "}
+            <strong style={{ color: V.text2 }}>
+              The {summary.n} players with the widest spread score{" "}
+              {fmt1(summary.hard)} a race on the Needle, the {summary.n} tightest{" "}
+              {fmt1(summary.soft)}.
+            </strong>
+          </>
+        )}{" "}
+        The round in progress is left out until its deadline has gone.
+      </p>
+    </div>
+  );
+}
+
 // Where the panels start, before anybody moves one.
 const DEFAULT_LAYOUT = [
   ["home", "podiums"],
   ["championship", "second", "allplay", "drivers", "pits"],
-  ["players", "power", "edges", "value"],
+  ["players", "power", "edges", "playerEdges", "value"],
 ];
 const STORE = "f5_dash_layout2";
 
@@ -711,8 +785,14 @@ export default function DashboardPage({ currentUser, onNavigate }) {
         const settled = new Set(races
           .filter(r => r.pick_deadline && new Date(r.pick_deadline) <= new Date())
           .map(r => r.id));
-        const guessRows = (await selectAll("picks", "player_id,race_id,pit_guess")).data || [];
+        // auto is the randomizer's mark. The same fallback as /schedule, so the
+        // table still draws if scripts/picks_auto_column.sql has not run. Read
+        // in pages, past Supabase's 1,000 row cap.
+        let guessQ = await selectAll("picks", "player_id,race_id,pit_guess,auto");
+        if (guessQ.error) guessQ = await selectAll("picks", "player_id,race_id,pit_guess");
+        const guessRows = guessQ.data || [];
         const guessesByTeam = {};
+        const guessesByPlayer = {};
         guessRows.forEach(g => {
           const v = g.pit_guess == null ? null : Number(g.pit_guess);
           if (v == null || isNaN(v)) return;
@@ -724,6 +804,13 @@ export default function DashboardPage({ currentUser, onNavigate }) {
           const e = guessesByTeam[t.id] = guessesByTeam[t.id]
             || { team: t, over: [], under: [] };
           e[side].push(v);
+          // A guess Fernolo made says nothing about the player, so the player
+          // table leaves it out. The team table keeps it: the line was moved
+          // by that guess whoever made it.
+          if (g.auto) return;
+          const pe = guessesByPlayer[g.player_id] = guessesByPlayer[g.player_id]
+            || { id: g.player_id, over: [], under: [] };
+          pe[side].push(v);
         });
         // Playing the line is guessing against your own seat. On the OVER you
         // guess low, to drag the average the real stop has to beat down under
@@ -779,6 +866,44 @@ export default function DashboardPage({ currentUser, onNavigate }) {
           n: halfAt,
         } : null;
 
+        // The same question, one player at a time. The points beside a player
+        // are the Needle: pit_individual_pts, the individual game's pit stop
+        // score, which is what a guess earns on its own before it moves the
+        // line. Settled rounds only, the same as the guesses.
+        const needleOf = {}, needleRounds = {};
+        scores.forEach(x => {
+          if (!settled.has(x.race_id)) return;
+          needleOf[x.player_id] = (needleOf[x.player_id] || 0) + (Number(x.pit_individual_pts) || 0);
+          needleRounds[x.player_id] = (needleRounds[x.player_id] || 0) + 1;
+        });
+        const playerEdges = Object.values(guessesByPlayer).map(({ id, over, under }) => {
+          const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+          const o = over.length ? avg(over) : null;
+          const u = under.length ? avg(under) : null;
+          const r2 = v => (v == null ? null : Math.round(v * 100) / 100);
+          const t = teamOfPlayer[id];
+          return {
+            id, name: nameOfId[id] || "", team: t ? shortOf(t.name) : "",
+            over: r2(o), under: r2(u), nOver: over.length, nUnder: under.length,
+            spread: o != null && u != null ? Math.round((u - o) * 100) / 100 : null,
+            needle: needleOf[id] || 0, rounds: needleRounds[id] || 0,
+          };
+        }).sort((a, b) =>
+          (b.spread == null ? -Infinity : b.spread) - (a.spread == null ? -Infinity : a.spread)
+          || b.needle - a.needle || a.name.localeCompare(b.name));
+        // Does playing it hard cost the Needle? Hard players guess away from
+        // the stop on purpose, so the halves are compared on Needle points a
+        // round rather than on who won anything.
+        const pRanked = playerEdges.filter(e => e.spread != null && e.rounds);
+        const pHalf = Math.floor(pRanked.length / 2);
+        const perRoundRate = list => (list.length
+          ? list.reduce((a, b) => a + b.needle, 0) / list.reduce((a, b) => a + b.rounds, 0) : null);
+        const playerEdgeSummary = pHalf ? {
+          hard: perRoundRate(pRanked.slice(0, pHalf)),
+          soft: perRoundRate(pRanked.slice(-pHalf)),
+          n: pHalf,
+        } : null;
+
         // The podium of every round so far. Ties break on name, the same way
         // every other order in this app does: Postgres heap order is not
         // stable, and a shared score must not decide itself differently on two
@@ -817,6 +942,7 @@ export default function DashboardPage({ currentUser, onNavigate }) {
           myTeamId: myTeam ? myTeam.id : null,
           players: pt, place: placesBy(pt, r => r.avg), meId: me ? me.id : null, pickState,
           drivers, luck, podiums, drivers2, power, edges, edgeSummary,
+          playerEdges, playerEdgeSummary,
           week: {
             me: currentUser, teammate: mateId ? (players.find(p => p.id === mateId) || {}).name : null,
             race: { round: race.round, name: race.race_name, deadline: race.pick_deadline,
@@ -865,6 +991,8 @@ export default function DashboardPage({ currentUser, onNavigate }) {
       body: <PodiumRuns rows={s.podiums} meId={s.meId} /> },
     edges: { title: "Who plays the line hardest", accent: V.pink,
       body: <EdgeTable rows={s.edges} myTeamId={s.myTeamId} summary={s.edgeSummary} /> },
+    playerEdges: { title: "The line, player by player", accent: V.pink,
+      body: <PlayerEdgeTable rows={s.playerEdges} meId={s.meId} summary={s.playerEdgeSummary} /> },
     allplay: { title: "All-play and schedule luck", accent: V.amber,
       body: <AllPlayTable rows={s.luck} myTeamId={s.myTeamId} /> },
     value: { title: "What a driver has been worth", accent: V.blue,
