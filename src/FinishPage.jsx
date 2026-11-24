@@ -914,7 +914,10 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
     const mates = {};
     db.teams.forEach(t => { if (t.player1_id && t.player2_id) { mates[t.player1_id] = t.player2_id; mates[t.player2_id] = t.player1_id; } });
     const playerForecast = projectPlayers(playerRows, { left, mates });
-    return { scored, left, divisions, range, forecast, playerRows, playerForecast, roundOf, pairsFor, season, table };
+    // The player table as it stood before the last race, for how far the
+    // reader moved in it.
+    const prevRows = buildPlayerTable({ ...db, scores: db.scores.filter(s => roundOf[s.race_id] < scored) });
+    return { scored, left, divisions, range, forecast, playerRows, playerForecast, roundOf, pairsFor, season, table, prevRows };
   }, [state.db]);
 
   const shell = inner => (
@@ -938,7 +941,7 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
   if (state.loading) return shell(<Loading rows={6} />);
   if (state.error || !built) return shell(<p style={body("body", { color: V.text2 })}>This page did not load.</p>);
 
-  const { scored, left, divisions, range, forecast, playerRows, playerForecast, roundOf, pairsFor, season, table } = built;
+  const { scored, left, divisions, range, forecast, playerRows, playerForecast, roundOf, pairsFor, season, table, prevRows } = built;
   const meP = playerRows.find(r => r.name === currentUser) || null;
   const mineId = meP ? meP.teamId : null;
   const c8 = divisions.championship[7], s5 = divisions.second[4];
@@ -1227,20 +1230,90 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
     const kicker = (
       <div style={{ ...display("h3", { fontSize: 17, color: V.pink }), ...textGlow(V.pink, 0.8), textTransform: "uppercase", letterSpacing: "0.1em" }}>What are the odds</div>
     );
+    // The lead card and the two closers, Andrew's, 2026-11-24. The lead: the
+    // reader's avatar, how they moved in the player table in the last race,
+    // and his line into the deck. The closers: this week's matchup and why it
+    // is the one it is, then the last race, the six seed pills, and his send-off.
+    const gp = r => (r ? String(r.race_name || r.name || "").replace(/\s*Grand Prix\s*$/i, "") : "");
+    const raceAt = n => state.db.races.find(r => r.round === scored + n);
+    const lastGp = gp(raceAt(0)), gp1 = gp(raceAt(1)), gp2 = gp(raceAt(2));
+    const prevK = meP ? prevRows.findIndex(r => r.id === meP.id) : -1;
+    const hadPrev = prevK >= 0 && prevRows[prevK].races > 0;
+    const moved = hadPrev && k >= 0 ? prevK - k : 0;
+    const moveTone = moved > 0 ? V.green : moved < 0 ? V.pink : V.blue;
+    const lastWeek = myWeeks.find(w => w.round === scored) || null;
+    const lead = { key: "lead", body: <>
+      {sign("What are the odds?", V.pink, 28)}
+      {meP && (
+        <PlayerTap name={meP.name} block style={{ display: "grid", justifyItems: "center", gap: 8 }}>
+          <span className="fr-pop"><Face src={meP.photo} name={meP.name} size={148} ring={V.green} glow /></span>
+          <span style={{ ...display("h1", { fontSize: 30, color: V.text }), lineHeight: 1.05 }}>{meP.name}</span>
+        </PlayerTap>
+      )}
+      {meP && hadPrev && (
+        <div className="fr-rise" style={{ "--d": "0.25s", ...card({ padding: "12px 14px" }), width: "100%", display: "grid", gap: 6, justifyItems: "center",
+          border: `1.5px solid ${moveTone}`, boxShadow: `0 0 14px ${moveTone}55` }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
+            <span style={{ ...numeric("hero", { fontSize: 34, color: V.text2 }), lineHeight: 1 }}>P{prevK + 1}</span>
+            <svg width="44" height="28" viewBox="0 0 44 28" aria-hidden="true" style={{ filter: `drop-shadow(0 0 6px ${moveTone})` }}>
+              <path d="M3 14h34M27 4l11 10-11 10" fill="none" stroke={moveTone} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span style={{ ...numeric("hero", { fontSize: 56, color: moveTone }), ...textGlow(moveTone, 0.9), lineHeight: 1 }}>P{k + 1}</span>
+          </div>
+          <div style={{ ...display("h3", { fontSize: 19, color: moveTone }), textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            {moved > 0 ? `Up ${moved}` : moved < 0 ? `Down ${-moved}` : "Held your place"}{lastGp ? ` in ${lastGp}` : ""}</div>
+          {lastWeek && (
+            <div style={{ display: "flex", gap: 6, width: "100%", marginTop: 4 }}>
+              <Tile k="Your score" v={lastWeek.score} color={V.blue} />
+              {lastWeek.place != null && <Tile k="That week" v={`P${lastWeek.place}`} />}
+            </div>
+          )}
+        </div>
+      )}
+      {say(left === 1 ? `Hey, let's see what we have going on over the last race${gp1 ? ` in ${gp1}` : ""}.`
+        : `Hey, let's see what we have going on over the last two races${gp1 && gp2 ? ` in ${gp1} and ${gp2}` : ""}.`)}
+    </> };
+    const buttons = <>
+      {onPicks && btn("Make your picks", onPicks, true)}
+      {onMore && btn("The last two weeks", onMore, false)}
+    </>;
+    const closers = [];
+    if (left >= 2) {
+      if (myTeam && next) closers.push({ key: "thisweek", body: <>
+        {sign(gp1 || "This week", V.blue)}
+        <div style={{ width: "100%" }}><Versus a={myTeam} aPlace={ti + 1} b={next.opp} bPlace={next.oppPlace} bName={next.opp.short} /></div>
+        {say("Your matchup this week was planned from Race 12 to be a matchup against a team you would be close to in the standings.")}
+      </> });
+      closers.push({ key: "lastrace", last: true, body: <>
+        {sign(gp2 || "The last race", V.pink)}
+        {say("As for the last race of the season, that matchup will be determined after this week.")}
+        <SeedPills n={myTeam ? divisions[myDiv].length : 12} lit={myTeam ? ti + 1 : null} />
+        {say("All these points count towards your final score. So keep at it.")}
+        {buttons}
+      </> });
+    } else {
+      closers.push({ key: "lastrace", last: true, body: <>
+        {sign(gp1 || "The last race", V.pink)}
+        {myTeam && next && <div style={{ width: "100%" }}><Versus a={myTeam} aPlace={ti + 1} b={next.opp} bPlace={next.oppPlace} bName={next.opp.short} /></div>}
+        <SeedPills n={myTeam ? divisions[myDiv].length : 12} lit={myTeam ? ti + 1 : null} />
+        {say("All these points count towards your final score. So keep at it.")}
+        {buttons}
+      </> });
+    }
     const cards = [
+      lead,
       ...open.map(o => ({ key: o.key, scrolls: o.scrolls, body: <>
         {kicker}
         {sign(o.event, o.color, 22)}
         <div className="fr-pop" style={{ ...numeric("hero", { fontSize: 76, color: o.color }), ...textGlow(o.color, 0.9), lineHeight: 1 }}>{pct(o.p)}</div>
         {o.body}
       </> })),
-      // The last card: every odd again on one line each, and the two ways on.
-      { key: "end", last: true, scrolls: odds.length > 4, body: <>
-        {sign("What are the odds?", V.pink)}
-        {odds.length > 0 && left_(<Fights size={17} items={odds.map(o => [o.color, o.event, pct(o.p), o.pic])} />)}
-        {onPicks && btn("Make your picks", onPicks, true)}
-        {onMore && btn("The last two weeks", onMore, false)}
-      </> },
+      // Every odd again on one line each, then the closers.
+      ...(odds.length > 0 ? [{ key: "all", scrolls: odds.length > 5, body: <>
+        {sign("Your odds", V.pink)}
+        {left_(<Fights size={17} items={odds.map(o => [o.color, o.event, pct(o.p), o.pic])} />)}
+      </> }] : []),
+      ...closers,
     ];
     const i = Math.min(cards.length - 1, deckCard), cur = cards[i];
     return (

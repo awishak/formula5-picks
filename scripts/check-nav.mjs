@@ -41,7 +41,9 @@ const WALKS = [
   // the end; the standard deck is CONTINUE WITHOUT first and NEXT four times.
   // Optional taps skip what a deck does not have, and the last tap is required
   // on both, so the walk still has to cross the gate to pass.
-  { gate: true, taps: ["REVIEW THE AZERBAIJAN?", "NEXT?", "CONTINUE WITHOUT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "CONTINUE WITHOUT THE SONG|MAKE YOUR PICKS|DONE"] },
+  // The odds deck (2026-11-24) runs to fifteen cards for a reader with every
+  // odd, so the walk carries enough optional NEXTs to reach its last card.
+  { gate: true, taps: ["REVIEW THE AZERBAIJAN?", "NEXT?", "CONTINUE WITHOUT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "NEXT?", "CONTINUE WITHOUT THE SONG|MAKE YOUR PICKS|DONE"] },
   { taps: ["PLAYERS", "TEAMS", "MORE", "HOME"] },
   { taps: ["TEAMS", "SCHEDULE", "HOME", "PLAYERS"] },
   // Into the Power Rankings from More and back out by the nav.
