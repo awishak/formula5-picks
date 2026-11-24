@@ -1004,7 +1004,7 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
   if (view === "deck") {
     const two = v => v >= 0.02;
     const lit = id => !!meP && id === meP.id;
-    const pRows = (key, color) => playerRows.map((r, i) => ({ r, i })).filter(x => two(playerForecast[x.r.id][key]) || lit(x.r.id))
+    const pRows = (key, color, test = two) => playerRows.map((r, i) => ({ r, i })).filter(x => test(playerForecast[x.r.id][key]) || lit(x.r.id))
       .map(({ r, i }) => ({ id: r.id, name: r.name, place: i + 1, pts: r.pts, v: playerForecast[r.id][key], mine: lit(r.id),
         wrap: kids => <PlayerTap name={r.name} block>{kids}</PlayerTap>,
         pic: <Face src={r.photo} name={r.name} size={40} ring={lit(r.id) ? V.green : color} glow={lit(r.id)} /> }));
@@ -1068,11 +1068,6 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
         {gapTeam && what(divisions[myDiv][ti].short)}
         {gapTeam && <GapRow items={gapTeam} />}
       </> },
-      { key: "champ", body: <>
-        {sign("The fight for the player championship", V.gold)}
-        {what("Chance of finishing 1st")}
-        {left_(<FightRows items={pRows("title", V.gold)} color={V.gold} />)}
-      </> },
       { key: "top12", scrolls: true, body: <>
         {sign("Race for the top 12", V.pink)}
         {say("Those who finish in the top 12 get a special status, to be revealed going into the offseason.")}
@@ -1082,6 +1077,12 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
       { key: "teams", scrolls: true, body: <>
         {sign("The team fights", V.gold)}
         {myDiv === "second" ? [secBlock, champBlock] : [champBlock, secBlock]}
+      </> },
+      { key: "champ", body: <>
+        {sign("The fight for the player championship", V.gold)}
+        {playerForecast[leader.id].title >= 0.9 && say(`${leader.name.split(" ")[0]} has run away with it.`)}
+        {what("Chance of finishing 1st")}
+        {left_(<FightRows items={pRows("title", V.gold, v => v > 0)} color={V.gold} />)}
       </> },
       { key: "mates", body: <>
         {sign("Best teammate battles", V.blue)}
