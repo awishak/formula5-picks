@@ -15,6 +15,9 @@ import { buildPlayerTable } from "./playerTable";
 import { ranges, project, projectPlayers, ZONES, LAST_ROUND } from "./finishRange";
 import { PlayerTap, TeamTap } from "./PlayerCard.jsx";
 import { careerOf } from "./history.js";
+import { SONGS } from "./songs.js";
+import { songSrc, onSong, playSong, pauseSong } from "./themeSong.js";
+import { Sleeve } from "./Jukebox.jsx";
 import Loading from "./Loading.jsx";
 
 // The season "your place last year" is read from, off history.js.
@@ -868,6 +871,11 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
   const [openFight, setOpenFight] = useState(null);
   const [deckCard, setDeckCard] = useState(Math.max(0, initialCard));
   useEffect(() => { if (view === "deck") window.scrollTo(0, 0); }, [deckCard, view]);
+  // Whether the newest song is the one playing, for the deck's lead card.
+  // The audio is the app's one Audio object in themeSong.js, so the song
+  // plays on through the deck and after it.
+  const [newSongOn, setNewSongOn] = useState(() => songSrc() === SONGS[0].src);
+  useEffect(() => onSong(() => setNewSongOn(songSrc() === SONGS[0].src)), []);
 
   useEffect(() => {
     (async () => {
@@ -1259,6 +1267,7 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
     // sentence says how it went, and his second one turns to the odds. "A
     // little" is his, for a move of three places or fewer; a bigger move
     // says how many, and those words are Claude's.
+    const newSong = SONGS[0];
     const wasGp = lastGp || "the last race";
     const went = !hadPrev ? null
       : moved === 0 ? `In ${wasGp}, you held your place.`
@@ -1294,6 +1303,22 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
         </div>
       )}
       {say(`Let's look at your odds over the last ${left === 1 ? "week" : "two weeks"}.`)}
+      {/* The new song, up front (Andrew, 2026-11-24): "as you see your odds,
+          listen to the new song Belize". Always the newest row of songs.js.
+          The tap is the gesture a browser needs before it will play sound. */}
+      <div className="fr-rise" style={{ "--d": "0.4s", width: "100%", display: "flex", alignItems: "center", gap: 12, textAlign: "left", padding: "10px 12px",
+        borderRadius: 16, background: V.bg3, border: `1.5px solid ${V.gold}`, boxShadow: `0 0 14px ${V.gold}55` }}>
+        {newSong.cover
+          ? <img src={newSong.cover} alt={`${newSong.name} cover`} width={76} height={76}
+              style={{ display: "block", width: 76, height: 76, borderRadius: 8, objectFit: "cover", flexShrink: 0, boxShadow: `0 0 14px ${V.gold}55` }} />
+          : <Sleeve song={newSong} size={76} color={V.gold} style={{ flexShrink: 0 }} />}
+        <div style={{ display: "grid", gap: 8, minWidth: 0, flex: 1 }}>
+          <div style={{ ...body("body", { fontSize: 16, color: V.text, lineHeight: 1.3 }) }}>As you see your odds, listen to the new song {newSong.name}.</div>
+          <button onClick={() => (newSongOn ? pauseSong() : playSong(newSong.src))} className={newSongOn ? undefined : "v-shine"} style={{ ...display("h3", { fontSize: 16, color: V.bg }), background: V.gold, border: "none",
+            borderRadius: 999, padding: "10px 16px", cursor: "pointer", boxShadow: `0 0 16px ${V.gold}88`, textTransform: "uppercase", justifySelf: "start" }}>
+            {newSongOn ? `Pause ${newSong.name}` : `Listen to ${newSong.name}`}</button>
+        </div>
+      </div>
     </> };
     const buttons = <>
       {onPicks && btn("Make your picks", onPicks, true)}

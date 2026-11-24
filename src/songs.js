@@ -20,6 +20,20 @@
 //            in Spanish; these are the translation, Andrew's, 2026-10-27.
 export const SONGS = [
   {
+    // The song for the last two weeks. Andrew's file and title, 2026-11-24,
+    // 97 seconds. No line and no review yet: the words are his to write. The
+    // cover is his picture, sent the same day in place of a video he took
+    // back: two at a hookah lounge, cropped square from the middle of a
+    // 1344x768 still and shrunk to a 480px JPEG.
+    key: "belize",
+    src: "/belize.mp3",
+    name: "Belize",
+    date: "2026-11-24",
+    line: "",
+    file: "belize.mp3",
+    cover: "/belize.jpg",
+  },
+  {
     key: "kimi",
     src: "/kimi-el-hijo.mp3",
     name: "Kimi El Hijo",
