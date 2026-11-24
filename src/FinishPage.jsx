@@ -8,7 +8,8 @@
 // playerTable.js like every other page.
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase, selectAll } from "./supabaseClient";
-import { V, FM, FN, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
+import { V, FM, FN, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox, VEGAS_CSS } from "./theme.vegas";
+import { Card as DeckCard } from "./Weekly.jsx";
 import { buildTeamTable, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable } from "./playerTable";
 import { ranges, project, projectPlayers, ZONES, LAST_ROUND } from "./finishRange";
@@ -342,7 +343,7 @@ function PlaceBars({ dist, now }) {
           const v = dist[p - 1], c = p === now ? V.green : V.blue;
           return (
             <div key={p} style={{ display: "grid", justifyItems: "center", alignContent: "end", height: "100%", gap: 3 }}>
-              {(v >= 0.04 || p === now) && <span style={{ ...numeric("chip", { fontSize: span.length > 14 ? 10 : 12, color: V.text }) }}>{Math.round(v * 100)}</span>}
+              {(v >= 0.04 || p === now) && <span style={{ ...numeric("chip", { fontSize: span.length > 12 ? 9 : 12, color: V.text, letterSpacing: 0 }), whiteSpace: "nowrap" }}>{Math.round(v * 100)}%</span>}
               <span className="fr-up" style={{ "--d": `${i * 0.04}s`, width: "100%", height: `${Math.max(2, (v / peak) * 96)}px`,
                 transformOrigin: "bottom", borderRadius: "5px 5px 0 0", background: c, opacity: p === now ? 1 : 0.75,
                 boxShadow: p === now ? `0 0 10px ${c}` : "none" }} />
@@ -383,6 +384,84 @@ function SeasonBars({ weeks, avg }) {
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`, gap: 3, marginTop: 3 }}>
         {weeks.map(w => <span key={w.round} style={{ ...numeric("chip", { fontSize: 9, color: V.text3 }), textAlign: "center" }}>{w.round}</span>)}
       </div>
+    </div>
+  );
+}
+
+// A small cup, drawn, for a week on the podium.
+const Cup = ({ size = 13 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ display: "block", filter: `drop-shadow(0 0 4px ${V.gold})` }}>
+    <path d="M7 3h10v5a5 5 0 0 1-10 0V3z" fill={V.gold} />
+    <path d="M7 5H3v1a4 4 0 0 0 4 4M17 5h4v1a4 4 0 0 1-4 4" fill="none" stroke={V.gold} strokeWidth="2" />
+    <path d="M12 13v5M8 20h8" fill="none" stroke={V.gold} strokeWidth="2.4" strokeLinecap="round" />
+  </svg>
+);
+
+// Your score each week against the league's average score that week: a bar
+// up for a week above it, down for a week below, the difference on the bar,
+// and a cup on a week you finished on the podium.
+function DeltaBars({ weeks }) {
+  if (!weeks.length) return null;
+  const top = Math.max(...weeks.map(w => Math.abs(w.score - w.avg)), 1), H = 70;
+  const hUp = (Math.max(...weeks.map(w => w.score - w.avg), 0) / top) * H, hDown = (Math.max(...weeks.map(w => w.avg - w.score), 0) / top) * H;
+  return (
+    <div style={{ ...card({ padding: "10px 10px 8px" }), width: "100%" }}>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`, gap: 3 }}>
+        {weeks.map((w, i) => {
+          const d = Math.round(w.score - w.avg), up = d >= 0, c = up ? V.green : V.pink, h = Math.max(2, (Math.abs(w.score - w.avg) / top) * H);
+          const num = <span style={{ ...numeric("chip", { fontSize: 9, color: V.text, letterSpacing: 0 }), lineHeight: 1.2 }}>{d > 0 ? `+${d}` : d}</span>;
+          const bar = <span className="fr-up" style={{ "--d": `${i * 0.03}s`, transformOrigin: up ? "bottom" : "top", width: "100%", height: h,
+            borderRadius: up ? "4px 4px 0 0" : "0 0 4px 4px", background: c, boxShadow: w.place && w.place <= 3 ? `0 0 10px ${c}` : "none" }} />;
+          return (
+            <span key={w.round} title={`Round ${w.round}: ${w.score}, average ${w.avg.toFixed(1)}`} style={{ display: "grid", gridTemplateRows: `${hUp + 30}px ${hDown + 16}px auto` }}>
+              <span style={{ display: "grid", justifyItems: "center", alignContent: "end", gap: 1, borderBottom: `1.5px solid ${V.text2}` }}>
+                {w.place && w.place <= 3 && <Cup />}
+                {up && num}{up && bar}
+              </span>
+              <span style={{ display: "grid", justifyItems: "center", alignContent: "start", gap: 1 }}>
+                {!up && bar}{!up && num}
+              </span>
+              <span style={{ ...numeric("chip", { fontSize: 9, color: V.text3 }), textAlign: "center" }}>{w.round}</span>
+            </span>
+          );
+        })}
+      </div>
+      <div style={{ display: "flex", gap: "4px 14px", flexWrap: "wrap", justifyContent: "center", marginTop: 6, ...label({ fontSize: 11, color: V.text2 }) }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: V.green }} />Above average</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: V.pink }} />Below average</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Cup size={12} />Podium</span>
+      </div>
+    </div>
+  );
+}
+
+// The one ahead, you, the one behind, in a row, with the gaps drawn to scale:
+// a 15 point gap is a long line and a 2 point gap a short one.
+function GapRow({ items }) {
+  return (
+    <div style={{ ...card({ padding: "12px 10px 10px" }), width: "100%", display: "flex", alignItems: "flex-start" }}>
+      {items.map((it, i) => {
+        const g = i > 0 ? items[i - 1].pts - it.pts : 0, c = i > 0 && items[i - 1].me ? V.blue : V.pink;
+        return (
+          <Fragment key={it.key}>
+            {i > 0 && (
+              <span style={{ flex: `${Math.max(g, 0.5)} 1 0`, minWidth: 40, display: "grid", justifyItems: "center", gap: 3, paddingTop: 12 }}>
+                <span style={{ ...numeric("stat", { fontSize: 20, color: V.text }), lineHeight: 1 }}>{g}</span>
+                <span className="fr-grow" style={{ width: "100%", height: 5, borderRadius: 3, background: c, boxShadow: `0 0 8px ${c}`, transformOrigin: "center" }} />
+                <span style={{ ...label({ fontSize: 10, color: V.text2 }) }}>pts</span>
+              </span>
+            )}
+            {it.wrap(
+              <span style={{ width: it.me ? 84 : 66, display: "grid", justifyItems: "center", gap: 2, textAlign: "center" }}>
+                {it.pic}
+                <span style={{ ...numeric("chip", { fontSize: it.me ? 17 : 14, color: it.me ? V.green : V.text2 }) }}>P{it.place}</span>
+                <span style={{ ...display("chip", { fontSize: it.me ? 13 : 12, color: it.me ? V.green : V.text }), lineHeight: 1.1 }}>{it.name}</span>
+                <span style={{ ...numeric("chip", { fontSize: 12, color: V.text2 }) }}>{it.pts}</span>
+              </span>
+            )}
+          </Fragment>
+        );
+      })}
     </div>
   );
 }
@@ -643,13 +722,13 @@ function Duel({ a, b, team, pA, rounds, mine, big, compact }) {
 
 // Everyone's odds: first, top 3 and top 10, one row a player.
 function OddsTable({ rows, fc, me }) {
-  const cols = "20px 26px minmax(0, 1fr) 40px 42px 46px 46px";
+  const cols = "20px 26px minmax(0, 1fr) 40px 42px 46px";
   const cell = (v, c) => <span style={{ ...numeric("chip", { fontSize: 14, color: v < 0.005 ? V.text3 : c }), textAlign: "right" }}>{pct(v)}</span>;
   const th = t => <span style={{ ...label({ fontSize: 11, color: V.text2 }), textAlign: "right" }}>{t}</span>;
   return (
     <div style={{ ...card({ padding: "10px 10px" }), display: "grid", gap: 5 }}>
       <div style={{ display: "grid", gridTemplateColumns: cols, gap: 5, alignItems: "end" }}>
-        <span /><span /><span />{th("Pts")}{th("1st")}{th("Top 3")}{th("Top 12")}
+        <span /><span /><span />{th("Pts")}{th("1st")}{th("Top 12")}
       </div>
       {rows.map((r, i) => {
         const mine = me && r.id === me.id, f = fc[r.id];
@@ -661,7 +740,7 @@ function OddsTable({ rows, fc, me }) {
               <Face src={r.photo} name={r.name} size={26} ring={mine ? V.green : V.border2} glow={mine} />
               <span style={{ ...display("chip", { fontSize: 13, color: mine ? V.green : V.text }), lineHeight: 1.1 }}>{r.name}</span>
               <span style={{ ...numeric("chip", { fontSize: 14, color: V.text }), textAlign: "right" }}>{r.pts}</span>
-              {cell(f.title, V.gold)}{cell(f.podium, V.green)}{cell(f.top12, V.pink)}
+              {cell(f.title, V.gold)}{cell(f.top12, V.pink)}
             </PlayerTap>
           </div>
         );
@@ -700,9 +779,11 @@ function ScoreBars({ items, color, mineId, fmt = v => v.toFixed(2) }) {
   );
 }
 
-export default function FinishPage({ currentUser, view }) {
+export default function FinishPage({ currentUser, view, initialCard = 0, onExit, onPicks, onMore }) {
   const [state, setState] = useState({ loading: true });
   const [openFight, setOpenFight] = useState(null);
+  const [deckCard, setDeckCard] = useState(Math.max(0, initialCard));
+  useEffect(() => { if (view === "deck") window.scrollTo(0, 0); }, [deckCard, view]);
 
   useEffect(() => {
     (async () => {
@@ -766,6 +847,10 @@ export default function FinishPage({ currentUser, view }) {
       </div>
     </div>
   );
+  if (view === "deck" && (state.loading || state.error || !built || built.left <= 0)) {
+    if (!state.loading && onExit) setTimeout(onExit, 0);
+    return <div style={{ background: V.bg, minHeight: "100dvh", padding: "80px 16px" }}>{state.loading && <Loading rows={6} />}</div>;
+  }
   if (state.loading) return shell(<Loading rows={6} />);
   if (state.error || !built) return shell(<p style={body("body", { color: V.text2 })}>This page did not load.</p>);
 
@@ -821,7 +906,8 @@ export default function FinishPage({ currentUser, view }) {
       raceName: race ? race.race_name || race.name || "" : "", places: Array.from({ length: hi - lo + 1 }, (_, i) => lo + i) };
   }
   const leader = playerRows[0];
-  const myWeeks = meP ? Object.keys(meP.byRace).map(id => ({ round: roundOf[id], score: meP.byRace[id], place: meP.placeByRace[id] }))
+  const weekAvg = id => { const vs = playerRows.map(r => r.byRace[id]).filter(x => x != null); return vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : 0; };
+  const myWeeks = meP ? Object.keys(meP.byRace).map(id => ({ round: roundOf[id], score: meP.byRace[id], place: meP.placeByRace[id], avg: weekAvg(id) }))
     .sort((a, b) => a.round - b.round) : [];
   const myF = meP ? playerForecast[meP.id] : null;
   const wk = (pick) => myWeeks.reduce((a, w) => (a == null || pick(w, a) ? w : a), null);
@@ -861,7 +947,6 @@ export default function FinishPage({ currentUser, view }) {
   if (meP && myF && left > 0) {
     const live = v => v >= 0.03 && v <= 0.97;
     if (myF.title >= 0.01) myFights.push([V.gold, "You're fighting for the player championship.", pct(myF.title)]);
-    if (live(myF.podium)) myFights.push([V.green, "You're fighting for a top 3 finish.", pct(myF.podium)]);
     if (live(myF.top12)) myFights.push([V.pink, "You're fighting for a top 12 finish.", pct(myF.top12)]);
     const mate = playerRows.find(r => r.teamId === meP.teamId && r.id !== meP.id);
     const first = mate ? mate.name.split(" ")[0] : null;
@@ -913,6 +998,158 @@ export default function FinishPage({ currentUser, view }) {
     );
   };
 
+  // The deck: the same numbers on six cards, one press each, in the weekly
+  // deck's shell. Andrew, 2026-11-23, dictated. It is the gate for rounds 21
+  // and 22 in place of the weekly recap, and lives at /stretch.
+  if (view === "deck") {
+    const two = v => v >= 0.02;
+    const lit = id => !!meP && id === meP.id;
+    const pRows = (key, color) => playerRows.map((r, i) => ({ r, i })).filter(x => two(playerForecast[x.r.id][key]) || lit(x.r.id))
+      .map(({ r, i }) => ({ id: r.id, name: r.name, place: i + 1, pts: r.pts, v: playerForecast[r.id][key], mine: lit(r.id),
+        wrap: kids => <PlayerTap name={r.name} block>{kids}</PlayerTap>,
+        pic: <Face src={r.photo} name={r.name} size={40} ring={lit(r.id) ? V.green : color} glow={lit(r.id)} /> }));
+    const tRows = (d, val, always = true) => divisions[d].map((r, i) => ({ r, i }))
+      .filter(x => two(val(forecast.teams[x.r.id])) || (x.r.id === mineId && (always || val(forecast.teams[x.r.id]) >= 0.005)))
+      .map(({ r, i }) => ({ id: r.id, name: r.short, place: i + 1, pts: r.pts, v: val(forecast.teams[r.id]), mine: r.id === mineId,
+        wrap: kids => <TeamTap id={r.id} style={{ display: "block" }}>{kids}</TeamTap>,
+        pic: <Logo src={r.logo} name={r.name} size={40} glow={r.id === mineId ? V.green : null} /> }));
+    const sign = (t, c) => (
+      <div style={{ display: "inline-block", padding: "6px 16px 7px", borderRadius: 14, ...edgeGlow(c, 1), background: `${c}0d`,
+        ...display("h1", { fontSize: 25 }), ...textGlow(c, 1), textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.12 }}>{t}</div>
+    );
+    const what = t => <div style={{ ...label({ fontSize: 13, color: V.text }), width: "100%", textAlign: "left", marginBottom: -4 }}>{t}</div>;
+    const say = t => <div style={{ ...body("body", { fontSize: 18, color: V.text, lineHeight: 1.35 }), maxWidth: 420 }}>{t}</div>;
+    const left_ = kids => <div style={{ width: "100%", textAlign: "left" }}>{kids}</div>;
+    const gapTeam = ti < 0 ? null : around(divisions[myDiv], ti).map(j => {
+      const r = divisions[myDiv][j], me = j === ti;
+      return { key: r.id, me, place: j + 1, name: r.short, pts: r.pts, wrap: kids => <TeamTap id={r.id} style={{ display: "block" }}>{kids}</TeamTap>,
+        pic: <Logo src={r.logo} name={r.name} size={me ? 64 : 46} glow={me ? V.green : null} /> };
+    });
+    const gapMe = k < 0 ? null : around(playerRows, k).map(j => {
+      const r = playerRows[j], me = j === k;
+      return { key: r.id, me, place: j + 1, name: r.name, pts: r.pts, wrap: kids => <PlayerTap name={r.name} block>{kids}</PlayerTap>,
+        pic: <Face src={r.photo} name={r.name} size={me ? 64 : 46} ring={me ? V.green : j < k ? V.pink : V.blue} glow={me} /> };
+    });
+    const sec1 = divisions.second[0];
+    const secWon = sec1 && left > 0 && (range.second && range.second[sec1.id] ? range.second[sec1.id].worst === 1 : forecast.teams[sec1.id].title > 0.995);
+    const champBlock = (
+      <Fragment key="c">
+        {what("Chance of winning the Championship Division")}
+        {left_(<FightRows items={tRows("championship", f => f.title)} color={V.gold} />)}
+        {what("Chance of being relegated")}
+        {left_(<FightRows items={tRows("championship", f => 1 - f.up, false)} color={V.pink} cut={8} cutLabel={"↓ Relegated"} />)}
+      </Fragment>
+    );
+    const secBlock = (
+      <Fragment key="s">
+        {what("Chance of being promoted to the Championship Division")}
+        {left_(<FightRows items={tRows("second", f => f.up)} color={V.green} cut={4} cutLabel={"↑ Promoted"} />)}
+        {secWon && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", padding: "10px 12px", borderRadius: 14,
+            background: V.bg3, border: `1.5px solid ${V.gold}`, boxShadow: `0 0 12px ${V.gold}55` }}>
+            <Logo src={sec1.logo} name={sec1.name} size={44} glow={V.gold} />
+            <span style={{ ...body("body", { fontSize: 16, color: V.text, lineHeight: 1.3 }) }}>The Second Division has already been won by {sec1.name}.</span>
+          </div>
+        )}
+      </Fragment>
+    );
+    const bestDuels = duels.filter(d => d !== myDuel).slice(0, 2);
+    const btn = (t, fn, fill) => (
+      <button onClick={fn} style={{ ...display("h3", { fontSize: 17, color: fill ? V.bg : V.blue }), background: fill ? V.blue : "transparent",
+        border: `1.5px solid ${V.blue}`, borderRadius: 999, padding: "13px 20px", cursor: "pointer", width: "100%", maxWidth: 340,
+        boxShadow: fill ? `0 0 18px ${V.blue}77` : "none", textTransform: "uppercase" }}>{t}</button>
+    );
+    const cards = [
+      { key: "open", body: <>
+        {sign(left === 1 ? "One week left" : "Two weeks left", V.pink)}
+        {say(`All right, folks, we got ${left} week${left === 1 ? "" : "s"} left to go. Let's see where we are in the standings.`)}
+        {gapMe && what(meP.name)}
+        {gapMe && <GapRow items={gapMe} />}
+        {gapTeam && what(divisions[myDiv][ti].short)}
+        {gapTeam && <GapRow items={gapTeam} />}
+      </> },
+      { key: "champ", body: <>
+        {sign("The fight for the player championship", V.gold)}
+        {what("Chance of finishing 1st")}
+        {left_(<FightRows items={pRows("title", V.gold)} color={V.gold} />)}
+      </> },
+      { key: "top12", scrolls: true, body: <>
+        {sign("Race for the top 12", V.pink)}
+        {say("Those who finish in the top 12 get a special status, to be revealed going into the offseason.")}
+        {what("Chance of a top 12 finish")}
+        {left_(<FightRows items={pRows("top12", V.pink)} color={V.pink} cut={12} cutLabel={"↑ Top 12"} />)}
+      </> },
+      { key: "teams", scrolls: true, body: <>
+        {sign("The team fights", V.gold)}
+        {myDiv === "second" ? [secBlock, champBlock] : [champBlock, secBlock]}
+      </> },
+      { key: "mates", body: <>
+        {sign("Best teammate battles", V.blue)}
+        {left_(<div style={{ display: "grid", gap: 8 }}>
+          {bestDuels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} />)}
+          {myDuel && <Duel {...myDuel} mine={currentUser} big />}
+        </div>)}
+      </> },
+      { key: "you", last: true, body: <>
+        {sign(meP ? "Your chances of a strong finish" : "The last two weeks", V.green)}
+        {meP && myF && what("Your chance of each place")}
+        {meP && myF && left_(<PlaceBars dist={myF.dist} now={k + 1} />)}
+        {meP && myWeeks.length > 0 && what("Your score against the average score that week")}
+        {meP && myWeeks.length > 0 && <DeltaBars weeks={myWeeks} />}
+        {onPicks && btn("Make your picks", onPicks, true)}
+        {onMore && btn("The last two weeks", onMore, false)}
+      </> },
+    ];
+    const i = Math.min(cards.length - 1, deckCard), cur = cards[i];
+    return (
+      <div style={{ background: V.bg, minHeight: "100dvh", position: "relative", overflowX: "hidden" }}>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Monoton&family=Encode+Sans+Semi+Condensed:wght@400;600;700&family=Chakra+Petch:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { background: ${V.bg}; overflow-x: hidden; }
+          html { overflow-x: hidden; }
+          .f5card > * { max-width: 100% !important; flex-shrink: 0 !important; position: relative; }
+          @keyframes v-enter { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: none; } }
+          .f5card > * { animation: v-enter 400ms cubic-bezier(.2,.85,.3,1) both; }
+          .f5card > *:nth-child(2) { animation-delay: 70ms; }
+          .f5card > *:nth-child(3) { animation-delay: 140ms; }
+          .f5card > *:nth-child(n+4) { animation-delay: 210ms; }
+          @media (prefers-reduced-motion: reduce) { .f5card > * { animation: none !important; } }
+          ${VEGAS_CSS}${CSS}
+        `}</style>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 30, display: "flex", gap: 4, padding: "14px 16px 10px",
+          background: `linear-gradient(${V.bg} 60%, transparent)` }}>
+          {cards.map((c, ci) => (
+            <div key={c.key} style={{ flex: 1, height: 3, borderRadius: 2, background: V.bg4, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: ci <= i ? "100%" : "0%", borderRadius: 2, background: V.blue,
+                boxShadow: ci === i ? `0 0 8px ${V.blue}` : "none", transition: "width 420ms cubic-bezier(.2,.85,.3,1)" }} />
+            </div>
+          ))}
+        </div>
+        {i > 0 && (
+          <button onClick={() => setDeckCard(i - 1)} aria-label="Back" style={{ position: "fixed", top: 20, left: 12, zIndex: 31, background: "transparent",
+            border: "none", cursor: "pointer", padding: "8px 10px", lineHeight: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <polyline points="15,4 7,12 15,20" fill="none" stroke={V.text3} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        )}
+        {onExit && (
+          <button onClick={onExit} style={{ position: "fixed", top: 26, right: 14, zIndex: 31, ...label({ fontSize: 12, color: V.text3 }),
+            background: "transparent", border: "none", cursor: "pointer", padding: "6px 4px" }}>{cur.last ? "CLOSE" : "SKIP"}</button>
+        )}
+        <DeckCard dep={`stretch-${i}-${currentUser}`} bottom={0} scrolls={Boolean(cur.scrolls)}>{cur.body}</DeckCard>
+        {!cur.last && (
+          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 30, display: "flex", justifyContent: "center",
+            padding: "16px 16px 26px", background: `linear-gradient(transparent, ${V.bg} 46%)` }}>
+            <button onClick={() => setDeckCard(i + 1)} style={{ ...display("h3", { color: V.bg }), background: V.blue, border: "none",
+              borderRadius: 999, padding: "13px 28px", cursor: "pointer", boxShadow: `0 0 18px ${V.blue}77` }}>NEXT</button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (view === "fights") {
     // Everyone in a fight, in table order, so the cut line falls where it is.
     const tItems = (key, val) => Object.keys(divisions).flatMap(d => divisions[d].map((r, i) => ({ r, d, i })))
@@ -938,7 +1175,7 @@ export default function FinishPage({ currentUser, view }) {
     const go = key => { setOpenFight(key); window.scrollTo(0, 0); };
     const F = {
       title: tItems("title", f => f.title), stay: tItems("stay", f => f.up), promo: tItems("promo", f => f.up),
-      champ: pItems("title", v => v >= 0.01, V.gold), top3: pItems("podium", live, V.green), top12: pItems("top12", live, V.pink),
+      champ: pItems("title", v => v >= 0.01, V.gold), top12: pItems("top12", live, V.pink),
     };
 
     // One fight in full, reached from its card.
@@ -961,7 +1198,6 @@ export default function FinishPage({ currentUser, view }) {
           </>}
           {openFight === "players" && <>
             {group("Fighting for the Player Championship", V.gold, F.champ, "Chance of finishing 1st")}
-            {group("Fighting for a Top 3 Finish", V.green, F.top3, "Chance of a top 3 finish", 3, "↑ Top 3")}
             {group("Fighting for a Top 12 Finish", V.pink, F.top12, "Chance of a top 12 finish", 12, "↑ Top 12")}
           </>}
           {openFight === "mates" && <>
@@ -1040,7 +1276,7 @@ export default function FinishPage({ currentUser, view }) {
         {left > 0 && fcard("title", "Fighting for the Team Championship", V.gold, F.title, `All ${F.title.length} teams`, 0.1)}
         {left > 0 && fcard("stay", "Fighting to Stay Up", V.pink, F.stay, `All ${F.stay.length} teams`, 0.2, 8)}
         {left > 0 && fcard("promo", "Fighting to Be Promoted", V.green, F.promo, `All ${F.promo.length} teams`, 0.3, 4)}
-        {left > 0 && fcard("players", "Fighting for a Top 12 Finish", V.pink, F.top12, "Player championship, top 3, top 12", 0.4, 12)}
+        {left > 0 && fcard("players", "Fighting for a Top 12 Finish", V.pink, F.top12, "Player championship, top 12", 0.4, 12)}
         {topDuel && shellCard("mates", "Fighting to Beat a Teammate", V.blue, `All ${duels.length} teams`, <div style={{ pointerEvents: "none", marginTop: 6 }}><Duel {...topDuel} mine={currentUser} compact /></div>, 0.5)}
       </div>
     );
@@ -1108,8 +1344,6 @@ export default function FinishPage({ currentUser, view }) {
       <ScoreBars items={byAvg(season)} color={V.blue} mineId={mineId} />
       <div style={{ ...label({ fontSize: 13, color: V.text }), margin: "14px 0 6px" }}>Second-half average</div>
       <ScoreBars items={byAvg(table)} color={V.pink} mineId={mineId} />
-      <div style={{ ...label({ fontSize: 13, color: V.text }), margin: "14px 0 6px" }}>Best single week</div>
-      <ScoreBars items={bigWeeks} color={V.gold} mineId={null} fmt={v => String(v)} />
 
       <Head color={V.blue}>{meP ? "Your Chances of a Strong Finish" : "Player Championship"}</Head>
       {playerLadder && (
@@ -1131,11 +1365,10 @@ export default function FinishPage({ currentUser, view }) {
       )}
       {meP && myF && left > 0 && (
         <>
-          <div style={{ ...sub, marginTop: 4 }}>Your chance of each place, %</div>
+          <div style={{ ...sub, marginTop: 4 }}>Your chance of each place</div>
           <PlaceBars dist={myF.dist} now={k + 1} />
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
             <Tile k="Finish 1st" v={pct(myF.title)} color={V.gold} />
-            <Tile k="Top 3" v={pct(myF.podium)} color={V.green} />
             <Tile k="Top 12" v={pct(myF.top12)} color={V.pink} />
           </div>
           <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
@@ -1146,8 +1379,8 @@ export default function FinishPage({ currentUser, view }) {
       )}
       {meP && myWeeks.length > 0 && (
         <>
-          <div style={{ ...sub, marginTop: 16 }}>Your score, week by week</div>
-          <SeasonBars weeks={myWeeks} avg={meP.avg} />
+          <div style={{ ...sub, marginTop: 16 }}>Your score against the average score that week</div>
+          <DeltaBars weeks={myWeeks} />
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
             <Tile k="Best week" v={bestW.score} sub={`R${bestW.round}${bestW.place ? `, P${bestW.place}` : ""}`} color={V.green} />
             <Tile k="Worst week" v={worstW.score} sub={`R${worstW.round}${worstW.place ? `, P${worstW.place}` : ""}`} color={V.pink} />
@@ -1162,8 +1395,6 @@ export default function FinishPage({ currentUser, view }) {
       )}
       {left > 0 && (
         <>
-          <Head color={V.gold}>Race for the Top 3</Head>
-          <Bars items={fight("podium", V.green)} color={V.green} />
           <Head color={V.pink}>Race for the Top 12</Head>
           <div style={{ ...body("body", { fontSize: 16, color: V.text, lineHeight: 1.35 }), margin: "0 0 10px" }}>
             Those who finish in the top 12 get a special status, to be revealed going into the offseason.</div>

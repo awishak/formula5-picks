@@ -37,7 +37,11 @@ import { LeagueNote } from "./LeagueNote.jsx";
 // key, so the gate opens once more for everyone. Round 15's deck became the
 // Bahlaysian deck on 2026-09-27, a day after it was scored.
 // 16 reset 2026-10-05 when the second deck became the gate, so everyone sees it once.
-const WEEK_SEEN_V = { 15: "v2", 16: "v2" };
+// 21 reset 2026-11-23: the last two rounds gate on the two-weeks-left deck
+// (FinishPage view="deck") in place of the weekly recap, Andrew's call, and 22
+// will too: "i don't think we need the normal weekly recap next week".
+const WEEK_SEEN_V = { 15: "v2", 16: "v2", 21: "v2" };
+const STRETCH_ROUNDS = new Set([21, 22]);
 import Paddock from "./Paddock.jsx";
 import { NEWS } from "./news";
 
@@ -835,7 +839,7 @@ function BottomNav({ active, onChange, hasSubmittedPicks }) {
 const PAGES = new Set([
   "home", "picks", "practice", "schedule", "results", "player-standings",
   "dashboard", "power", "hands1", "hands2", "hands3", "hands4", "hands5", "hands6", "hands7", "hands8", "home-v1", "schedule-v1", "team-standings", "team-standings-v1", "player-standings-v1", "division-trends", "players", "rules", "strategy",
-  "f1-calendar", "season-preview", "recaps", "admin", "recap", "paddock", "paddock-vegas", "league", "finish", "fights",
+  "f1-calendar", "season-preview", "recaps", "admin", "recap", "paddock", "paddock-vegas", "league", "finish", "fights", "stretch",
 ]);
 
 // ── Routing ──────────────────────────────────────────────
@@ -872,6 +876,7 @@ const ROUTES = [
   // The close races: where everyone can still finish. Linked from /teams and /players.
   { path: "/finish", page: "finish" },
   { path: "/fights", page: "fights" },
+  { path: "/stretch", page: "stretch" },
   { path: "/results", page: "results" },
   { path: "/rules", page: "rules" },
   { path: "/calendar", page: "f1-calendar" },
@@ -1074,6 +1079,18 @@ export default function App() {
   //
   // Rendered outside .app-wrap because it sets its own black ground, exactly
   // like the recap deck and the Vegas pages.
+  // The two-weeks-left deck at its own address. ?player= and ?card= as on /week.
+  if (activePage === "stretch") {
+    const q = new URLSearchParams(window.location.search);
+    const home = () => { window.history.replaceState(null, "", "/"); navigateTo("home"); };
+    return (
+      <FinishPage currentUser={q.get("player") || currentUser} view="deck"
+        initialCard={Math.max(1, parseInt(q.get("card") || "1", 10) || 1) - 1}
+        onExit={home}
+        onPicks={() => { window.history.replaceState(null, "", "/"); navigateTo("vegas"); }}
+        onMore={() => { window.history.replaceState(null, "", "/finish"); navigateTo("finish"); }} />
+    );
+  }
   if (activePage === "weekly") {
     const q = new URLSearchParams(window.location.search);
     const who = q.get("player") || currentUser;
@@ -1176,6 +1193,15 @@ export default function App() {
   // overlay meant the window scrolled underneath it while the deck stayed put,
   // so the matchup card could not be scrolled. This is how /week renders too,
   // so it behaves identically.
+  if (showWeekGate && STRETCH_ROUNDS.has(weekRound)) {
+    const seen = () => { try { localStorage.setItem(weekKey, "1"); } catch (e) {} setWeekSeen(true); };
+    return (
+      <FinishPage currentUser={currentUser} view="deck"
+        onExit={seen}
+        onPicks={() => { seen(); window.history.replaceState(null, "", "/"); navigateTo("vegas"); }}
+        onMore={() => { seen(); window.history.replaceState(null, "", "/finish"); navigateTo("finish"); }} />
+    );
+  }
   if (showWeekGate) return (
     <WeeklyV2
       playerName={currentUser}
