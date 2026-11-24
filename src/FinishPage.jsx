@@ -603,6 +603,8 @@ function Versus({ a, aPlace, b, bPlace, bName, size = 56 }) {
         <Logo src={a.logo} name={a.name} size={size} glow={V.green} />
         <span style={{ ...display("chip", { fontSize: name, color: V.green }), lineHeight: 1.1 }}>{a.short}</span>
         {aPlace != null && <span style={{ ...numeric("chip", { fontSize: place, color: V.text }) }}>{ordinal(aPlace)}</span>}
+        {/* A place in the standings always carries the champ points (Andrew, 2026-11-24). */}
+        {aPlace != null && a.pts != null && <span style={{ ...numeric("chip", { fontSize: name, color: V.text2 }) }}>{a.pts} pts</span>}
       </div>
       <span style={{ ...display("h3", { fontSize: Math.round(18 * Math.min(k, 1.6)), color: V.text3 }) }}>V</span>
       <div className="fr-rise" style={{ "--d": "0.15s", display: "grid", justifyItems: "center", gap: 3, textAlign: "center" }}>
@@ -611,6 +613,7 @@ function Versus({ a, aPlace, b, bPlace, bName, size = 56 }) {
               ...numeric("hero", { fontSize: Math.round(30 * k), color: V.pink }) }}>?</span>}
         <span style={{ ...display("chip", { fontSize: name, color: V.text }), lineHeight: 1.1 }}>{bName}</span>
         {bPlace != null && <span style={{ ...numeric("chip", { fontSize: place, color: V.text }) }}>{ordinal(bPlace)}</span>}
+        {bPlace != null && b && b.pts != null && <span style={{ ...numeric("chip", { fontSize: name, color: V.text2 }) }}>{b.pts} pts</span>}
       </div>
     </div>
   );
@@ -1290,32 +1293,32 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
           )}
         </div>
       )}
-      {say(`Now let's look at your odds for the remaining ${left === 1 ? "week" : "two weeks"}.`)}
+      {say(`Let's look at your odds over the last ${left === 1 ? "week" : "two weeks"}.`)}
     </> };
     const buttons = <>
       {onPicks && btn("Make your picks", onPicks, true)}
-      {onMore && btn("The last two weeks", onMore, false)}
+      {onMore && btn(left === 1 ? "See more about the last week" : "See more about the last two weeks", onMore, false)}
     </>;
+    // One closing page (Andrew, 2026-11-24): this week's matchup and the
+    // final week's on the same page, team logos in both, the final week's
+    // opponent a ? while it is yet to be determined, then the two buttons.
+    const raceTag = (t, c) => (
+      <div style={{ ...display("h3", { fontSize: 20, color: c }), ...textGlow(c, 0.8), textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: -8 }}>{t}</div>
+    );
     const closers = [];
     if (left >= 2) {
-      if (myTeam && next) closers.push({ key: "thisweek", body: <>
-        {sign(gp1 || "This week", V.blue)}
-        <div style={{ width: "100%" }}><Versus a={myTeam} aPlace={ti + 1} b={next.opp} bPlace={next.oppPlace} bName={next.opp.short} size={116} /></div>
-        {say("Your matchup this week was planned from Race 12 to be a matchup against a team you would be close to in the standings.")}
-      </> });
-      closers.push({ key: "lastrace", last: true, body: <>
-        {sign(gp2 || "The last race", V.pink)}
-        {say("As for the last race of the season, that matchup will be determined after this week.")}
-        <SeedPills n={myTeam ? divisions[myDiv].length : 12} lit={myTeam ? ti + 1 : null} />
-        {say("All these points count towards your final score. So keep at it.")}
+      closers.push({ key: "matchups", last: true, body: <>
+        {raceTag(gp1 || "This week", V.blue)}
+        {myTeam && next && <div style={{ width: "100%" }}><Versus a={myTeam} aPlace={ti + 1} b={next.opp} bPlace={next.oppPlace} bName={next.opp.short} size={84} /></div>}
+        {raceTag(gp2 || "The final week", V.pink)}
+        {myTeam && <div style={{ width: "100%" }}><Versus a={myTeam} b={null} bName="" size={84} /></div>}
+        {say("Final week matchup is yet to be determined.")}
         {buttons}
       </> });
     } else {
-      closers.push({ key: "lastrace", last: true, body: <>
-        {sign(gp1 || "The last race", V.pink)}
+      closers.push({ key: "matchups", last: true, body: <>
+        {raceTag(gp1 || "The final week", V.pink)}
         {myTeam && next && <div style={{ width: "100%" }}><Versus a={myTeam} aPlace={ti + 1} b={next.opp} bPlace={next.oppPlace} bName={next.opp.short} size={116} /></div>}
-        <SeedPills n={myTeam ? divisions[myDiv].length : 12} lit={myTeam ? ti + 1 : null} />
-        {say("All these points count towards your final score. So keep at it.")}
         {buttons}
       </> });
     }
