@@ -595,21 +595,22 @@ function FightRows({ items, color, cut, cutLabel }) {
 // Two teams face to face: logo, short name and place, yours lit green and
 // theirs pink. With no `b` the other side is a dashed ? box, for a matchup
 // that is not set yet.
-function Versus({ a, aPlace, b, bPlace, bName }) {
+function Versus({ a, aPlace, b, bPlace, bName, size = 56 }) {
+  const k = size / 56, name = Math.round(14 + (k - 1) * 5), place = Math.round(20 + (k - 1) * 10);
   return (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)", alignItems: "center", gap: 8, margin: "12px 0 10px" }}>
       <div className="fr-rise" style={{ display: "grid", justifyItems: "center", gap: 3, textAlign: "center" }}>
-        <Logo src={a.logo} name={a.name} size={56} glow={V.green} />
-        <span style={{ ...display("chip", { fontSize: 14, color: V.green }), lineHeight: 1.1 }}>{a.short}</span>
-        {aPlace != null && <span style={{ ...numeric("chip", { fontSize: 20, color: V.text }) }}>{ordinal(aPlace)}</span>}
+        <Logo src={a.logo} name={a.name} size={size} glow={V.green} />
+        <span style={{ ...display("chip", { fontSize: name, color: V.green }), lineHeight: 1.1 }}>{a.short}</span>
+        {aPlace != null && <span style={{ ...numeric("chip", { fontSize: place, color: V.text }) }}>{ordinal(aPlace)}</span>}
       </div>
-      <span style={{ ...display("h3", { fontSize: 18, color: V.text3 }) }}>V</span>
+      <span style={{ ...display("h3", { fontSize: Math.round(18 * Math.min(k, 1.6)), color: V.text3 }) }}>V</span>
       <div className="fr-rise" style={{ "--d": "0.15s", display: "grid", justifyItems: "center", gap: 3, textAlign: "center" }}>
-        {b ? <Logo src={b.logo} name={b.name} size={56} glow={V.pink} />
-          : <span style={{ width: 56, height: 56, borderRadius: 12, border: `2px dashed ${V.pink}`, display: "grid", placeItems: "center",
-              ...numeric("hero", { fontSize: 30, color: V.pink }) }}>?</span>}
-        <span style={{ ...display("chip", { fontSize: 14, color: V.text }), lineHeight: 1.1 }}>{bName}</span>
-        {bPlace != null && <span style={{ ...numeric("chip", { fontSize: 20, color: V.text }) }}>{ordinal(bPlace)}</span>}
+        {b ? <Logo src={b.logo} name={b.name} size={size} glow={V.pink} />
+          : <span style={{ width: size, height: size, borderRadius: 12, border: `2px dashed ${V.pink}`, display: "grid", placeItems: "center",
+              ...numeric("hero", { fontSize: Math.round(30 * k), color: V.pink }) }}>?</span>}
+        <span style={{ ...display("chip", { fontSize: name, color: V.text }), lineHeight: 1.1 }}>{bName}</span>
+        {bPlace != null && <span style={{ ...numeric("chip", { fontSize: place, color: V.text }) }}>{ordinal(bPlace)}</span>}
       </div>
     </div>
   );
@@ -1281,7 +1282,7 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
     if (left >= 2) {
       if (myTeam && next) closers.push({ key: "thisweek", body: <>
         {sign(gp1 || "This week", V.blue)}
-        <div style={{ width: "100%" }}><Versus a={myTeam} aPlace={ti + 1} b={next.opp} bPlace={next.oppPlace} bName={next.opp.short} /></div>
+        <div style={{ width: "100%" }}><Versus a={myTeam} aPlace={ti + 1} b={next.opp} bPlace={next.oppPlace} bName={next.opp.short} size={116} /></div>
         {say("Your matchup this week was planned from Race 12 to be a matchup against a team you would be close to in the standings.")}
       </> });
       closers.push({ key: "lastrace", last: true, body: <>
@@ -1294,7 +1295,7 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
     } else {
       closers.push({ key: "lastrace", last: true, body: <>
         {sign(gp1 || "The last race", V.pink)}
-        {myTeam && next && <div style={{ width: "100%" }}><Versus a={myTeam} aPlace={ti + 1} b={next.opp} bPlace={next.oppPlace} bName={next.opp.short} /></div>}
+        {myTeam && next && <div style={{ width: "100%" }}><Versus a={myTeam} aPlace={ti + 1} b={next.opp} bPlace={next.oppPlace} bName={next.opp.short} size={116} /></div>}
         <SeedPills n={myTeam ? divisions[myDiv].length : 12} lit={myTeam ? ti + 1 : null} />
         {say("All these points count towards your final score. So keep at it.")}
         {buttons}
