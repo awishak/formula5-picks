@@ -20,17 +20,19 @@
 //            in Spanish; these are the translation, Andrew's, 2026-10-27.
 export const SONGS = [
   {
-    // The song for the last two weeks. Andrew's file and title, 2026-11-24,
-    // 97 seconds. No line and no review yet: the words are his to write. The
-    // cover is his picture, sent the same day in place of a video he took
-    // back: two at a hookah lounge, cropped square from the middle of a
-    // 1344x768 still and shrunk to a 480px JPEG.
-    key: "belize",
-    src: "/belize.mp3",
-    name: "Belize",
+    // The song for the last two weeks. Andrew's file, 2026-11-24, 120 seconds,
+    // named as he named the file. It took Belize's place the same afternoon
+    // ("replace belize with this mp3 i just gave you"), so Belize is off the
+    // list; public/belize.mp3 is still on disk. No line and no review yet: the
+    // words are his to write. The cover is the picture he sent for Belize, two
+    // at a hookah lounge, cropped square from the middle of a 1344x768 still
+    // and shrunk to a 480px JPEG. Keeping that picture is Claude's reading.
+    key: "maximous",
+    src: "/maximous-and-gawargious.mp3",
+    name: "Maximous and Gawargious",
     date: "2026-11-24",
     line: "",
-    file: "belize.mp3",
+    file: "maximous-and-gawargious.mp3",
     cover: "/belize.jpg",
   },
   {
