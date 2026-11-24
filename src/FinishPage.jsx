@@ -14,7 +14,11 @@ import { buildTeamTable, ordinal, FIRST_H2_ROUND } from "./teamTable";
 import { buildPlayerTable } from "./playerTable";
 import { ranges, project, projectPlayers, ZONES, LAST_ROUND } from "./finishRange";
 import { PlayerTap, TeamTap } from "./PlayerCard.jsx";
+import { careerOf } from "./history.js";
 import Loading from "./Loading.jsx";
+
+// The season "your place last year" is read from, off history.js.
+const LAST_YEAR = 2025;
 
 const WRAP = { maxWidth: 480, margin: "0 auto", padding: "0 16px 96px" };
 const TITLE_SIZE = titleFit("TWO WEEKS LEFT", { fill: 0.95, min: 15 });
@@ -331,16 +335,59 @@ function Bars({ items, color, all }) {
 
 // Your own finish: one bar a place, as tall as the forecast makes it likely,
 // for every place with a real chance. Where you are now is lit.
-function PlaceBars({ dist, now }) {
+//
+// With `beat`, a place to finish above (last year's): every place higher than
+// it is green, the rest blue, where you are now is the lit bar, and a key
+// under the chart names the three.
+function PlaceBars({ dist, now, beat, beatLabel, vertical }) {
   const live = dist.map((v, i) => [i + 1, v]).filter(([, v]) => v >= 0.005);
   if (!live.length) return null;
   const first = live[0][0], last = live[live.length - 1][0], peak = Math.max(...dist);
   const span = Array.from({ length: last - first + 1 }, (_, i) => first + i);
+  const tone = p => (beat ? (p < beat ? V.green : V.blue) : p === now ? V.green : V.blue);
+  const key = { display: "inline-flex", alignItems: "center", gap: 5 };
+  // Vertical (Andrew, 2026-11-24: "your chance of each place should be
+  // vertical"): the places run down the card, one row each, the bar out to
+  // the right and the chance at its end. With `beat`, a dashed line sits
+  // above the place to finish higher than.
+  if (vertical) {
+    const cols = "38px minmax(0, 1fr) 44px";
+    return (
+      <div style={{ ...card({ padding: "10px 12px" }), display: "grid", gap: 3 }}>
+        {span.map((p, i) => {
+          const v = dist[p - 1], c = tone(p), mine = p === now;
+          return (
+            <Fragment key={p}>
+              {beat === p && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "3px 0" }}>
+                  <span style={{ flex: 1, borderTop: `2px dashed ${V.green}` }} />
+                  <span style={{ ...label({ fontSize: 12, color: V.green }), ...textGlow(V.green, 0.6) }}>{"↑"} Higher than {beatLabel}</span>
+                  <span style={{ flex: 1, borderTop: `2px dashed ${V.green}` }} />
+                </div>
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: cols, alignItems: "center", gap: 8, borderRadius: 7,
+                ...(mine ? { margin: "0 -6px", padding: "2px 6px", background: `${V.text}14`, boxShadow: `0 0 0 1.5px ${V.text}` } : {}) }}>
+                <span style={{ ...numeric("chip", { fontSize: 14, color: mine ? V.text : V.text2 }) }}>P{p}</span>
+                <span style={{ height: 14, borderRadius: 7, background: V.bg3, overflow: "hidden" }}>
+                  <span className="fr-grow" style={{ "--d": `${i * 0.03}s`, display: "block", height: "100%", width: `${Math.max(2, (v / peak) * 100)}%`,
+                    borderRadius: 7, background: c, boxShadow: mine ? `0 0 10px ${c}` : "none" }} />
+                </span>
+                <span style={{ ...numeric("chip", { fontSize: 14, color: V.text }), textAlign: "right" }}>{pct(v)}</span>
+              </div>
+            </Fragment>
+          );
+        })}
+        <div style={{ ...label({ fontSize: 12, color: V.text2 }), textAlign: "center", marginTop: 6 }}>
+          <span style={key}><span style={{ width: 12, height: 12, borderRadius: 3, boxShadow: `0 0 0 1.5px ${V.text}` }} />P{now}, where you are now</span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div style={{ ...card({ padding: "12px 10px 8px" }) }}>
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${span.length}, minmax(0, 1fr))`, gap: 3, alignItems: "end", height: 132 }}>
         {span.map((p, i) => {
-          const v = dist[p - 1], c = p === now ? V.green : V.blue;
+          const v = dist[p - 1], c = tone(p);
           return (
             <div key={p} style={{ display: "grid", justifyItems: "center", alignContent: "end", height: "100%", gap: 3 }}>
               {(v >= 0.04 || p === now) && <span style={{ ...numeric("chip", { fontSize: span.length > 12 ? 9 : 12, color: V.text, letterSpacing: 0 }), whiteSpace: "nowrap" }}>{Math.round(v * 100)}%</span>}
@@ -354,11 +401,18 @@ function PlaceBars({ dist, now }) {
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${span.length}, minmax(0, 1fr))`, gap: 3, marginTop: 4,
         borderTop: `1px solid ${V.border2}`, paddingTop: 4 }}>
         {span.map(p => (
-          <span key={p} style={{ ...numeric("chip", { fontSize: span.length > 14 ? 10 : 12, color: p === now ? V.green : V.text2 }), textAlign: "center" }}>
+          <span key={p} style={{ ...numeric("chip", { fontSize: span.length > 14 ? 10 : 12, color: p === now ? (beat ? V.text : V.green) : V.text2 }), textAlign: "center" }}>
             {span.length > 20 && p % 2 === 0 && p !== now ? "" : p}
           </span>
         ))}
       </div>
+      {beat && (
+        <div style={{ display: "flex", gap: "4px 14px", flexWrap: "wrap", justifyContent: "center", marginTop: 8, ...label({ fontSize: 11, color: V.text2 }) }}>
+          <span style={key}><span style={{ width: 10, height: 10, borderRadius: 3, background: V.green }} />Higher than {beatLabel}</span>
+          <span style={key}><span style={{ width: 10, height: 10, borderRadius: 3, background: V.blue }} />{beatLabel} or lower</span>
+          <span style={key}><span style={{ width: 10, height: 10, borderRadius: 3, background: tone(now), boxShadow: `0 0 8px ${tone(now)}`, border: `1.5px solid ${V.text}` }} />P{now} now</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -400,7 +454,9 @@ const Cup = ({ size = 13 }) => (
 // Your score each week against the league's average score that week: a bar
 // up for a week above it, down for a week below, the difference on the bar,
 // and a cup on a week you finished on the podium.
-function DeltaBars({ weeks }) {
+// With `versus`, the same chart against one other player: `avg` on each week is
+// their score, `up` and `down` name the two colours, and the cup is left out.
+function DeltaBars({ weeks, versus, up: upWord = "Above average", down: downWord = "Below average" }) {
   if (!weeks.length) return null;
   const top = Math.max(...weeks.map(w => Math.abs(w.score - w.avg)), 1), H = 70;
   const hUp = (Math.max(...weeks.map(w => w.score - w.avg), 0) / top) * H, hDown = (Math.max(...weeks.map(w => w.avg - w.score), 0) / top) * H;
@@ -408,12 +464,13 @@ function DeltaBars({ weeks }) {
     <div style={{ ...card({ padding: "10px 10px 8px" }), width: "100%" }}>
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`, gap: 3 }}>
         {weeks.map((w, i) => {
-          const d = Math.round(w.score - w.avg), up = d >= 0, c = up ? V.green : V.pink, h = Math.max(2, (Math.abs(w.score - w.avg) / top) * H);
+          // Against one player a level week belongs to neither, so it is grey.
+          const d = Math.round(w.score - w.avg), up = d >= 0, c = versus && w.score === w.avg ? V.text3 : up ? V.green : V.pink, h =Math.max(2, (Math.abs(w.score - w.avg) / top) * H);
           const num = <span style={{ ...numeric("chip", { fontSize: 9, color: V.text, letterSpacing: 0 }), lineHeight: 1.2 }}>{d > 0 ? `+${d}` : d}</span>;
           const bar = <span className="fr-up" style={{ "--d": `${i * 0.03}s`, transformOrigin: up ? "bottom" : "top", width: "100%", height: h,
             borderRadius: up ? "4px 4px 0 0" : "0 0 4px 4px", background: c, boxShadow: w.place && w.place <= 3 ? `0 0 10px ${c}` : "none" }} />;
           return (
-            <span key={w.round} title={`Round ${w.round}: ${w.score}, average ${w.avg.toFixed(1)}`} style={{ display: "grid", gridTemplateRows: `${hUp + 30}px ${hDown + 16}px auto` }}>
+            <span key={w.round} title={versus ? `Round ${w.round}: ${w.score}, ${versus} ${w.avg}` : `Round ${w.round}: ${w.score}, average ${w.avg.toFixed(1)}`} style={{ display: "grid", gridTemplateRows: `${hUp + 30}px ${hDown + 16}px auto` }}>
               <span style={{ display: "grid", justifyItems: "center", alignContent: "end", gap: 1, borderBottom: `1.5px solid ${V.text2}` }}>
                 {w.place && w.place <= 3 && <Cup />}
                 {up && num}{up && bar}
@@ -427,9 +484,9 @@ function DeltaBars({ weeks }) {
         })}
       </div>
       <div style={{ display: "flex", gap: "4px 14px", flexWrap: "wrap", justifyContent: "center", marginTop: 6, ...label({ fontSize: 11, color: V.text2 }) }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: V.green }} />Above average</span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: V.pink }} />Below average</span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Cup size={12} />Podium</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: V.green }} />{upWord}</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 10, height: 10, borderRadius: 3, background: V.pink }} />{downWord}</span>
+        {!versus && <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Cup size={12} />Podium</span>}
       </div>
     </div>
   );
@@ -476,14 +533,14 @@ const Tile = ({ k, v, sub, color = V.text }) => (
 );
 
 // What the reader is fighting for, one lit line each, the chance beside it.
-function Fights({ items }) {
+function Fights({ items, size = 22 }) {
   return (
     <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
       {items.map(([c, t, v, pic], i) => (
         <div key={t} className="fr-rise" style={{ "--d": `${0.3 + i * 0.15}s`, display: "flex", alignItems: "center", gap: 12, padding: "14px 14px", borderRadius: 16,
           background: V.bg3, border: `2px solid ${c}`, boxShadow: `0 0 16px ${c}66` }}>
           {pic}
-          <span style={{ flex: 1, ...display("h2", { fontSize: 22, color: c }), ...textGlow(c, 0.7), lineHeight: 1.15 }}>{t}</span>
+          <span style={{ flex: 1, ...display("h2", { fontSize: size, color: c }), ...textGlow(c, 0.7), lineHeight: 1.15 }}>{t}</span>
           {v && <span style={{ ...numeric("hero", { fontSize: 32, color: V.text }) }}>{v}</span>}
         </div>
       ))}
@@ -516,12 +573,12 @@ function FightRows({ items, color, cut, cutLabel }) {
             <span style={{ display: "grid", gap: 5, minWidth: 0 }}>
               <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
                 <span style={{ ...display("chip", { fontSize: 16, color: x.mine ? V.green : V.text }), lineHeight: 1.1 }}>{x.name}</span>
-                <span style={{ ...numeric("chip", { fontSize: 13, color: V.text2 }), whiteSpace: "nowrap" }}>{ordinal(x.place)} · {x.pts} pts</span>
+                <span style={{ ...numeric("chip", { fontSize: 13, color: x.tone || V.text2 }), whiteSpace: "nowrap" }}>{x.sub || `${ordinal(x.place)} · ${x.pts} pts`}</span>
               </span>
               {x.v != null && (
                 <span style={{ height: 12, borderRadius: 6, background: V.bg3, overflow: "hidden" }}>
                   <span className="fr-grow" style={{ "--d": `${0.15 + i * 0.05}s`, display: "block", height: "100%", width: `${Math.max(2, x.v * 100)}%`,
-                    borderRadius: 6, background: color, boxShadow: `0 0 10px ${color}` }} />
+                    borderRadius: 6, background: x.tone || color, boxShadow: `0 0 10px ${x.tone || color}` }} />
                 </span>
               )}
             </span>
@@ -535,12 +592,11 @@ function FightRows({ items, color, cut, cutLabel }) {
   return <div style={{ ...card({ padding: "12px 12px" }), display: "grid", gap: 10 }}>{out}</div>;
 }
 
-// How the last two weeks work, at the top, drawn. Two numbered weeks and the
-// promotion ladder. The sentences are Andrew's, from his messages of
-// 2026-11-23, typos fixed.
-function Explainer({ left, names, me, myPlace, opp, oppPlace, divKey, rows, all }) {
-  const txt = { ...body("body", { fontSize: 16, color: V.text, lineHeight: 1.35 }) };
-  const versus = (a, aPlace, b, bPlace, bName) => (
+// Two teams face to face: logo, short name and place, yours lit green and
+// theirs pink. With no `b` the other side is a dashed ? box, for a matchup
+// that is not set yet.
+function Versus({ a, aPlace, b, bPlace, bName }) {
+  return (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)", alignItems: "center", gap: 8, margin: "12px 0 10px" }}>
       <div className="fr-rise" style={{ display: "grid", justifyItems: "center", gap: 3, textAlign: "center" }}>
         <Logo src={a.logo} name={a.name} size={56} glow={V.green} />
@@ -557,6 +613,30 @@ function Explainer({ left, names, me, myPlace, opp, oppPlace, divKey, rows, all 
       </div>
     </div>
   );
+}
+
+// The last round's seeding as pills: 1 v 12, 2 v 11 and so on. `lit` is a
+// place whose pill is lit green.
+function SeedPills({ n = 12, lit = null }) {
+  const pairs = Array.from({ length: n / 2 }, (_, i) => [i + 1, n - i]);
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, marginTop: 10, width: "100%" }}>
+      {pairs.map(([a, b]) => {
+        const mine = lit != null && (a === lit || b === lit);
+        return <span key={a} style={{ ...numeric("chip", { fontSize: 16, color: V.text }), textAlign: "center", padding: "5px 4px", borderRadius: 9,
+          background: mine ? `${V.green}22` : V.bg, border: `1.5px solid ${mine ? V.green : V.border2}`, boxShadow: mine ? `0 0 10px ${V.green}88` : "none" }}>
+          {a} <span style={{ color: V.text3 }}>v</span> {b}</span>;
+      })}
+    </div>
+  );
+}
+
+// How the last two weeks work, at the top, drawn. Two numbered weeks and the
+// promotion ladder. The sentences are Andrew's, from his messages of
+// 2026-11-23, typos fixed.
+function Explainer({ left, names, me, myPlace, opp, oppPlace, divKey, rows, all }) {
+  const txt = { ...body("body", { fontSize: 16, color: V.text, lineHeight: 1.35 }) };
+  const versus = (a, aPlace, b, bPlace, bName) => <Versus a={a} aPlace={aPlace} b={b} bPlace={bPlace} bName={bName} />;
   const week = (n, c, when, name, kids, d) => (
     <div className="fr-rise" style={{ "--d": `${d}s`, padding: "12px 14px", borderRadius: 16, background: V.bg3, border: `1.5px solid ${c}`, boxShadow: `0 0 12px ${c}44` }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -572,7 +652,6 @@ function Explainer({ left, names, me, myPlace, opp, oppPlace, divKey, rows, all 
   );
   const N = rows ? rows.length : 12;
   const seedOpp = me && rows ? rows[N - myPlace] : null;
-  const pairs = Array.from({ length: N / 2 }, (_, i) => [i + 1, N - i]);
   const z = ZONES;
   // One division as it stands: every team's logo in table order, outlined in
   // the colour of what that place means, the place under it.
@@ -612,14 +691,7 @@ function Explainer({ left, names, me, myPlace, opp, oppPlace, divKey, rows, all 
         {me && left === 2 && versus(me, null, null, null, "Decided after this week")}
         {me && left === 1 && opp && versus(me, myPlace, opp, oppPlace, opp.short)}
         <div style={{ ...txt, marginTop: me ? 0 : 10 }}>{left === 2 ? "Your opponent is determined by where you are after this week. " : ""}#1 vs #12, #2 vs #11 in each division, giving the advantage to top teams. We're still live, and the points count as any other.</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, marginTop: 10 }}>
-          {pairs.map(([a, b]) => {
-            const mine = me && left === 2 && (a === myPlace || b === myPlace);
-            return <span key={a} style={{ ...numeric("chip", { fontSize: 16, color: V.text }), textAlign: "center", padding: "5px 4px", borderRadius: 9,
-              background: mine ? `${V.green}22` : V.bg, border: `1.5px solid ${mine ? V.green : V.border2}`, boxShadow: mine ? `0 0 10px ${V.green}88` : "none" }}>
-              {a} <span style={{ color: V.text3 }}>v</span> {b}</span>;
-          })}
-        </div>
+        <SeedPills n={N} lit={me && left === 2 ? myPlace : null} />
         {me && left === 2 && seedOpp && seedOpp.id !== me.id && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, ...label({ fontSize: 12, color: V.text }) }}>
             <Logo src={seedOpp.logo} name={seedOpp.name} size={24} />
@@ -695,15 +767,23 @@ function Duel({ a, b, team, pA, rounds, mine, big, compact }) {
         <div style={{ textAlign: "center" }}>
           <div style={{ ...numeric("hero", { fontSize: big ? 34 : 24, color: V.text }), lineHeight: 1 }}>{a.pts - b.pts}</div>
           <div style={{ ...label({ fontSize: 11, color: V.text2 }), marginTop: 2 }}>points apart</div>
-          <div style={{ ...numeric("chip", { fontSize: 14, color: V.text }), marginTop: 6 }}>
-            <span style={{ color: ca }}>{aw}</span> · {lv} · <span style={{ color: cb }}>{bw}</span></div>
-          <div style={{ ...label({ fontSize: 11, color: V.text2 }) }}>weeks won</div>
         </div>
         {who(b, cb, true)}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${rounds.length}, minmax(0, 1fr))`, gap: 2, marginTop: 10 }}>
+      {/* Weeks won, on a row of its own and big (Andrew, 2026-11-24: "weeks
+          won between teammates is too small"): each side's count over its
+          end of the strip, level weeks in the middle. */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "end", marginTop: 12 }}>
+        <span style={{ ...numeric("hero", { fontSize: big ? 40 : 26, color: ca }), ...textGlow(ca, 0.6), lineHeight: 1, textAlign: "left" }}>{aw}</span>
+        <span style={{ textAlign: "center" }}>
+          <span style={{ display: "block", ...label({ fontSize: big ? 14 : 12, color: V.text }) }}>weeks won</span>
+          {lv > 0 && <span style={{ display: "block", ...label({ fontSize: 12, color: V.text2 }) }}>{lv} level</span>}
+        </span>
+        <span style={{ ...numeric("hero", { fontSize: big ? 40 : 26, color: cb }), ...textGlow(cb, 0.6), lineHeight: 1, textAlign: "right" }}>{bw}</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${rounds.length}, minmax(0, 1fr))`, gap: 2, marginTop: 6 }}>
         {rounds.map((r, i) => (
-          <span key={r.round} className="fr-fill" title={`Round ${r.round}: ${r.a} to ${r.b}`} style={{ "--d": `${i * 0.03}s`, height: big ? 16 : 10, borderRadius: 3,
+          <span key={r.round} className="fr-fill" title={`Round ${r.round}: ${r.a} to ${r.b}`} style={{ "--d": `${i * 0.03}s`, height: big ? 28 : 16, borderRadius: 4,
             background: r.a > r.b ? ca : r.b > r.a ? cb : V.border2, opacity: r.a === r.b ? 1 : 0.9 }} />
         ))}
       </div>
@@ -823,13 +903,17 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
     };
     const range = {};
     Object.keys(divisions).forEach(k => { range[k] = ranges(divisions[k], { scored, pairs: pairsFor(k, scored + 1) }); });
-    const forecast = project(divisions, { scored, pairsFor });
+    // The whole season, for the two odds that run across it: the highest
+    // scoring team and the best record, both out of all 24.
+    const season = buildTeamTable(db);
+    const seasonOf = Object.fromEntries(season.map(r => [r.id, {
+      sum: r.weeks.reduce((a, x) => a + x.score, 0), n: r.weeks.length, half: (r.w || 0) + (r.d || 0) / 2 }]));
+    const forecast = project(divisions, { scored, pairsFor, season: seasonOf });
     const playerRows = buildPlayerTable(db);
     const left = Math.max(0, LAST_ROUND - scored);
     const mates = {};
     db.teams.forEach(t => { if (t.player1_id && t.player2_id) { mates[t.player1_id] = t.player2_id; mates[t.player2_id] = t.player1_id; } });
     const playerForecast = projectPlayers(playerRows, { left, mates });
-    const season = buildTeamTable(db);
     return { scored, left, divisions, range, forecast, playerRows, playerForecast, roundOf, pairsFor, season, table };
   }, [state.db]);
 
@@ -1013,90 +1097,147 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
       .map(({ r, i }) => ({ id: r.id, name: r.short, place: i + 1, pts: r.pts, v: val(forecast.teams[r.id]), mine: r.id === mineId,
         wrap: kids => <TeamTap id={r.id} style={{ display: "block" }}>{kids}</TeamTap>,
         pic: <Logo src={r.logo} name={r.name} size={40} glow={r.id === mineId ? V.green : null} /> }));
-    const sign = (t, c) => (
+    const sign = (t, c, fs = 25) => (
       <div style={{ display: "inline-block", padding: "6px 16px 7px", borderRadius: 14, ...edgeGlow(c, 1), background: `${c}0d`,
-        ...display("h1", { fontSize: 25 }), ...textGlow(c, 1), textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.12 }}>{t}</div>
+        ...display("h1", { fontSize: fs }), ...textGlow(c, 1), textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.12 }}>{t}</div>
     );
     const what = t => <div style={{ ...label({ fontSize: 13, color: V.text }), width: "100%", textAlign: "left", marginBottom: -4 }}>{t}</div>;
     const say = t => <div style={{ ...body("body", { fontSize: 18, color: V.text, lineHeight: 1.35 }), maxWidth: 420 }}>{t}</div>;
     const left_ = kids => <div style={{ width: "100%", textAlign: "left" }}>{kids}</div>;
-    const gapTeam = ti < 0 ? null : around(divisions[myDiv], ti).map(j => {
-      const r = divisions[myDiv][j], me = j === ti;
-      return { key: r.id, me, place: j + 1, name: r.short, pts: r.pts, wrap: kids => <TeamTap id={r.id} style={{ display: "block" }}>{kids}</TeamTap>,
-        pic: <Logo src={r.logo} name={r.name} size={me ? 64 : 46} glow={me ? V.green : null} /> };
-    });
-    const gapMe = k < 0 ? null : around(playerRows, k).map(j => {
-      const r = playerRows[j], me = j === k;
-      return { key: r.id, me, place: j + 1, name: r.name, pts: r.pts, wrap: kids => <PlayerTap name={r.name} block>{kids}</PlayerTap>,
-        pic: <Face src={r.photo} name={r.name} size={me ? 64 : 46} ring={me ? V.green : j < k ? V.pink : V.blue} glow={me} /> };
-    });
-    const sec1 = divisions.second[0];
-    const secWon = sec1 && left > 0 && (range.second && range.second[sec1.id] ? range.second[sec1.id].worst === 1 : forecast.teams[sec1.id].title > 0.995);
-    const champBlock = (
-      <Fragment key="c">
-        {what("Chance of winning the Championship Division")}
-        {left_(<FightRows items={tRows("championship", f => f.title)} color={V.gold} />)}
-        {what("Chance of being relegated")}
-        {left_(<FightRows items={tRows("championship", f => 1 - f.up, false)} color={V.pink} cut={8} cutLabel={"↓ Relegated"} />)}
-      </Fragment>
-    );
-    const secBlock = (
-      <Fragment key="s">
-        {what("Chance of being promoted to the Championship Division")}
-        {left_(<FightRows items={tRows("second", f => f.up)} color={V.green} cut={4} cutLabel={"↑ Promoted"} />)}
-        {secWon && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", padding: "10px 12px", borderRadius: 14,
-            background: V.bg3, border: `1.5px solid ${V.gold}`, boxShadow: `0 0 12px ${V.gold}55` }}>
-            <Logo src={sec1.logo} name={sec1.name} size={44} glow={V.gold} />
-            <span style={{ ...body("body", { fontSize: 16, color: V.text, lineHeight: 1.3 }) }}>The Second Division has already been won by {sec1.name}.</span>
-          </div>
-        )}
-      </Fragment>
-    );
-    const bestDuels = duels.filter(d => d !== myDuel).slice(0, 2);
+    // What are the odds? Andrew, 2026-11-24: "give people the odds for each
+    // thing happening", led by what is most relevant and most likely for the
+    // reader and their team, and leaving out what is irrelevant to them. One
+    // card an odd: the event in his words, the chance, and the graphic that
+    // already draws that question.
+    //
+    // The order: the prizes first (player championship, top 12, the division,
+    // promotion, relegation, the highest scoring team, the best record), then
+    // the personal ones (last year's place, the teammate, last place), and
+    // inside each group the more likely before the less. An odd under 1% is
+    // irrelevant to the reader and is not shown, and neither is one that
+    // cannot apply: promotion in the Championship, relegation in the Second
+    // Division, last year's place for a rookie.
+    const myTeam = ti >= 0 ? divisions[myDiv][ti] : null;
+    const tf = myTeam ? forecast.teams[mineId] : null;
+    const divName = myDiv === "championship" ? "Championship Division" : "Second Division";
+    const mate = meP ? playerRows.find(r => r.teamId === meP.teamId && r.id !== meP.id) || null : null;
+    const mateFirst = mate ? mate.name.split(" ")[0] : "";
+    const lastYear = meP ? careerOf(meP.name).seasons.find(s => s.year === LAST_YEAR) || null : null;
+    const pHigher = lastYear && myF ? myF.dist.slice(0, lastYear.place - 1).reduce((a, x) => a + x, 0) : null;
+    const vsMate = meP && mate ? Object.keys(meP.byRace).filter(id => mate.byRace[id] != null)
+      .map(id => ({ round: roundOf[id], score: meP.byRace[id], avg: mate.byRace[id], place: null }))
+      .sort((a, b) => a.round - b.round) : [];
+    const facePic = meP ? <Face src={meP.photo} name={meP.name} size={40} ring={V.green} /> : null;
+    const logoPic = myTeam ? <Logo src={myTeam.logo} name={myTeam.name} size={40} /> : null;
+
+    // A division's rows coloured by where each team is now (Andrew,
+    // 2026-11-24: different colours for the teams currently in the promotion
+    // zone, and the relegation zone): green in the places that go up, pink in
+    // the places that go down, gold in the 8th against 5th place, blue for the rest.
+    const zoned = (d, val, always) => tRows(d, val, always).map(x => ({ ...x, tone: zoneTone(d, x.place) || V.blue }));
+    const every = [];
+    const odd = o => { if (o.p != null) every.push(o); };
+    if (meP && myF) {
+      odd({ key: "champ", tier: 0, p: myF.title, color: V.gold, pic: facePic, event: "You win the player championship", body: <>
+        {playerForecast[leader.id].title >= 0.9 && say(`${leader.name.split(" ")[0]} has run away with it.`)}
+        {what("Chance of finishing 1st")}
+        {left_(<FightRows items={pRows("title", V.gold, v => v >= 0.01)} color={V.gold} />)}
+      </> });
+      odd({ key: "top12", tier: 0, p: myF.top12, color: V.pink, pic: facePic, scrolls: true, event: "You finish top 12 in the player championship", body: <>
+        {say("Those who finish in the top 12 get a special status, to be revealed going into the offseason.")}
+        {what("Chance of a top 12 finish")}
+        {left_(<FightRows items={pRows("top12", V.pink)} color={V.pink} cut={12} cutLabel={"↑ Top 12"} />)}
+      </> });
+    }
+    if (myTeam && tf) {
+      odd({ key: "division", tier: 0, p: tf.title, color: V.gold, pic: logoPic, event: `Your team wins the ${divName}`, body: <>
+        {what(`Chance of winning the ${divName}`)}
+        {left_(<FightRows items={tRows(myDiv, f => f.title)} color={V.gold} />)}
+      </> });
+      const places = <>
+        {what(`${myTeam.short}: chance of each place`)}
+        {left_(<Legend divKey={myDiv} row={myTeam} now={ti + 1} rg={myRange} f={tf} rows={divisions[myDiv]} />)}
+        {what(myDiv === "second" ? "Chance of being promoted to the Championship Division" : "Chance of being relegated")}
+        {left_(myDiv === "second"
+          ? <FightRows items={zoned("second", f => f.up, true)} color={V.green} cut={4} cutLabel={"↑ Promoted"} />
+          : <FightRows items={zoned("championship", f => 1 - f.up, false)} color={V.pink} cut={8} cutLabel={"↓ Relegated"} />)}
+      </>;
+      if (myDiv === "second") odd({ key: "promoted", tier: 0, p: tf.up, color: V.green, pic: logoPic, scrolls: true, event: "Your team gets promoted", body: places });
+      if (myDiv === "championship") odd({ key: "relegated", tier: 0, p: 1 - tf.up, color: V.pink, pic: logoPic, scrolls: true, event: "Your team gets relegated", body: places });
+      // The two that run across the whole season and all 24 teams.
+      odd({ key: "topscore", tier: 0, p: tf.topScore, color: V.blue, pic: logoPic, event: "You are on the highest scoring team at the end of the season", body: <>
+        {what("Season scoring average")}
+        {left_(<ScoreBars items={byAvg(season)} color={V.blue} mineId={mineId} />)}
+      </> });
+      const half = r => (r.w || 0) + (r.d || 0) / 2;
+      const byRecord = season.slice().sort((a, b) => half(b) - half(a) || b.avgRaw - a.avgRaw)
+        .filter(r => forecast.teams[r.id] && (two(forecast.teams[r.id].bestRecord) || r.id === mineId))
+        .map((r, i) => ({ id: r.id, name: r.short, place: i + 1, pts: r.pts, sub: `${r.w}-${r.l}${r.d ? `-${r.d}` : ""}`,
+          v: forecast.teams[r.id].bestRecord, mine: r.id === mineId,
+          wrap: kids => <TeamTap id={r.id} style={{ display: "block" }}>{kids}</TeamTap>,
+          pic: <Logo src={r.logo} name={r.name} size={40} glow={r.id === mineId ? V.green : null} /> }));
+      odd({ key: "record", tier: 0, p: tf.bestRecord, color: V.gold, pic: logoPic, event: "Your team has the best record at the end of the season", body: <>
+        {what("Chance of the best record, with the record now")}
+        {left_(<FightRows items={byRecord} color={V.gold} />)}
+      </> });
+    }
+    if (meP && myF) {
+      if (lastYear) odd({ key: "lastyear", tier: 1, p: pHigher, color: V.green, pic: facePic, scrolls: true, event: "You finish higher than your place last year", body: <>
+        {what("Your chance of each place")}
+        {left_(<PlaceBars vertical dist={myF.dist} now={k + 1} beat={lastYear.place} beatLabel={`P${lastYear.place} in ${LAST_YEAR}`} />)}
+      </> });
+      if (mate && myDuel) odd({ key: "outscore", tier: 1, p: myF.aheadOfMate, color: V.blue, pic: facePic, event: "You outscore your teammate", body: <>
+        {left_(<Duel {...myDuel} mine={currentUser} big />)}
+      </> });
+      if (mate && myF.h2h && vsMate.length > 0) odd({ key: "h2h", tier: 1, p: myF.moreWinsThanMate, color: V.blue, pic: facePic,
+        event: "You have more wins against your teammate than losses", body: <>
+        <div style={{ display: "flex", gap: 6, width: "100%" }}>
+          <Tile k="Weeks won" v={myF.h2h.w} color={V.green} />
+          <Tile k="Weeks lost" v={myF.h2h.l} color={V.pink} />
+          {vsMate.length - myF.h2h.w - myF.h2h.l > 0 && <Tile k="Level" v={vsMate.length - myF.h2h.w - myF.h2h.l} />}
+          <Tile k="Weeks left" v={left} />
+        </div>
+        {what(`Your score against ${mateFirst}'s each week`)}
+        <DeltaBars weeks={vsMate} versus={mateFirst} up="You won the week" down={`${mateFirst} won the week`} />
+      </> });
+      odd({ key: "last", tier: 1, p: myF.last, color: V.pink, pic: facePic, event: "You finish in last place", body: <>
+        {what("Chance of finishing last")}
+        {left_(<FightRows items={pRows("last", V.pink)} color={V.pink} />)}
+      </> });
+    }
+    // Under 1% is left out, and over 99% keeps its card (Andrew: "over 99%
+    // should absolutely get cards of their own"). A reader left with fewer
+    // than three gets the likeliest of what was left out, the personal ones
+    // first, so nobody's deck is empty ("include a couple things anyway").
+    const odds = every.filter(o => o.p >= 0.01);
+    every.filter(o => o.p < 0.01).sort((a, b) => b.tier - a.tier || b.p - a.p)
+      .slice(0, Math.max(0, 3 - odds.length)).forEach(o => odds.push(o));
+    // Open odds lead and the ones over 99% follow (Andrew, 2026-11-24: "lead
+    // with open odds"); inside each, the prizes then the personal ones, the
+    // more likely first.
+    const done = o => (o.p > 0.99 ? 1 : 0);
+    odds.sort((a, b) => done(a) - done(b) || a.tier - b.tier || b.p - a.p);
+    const open = odds;
+
     const btn = (t, fn, fill) => (
       <button onClick={fn} style={{ ...display("h3", { fontSize: 17, color: fill ? V.bg : V.blue }), background: fill ? V.blue : "transparent",
         border: `1.5px solid ${V.blue}`, borderRadius: 999, padding: "13px 20px", cursor: "pointer", width: "100%", maxWidth: 340,
         boxShadow: fill ? `0 0 18px ${V.blue}77` : "none", textTransform: "uppercase" }}>{t}</button>
     );
+    const kicker = (
+      <div style={{ ...display("h3", { fontSize: 17, color: V.pink }), ...textGlow(V.pink, 0.8), textTransform: "uppercase", letterSpacing: "0.1em" }}>What are the odds</div>
+    );
     const cards = [
-      { key: "open", body: <>
-        {sign(left === 1 ? "One week left" : "Two weeks left", V.pink)}
-        {say(`All right, folks, we got ${left} week${left === 1 ? "" : "s"} left to go. Let's see where we are in the standings.`)}
-        {gapMe && what(meP.name)}
-        {gapMe && <GapRow items={gapMe} />}
-        {gapTeam && what(divisions[myDiv][ti].short)}
-        {gapTeam && <GapRow items={gapTeam} />}
-      </> },
-      { key: "top12", scrolls: true, body: <>
-        {sign("Race for the top 12", V.pink)}
-        {say("Those who finish in the top 12 get a special status, to be revealed going into the offseason.")}
-        {what("Chance of a top 12 finish")}
-        {left_(<FightRows items={pRows("top12", V.pink)} color={V.pink} cut={12} cutLabel={"↑ Top 12"} />)}
-      </> },
-      { key: "teams", scrolls: true, body: <>
-        {sign("The team fights", V.gold)}
-        {myDiv === "second" ? [secBlock, champBlock] : [champBlock, secBlock]}
-      </> },
-      { key: "champ", body: <>
-        {sign("The fight for the player championship", V.gold)}
-        {playerForecast[leader.id].title >= 0.9 && say(`${leader.name.split(" ")[0]} has run away with it.`)}
-        {what("Chance of finishing 1st")}
-        {left_(<FightRows items={pRows("title", V.gold, v => v > 0)} color={V.gold} />)}
-      </> },
-      { key: "mates", body: <>
-        {sign("Best teammate battles", V.blue)}
-        {left_(<div style={{ display: "grid", gap: 8 }}>
-          {bestDuels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} />)}
-          {myDuel && <Duel {...myDuel} mine={currentUser} big />}
-        </div>)}
-      </> },
-      { key: "you", last: true, body: <>
-        {sign(meP ? "Your chances of a strong finish" : "The last two weeks", V.green)}
-        {meP && myF && what("Your chance of each place")}
-        {meP && myF && left_(<PlaceBars dist={myF.dist} now={k + 1} />)}
-        {meP && myWeeks.length > 0 && what("Your score against the average score that week")}
-        {meP && myWeeks.length > 0 && <DeltaBars weeks={myWeeks} />}
+      ...open.map(o => ({ key: o.key, scrolls: o.scrolls, body: <>
+        {kicker}
+        {sign(o.event, o.color, 22)}
+        <div className="fr-pop" style={{ ...numeric("hero", { fontSize: 76, color: o.color }), ...textGlow(o.color, 0.9), lineHeight: 1 }}>{pct(o.p)}</div>
+        {o.body}
+      </> })),
+      // The last card: every odd again on one line each, and the two ways on.
+      { key: "end", last: true, scrolls: odds.length > 4, body: <>
+        {sign("What are the odds?", V.pink)}
+        {odds.length > 0 && left_(<Fights size={17} items={odds.map(o => [o.color, o.event, pct(o.p), o.pic])} />)}
         {onPicks && btn("Make your picks", onPicks, true)}
         {onMore && btn("The last two weeks", onMore, false)}
       </> },
