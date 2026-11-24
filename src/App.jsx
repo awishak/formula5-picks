@@ -40,7 +40,9 @@ import { LeagueNote } from "./LeagueNote.jsx";
 // 21 reset 2026-11-23: the last two rounds gate on the two-weeks-left deck
 // (FinishPage view="deck") in place of the weekly recap, Andrew's call, and 22
 // will too: "i don't think we need the normal weekly recap next week".
-const WEEK_SEEN_V = { 15: "v2", 16: "v2", 21: "v2" };
+// 21 again on 2026-11-24, to v3: the deck became What are the odds? a day
+// later, and Andrew wanted everyone who had closed the first one to get it once.
+const WEEK_SEEN_V = { 15: "v2", 16: "v2", 21: "v3" };
 const STRETCH_ROUNDS = new Set([21, 22]);
 import Paddock from "./Paddock.jsx";
 import { NEWS } from "./news";
