@@ -1214,7 +1214,15 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
     // than three gets the likeliest of what was left out, the personal ones
     // first, so nobody's deck is empty ("include a couple things anyway").
     const odds = every.filter(o => o.p >= 0.01);
-    every.filter(o => o.p < 0.01).sort((a, b) => b.tier - a.tier || b.p - a.p)
+    // Everybody sees at least one team odd, at 0% if it comes to that
+    // (Andrew, 2026-11-24): the likeliest, and level on that, promotion or
+    // relegation before the division, the scoring and the record.
+    const TEAM = ["promoted", "relegated", "division", "topscore", "record"];
+    if (!odds.some(o => TEAM.includes(o.key))) {
+      const t = every.filter(o => TEAM.includes(o.key)).sort((a, b) => b.p - a.p || TEAM.indexOf(a.key) - TEAM.indexOf(b.key))[0];
+      if (t) odds.push(t);
+    }
+    every.filter(o => o.p < 0.01 && !odds.includes(o)).sort((a, b) => b.tier - a.tier || b.p - a.p)
       .slice(0, Math.max(0, 3 - odds.length)).forEach(o => odds.push(o));
     // Open odds lead and the ones over 99% follow (Andrew, 2026-11-24: "lead
     // with open odds"); inside each, the prizes then the personal ones, the
@@ -1243,14 +1251,25 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
     const moved = hadPrev && k >= 0 ? prevK - k : 0;
     const moveTone = moved > 0 ? V.green : moved < 0 ? V.pink : V.blue;
     const lastWeek = myWeeks.find(w => w.round === scored) || null;
+    // Results first, then the odds (Andrew, 2026-11-24: "cant say what are
+    // the odds then show old results"). The sign is the race that was, his
+    // sentence says how it went, and his second one turns to the odds. "A
+    // little" is his, for a move of three places or fewer; a bigger move
+    // says how many, and those words are Claude's.
+    const wasGp = lastGp || "the last race";
+    const went = !hadPrev ? null
+      : moved === 0 ? `In ${wasGp}, you held your place.`
+      : Math.abs(moved) <= 3 ? `In ${wasGp}, you ${moved < 0 ? "dropped" : "moved up"} a little.`
+      : `In ${wasGp}, you ${moved < 0 ? "dropped" : "moved up"} ${Math.abs(moved)} places.`;
     const lead = { key: "lead", body: <>
-      {sign("What are the odds?", V.pink, 28)}
+      {sign(lastGp || "The last race", V.blue, 28)}
       {meP && (
         <PlayerTap name={meP.name} block style={{ display: "grid", justifyItems: "center", gap: 8 }}>
           <span className="fr-pop"><Face src={meP.photo} name={meP.name} size={148} ring={V.green} glow /></span>
           <span style={{ ...display("h1", { fontSize: 30, color: V.text }), lineHeight: 1.05 }}>{meP.name}</span>
         </PlayerTap>
       )}
+      {went && say(went)}
       {meP && hadPrev && (
         <div className="fr-rise" style={{ "--d": "0.25s", ...card({ padding: "12px 14px" }), width: "100%", display: "grid", gap: 6, justifyItems: "center",
           border: `1.5px solid ${moveTone}`, boxShadow: `0 0 14px ${moveTone}55` }}>
@@ -1262,7 +1281,7 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
             <span style={{ ...numeric("hero", { fontSize: 56, color: moveTone }), ...textGlow(moveTone, 0.9), lineHeight: 1 }}>P{k + 1}</span>
           </div>
           <div style={{ ...display("h3", { fontSize: 19, color: moveTone }), textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            {moved > 0 ? `Up ${moved}` : moved < 0 ? `Down ${-moved}` : "Held your place"}{lastGp ? ` in ${lastGp}` : ""}</div>
+            {moved > 0 ? `Up ${moved}` : moved < 0 ? `Down ${-moved}` : "Held your place"}</div>
           {lastWeek && (
             <div style={{ display: "flex", gap: 6, width: "100%", marginTop: 4 }}>
               <Tile k="Your score" v={lastWeek.score} color={V.blue} />
@@ -1271,8 +1290,7 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
           )}
         </div>
       )}
-      {say(left === 1 ? `Hey, let's see what we have going on over the last race${gp1 ? ` in ${gp1}` : ""}.`
-        : `Hey, let's see what we have going on over the last two races${gp1 && gp2 ? ` in ${gp1} and ${gp2}` : ""}.`)}
+      {say(`Now let's look at your odds for the remaining ${left === 1 ? "week" : "two weeks"}.`)}
     </> };
     const buttons = <>
       {onPicks && btn("Make your picks", onPicks, true)}
@@ -1305,14 +1323,14 @@ export default function FinishPage({ currentUser, view, initialCard = 0, onExit,
       lead,
       ...open.map(o => ({ key: o.key, scrolls: o.scrolls, body: <>
         {kicker}
-        {sign(o.event, o.color, 22)}
+        {sign(`${o.event}?`, o.color, 22)}
         <div className="fr-pop" style={{ ...numeric("hero", { fontSize: 76, color: o.color }), ...textGlow(o.color, 0.9), lineHeight: 1 }}>{pct(o.p)}</div>
         {o.body}
       </> })),
       // Every odd again on one line each, then the closers.
       ...(odds.length > 0 ? [{ key: "all", scrolls: odds.length > 5, body: <>
         {sign("Your odds", V.pink)}
-        {left_(<Fights size={17} items={odds.map(o => [o.color, o.event, pct(o.p), o.pic])} />)}
+        {left_(<Fights size={17} items={odds.map(o => [o.color, `${o.event}?`, pct(o.p), o.pic])} />)}
       </> }] : []),
       ...closers,
     ];
