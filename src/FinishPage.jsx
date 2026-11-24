@@ -6,7 +6,7 @@
 // championship as a gap chart. Linked from the top of /teams and /players.
 // Nothing here scores anything: the tables come from teamTable.js and
 // playerTable.js like every other page.
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase, selectAll } from "./supabaseClient";
 import { V, FM, FN, display, numeric, label, body, card, textGlow, edgeGlow, titleFit, titleBox } from "./theme.vegas";
 import { buildTeamTable, ordinal, FIRST_H2_ROUND } from "./teamTable";
@@ -702,6 +702,7 @@ function ScoreBars({ items, color, mineId, fmt = v => v.toFixed(2) }) {
 
 export default function FinishPage({ currentUser, view }) {
   const [state, setState] = useState({ loading: true });
+  const [openFight, setOpenFight] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -934,10 +935,94 @@ export default function FinishPage({ currentUser, view }) {
     const close = d => d.pA != null && d.pA >= 0.15 && d.pA <= 0.85;
     const rest = duels.filter(d => d !== myDuel);
     const closeDuels = rest.filter(close), doneDuels = rest.filter(d => !close(d));
+    const go = key => { setOpenFight(key); window.scrollTo(0, 0); };
+    const F = {
+      title: tItems("title", f => f.title), stay: tItems("stay", f => f.up), promo: tItems("promo", f => f.up),
+      champ: pItems("title", v => v >= 0.01, V.gold), top3: pItems("podium", live, V.green), top12: pItems("top12", live, V.pink),
+    };
+
+    // One fight in full, reached from its card.
+    if (openFight) {
+      return shell(
+        <>
+          <div role="button" tabIndex={0} onClick={() => go(null)} onKeyDown={e => { if (e.key === "Enter") go(null); }}
+            style={{ display: "inline-block", cursor: "pointer", padding: "8px 14px", borderRadius: 12, marginTop: 4, background: V.bg3,
+              border: `1.5px solid ${V.border2}`, ...display("chip", { fontSize: 15, color: V.text }) }}>{"‹"} The fights</div>
+          {openFight === "title" && group("Fighting for the Team Championship", V.gold, F.title, "Chance of winning the title")}
+          {openFight === "stay" && <>
+            {group("Fighting to Stay Up", V.pink, F.stay, "Chance of staying up", 8, "↓ Relegated")}
+            {group("Staying Up", V.blue, tItems("safe"))}
+            {group("Going Down", V.pink, tItems("down"))}
+          </>}
+          {openFight === "promo" && <>
+            {group("Fighting to Be Promoted", V.green, F.promo, "Chance of going up", 4, "↑ Promoted")}
+            {group("Going Up", V.green, tItems("up"))}
+            {group("Staying in the Second Division", V.silver, tItems("stuck"))}
+          </>}
+          {openFight === "players" && <>
+            {group("Fighting for the Player Championship", V.gold, F.champ, "Chance of finishing 1st")}
+            {group("Fighting for a Top 3 Finish", V.green, F.top3, "Chance of a top 3 finish", 3, "↑ Top 3")}
+            {group("Fighting for a Top 12 Finish", V.pink, F.top12, "Chance of a top 12 finish", 12, "↑ Top 12")}
+          </>}
+          {openFight === "mates" && <>
+            <Head color={V.blue}>Fighting to Beat a Teammate</Head>
+            <div style={{ display: "grid", gap: 8 }}>
+              {myDuel && <Duel {...myDuel} mine={currentUser} big />}
+              {closeDuels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} />)}
+            </div>
+            {doneDuels.length > 0 && (
+              <div style={{ ...card({ padding: "2px 12px 6px" }), marginTop: 8 }}>
+                {doneDuels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} compact />)}
+              </div>
+            )}
+          </>}
+        </>
+      );
+    }
+
+    // The front: one card a fight, the four nearest the line in each, and the
+    // reader if they are in it. The whole list is behind the card.
+    const peek = (items, cut) => {
+      if (items.length <= 4) return items;
+      let at = cut == null ? 2 : items.findIndex(x => x.place > cut);
+      if (at < 0) at = items.length;
+      const st = Math.max(0, Math.min(items.length - 4, at - 2));
+      const sel = items.slice(st, st + 4), me = items.find(x => x.mine);
+      if (me && !sel.includes(me)) sel[items.indexOf(me) < st ? 0 : 3] = me;
+      return sel;
+    };
+    const shellCard = (key, title, color, more, kids, d) => (
+      <div key={key} role="button" tabIndex={0} className="fr-rise" onClick={() => go(key)} onKeyDown={e => { if (e.key === "Enter") go(key); }}
+        style={{ "--d": `${d}s`, cursor: "pointer", padding: "12px 12px 10px", borderRadius: 16, background: V.bg3, border: `1.5px solid ${color}`, boxShadow: `0 0 12px ${color}44` }}>
+        <div style={{ ...display("h3", { fontSize: 19, color }), ...textGlow(color, 0.7), textTransform: "uppercase", lineHeight: 1.1 }}>{title}</div>
+        {kids}
+        <div style={{ ...display("chip", { fontSize: 14, color: V.text }), textAlign: "right", marginTop: 8 }}>{more} {"›"}</div>
+      </div>
+    );
+    const fcard = (key, title, color, items, more, d, cut) => {
+      if (!items.length) return null;
+      const sel = peek(items, cut);
+      return shellCard(key, title, color, more, (
+        <div style={{ display: "flex", alignItems: "stretch", gap: 4, marginTop: 12 }}>
+          {sel.map((x, i) => (
+            <Fragment key={x.id}>
+              {cut != null && i > 0 && sel[i - 1].place <= cut && x.place > cut && <span style={{ borderLeft: `2px dashed ${color}`, margin: "0 2px" }} />}
+              <span style={{ flex: "1 1 0", minWidth: 0, display: "grid", justifyItems: "center", alignContent: "start", gap: 3, textAlign: "center" }}>
+                {x.pic}
+                <span style={{ ...display("chip", { fontSize: x.name.split(" ").some(w => w.length > 10) ? 10 : 12, color: x.mine ? V.green : V.text }), lineHeight: 1.1,
+                  ...(x.name.split(" ").some(w => w.length > 10) ? { letterSpacing: 0, whiteSpace: "nowrap" } : {}) }}>{x.name}</span>
+                <span style={{ ...numeric("stat", { fontSize: 20, color: V.text }) }}>{pct(x.v)}</span>
+              </span>
+            </Fragment>
+          ))}
+        </div>
+      ), d);
+    };
+    const topDuel = myDuel && close(myDuel) ? myDuel : closeDuels[0] || myDuel || duels[0];
     return shell(
-      <>
+      <div style={{ display: "grid", gap: 12, marginTop: 4 }}>
         {myTeam && mine.length > 0 && (
-          <div className="fr-mine" style={{ ...card({ padding: "16px 12px 12px" }), ...edgeGlow(V.green, 0.6), marginTop: 4 }}>
+          <div className="fr-mine" style={{ ...card({ padding: "16px 12px 12px" }), ...edgeGlow(V.green, 0.6) }}>
             <TeamTap id={myTeam.id} style={{ display: "grid", justifyItems: "center", gap: 3, textAlign: "center" }}>
               <Logo src={myTeam.logo} name={myTeam.name} size={88} glow={V.green} />
               <span style={{ display: "flex", justifyContent: "center", marginTop: -16 }}>
@@ -952,31 +1037,12 @@ export default function FinishPage({ currentUser, view }) {
             <Fights items={mine} />
           </div>
         )}
-        {left > 0 && (
-          <>
-            {group("Fighting for the Team Championship", V.gold, tItems("title", f => f.title), "Chance of winning the title")}
-            {group("Fighting to Stay Up", V.pink, tItems("stay", f => f.up), "Chance of staying up", 8, "\u2193 Relegated")}
-            {group("Fighting to Be Promoted", V.green, tItems("promo", f => f.up), "Chance of going up", 4, "\u2191 Promoted")}
-            {group("Staying Up", V.blue, tItems("safe"))}
-            {group("Going Up", V.green, tItems("up"))}
-            {group("Going Down", V.pink, tItems("down"))}
-            {group("Staying in the Second Division", V.silver, tItems("stuck"))}
-            {group("Fighting for the Player Championship", V.gold, pItems("title", v => v >= 0.01, V.gold), "Chance of finishing 1st")}
-            {group("Fighting for a Top 3 Finish", V.green, pItems("podium", live, V.green), "Chance of a top 3 finish", 3, "\u2191 Top 3")}
-            {group("Fighting for a Top 12 Finish", V.pink, pItems("top12", live, V.pink), "Chance of a top 12 finish", 12, "\u2191 Top 12")}
-          </>
-        )}
-        <Head color={V.blue}>Fighting to Beat a Teammate</Head>
-        <div style={{ display: "grid", gap: 8 }}>
-          {myDuel && <Duel {...myDuel} mine={currentUser} big />}
-          {closeDuels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} />)}
-        </div>
-        {doneDuels.length > 0 && (
-          <div style={{ ...card({ padding: "2px 12px 6px" }), marginTop: 8 }}>
-            {doneDuels.map(d => <Duel key={d.team.id} {...d} mine={currentUser} compact />)}
-          </div>
-        )}
-      </>
+        {left > 0 && fcard("title", "Fighting for the Team Championship", V.gold, F.title, `All ${F.title.length} teams`, 0.1)}
+        {left > 0 && fcard("stay", "Fighting to Stay Up", V.pink, F.stay, `All ${F.stay.length} teams`, 0.2, 8)}
+        {left > 0 && fcard("promo", "Fighting to Be Promoted", V.green, F.promo, `All ${F.promo.length} teams`, 0.3, 4)}
+        {left > 0 && fcard("players", "Fighting for a Top 12 Finish", V.pink, F.top12, "Player championship, top 3, top 12", 0.4, 12)}
+        {topDuel && shellCard("mates", "Fighting to Beat a Teammate", V.blue, `All ${duels.length} teams`, <div style={{ pointerEvents: "none", marginTop: 6 }}><Duel {...topDuel} mine={currentUser} compact /></div>, 0.5)}
+      </div>
     );
   }
 
