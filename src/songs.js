@@ -21,18 +21,22 @@
 export const SONGS = [
   {
     // The song for the last two weeks. Andrew's file, 2026-11-24, 120 seconds,
-    // named as he named the file. It took Belize's place the same afternoon
-    // ("replace belize with this mp3 i just gave you"), so Belize is off the
-    // list; public/belize.mp3 is still on disk. No line and no review yet: the
-    // words are his to write. The cover is the picture he sent for Belize, two
-    // at a hookah lounge, cropped square from the middle of a 1344x768 still
-    // and shrunk to a 480px JPEG. Keeping that picture is Claude's reading.
-    key: "maximous",
+    // and called Belize. This is the second recording: it took the first one's
+    // place the same afternoon ("replace belize with this mp3 i just gave
+    // you"). The file he dropped was named "Maximous and Gawargious.mp3" and
+    // the row carried that as the title until he corrected it the same day
+    // ("the f5 song is called Belize not maxmous"); the file in public/ keeps
+    // that name, the download hands it out as belize.mp3. The first recording,
+    // 97 seconds, is still on disk at public/belize.mp3 and nothing plays it.
+    // No line and no review yet: the words are his to write. The cover is the
+    // picture he sent for Belize, two at a hookah lounge, cropped square from
+    // the middle of a 1344x768 still and shrunk to a 480px JPEG.
+    key: "belize",
     src: "/maximous-and-gawargious.mp3",
-    name: "Maximous and Gawargious",
+    name: "Belize",
     date: "2026-11-24",
     line: "",
-    file: "maximous-and-gawargious.mp3",
+    file: "belize.mp3",
     cover: "/belize.jpg",
   },
   {

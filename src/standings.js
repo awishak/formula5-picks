@@ -99,6 +99,18 @@ export async function driverStandings(year = 2026, canonical = (n) => n, { cache
     }
     if (!order.length) { skipped.push(`${s.country_name} ${s.session_name}`); continue; }
 
+    // The names above are the latest session's grid. A driver who raced
+    // earlier and sat the latest one out is not on it, and dropping the number
+    // drops his whole season: Ocon's 7 points went missing on 2026-11-24, when
+    // Camara drove the Haas in Las Vegas. Ask that session who the number was.
+    for (const num of order) {
+      if (nameOf[num]) continue;
+      const who = await get(`drivers?session_key=${s.session_key}&driver_number=${num}`)
+        .catch(e => { if (/-> 404/.test(String(e.message))) return []; throw e; });
+      if (who[0]) nameOf[num] = canonical(titled(who[0].full_name));
+      await sleep(500);
+    }
+
     const table = isSprint(s) ? SPRINT_POINTS : RACE_POINTS;
     order.forEach((num, i) => {
       const name = nameOf[num];
